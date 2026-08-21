@@ -1,0 +1,33 @@
+---
+interface Props {
+  businessProblem: string;
+  technologyFocus: string;
+  intendedAudience: string;
+  readerOutcome: string;
+}
+
+const { businessProblem, technologyFocus, intendedAudience, readerOutcome } =
+  Astro.props;
+---
+
+<section class="fit-summary" aria-labelledby="fit-heading">
+  <h2 id="fit-heading">Business technology fit</h2>
+  <dl>
+    <div>
+      <dt>Business problem</dt>
+      <dd>{businessProblem}</dd>
+    </div>
+    <div>
+      <dt>Technology focus</dt>
+      <dd>{technologyFocus}</dd>
+    </div>
+    <div>
+      <dt>Intended reader</dt>
+      <dd>{intendedAudience}</dd>
+    </div>
+    <div>
+      <dt>Practical outcome</dt>
+      <dd>{readerOutcome}</dd>
+    </div>
+  </dl>
+</section>

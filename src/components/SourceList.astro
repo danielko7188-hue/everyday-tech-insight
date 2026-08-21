@@ -1,0 +1,29 @@
+---
+import type { ArticleSource } from "../utils/content-contract";
+
+interface Props {
+  sources: ArticleSource[];
+}
+
+const { sources } = Astro.props;
+---
+
+<section class="source-list" aria-labelledby="sources-heading">
+  <h2 id="sources-heading">Sources</h2>
+  <p>
+    These primary sources support the framework and risk checks used in this
+    article. Access dates record the latest editorial verification.
+  </p>
+  <ol>
+    {
+      sources.map((source) => (
+        <li>
+          <a href={source.url}>{source.title}</a>
+          <span>
+            {source.publisher}; accessed {source.accessed}
+          </span>
+        </li>
+      ))
+    }
+  </ol>
+</section>

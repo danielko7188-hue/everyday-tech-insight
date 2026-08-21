@@ -1,0 +1,46 @@
+---
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import { site } from "../data/site";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const issueUrl = site.contact.url;
+const title = `Corrections process | ${site.name}`;
+const description =
+  "How to report a factual error, broken source, or material omission to Everyday Tech Insight through the public GitHub issue tracker.";
+---
+
+<BaseLayout title={title} description={description} path="/corrections/">
+  <div class="page-shell">
+    <Breadcrumbs
+      items={[
+        { name: "Home", href: "/" },
+        { name: "Corrections", href: "/corrections/" },
+      ]}
+    />
+    <article class="trust-content">
+      <p class="eyebrow">Accuracy and updates</p>
+      <h1>Corrections</h1>
+      <p class="page-deck">
+        Factual errors, broken primary sources, and material omissions should be
+        reported so the affected guide can be reviewed.
+      </p>
+      <h2>Submit a report</h2>
+      <p>
+        Open a <a href={issueUrl}>public GitHub issue</a> with the article URL, the
+        passage in question, the proposed correction, and a supporting source when
+        available.
+      </p>
+      <p class="notice">
+        GitHub issues are public. Do not include private, confidential,
+        financial, account, credential, or security-sensitive information.
+      </p>
+      <h2>What happens next</h2>
+      <p>
+        A report should be checked against the cited and newly supplied
+        evidence. If a material correction is made, the article should receive
+        an accurate modified or review date. Submitting a report does not
+        guarantee that a requested change will be accepted.
+      </p>
+    </article>
+  </div>
+</BaseLayout>

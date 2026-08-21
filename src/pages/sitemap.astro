@@ -1,0 +1,83 @@
+---
+import { getCollection } from "astro:content";
+
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import { categories } from "../data/categories";
+import { site } from "../data/site";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const publishedArticles = (
+  await getCollection("articles", ({ data }) => data.status === "published")
+).sort((left, right) => left.data.title.localeCompare(right.data.title));
+const title = `HTML sitemap | ${site.name}`;
+const description =
+  "A human-readable index of Everyday Tech Insight categories, published business-technology guides, and publication information pages.";
+const informationPages = [
+  { name: "About", href: "/about/" },
+  { name: "Publisher", href: "/publisher/" },
+  { name: "Editorial standards", href: "/editorial-standards/" },
+  { name: "Corrections", href: "/corrections/" },
+  { name: "Contact", href: "/contact/" },
+  { name: "Privacy", href: "/privacy/" },
+  { name: "Advertising disclosure", href: "/advertising-disclosure/" },
+] as const;
+---
+
+<BaseLayout title={title} description={description} path="/sitemap/">
+  <div class="page-shell">
+    <Breadcrumbs
+      items={[
+        { name: "Home", href: "/" },
+        { name: "Sitemap", href: "/sitemap/" },
+      ]}
+    />
+    <header class="page-intro">
+      <p class="eyebrow">Publication index</p>
+      <h1>Sitemap</h1>
+      <p class="page-deck">
+        Browse the public sections and every article currently in published
+        status.
+      </p>
+    </header>
+    <section aria-labelledby="sitemap-categories">
+      <h2 id="sitemap-categories">Categories</h2>
+      <ul>
+        <li><a href="/categories/">All categories</a></li>
+        {
+          categories.map((category) => (
+            <li>
+              <a href={`/categories/${category.slug}/`}>{category.name}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+    <section aria-labelledby="sitemap-articles">
+      <h2 id="sitemap-articles">Published guides</h2>
+      <ul>
+        {
+          publishedArticles.map((article) => (
+            <li>
+              <a href={`/articles/${article.data.slug}/`}>
+                {article.data.title}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+    <section aria-labelledby="sitemap-information">
+      <h2 id="sitemap-information">Publication information</h2>
+      <ul>
+        {
+          informationPages.map((page) => (
+            <li>
+              <a href={page.href}>{page.name}</a>
+            </li>
+          ))
+        }
+        <li><a href="/rss.xml">RSS feed</a></li>
+      </ul>
+    </section>
+  </div>
+</BaseLayout>

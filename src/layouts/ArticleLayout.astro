@@ -1,0 +1,102 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import FitSummary from "../components/FitSummary.astro";
+import SourceList from "../components/SourceList.astro";
+import type { CategoryRecord } from "../data/categories";
+import { site } from "../data/site";
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  article: CollectionEntry<"articles">;
+  category: CategoryRecord;
+  relatedArticles?: CollectionEntry<"articles">[];
+}
+
+const { article, category, relatedArticles = [] } = Astro.props;
+const { data } = article;
+const articlePath = `/articles/${data.slug}/`;
+const title = `${data.title} | ${site.name}`;
+const formatDate = (date: string) =>
+  new Intl.DateTimeFormat(site.locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T12:00:00Z`));
+---
+
+<BaseLayout
+  title={title}
+  description={data.description}
+  path={articlePath}
+  canonical={data.canonicalOverride}
+  ogType="article"
+>
+  <div class="page-shell article-shell">
+    <Breadcrumbs
+      items={[
+        { name: "Home", href: "/" },
+        { name: "Categories", href: "/categories/" },
+        { name: category.name, href: `/categories/${category.slug}/` },
+        { name: data.title, href: articlePath },
+      ]}
+    />
+
+    <article class="article-page">
+      <header class="article-header">
+        <p class="eyebrow">{category.name}</p>
+        <h1>{data.title}</h1>
+        <p class="article-summary">{data.summary}</p>
+        <div class="article-facts" aria-label="Publication details">
+          <p>By <strong>{data.author}</strong></p>
+          <p>Published {formatDate(data.datePublished)}</p>
+          {
+            data.dateModified && data.dateModified !== data.datePublished && (
+              <p>Updated {formatDate(data.dateModified)}</p>
+            )
+          }
+          <p>Reviewed {formatDate(data.lastReviewed)}</p>
+        </div>
+      </header>
+
+      <FitSummary
+        businessProblem={data.businessProblem}
+        technologyFocus={data.technologyFocus}
+        intendedAudience={data.intendedAudience}
+        readerOutcome={data.readerOutcome}
+      />
+
+      <div class="article-body">
+        <slot />
+      </div>
+
+      <SourceList sources={data.sourceList} />
+
+      {
+        relatedArticles.length > 0 && (
+          <section class="related-articles" aria-labelledby="related-heading">
+            <h2 id="related-heading">Related reading</h2>
+            <ul>
+              {relatedArticles.map((related) => (
+                <li>
+                  <a href={`/articles/${related.data.slug}/`}>
+                    {related.data.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      <footer class="article-footer">
+        <p>
+          Found a factual error or a source that needs review?{" "}
+          <a href="/corrections/">Request a correction</a>.
+        </p>
+      </footer>
+    </article>
+  </div>
+</BaseLayout>

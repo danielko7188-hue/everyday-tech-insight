@@ -1,0 +1,43 @@
+---
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import { site } from "../data/site";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const title = `Publisher identity boundary | ${site.name}`;
+const description =
+  "A plain statement of the verified public publisher identity and the personal, legal, credential, team, and testing claims not made by this publication.";
+---
+
+<BaseLayout title={title} description={description} path="/publisher/">
+  <div class="page-shell">
+    <Breadcrumbs
+      items={[
+        { name: "Home", href: "/" },
+        { name: "Publisher", href: "/publisher/" },
+      ]}
+    />
+    <article class="trust-content">
+      <p class="eyebrow">Identity and evidence</p>
+      <h1>Publisher</h1>
+      <p class="page-deck">
+        Everyday Tech Insight is the publication name, not a legal entity or a
+        claim about a particular person.
+      </p>
+      <p>
+        This page does not claim a named person, company, team, professional
+        credentials, business registration, office, or hands-on product testing.
+        Those facts have not been supplied and verified for public use.
+      </p>
+      <p>
+        Articles therefore use <strong>Everyday Tech Insight</strong> only as a publication-name
+        byline. The byline is not presented as a person or organization in structured
+        data.
+      </p>
+      <p class="notice">
+        Reader trust depends on accurate boundaries. A future identity update
+        should be published only after the relevant facts and permission to
+        share them are confirmed.
+      </p>
+    </article>
+  </div>
+</BaseLayout>

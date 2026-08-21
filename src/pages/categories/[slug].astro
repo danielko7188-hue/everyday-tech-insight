@@ -1,0 +1,101 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
+
+import ArticleCard from "../../components/ArticleCard.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import CategoryNav from "../../components/CategoryNav.astro";
+import {
+  categories,
+  type CategoryRecord,
+  type CategorySlug,
+} from "../../data/categories";
+import { site } from "../../data/site";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const categoryPurposes: Record<CategorySlug, string> = {
+  "ai-automation":
+    "Use this section to decide where automation can remove repeat work without hiding judgment, accountability, or operational risk.",
+  "business-software":
+    "Use this section to compare software against real workflows, ownership cost, data portability, and the effort required to change later.",
+  "cybersecurity-data-protection":
+    "Use this section to turn broad security concerns into prioritized safeguards for accounts, devices, vendors, and business data.",
+  "digital-operations":
+    "Use this section to make routine digital work easier to hand off, verify, recover, and improve as the business changes.",
+  "technology-strategy":
+    "Use this section to connect technology spending and governance to business priorities, constraints, and measurable decisions.",
+};
+
+export async function getStaticPaths() {
+  const publishedArticles = await getCollection(
+    "articles",
+    ({ data }) => data.status === "published",
+  );
+
+  return categories.map((category) => ({
+    params: { slug: category.slug },
+    props: {
+      category,
+      articles: publishedArticles
+        .filter(({ data }) => data.category === category.slug)
+        .sort((left, right) =>
+          right.data.datePublished.localeCompare(left.data.datePublished),
+        ),
+    },
+  }));
+}
+
+interface Props {
+  category: CategoryRecord;
+  articles: CollectionEntry<"articles">[];
+}
+
+const { category, articles } = Astro.props;
+const path = `/categories/${category.slug}/`;
+const title = `${category.name} for small business | ${site.name}`;
+const description = `${category.description} ${categoryPurposes[category.slug]}`;
+---
+
+<BaseLayout title={title} description={description} path={path}>
+  <div class="page-shell">
+    <Breadcrumbs
+      items={[
+        { name: "Home", href: "/" },
+        { name: "Categories", href: "/categories/" },
+        { name: category.name, href: path },
+      ]}
+    />
+    <header class="page-intro">
+      <p class="eyebrow">Business technology category</p>
+      <h1>{category.name}</h1>
+      <p class="page-deck">{category.description}</p>
+      <p>{categoryPurposes[category.slug]}</p>
+    </header>
+
+    <CategoryNav />
+
+    {
+      articles.length > 0 ? (
+        <section aria-labelledby="guides-heading">
+          <h2 id="guides-heading">Published guides</h2>
+          <ul class="article-list">
+            {articles.map((article) => (
+              <li>
+                <ArticleCard article={article} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+        <section class="empty-category" aria-labelledby="scope-heading">
+          <h2 id="scope-heading">Current scope</h2>
+          <p>
+            This category is available as part of the publication taxonomy. It
+            currently has no published guide; only reviewed entries with
+            complete source support appear here.
+          </p>
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>

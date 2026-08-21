@@ -1,0 +1,99 @@
+---
+import { getCollection } from "astro:content";
+
+import ArticleCard from "../components/ArticleCard.astro";
+import CategoryNav from "../components/CategoryNav.astro";
+import { categories } from "../data/categories";
+import { site } from "../data/site";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const publishedArticles = (
+  await getCollection("articles", ({ data }) => data.status === "published")
+).sort((left, right) =>
+  right.data.datePublished.localeCompare(left.data.datePublished),
+);
+const featuredArticles = publishedArticles.filter(({ data }) => data.featured);
+const leadArticles =
+  featuredArticles.length > 0 ? featuredArticles : publishedArticles;
+const title = `${site.name} | Practical Business Technology`;
+const description =
+  "Practical, source-backed guidance that helps small-business decision makers choose, use, secure, and govern everyday technology.";
+const websiteStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: site.name,
+  url: site.url,
+  description,
+  inLanguage: site.locale,
+};
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  path="/"
+  structuredData={websiteStructuredData}
+>
+  <div class="page-shell">
+    <section class="editorial-lead" aria-labelledby="home-heading">
+      <div class="lead-copy">
+        <p class="eyebrow">Independent practical guidance</p>
+        <h1 id="home-heading">
+          Practical business technology, explained clearly
+        </h1>
+        <p class="lead-summary">
+          Everyday Tech Insight connects business needs and technology decisions
+          for small-business decision makers who need useful next steps, not
+          product hype.
+        </p>
+      </div>
+      <div class="lead-note">
+        <p>
+          Each published guide starts with a business problem, identifies the
+          relevant technology, defines the reader, and states a practical
+          outcome.
+        </p>
+      </div>
+    </section>
+
+    <section class="category-section" aria-labelledby="category-heading">
+      <p class="eyebrow">Explore by decision</p>
+      <h2 id="category-heading">
+        Five parts of the technology operating picture
+      </h2>
+      <p class="page-deck">
+        Use the category index to move from a business question to focused,
+        source-backed guidance.
+      </p>
+      <ul class="category-index">
+        {
+          categories.map((category) => (
+            <li>
+              <h2>
+                <a href={`/categories/${category.slug}/`}>{category.name}</a>
+              </h2>
+              <p>{category.description}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <CategoryNav />
+    </section>
+
+    {
+      leadArticles.length > 0 && (
+        <section class="latest-section" aria-labelledby="latest-heading">
+          <p class="eyebrow">Start here</p>
+          <h2 id="latest-heading">Latest practical guide</h2>
+          <ul class="article-list">
+            {leadArticles.slice(0, 2).map((article) => (
+              <li>
+                <ArticleCard article={article} headingLevel={3} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>

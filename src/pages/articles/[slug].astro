@@ -1,0 +1,52 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getCollection, render } from "astro:content";
+
+import { categoriesBySlug, type CategoryRecord } from "../../data/categories";
+import ArticleLayout from "../../layouts/ArticleLayout.astro";
+
+export async function getStaticPaths() {
+  const publishedArticles = await getCollection(
+    "articles",
+    ({ data }) => data.status === "published",
+  );
+
+  return publishedArticles.map((article) => ({
+    params: { slug: article.data.slug },
+    props: {
+      article,
+      relatedArticles: article.data.relatedArticles
+        .map((slug) =>
+          publishedArticles.find((candidate) => candidate.data.slug === slug),
+        )
+        .filter(
+          (candidate): candidate is CollectionEntry<"articles"> =>
+            candidate !== undefined,
+        ),
+    },
+  }));
+}
+
+interface Props {
+  article: CollectionEntry<"articles">;
+  relatedArticles: CollectionEntry<"articles">[];
+}
+
+const { article, relatedArticles } = Astro.props as Props;
+const category = categoriesBySlug.get(article.data.category) as
+  CategoryRecord | undefined;
+
+if (!category) {
+  throw new Error(`Unknown article category: ${article.data.category}`);
+}
+
+const { Content } = await render(article);
+---
+
+<ArticleLayout
+  article={article}
+  category={category}
+  relatedArticles={relatedArticles}
+>
+  <Content />
+</ArticleLayout>

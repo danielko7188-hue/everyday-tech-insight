@@ -1,0 +1,58 @@
+---
+import { getCollection } from "astro:content";
+
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import { categories } from "../../data/categories";
+import { site } from "../../data/site";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const publishedArticles = await getCollection(
+  "articles",
+  ({ data }) => data.status === "published",
+);
+const title = `Business technology categories | ${site.name}`;
+const description =
+  "Browse five practical business-technology categories covering automation, software, security, digital operations, and technology strategy.";
+---
+
+<BaseLayout title={title} description={description} path="/categories/">
+  <div class="page-shell">
+    <Breadcrumbs
+      items={[
+        { name: "Home", href: "/" },
+        { name: "Categories", href: "/categories/" },
+      ]}
+    />
+    <header class="page-intro">
+      <p class="eyebrow">Topic index</p>
+      <h1>Business technology categories</h1>
+      <p class="page-deck">
+        Each category groups decisions that a small business can evaluate in
+        practical terms: the problem, the technology, the risk, and the next
+        step.
+      </p>
+    </header>
+    <ul class="category-index">
+      {
+        categories.map((category) => {
+          const count = publishedArticles.filter(
+            ({ data }) => data.category === category.slug,
+          ).length;
+          return (
+            <li>
+              <h2>
+                <a href={`/categories/${category.slug}/`}>{category.name}</a>
+              </h2>
+              <p>{category.description}</p>
+              <p class="card-outcome">
+                {count === 1
+                  ? "1 published guide"
+                  : `${count} published guides`}
+              </p>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</BaseLayout>

@@ -1,0 +1,23 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  article: CollectionEntry<"articles">;
+  headingLevel?: 2 | 3;
+}
+
+const { article, headingLevel = 2 } = Astro.props;
+const Heading = `h${headingLevel}` as "h2" | "h3";
+---
+
+<article class="article-card">
+  <p class="card-kicker">{article.data.contentType}</p>
+  <Heading>
+    <a href={`/articles/${article.data.slug}/`}>{article.data.title}</a>
+  </Heading>
+  <p>{article.data.summary}</p>
+  <p class="card-outcome">
+    <strong>Use it to:</strong>
+    {article.data.readerOutcome}
+  </p>
+</article>

@@ -1,0 +1,62 @@
+---
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import { site } from "../data/site";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const title = `Editorial standards and sourcing | ${site.name}`;
+const description =
+  "The publication standards for business relevance, primary sourcing, evidence labels, dates, first-hand claims, updates, and corrections.";
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  path="/editorial-standards/"
+>
+  <div class="page-shell">
+    <Breadcrumbs
+      items={[
+        { name: "Home", href: "/" },
+        {
+          name: "Editorial standards",
+          href: "/editorial-standards/",
+        },
+      ]}
+    />
+    <article class="trust-content">
+      <p class="eyebrow">How publication decisions are made</p>
+      <h1>Editorial standards</h1>
+      <p class="page-deck">
+        Every published guide must connect a real business problem to a
+        practical technology decision and stay within the evidence available.
+      </p>
+      <h2>Business technology fit</h2>
+      <p>
+        A publishable entry identifies the business problem, technology focus,
+        intended small-business reader, practical reader outcome, and traceable
+        source list. Missing any one of those elements keeps an entry out of the
+        public collection.
+      </p>
+      <h2>Sources and claims</h2>
+      <p>
+        Current official or primary sources are preferred for technical,
+        regulatory, security, and platform claims. Analysis and decision tools
+        are described as editorial synthesis when a source does not prescribe
+        the exact method. Access dates show when listed sources were checked.
+      </p>
+      <h2>First-hand evidence</h2>
+      <p>
+        The publication does not describe a product as personally tested or
+        claim observed results unless a documented test actually occurred. The
+        initial public portfolio is source-checked, not represented as
+        first-hand product testing.
+      </p>
+      <h2>Dates, updates, and corrections</h2>
+      <p>
+        Publication and review dates reflect real editorial events. Material
+        corrections should update the affected article and be handled under the
+        <a href="/corrections/">corrections process</a>.
+      </p>
+    </article>
+  </div>
+</BaseLayout>

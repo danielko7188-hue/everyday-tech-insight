@@ -1,0 +1,44 @@
+---
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import { site } from "../data/site";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const title = `Contact the publication | ${site.name}`;
+const description =
+  "Contact Everyday Tech Insight about editorial questions or site problems through its public GitHub issue tracker without sharing private information.";
+---
+
+<BaseLayout title={title} description={description} path="/contact/">
+  <div class="page-shell">
+    <Breadcrumbs
+      items={[
+        { name: "Home", href: "/" },
+        { name: "Contact", href: "/contact/" },
+      ]}
+    />
+    <article class="trust-content">
+      <p class="eyebrow">Public contact channel</p>
+      <h1>Contact</h1>
+      <p class="page-deck">
+        Editorial questions, accessibility problems, and site issues can be
+        submitted through the publication's public issue tracker.
+      </p>
+      <p>
+        <a href={site.contact.url}
+          >Open the Everyday Tech Insight GitHub issues page</a
+        >. For factual changes, see the <a href="/corrections/"
+          >corrections process</a
+        >
+        first.
+      </p>
+      <p class="notice">
+        The issue tracker is public. Do not post private information, passwords,
+        tokens, account records, payment details, or confidential business data.
+      </p>
+      <p>
+        This static site has no contact form and does not claim a private email,
+        phone, postal address, response time, or support commitment.
+      </p>
+    </article>
+  </div>
+</BaseLayout>
