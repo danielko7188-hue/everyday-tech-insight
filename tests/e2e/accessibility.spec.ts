@@ -36,7 +36,18 @@ test("skip link is first, visibly focused, and moves focus to main", async ({
   expect(focusOutline).not.toBe("none");
 
   await page.keyboard.press("Enter");
-  await expect(page.locator("#main-content")).toBeFocused();
+  const mainContent = page.locator("#main-content");
+  await expect(mainContent).toBeFocused();
+
+  const mainFocusIndicator = await mainContent.evaluate((element) => {
+    const styles = getComputedStyle(element);
+    return {
+      style: styles.outlineStyle,
+      width: Number.parseFloat(styles.outlineWidth),
+    };
+  });
+  expect(mainFocusIndicator.style).not.toBe("none");
+  expect(mainFocusIndicator.width).toBeGreaterThan(0);
 });
 
 test("375px layout has no horizontal overflow and keeps navigation usable", async ({
