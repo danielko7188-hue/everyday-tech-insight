@@ -72,7 +72,7 @@ describe("article frontmatter contract", () => {
     expect(VERIFICATION_STATUSES).toEqual([
       "unverified",
       "source-checked",
-      "human-reviewed",
+      "tested",
     ]);
 
     expect(
@@ -193,6 +193,25 @@ describe("article frontmatter contract", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("requires published content to be source-checked or tested", () => {
+    const unverified = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      verificationStatus: "unverified",
+    });
+    const sourceChecked = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      verificationStatus: "source-checked",
+    });
+    const tested = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      verificationStatus: "tested",
+    });
+
+    expect(unverified.success).toBe(false);
+    expect(sourceChecked.success).toBe(true);
+    expect(tested.success).toBe(true);
   });
 
   it("requires hero images and alternative text to be supplied together", () => {

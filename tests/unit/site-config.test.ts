@@ -134,6 +134,34 @@ describe("static deployment configuration", () => {
     expect(packageJson.engines?.node).toBe("^22.19.0 || >=24.0.0");
   });
 
+  it("uses Node 22 types for the lowest supported runtime", () => {
+    const packageJson = readJson("../../package.json") as {
+      engines?: { node?: string };
+      devDependencies?: Record<string, string>;
+    };
+
+    expect(packageJson.engines?.node).toBe("^22.19.0 || >=24.0.0");
+    expect(packageJson.devDependencies?.["@types/node"]).toBe("22.20.1");
+  });
+
+  it("does not allow inline executable scripts in the production CSP", () => {
+    const vercelConfig = readJson("../../vercel.json") as {
+      headers?: Array<{
+        headers: Array<{ key: string; value: string }>;
+      }>;
+    };
+    const contentSecurityPolicy = vercelConfig.headers?.[0]?.headers.find(
+      ({ key }) => key === "Content-Security-Policy",
+    )?.value;
+    const scriptDirective = contentSecurityPolicy
+      ?.split(";")
+      .map((directive) => directive.trim())
+      .find((directive) => directive.startsWith("script-src"));
+
+    expect(scriptDirective).toBe("script-src 'self'");
+    expect(scriptDirective).not.toContain("'unsafe-inline'");
+  });
+
   it("sets conservative static security headers including frame protection", () => {
     const vercelConfig = readJson("../../vercel.json") as {
       headers?: Array<{

@@ -13,7 +13,7 @@ export const CONTENT_TYPES = [
 export const VERIFICATION_STATUSES = [
   "unverified",
   "source-checked",
-  "human-reviewed",
+  "tested",
 ] as const;
 
 export const BUSINESS_TECHNOLOGY_FIT_FIELDS = [
@@ -199,6 +199,14 @@ export const articleFrontmatterSchema = z
           code: "custom",
           path: ["noindex"],
           message: "Published content cannot be excluded from indexing.",
+        });
+      }
+
+      if (article.verificationStatus === "unverified") {
+        context.addIssue({
+          code: "custom",
+          path: ["verificationStatus"],
+          message: "Published content must be source-checked or tested.",
         });
       }
     }
