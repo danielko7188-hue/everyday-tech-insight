@@ -163,10 +163,8 @@ export const articleFrontmatterSchema = z
       .trim()
       .min(1)
       .refine(
-        (value) =>
-          value.startsWith("/") ||
-          (URL.canParse(value) && new URL(value).protocol === "https:"),
-        "Hero image must be a root-relative path or HTTPS URL.",
+        (value) => value.startsWith("/") && !value.startsWith("//"),
+        "Hero image must be a root-relative local path.",
       )
       .optional(),
     heroImageAlt: requiredText(10, 240).optional(),

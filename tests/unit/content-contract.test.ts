@@ -208,4 +208,13 @@ describe("article frontmatter contract", () => {
     expect(missingAlt.success).toBe(false);
     expect(missingImage.success).toBe(false);
   });
+
+  it("rejects remote hero images that the production CSP cannot load", () => {
+    const result = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      heroImage: "https://images.example.test/automation-workflow.svg",
+    });
+
+    expect(result.success).toBe(false);
+  });
 });

@@ -126,6 +126,14 @@ describe("static deployment configuration", () => {
     );
   });
 
+  it("supports maintained Node releases while excluding Node 23", () => {
+    const packageJson = readJson("../../package.json") as {
+      engines?: { node?: string };
+    };
+
+    expect(packageJson.engines?.node).toBe("^22.19.0 || >=24.0.0");
+  });
+
   it("sets conservative static security headers including frame protection", () => {
     const vercelConfig = readJson("../../vercel.json") as {
       headers?: Array<{
