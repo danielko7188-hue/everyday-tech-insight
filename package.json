@@ -1,0 +1,48 @@
+{
+  "name": "everyday-tech-insight-static",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "format": "prettier --plugin=prettier-plugin-astro --no-error-on-unmatched-pattern --write src tests scripts astro.config.mjs eslint.config.js playwright.config.ts vitest.config.ts package.json tsconfig.json vercel.json README.md AGENTS.md",
+    "format:check": "prettier --plugin=prettier-plugin-astro --no-error-on-unmatched-pattern --check src tests scripts astro.config.mjs eslint.config.js playwright.config.ts vitest.config.ts package.json tsconfig.json vercel.json README.md AGENTS.md",
+    "lint": "eslint .",
+    "typecheck": "astro check",
+    "test": "vitest",
+    "test:e2e": "playwright test",
+    "check:links": "node scripts/check-external-links.mjs",
+    "check:content": "node scripts/qa-content.mjs",
+    "check:seo": "node scripts/qa-build.mjs",
+    "lighthouse": "node scripts/run-lighthouse.mjs",
+    "qa": "npm run format:check && npm run lint && npm run typecheck && npm run test -- --run && npm run build && npm run check:content && npm run check:seo && npm run check:links && npm run test:e2e && npm run lighthouse"
+  },
+  "dependencies": {
+    "@astrojs/rss": "4.0.19",
+    "@astrojs/sitemap": "3.7.3",
+    "astro": "7.2.4",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@axe-core/playwright": "4.13.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.13.3",
+    "cheerio": "1.1.2",
+    "eslint": "10.9.0",
+    "eslint-plugin-astro": "1.7.0",
+    "globals": "17.11.0",
+    "lighthouse": "13.4.1",
+    "prettier": "3.9.6",
+    "prettier-plugin-astro": "0.14.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.11"
+  }
+}
