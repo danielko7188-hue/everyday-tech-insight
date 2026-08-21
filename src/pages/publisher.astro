@@ -1,8 +1,18 @@
 ---
+import { getCollection } from "astro:content";
+
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import { site } from "../data/site";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
+const publishedArticles = (
+  await getCollection("articles", ({ data }) => data.status === "published")
+).sort((left, right) => {
+  const dateOrder = right.data.datePublished.localeCompare(
+    left.data.datePublished,
+  );
+  return dateOrder || left.data.title.localeCompare(right.data.title);
+});
 const title = `Publisher identity boundary | ${site.name}`;
 const description =
   "A plain statement of the verified public publisher identity and the personal, legal, credential, team, and testing claims not made by this publication.";
@@ -38,6 +48,24 @@ const description =
         should be published only after the relevant facts and permission to
         share them are confirmed.
       </p>
+      <section aria-labelledby="published-articles-heading">
+        <h2 id="published-articles-heading">Published articles</h2>
+        <p>
+          This index is generated from entries that currently have published
+          status. Draft and review entries do not appear.
+        </p>
+        <ul>
+          {
+            publishedArticles.map((article) => (
+              <li>
+                <a href={`/articles/${article.data.slug}/`}>
+                  {article.data.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
     </article>
   </div>
 </BaseLayout>

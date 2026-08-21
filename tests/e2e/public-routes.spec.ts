@@ -106,6 +106,44 @@ test("category and published article routes expose useful editorial content", as
   ).toHaveAttribute("href", "/corrections/");
 });
 
+test("publication byline links to its truthful profile and published article index", async ({
+  page,
+}) => {
+  await page.goto(`/articles/${articleSlug}/`);
+
+  const article = page.locator("article.article-page");
+  const publicationDetails = article.getByLabel("Publication details");
+  await expect(
+    publicationDetails.getByRole("link", {
+      name: "Everyday Tech Insight",
+      exact: true,
+    }),
+  ).toHaveAttribute("href", "/publisher/");
+
+  const bylineBox = article.getByRole("region", {
+    name: "About the publication byline",
+  });
+  await expect(bylineBox).toContainText(
+    /publication-name byline.*not.*named person/i,
+  );
+  await expect(
+    bylineBox.getByRole("link", { name: "Contact" }),
+  ).toHaveAttribute("href", "/contact/");
+  await expect(
+    bylineBox.getByRole("link", { name: "Corrections" }),
+  ).toHaveAttribute("href", "/corrections/");
+
+  await page.goto("/publisher/");
+  await expect(
+    page.getByRole("heading", { level: 2, name: "Published articles" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", {
+      name: "How to identify business tasks for automation",
+    }),
+  ).toHaveAttribute("href", `/articles/${articleSlug}/`);
+});
+
 test("trust pages are reachable and state the public evidence boundary", async ({
   page,
 }) => {

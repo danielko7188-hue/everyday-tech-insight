@@ -50,7 +50,9 @@ const formatDate = (date: string) =>
         <h1>{data.title}</h1>
         <p class="article-summary">{data.summary}</p>
         <div class="article-facts" aria-label="Publication details">
-          <p>By <strong>{data.author}</strong></p>
+          <p>
+            By <strong><a href="/publisher/">{data.author}</a></strong>
+          </p>
           <p>Published {formatDate(data.datePublished)}</p>
           {
             data.dateModified && data.dateModified !== data.datePublished && (
@@ -73,6 +75,20 @@ const formatDate = (date: string) =>
       </div>
 
       <SourceList sources={data.sourceList} />
+
+      <section class="notice" aria-labelledby="byline-heading">
+        <h2 id="byline-heading">About the publication byline</h2>
+        <p>
+          <a href="/publisher/"><strong>{data.author}</strong></a> is a publication-name
+          byline, not a named person, legal entity, team, credential, or claim of
+          hands-on product testing.
+        </p>
+        <p>
+          <a href="/contact/">Contact</a> · <a href="/corrections/"
+            >Corrections</a
+          >
+        </p>
+      </section>
 
       {
         relatedArticles.length > 0 && (
