@@ -61,6 +61,21 @@ describe("article frontmatter contract", () => {
     expect(result.success).toBe(true);
   });
 
+  it("allows canonical overrides only on the configured site origin", () => {
+    const sameOrigin = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      canonicalOverride:
+        "https://everyday-tech-insight.vercel.app/articles/same-origin/",
+    });
+    const offOrigin = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      canonicalOverride: "https://example.org/articles/off-origin/",
+    });
+
+    expect(sameOrigin.success).toBe(true);
+    expect(offOrigin.success).toBe(false);
+  });
+
   it("limits workflow, content, and verification values to the approved vocabularies", () => {
     expect(ARTICLE_STATUSES).toEqual(["draft", "review", "published"]);
     expect(CONTENT_TYPES).toEqual([

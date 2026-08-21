@@ -94,6 +94,14 @@ const httpsUrlSchema = z
     message: "URL must use HTTPS.",
   });
 
+const configuredSiteOrigin = new URL(site.url).origin;
+const canonicalOverrideSchema = httpsUrlSchema.refine(
+  (value) => new URL(value).origin === configuredSiteOrigin,
+  {
+    message: "Canonical override must use the configured site origin.",
+  },
+);
+
 const slugSchema = z.string().trim().min(1).max(120).regex(SLUG_PATTERN);
 
 export const sourceSchema = z
@@ -168,7 +176,7 @@ export const articleFrontmatterSchema = z
       )
       .optional(),
     heroImageAlt: requiredText(10, 240).optional(),
-    canonicalOverride: httpsUrlSchema.optional(),
+    canonicalOverride: canonicalOverrideSchema.optional(),
     noindex: z.boolean().default(false),
   })
   .strict()

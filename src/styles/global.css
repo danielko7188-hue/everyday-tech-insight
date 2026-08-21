@@ -52,8 +52,9 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 3px;
+  outline: 3px solid var(--navy);
+  outline-offset: 0;
+  box-shadow: 0 0 0 6px var(--focus);
 }
 
 .skip-link {
@@ -138,8 +139,9 @@ a:hover {
 }
 
 main:focus {
-  outline: 3px solid var(--focus);
-  outline-offset: -3px;
+  outline: 3px solid var(--navy);
+  outline-offset: 0;
+  box-shadow: 0 0 0 6px var(--focus);
 }
 
 .page-shell {
