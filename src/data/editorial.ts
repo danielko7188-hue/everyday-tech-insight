@@ -99,9 +99,11 @@ export function allocateHomepageEdition<T extends CuratableArticle>(
   articles: readonly T[],
   curation: HomepageCurationConfig = homepageCuration,
 ): HomepageEdition<T> {
-  const configured = resolveHomepageCuration(articles, curation);
   const published = articles.filter(
     (article) => article.data.status === "published",
+  );
+  const publishedBySlug = new Map(
+    published.map((article) => [article.data.slug, article]),
   );
   const assigned = new Set<string>();
   const edition: HomepageEdition<T> = {
@@ -114,12 +116,18 @@ export function allocateHomepageEdition<T extends CuratableArticle>(
 
   for (const section of homepageCurationSections) {
     const target = edition[section];
-    for (const article of configured[section]) {
-      if (!assigned.has(article.data.slug)) {
+    for (const slug of curation[section]) {
+      if (target.length >= homepageSectionSizes[section]) break;
+      const article = publishedBySlug.get(slug);
+      if (article && !assigned.has(slug)) {
         target.push(article);
-        assigned.add(article.data.slug);
+        assigned.add(slug);
       }
     }
+  }
+
+  for (const section of homepageCurationSections) {
+    const target = edition[section];
     for (const article of published) {
       if (target.length >= homepageSectionSizes[section]) break;
       if (!assigned.has(article.data.slug)) {
@@ -129,8 +137,10 @@ export function allocateHomepageEdition<T extends CuratableArticle>(
     }
   }
 
-  edition.moreGuides = published.filter(
-    (article) => !assigned.has(article.data.slug),
-  );
+  edition.moreGuides = published.filter((article) => {
+    if (assigned.has(article.data.slug)) return false;
+    assigned.add(article.data.slug);
+    return true;
+  });
   return edition;
 }
