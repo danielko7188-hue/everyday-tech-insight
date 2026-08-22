@@ -33,18 +33,34 @@ describe("estimateReadingTime", () => {
 
     expect(estimateReadingTime(markdown)).toBe(2);
   });
+
+  it("preserves a leading thematic break in an article body", () => {
+    const firstSection = Array(225).fill("first").join(" ");
+    const secondSection = Array(225).fill("second").join(" ");
+    const markdown = `---\n\n${firstSection}\n\n---\n\n${secondSection}`;
+
+    expect(estimateReadingTime(markdown)).toBe(2);
+  });
 });
 
 describe("visualVariantForSlug", () => {
   it("returns a stable integer inside the requested range", () => {
-    const first = visualVariantForSlug("evaluate-saas", 5);
-    const second = visualVariantForSlug("evaluate-saas", 5);
+    const variant = visualVariantForSlug("evaluate-saas", 5);
 
-    expect(second).toBe(first);
-    expect(Number.isInteger(first)).toBe(true);
-    expect(first).toBeGreaterThanOrEqual(0);
-    expect(first).toBeLessThan(5);
+    expect(Number.isInteger(variant)).toBe(true);
+    expect(variant).toBeGreaterThanOrEqual(0);
+    expect(variant).toBeLessThan(5);
   });
+
+  it.each([
+    ["evaluate-saas-with-a-practical-checklist", 4, 1],
+    ["respond-to-a-suspected-phishing-message", 5, 2],
+  ] as const)(
+    "pins %s in range %i to visual variant %i",
+    (slug, range, expected) => {
+      expect(visualVariantForSlug(slug, range)).toBe(expected);
+    },
+  );
 
   it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
     "returns zero for the invalid range %s",

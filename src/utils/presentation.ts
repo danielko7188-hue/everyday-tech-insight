@@ -2,7 +2,6 @@ const DEFAULT_WORDS_PER_MINUTE = 225;
 
 function markdownToReadableText(markdown: string): string {
   return markdown
-    .replace(/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, " ")
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/~~~[\s\S]*?~~~/g, " ")
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
