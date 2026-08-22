@@ -29,6 +29,7 @@
 ### Task 1: Allocate one unique homepage placement per article
 
 **Files:**
+
 - Modify: `src/data/editorial.ts`
 - Modify: `tests/unit/editorial.test.ts`
 
@@ -47,10 +48,7 @@ it("allocates every published article at most once", () => {
   const extras = Array.from({ length: 6 }, (_, index) => ({
     data: { slug: `extra-${index + 1}`, status: "published" as const },
   }));
-  const edition = allocateHomepageEdition([
-    ...publishedArticles,
-    ...extras,
-  ]);
+  const edition = allocateHomepageEdition([...publishedArticles, ...extras]);
   const assigned = [
     ...edition.lead,
     ...edition.features,
@@ -164,6 +162,7 @@ git commit -m "feat: allocate a unique homepage edition"
 ### Task 2: Recompose the homepage as an issue front page
 
 **Files:**
+
 - Modify: `src/pages/index.astro`
 - Modify: `src/components/ArticleCard.astro`
 - Modify: `src/components/TrustModule.astro`
@@ -185,8 +184,12 @@ test("home is a de-duplicated issue front page", async ({ page }) => {
 
   expect(hrefs).toHaveLength(15);
   expect(new Set(hrefs).size).toBe(15);
-  await expect(page.locator(".front-page__lead .article-card--lead")).toHaveCount(1);
-  await expect(page.locator(".front-page__support .article-card--feature")).toHaveCount(2);
+  await expect(
+    page.locator(".front-page__lead .article-card--lead"),
+  ).toHaveCount(1);
+  await expect(
+    page.locator(".front-page__support .article-card--feature"),
+  ).toHaveCount(2);
   await expect(page.locator(".topic-directory--compact li")).toHaveCount(5);
   await expect(
     page.locator('.topic-directory--compact a[href^="/articles/"]'),
@@ -204,15 +207,19 @@ for (const viewport of [
   { width: 390, height: 844 },
   { width: 1440, height: 900 },
 ]) {
-  test(`homepage lead headline is visible at ${viewport.width}px`, async ({ page }) => {
+  test(`homepage lead headline is visible at ${viewport.width}px`, async ({
+    page,
+  }) => {
     await page.setViewportSize(viewport);
     await page.goto("/");
-    const box = await page.locator(".front-page__lead .article-card__title").boundingBox();
+    const box = await page
+      .locator(".front-page__lead .article-card__title")
+      .boundingBox();
     expect(box).not.toBeNull();
     expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
-    expect(await page.locator("main").evaluate((main) => main.scrollHeight)).toBeLessThan(
-      viewport.width === 390 ? 11_000 : 7_000,
-    );
+    expect(
+      await page.locator("main").evaluate((main) => main.scrollHeight),
+    ).toBeLessThan(viewport.width === 390 ? 11_000 : 7_000);
   });
 }
 ```
@@ -257,63 +264,116 @@ Use `allocateHomepageEdition(publishedArticles)` and render this order:
     <p class="eyebrow">Independent practical guidance</p>
     <h1>Practical business technology, explained clearly</h1>
     <p class="lead-summary">
-      Source-backed guidance for small-business technology decisions, without product hype.
+      Source-backed guidance for small-business technology decisions, without
+      product hype.
     </p>
   </div>
   <section class="front-page" aria-labelledby="front-page-heading">
     <h2 id="front-page-heading" class="visually-hidden">Current issue</h2>
     <div class="front-page__lead">
-      {leadArticle && <ArticleCard article={leadArticle} variant="lead" headingLevel={3} />}
+      {
+        leadArticle && (
+          <ArticleCard article={leadArticle} variant="lead" headingLevel={3} />
+        )
+      }
     </div>
     <div class="front-page__support">
-      {featureArticles.map((article) => (
-        <ArticleCard article={article} variant="feature" headingLevel={3} />
-      ))}
+      {
+        featureArticles.map((article) => (
+          <ArticleCard article={article} variant="feature" headingLevel={3} />
+        ))
+      }
     </div>
   </section>
 </header>
 
 <TrustModule />
 
-<section class="home-section latest-briefing" aria-labelledby="latest-briefing-heading">
-  <SectionHeading eyebrow="Latest" title="Latest briefing" id="latest-briefing-heading" />
+<section
+  class="home-section latest-briefing"
+  aria-labelledby="latest-briefing-heading"
+>
+  <SectionHeading
+    eyebrow="Latest"
+    title="Latest briefing"
+    id="latest-briefing-heading"
+  />
   <ol class="latest-briefing__list">
-    {briefingArticles.map((article) => (
-      <li><ArticleCard article={article} variant="list" headingLevel={3} showSummary /></li>
-    ))}
+    {
+      briefingArticles.map((article) => (
+        <li>
+          <ArticleCard
+            article={article}
+            variant="list"
+            headingLevel={3}
+            showSummary
+          />
+        </li>
+      ))
+    }
   </ol>
 </section>
 
 <section class="home-section start-here" aria-labelledby="start-here-heading">
-  <SectionHeading eyebrow="Practical foundations" title="Start here" id="start-here-heading" />
+  <SectionHeading
+    eyebrow="Practical foundations"
+    title="Start here"
+    id="start-here-heading"
+  />
   <ol class="start-here__list">
-    {startHereArticles.map((article) => (
-      <li><ArticleCard article={article} variant="list" headingLevel={3} showSummary /></li>
-    ))}
+    {
+      startHereArticles.map((article) => (
+        <li>
+          <ArticleCard
+            article={article}
+            variant="list"
+            headingLevel={3}
+            showSummary
+          />
+        </li>
+      ))
+    }
   </ol>
 </section>
 
-<section class="home-section topic-directory topic-directory--compact" aria-labelledby="topics-heading">
-  <SectionHeading eyebrow="Five decision areas" title="Browse by topic" id="topics-heading" />
+<section
+  class="home-section topic-directory topic-directory--compact"
+  aria-labelledby="topics-heading"
+>
+  <SectionHeading
+    eyebrow="Five decision areas"
+    title="Browse by topic"
+    id="topics-heading"
+  />
   <ol>
-    {categories.map((category) => (
-      <li style={`--category-accent: ${category.accent};`}>
-        <a href={`/categories/${category.slug}/`}>
-          <span>{category.name}</span>
-          <span>{topicCounts.get(category.slug)} guides</span>
-        </a>
-        <p>{category.description}</p>
-      </li>
-    ))}
+    {
+      categories.map((category) => (
+        <li style={`--category-accent: ${category.accent};`}>
+          <a href={`/categories/${category.slug}/`}>
+            <span>{category.name}</span>
+            <span>{topicCounts.get(category.slug)} guides</span>
+          </a>
+          <p>{category.description}</p>
+        </li>
+      ))
+    }
   </ol>
 </section>
 
 <section class="home-section more-guides" aria-labelledby="more-guides-heading">
-  <SectionHeading eyebrow="Complete issue" title="More guides" id="more-guides-heading" />
+  <SectionHeading
+    eyebrow="Complete issue"
+    title="More guides"
+    id="more-guides-heading"
+  />
   <ol>
-    {moreGuides.map((article) => (
-      <li><ArticleCard article={article} variant="list" headingLevel={3} /></li>
-    ))}
+    {
+      moreGuides.map((article) => (
+        <li>
+          <ArticleCard article={article} variant="list" headingLevel={3} />
+        </li>
+      ))
+    }
   </ol>
 </section>
 ```
@@ -417,6 +477,7 @@ git commit -m "feat: rebalance the editorial front page"
 ### Task 3: Put category guidance in the opening viewport
 
 **Files:**
+
 - Modify: `src/pages/categories/[slug].astro`
 - Modify: `src/styles/global.css`
 - Modify: `tests/e2e/public-routes.spec.ts`
@@ -425,7 +486,9 @@ git commit -m "feat: rebalance the editorial front page"
 - [ ] **Step 1: Write failing single-art and geometry tests**
 
 ```ts
-test("category uses one visual anchor and three distinct guide links", async ({ page }) => {
+test("category uses one visual anchor and three distinct guide links", async ({
+  page,
+}) => {
   await page.goto("/categories/ai-automation/");
   await expect(page.locator("main [data-editorial-visual]")).toHaveCount(1);
   const hrefs = await page
@@ -438,7 +501,9 @@ test("category uses one visual anchor and three distinct guide links", async ({ 
 test("category lead begins in the opening viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/categories/ai-automation/");
-  const box = await page.locator(".category-hero__lead .article-card__title").boundingBox();
+  const box = await page
+    .locator(".category-hero__lead .article-card__title")
+    .boundingBox();
   expect(box).not.toBeNull();
   expect(box!.y + box!.height).toBeLessThanOrEqual(820);
 });
@@ -455,7 +520,11 @@ Expected: FAIL with four visuals and no `.category-hero__lead`.
 Render copy, a typography-led lead card, and one page-level visual in logical source order:
 
 ```astro
-<header class="category-hero" data-category={category.slug} style={`--category-accent: ${category.accent};`}>
+<header
+  class="category-hero"
+  data-category={category.slug}
+  style={`--category-accent: ${category.accent};`}
+>
   <div class="category-hero__copy">
     <p class="eyebrow">Business technology topic</p>
     <h1>{category.name}</h1>
@@ -463,12 +532,23 @@ Render copy, a typography-led lead card, and one page-level visual in logical so
     <p>{categoryPurposes[category.slug]}</p>
   </div>
   <div class="category-hero__lead">
-    {leadArticle && (
-      <ArticleCard article={leadArticle} variant="lead" headingLevel={2} showVisual={false} />
-    )}
+    {
+      leadArticle && (
+        <ArticleCard
+          article={leadArticle}
+          variant="lead"
+          headingLevel={2}
+          showVisual={false}
+        />
+      )
+    }
   </div>
   <div class="category-hero__visual" data-editorial-visual>
-    <EditorialVisual category={category.slug} slug={`${category.slug}-category`} ratio="wide" />
+    <EditorialVisual
+      category={category.slug}
+      slug={`${category.slug}-category`}
+      ratio="wide"
+    />
   </div>
 </header>
 ```
@@ -539,6 +619,7 @@ git commit -m "feat: bring category guidance above the fold"
 ### Task 4: Compress the article preamble and surface evidence
 
 **Files:**
+
 - Create: `src/components/ArticleEvidence.astro`
 - Modify: `src/components/FitSummary.astro`
 - Modify: `src/components/Breadcrumbs.astro`
@@ -551,18 +632,18 @@ git commit -m "feat: bring category guidance above the fold"
 - [ ] **Step 1: Write failing article evidence and mobile-density tests**
 
 ```ts
-test("article surfaces its evidence boundary near the headline", async ({ page }) => {
+test("article surfaces its evidence boundary near the headline", async ({
+  page,
+}) => {
   await page.goto(`/articles/${articleSlug}/`);
   const evidence = page.getByRole("region", { name: "Article evidence" });
   await expect(evidence).toContainText(/3 primary sources/i);
-  await expect(evidence.getByRole("link", { name: /editorial standards/i })).toHaveAttribute(
-    "href",
-    "/editorial-standards/",
-  );
-  await expect(evidence.getByRole("link", { name: /corrections/i })).toHaveAttribute(
-    "href",
-    "/corrections/",
-  );
+  await expect(
+    evidence.getByRole("link", { name: /editorial standards/i }),
+  ).toHaveAttribute("href", "/editorial-standards/");
+  await expect(
+    evidence.getByRole("link", { name: /corrections/i }),
+  ).toHaveAttribute("href", "/corrections/");
 });
 
 test("mobile article reaches the reading body quickly", async ({ page }) => {
@@ -571,7 +652,10 @@ test("mobile article reaches the reading body quickly", async ({ page }) => {
   await expect(page.locator(".article-hero__visual")).toBeHidden();
   const fit = page.locator("details.fit-summary--mobile");
   await expect(fit).not.toHaveAttribute("open", "");
-  const firstParagraph = await page.locator(".article-body > p").first().boundingBox();
+  const firstParagraph = await page
+    .locator(".article-body > p")
+    .first()
+    .boundingBox();
   expect(firstParagraph).not.toBeNull();
   expect(firstParagraph!.y).toBeLessThanOrEqual(1_477);
 });
@@ -619,17 +703,38 @@ const fields = [
 ] as const;
 ---
 
-<section class="fit-summary fit-summary--desktop" aria-labelledby="fit-heading-desktop">
+<section
+  class="fit-summary fit-summary--desktop"
+  aria-labelledby="fit-heading-desktop"
+>
   <h2 id="fit-heading-desktop">Business technology fit</h2>
   <dl>
-    {fields.map(([term, value]) => <div><dt>{term}</dt><dd>{value}</dd></div>)}
+    {
+      fields.map(([term, value]) => (
+        <div>
+          <>
+            <dt>{term}</dt>
+            <dd>{value}</dd>
+          </>
+        </div>
+      ))
+    }
   </dl>
 </section>
 
 <details class="fit-summary fit-summary--mobile">
   <summary>Business technology fit</summary>
   <dl>
-    {fields.map(([term, value]) => <div><dt>{term}</dt><dd>{value}</dd></div>)}
+    {
+      fields.map(([term, value]) => (
+        <div>
+          <>
+            <dt>{term}</dt>
+            <dd>{value}</dd>
+          </>
+        </div>
+      ))
+    }
   </dl>
 </details>
 ```
@@ -721,6 +826,7 @@ git commit -m "feat: create a faster article reading start"
 ### Task 5: Rebalance shared responsive chrome and tables
 
 **Files:**
+
 - Create: `src/utils/rehype-wrap-tables.mjs`
 - Modify: `astro.config.mjs`
 - Modify: `src/styles/global.css`
@@ -744,12 +850,18 @@ test("shared chrome uses balanced responsive breakpoints", async ({ page }) => {
   await expect(page.locator(".site-header__topics")).toBeVisible();
 });
 
-test("mobile tables remain readable and keyboard reachable", async ({ page }) => {
+test("mobile tables remain readable and keyboard reachable", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/articles/${articleSlug}/`);
   const region = page.locator("[data-horizontal-scroll]").first();
   await expect(region).toHaveAttribute("tabindex", "0");
-  expect(await region.locator("table").evaluate((table) => parseFloat(getComputedStyle(table).fontSize))).toBeGreaterThanOrEqual(16);
+  expect(
+    await region
+      .locator("table")
+      .evaluate((table) => parseFloat(getComputedStyle(table).fontSize)),
+  ).toBeGreaterThanOrEqual(16);
 });
 ```
 
@@ -885,6 +997,7 @@ git commit -m "feat: rebalance responsive publication chrome"
 ### Task 6: Verify visually, update the design baseline, and release
 
 **Files:**
+
 - Modify: `DESIGN.md`
 - Create: `docs/EDITORIAL_BALANCE_V2_REPORT.md`
 
