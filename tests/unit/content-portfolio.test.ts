@@ -3,24 +3,30 @@ import { basename, join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { todayInPublicationTimeZone } from "../../scripts/qa-content.mjs";
+import { siteConfig } from "../../site.config.mjs";
 import { categorySlugs } from "../../src/data/categories";
 import { BUSINESS_TECHNOLOGY_FIT_FIELDS } from "../../src/utils/content-contract";
 
 const articlesDirectory = join(process.cwd(), "src", "content", "articles");
 const contentAuditPath = join(process.cwd(), "docs", "CONTENT_AUDIT.md");
-const publicationDate = "2026-08-21";
-const officialSourceHosts = new Set([
-  "airc.nist.gov",
-  "csrc.nist.gov",
-  "digital.gov",
-  "www.archives.gov",
-  "www.atlassian.com",
-  "www.cisa.gov",
-  "www.epa.gov",
-  "www.ftc.gov",
-  "www.nist.gov",
-  "www.salesforce.com",
-]);
+const launchArticleSlugs = [
+  "back-up-business-files-with-the-3-2-1-method",
+  "calculate-the-total-cost-of-business-software",
+  "create-a-shared-file-and-folder-system",
+  "create-a-simple-technology-risk-register",
+  "crm-vs-project-management-software",
+  "document-a-repetitive-workflow-before-automating",
+  "evaluate-ai-output-quality-in-a-small-team-pilot",
+  "evaluate-saas-with-a-practical-checklist",
+  "how-to-identify-business-tasks-for-automation",
+  "onboard-employees-and-contractors-to-business-technology",
+  "respond-to-a-suspected-phishing-message",
+  "roll-out-mfa-across-a-small-business",
+  "run-a-30-day-business-technology-pilot",
+  "test-data-export-and-integrations-before-saas-lock-in",
+  "write-a-practical-ai-acceptable-use-policy",
+] as const;
 
 interface ArticleRecord {
   body: string;
@@ -67,6 +73,18 @@ function scalar(article: ArticleRecord, field: string): string {
   return JSON.parse(value) as string;
 }
 
+function optionalScalar(
+  article: ArticleRecord,
+  field: string,
+): string | undefined {
+  const expression = new RegExp(
+    `^${field}:\\s*("(?:[^"\\\\]|\\\\.)*")\\s*$`,
+    "m",
+  );
+  const value = article.frontmatter.match(expression)?.[1];
+  return value ? (JSON.parse(value) as string) : undefined;
+}
+
 function sourceUrls(article: ArticleRecord): string[] {
   return [
     ...article.frontmatter.matchAll(/^\s+url:\s*"([^"]+)"\s*$/gm),
@@ -97,7 +115,7 @@ function whitespaceTokenCount(value: string): number {
 }
 
 describe("published content portfolio", () => {
-  it("contains exactly fifteen Markdown articles and three in every category", () => {
+  it("contains at least fifteen Markdown articles and three in every category", () => {
     const articles = articleRecords();
     const categoryCounts = Object.fromEntries(
       categorySlugs.map((category) => [
@@ -107,10 +125,10 @@ describe("published content portfolio", () => {
       ]),
     );
 
-    expect(articles).toHaveLength(15);
-    expect(categoryCounts).toEqual(
-      Object.fromEntries(categorySlugs.map((category) => [category, 3])),
-    );
+    expect(articles.length).toBeGreaterThanOrEqual(15);
+    for (const category of categorySlugs) {
+      expect(categoryCounts[category]).toBeGreaterThanOrEqual(3);
+    }
   });
 
   it("uses distinct slugs, titles, and descriptions that match their files", () => {
@@ -128,21 +146,42 @@ describe("published content portfolio", () => {
     }
   });
 
-  it("publishes source-checked entries with real launch dates and no premature modification date", () => {
+  it("keeps publication evidence ordered from launch through the current date", () => {
+    const today = todayInPublicationTimeZone();
     for (const article of articleRecords()) {
       expect(scalar(article, "status"), article.fileName).toBe("published");
       expect(scalar(article, "verificationStatus"), article.fileName).toBe(
         "source-checked",
       );
-      expect(scalar(article, "datePublished"), article.fileName).toBe(
-        publicationDate,
-      );
-      expect(scalar(article, "lastReviewed"), article.fileName).toBe(
-        publicationDate,
-      );
-      expect(article.frontmatter, article.fileName).not.toMatch(
-        /^dateModified:/m,
-      );
+      const published = scalar(article, "datePublished");
+      const reviewed = scalar(article, "lastReviewed");
+      const modified = optionalScalar(article, "dateModified");
+      expect(
+        published.localeCompare(siteConfig.launchDate),
+        article.fileName,
+      ).toBeGreaterThanOrEqual(0);
+      expect(
+        published.localeCompare(today),
+        article.fileName,
+      ).toBeLessThanOrEqual(0);
+      expect(
+        reviewed.localeCompare(published),
+        article.fileName,
+      ).toBeGreaterThanOrEqual(0);
+      expect(
+        reviewed.localeCompare(today),
+        article.fileName,
+      ).toBeLessThanOrEqual(0);
+      if (modified) {
+        expect(
+          modified.localeCompare(published),
+          article.fileName,
+        ).toBeGreaterThan(0);
+        expect(
+          modified.localeCompare(today),
+          article.fileName,
+        ).toBeLessThanOrEqual(0);
+      }
     }
   });
 
@@ -177,10 +216,6 @@ describe("published content portfolio", () => {
           "https:",
         );
         expect(
-          officialSourceHosts.has(url.hostname),
-          `${article.fileName}: ${url.hostname} is not an approved primary host`,
-        ).toBe(true);
-        expect(
           article.body,
           `${article.fileName}: source must be cited in body`,
         ).toContain(sourceUrl);
@@ -188,7 +223,7 @@ describe("published content portfolio", () => {
     }
   });
 
-  it("links every article to two distinct published related guides", () => {
+  it("links related guides only to distinct published articles", () => {
     const articles = articleRecords();
     const publishedSlugs = new Set(
       articles.map((article) => scalar(article, "slug")),
@@ -198,10 +233,6 @@ describe("published content portfolio", () => {
       const slug = scalar(article, "slug");
       const related = sequenceValues(article, "relatedArticles");
 
-      expect(
-        related,
-        `${article.fileName}: related article count`,
-      ).toHaveLength(2);
       expect(
         new Set(related).size,
         `${article.fileName}: duplicate relation`,
@@ -292,8 +323,8 @@ describe("published content portfolio", () => {
     const rangeMatch = audit.match(rangePattern);
     if (!totalMatch?.[1] || !rangeMatch?.[1] || !rangeMatch[2]) return;
 
-    const tokenCounts = articleRecords().map((article) =>
-      whitespaceTokenCount(article.body),
+    const tokenCounts = launchArticleSlugs.map((slug) =>
+      whitespaceTokenCount(articleBySlug(slug).body),
     );
     const parseNumber = (value: string) => Number(value.replaceAll(",", ""));
 

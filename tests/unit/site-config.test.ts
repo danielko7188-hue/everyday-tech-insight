@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { siteConfig, siteUrl } from "../../site.config.mjs";
+
 const expectedCategorySlugs = [
   "ai-automation",
   "business-software",
@@ -28,12 +30,13 @@ describe("publication identity", () => {
       locale: "en-US",
       timeZone: "America/Los_Angeles",
       intendedAudience: "small-business decision makers",
-      url: "https://everyday-tech-insight.vercel.app/",
+      url: siteUrl,
       contact: {
         method: "github-issues",
         url: "https://github.com/danielko7188-hue/everyday-tech-insight/issues",
       },
     });
+    expect(site).toBe(siteConfig);
   });
 
   it("contains no placeholder identity values", async () => {
@@ -95,7 +98,7 @@ describe("static deployment configuration", () => {
 
     expect(astroConfig).toMatchObject({
       output: "static",
-      site: "https://everyday-tech-insight.vercel.app/",
+      site: siteUrl,
       trailingSlash: "always",
     });
     expect(astroConfig).not.toHaveProperty("adapter");
@@ -117,6 +120,8 @@ describe("static deployment configuration", () => {
         "typecheck",
         "test",
         "test:e2e",
+        "setup:browsers",
+        "setup:browsers:linux",
         "check:links",
         "check:content",
         "check:seo",
@@ -124,6 +129,13 @@ describe("static deployment configuration", () => {
         "qa",
       ]),
     );
+    expect(packageJson.scripts?.["setup:browsers"]).toBe(
+      "playwright install chromium",
+    );
+    expect(packageJson.scripts?.["setup:browsers:linux"]).toBe(
+      "playwright install --with-deps chromium",
+    );
+    expect(packageJson.scripts?.qa).not.toContain("playwright install");
   });
 
   it("supports maintained Node releases while excluding Node 23", () => {
@@ -185,8 +197,6 @@ describe("static deployment configuration", () => {
     expect(headerSet["Content-Security-Policy"]).toContain(
       "frame-ancestors 'none'",
     );
-    expect(headerSet["Content-Security-Policy"]).not.toMatch(
-      /https?:\/\/(?!everyday-tech-insight\.vercel\.app)/,
-    );
+    expect(headerSet["Content-Security-Policy"]).not.toMatch(/https?:\/\//);
   });
 });

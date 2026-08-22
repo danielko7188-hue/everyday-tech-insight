@@ -88,6 +88,11 @@ const dateOnlySchema = z
     "Date must not be in the future.",
   );
 
+const publicationEraDateSchema = dateOnlySchema.refine(
+  (value) => value >= site.launchDate,
+  `Date must not precede the ${site.launchDate} publication launch.`,
+);
+
 const httpsUrlSchema = z
   .url()
   .refine((value) => new URL(value).protocol === "https:", {
@@ -96,7 +101,12 @@ const httpsUrlSchema = z
 
 const configuredSiteOrigin = new URL(site.url).origin;
 const canonicalOverrideSchema = httpsUrlSchema.refine(
-  (value) => new URL(value).origin === configuredSiteOrigin,
+  (value) => {
+    const url = new URL(value);
+    return (
+      url.origin === configuredSiteOrigin && !url.username && !url.password
+    );
+  },
   {
     message: "Canonical override must use the configured site origin.",
   },
@@ -109,7 +119,7 @@ export const sourceSchema = z
     title: requiredText(3, 200),
     url: httpsUrlSchema,
     publisher: requiredText(2, 120),
-    accessed: dateOnlySchema,
+    accessed: publicationEraDateSchema,
   })
   .strict();
 
@@ -159,9 +169,9 @@ export const articleFrontmatterSchema = z
     intendedAudience: requiredText(20, 300),
     readerOutcome: requiredText(20, 500),
     verificationStatus: z.enum(VERIFICATION_STATUSES),
-    datePublished: dateOnlySchema,
-    dateModified: dateOnlySchema.optional(),
-    lastReviewed: dateOnlySchema,
+    datePublished: publicationEraDateSchema,
+    dateModified: publicationEraDateSchema.optional(),
+    lastReviewed: publicationEraDateSchema,
     featured: z.boolean().default(false),
     summary: requiredText(40, 500),
     sourceList: z.array(sourceSchema),
@@ -227,11 +237,11 @@ export const articleFrontmatterSchema = z
       });
     }
 
-    if (article.dateModified && article.dateModified < article.datePublished) {
+    if (article.dateModified && article.dateModified <= article.datePublished) {
       context.addIssue({
         code: "custom",
         path: ["dateModified"],
-        message: "Modification date cannot precede publication date.",
+        message: "Modification date must be later than publication date.",
       });
     }
 

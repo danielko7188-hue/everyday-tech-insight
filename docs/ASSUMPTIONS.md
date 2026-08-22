@@ -11,6 +11,7 @@ Date recorded: 2026-08-21
 - GitHub Issues is the public contact and corrections path.
 - Advertising, analytics, affiliate, sponsorship, consent-management, and tracking integrations are disabled.
 - Vercel is the authorized production target for this release. Replit support is limited to import, development preview, and documented static-build compatibility.
+- `site.config.mjs` is the single canonical-origin source consumed by Astro, runtime metadata, generated robots, and release QA.
 
 ## Assumptions to verify during deployment
 
@@ -18,7 +19,7 @@ Date recorded: 2026-08-21
 - The GitHub repository remains public so visitors can open contact and correction issues without receiving a dead link. Repository visibility and issue settings must be checked after the push.
 - The generated output remains fully static and requires no runtime environment variables.
 
-If Vercel assigns a different production hostname, stop and update every canonical reference before treating the deployment as production.
+If Vercel assigns a different production hostname, stop and update the one canonical `url` value in `site.config.mjs`, rerun full QA, commit, push, and redeploy before treating the deployment as production.
 
 ## Deliberately unknown or unclaimed
 

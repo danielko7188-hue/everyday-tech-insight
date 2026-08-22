@@ -19,16 +19,24 @@ Google alone decides AdSense eligibility and approval.
 
 - Node.js `^22.19.0` or `>=24.0.0`
 - npm 11 or the npm version bundled with a supported Node release
-- Chrome or Chromium for Playwright and Lighthouse
+- The version-matched Playwright Chromium installed by the setup command below
 
 ## Local commands
 
 ```text
 npm ci
+npm run setup:browsers
+npm run qa
+```
+
+On a fresh Linux CI/workstation that also needs Chromium system libraries, use `npm run setup:browsers:linux` instead of `npm run setup:browsers`. These commands use the repository-pinned Playwright version. They are local/CI setup steps, not part of a Vercel production build.
+
+Development and focused build commands:
+
+```text
 npm run dev
 npm run build
 npm run preview
-npm run qa
 ```
 
 Focused checks:
@@ -45,7 +53,7 @@ npm run test:e2e
 npm run lighthouse
 ```
 
-`npm run check:links` checks article sources and external HTTPS destinations rendered in public HTML. It uses `PASS`, `FAIL`, and `UNVERIFIED` deliberately. A definitive 404/410 is `FAIL`; access controls, rate limits, server errors, timeouts, and network failures are `UNVERIFIED`. Either state blocks the full QA command until a human can establish the destination is reachable.
+`npm run check:links` checks article sources and every external HTTP(S) destination rendered in public HTML. It uses `PASS`, `FAIL`, and `UNVERIFIED` deliberately. Plain HTTP, a definitive 404/410, or a blocked unsafe target is `FAIL`; access controls, rate limits, server errors, timeouts, and network failures are `UNVERIFIED`. Either state blocks the full QA command until a human can establish the destination is reachable.
 
 ## Repository map
 
@@ -53,6 +61,7 @@ npm run lighthouse
 - `src/pages/`: generated public route templates.
 - `src/layouts/` and `src/components/`: shared publication shell.
 - `src/data/`: publication and category configuration.
+- `site.config.mjs`: the single source of truth for the canonical origin and publication identity used by Astro, runtime pages, robots, and QA.
 - `scripts/`: content, built-output, external-link, and Lighthouse QA.
 - `tests/`: unit, route, responsive, keyboard, and accessibility contracts.
 - `docs/`: editorial evidence, assumptions, review gates, deployment, and QA records.
@@ -65,7 +74,7 @@ Generated folders such as `dist/`, `.astro/`, `.vercel/`, and `.lighthouseci/` a
 2. Keep the slug and file name identical.
 3. Complete all topic-fit fields and include at least two current HTTPS primary sources.
 4. Cite every frontmatter source URL in the article body.
-5. Use `datePublished` only for first publication. Omit `dateModified` at launch; add it only after a later substantive change. Update `lastReviewed` after a real review.
+5. Use `datePublished` only for first publication. Omit `dateModified` at initial publication; add it only on a later calendar date after a substantive change. Update `lastReviewed` after a real review. Dates may advance through the current date but never be backdated before the confirmed launch.
 6. Keep unfinished work out of `published` status.
 7. Run `npm run qa` and complete the human review checklist before release.
 

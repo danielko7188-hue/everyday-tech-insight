@@ -7,11 +7,11 @@ Date recorded: 2026-08-21
 This release uses GitHub first and Vercel second. Do not deploy local unpushed code as the production record.
 
 1. Complete the human review checklist or record every unchecked gate honestly.
-2. From a clean checkout, run `npm ci` and `npm run qa`.
+2. From a clean checkout, run `npm ci`, `npm run setup:browsers`, and `npm run qa`. On a fresh Linux CI/workstation that needs Chromium libraries, use `npm run setup:browsers:linux` for the browser step.
 3. Confirm no parent Blogger files, secrets, account identifiers, or generated output are tracked.
 4. Merge the verified branch to `main` and rerun the complete QA command on `main`.
 5. Push `main` to the public GitHub repository and confirm the remote commit SHA equals local `HEAD`.
-6. Import or link that GitHub repository in Vercel with Astro as the framework, `npm run build` as the build command, and `dist` as the output directory.
+6. Import or link that GitHub repository in Vercel with Astro as the framework, `npm run build` as the build command, and `dist` as the output directory. Do not add a browser-install or full-QA step to the Vercel production build; browser setup belongs in the verified local/CI release gate.
 7. Create the production deployment from the pushed `main` commit.
 8. Verify the production URL, representative routes, real 404, canonical tags, robots, sitemap index, RSS, security headers, and deployment logs.
 
@@ -31,13 +31,13 @@ CLI syntax can change. Check `npx vercel@latest --help` before a live action. Th
 
 ## Canonical hostname and custom domain
 
-The code currently expects `https://everyday-tech-insight.vercel.app/`. After deployment:
+The single canonical source of truth is `site.config.mjs`, which currently expects `https://everyday-tech-insight.vercel.app/`. After deployment:
 
 1. Confirm Vercel assigned that exact production hostname.
-2. If it differs, update `src/data/site.ts`, `astro.config.mjs`, and `public/robots.txt` together.
+2. If it differs, update only the `url` value in `site.config.mjs`. Astro, runtime metadata, generated `robots.txt`, link checking, and built-output QA import that value.
 3. Rerun `npm run qa`, commit, push, redeploy, and recheck the live metadata.
 
-For a future custom domain, add and verify the domain in Vercel, configure the required DNS records at the registrar, choose one canonical hostname, redirect alternatives, then make the same three-file canonical update and full release cycle. Do not switch canonicals before the domain resolves over HTTPS.
+For a future custom domain, add and verify the domain in Vercel, configure the required DNS records at the registrar, choose one canonical hostname, redirect alternatives, then make the same one-file canonical update and full release cycle. Do not switch canonicals before the domain resolves over HTTPS.
 
 ## Search Console
 
@@ -61,7 +61,7 @@ Only after those facts exist should code add the exact authorized ad integration
 1. Draft or revise Markdown under `src/content/articles/`.
 2. Verify every factual claim against the cited primary source.
 3. Keep unfinished entries out of published status.
-4. Update source access and review evidence only when the work actually occurred.
+4. Update source access and review evidence only when the work actually occurred. Dates may advance from the confirmed 2026-08-21 launch through the current `America/Los_Angeles` date; `dateModified` must be later than publication and requires a substantive change.
 5. Run automated QA, then complete human editorial/accessibility/privacy/legal review.
 6. Use a review branch, merge, and let the connected production branch deploy only the approved commit.
 

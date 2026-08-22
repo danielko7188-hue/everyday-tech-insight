@@ -1,8 +1,10 @@
 import sitemap from "@astrojs/sitemap";
 import { defineConfig } from "astro/config";
 
+import { siteUrl } from "./site.config.mjs";
+
 export default defineConfig({
-  site: "https://everyday-tech-insight.vercel.app/",
+  site: siteUrl,
   output: "static",
   trailingSlash: "always",
   integrations: [sitemap()],

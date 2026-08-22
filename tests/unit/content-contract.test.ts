@@ -7,6 +7,7 @@ import {
   articleFrontmatterSchema,
   assessBusinessTechnologyFit,
 } from "../../src/utils/content-contract";
+import { siteUrl } from "../../site.config.mjs";
 
 const validPublishedArticle = {
   title: "How to evaluate an automation workflow before rollout",
@@ -27,7 +28,6 @@ const validPublishedArticle = {
     "Create a scored go-or-no-go assessment before buying or deploying a tool.",
   verificationStatus: "source-checked",
   datePublished: "2026-08-21",
-  dateModified: "2026-08-21",
   lastReviewed: "2026-08-21",
   featured: true,
   summary:
@@ -49,8 +49,10 @@ const validPublishedArticle = {
   relatedArticles: ["compare-business-software"],
   heroImage: "/images/automation-workflow.svg",
   heroImageAlt: "Decision flow for evaluating a business automation workflow",
-  canonicalOverride:
-    "https://everyday-tech-insight.vercel.app/articles/evaluate-automation-workflow/",
+  canonicalOverride: new URL(
+    "articles/evaluate-automation-workflow/",
+    siteUrl,
+  ).toString(),
   noindex: false,
 } as const;
 
@@ -64,8 +66,7 @@ describe("article frontmatter contract", () => {
   it("allows canonical overrides only on the configured site origin", () => {
     const sameOrigin = articleFrontmatterSchema.safeParse({
       ...validPublishedArticle,
-      canonicalOverride:
-        "https://everyday-tech-insight.vercel.app/articles/same-origin/",
+      canonicalOverride: new URL("articles/same-origin/", siteUrl).toString(),
     });
     const offOrigin = articleFrontmatterSchema.safeParse({
       ...validPublishedArticle,
@@ -164,6 +165,15 @@ describe("article frontmatter contract", () => {
       articleFrontmatterSchema.safeParse({
         ...validPublishedArticle,
         lastReviewed: "9999-01-01",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("requires dateModified to be later than datePublished", () => {
+    expect(
+      articleFrontmatterSchema.safeParse({
+        ...validPublishedArticle,
+        dateModified: validPublishedArticle.datePublished,
       }).success,
     ).toBe(false);
   });

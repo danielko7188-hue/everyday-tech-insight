@@ -8,6 +8,6 @@ dist/
 playwright-report/
 test-results/
 .lighthouseci/
+.lighthouseci.pending/
 coverage/
 *.log
-

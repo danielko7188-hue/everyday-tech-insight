@@ -4,6 +4,8 @@ import { pathToFileURL } from "node:url";
 
 import { load as loadYaml } from "js-yaml";
 
+import { siteConfig, siteOrigin } from "../site.config.mjs";
+
 export const REQUIRED_CATEGORY_SLUGS = [
   "ai-automation",
   "business-software",
@@ -12,9 +14,6 @@ export const REQUIRED_CATEGORY_SLUGS = [
   "technology-strategy",
 ];
 
-const EXPECTED_PUBLICATION_DATE = "2026-08-21";
-const EXPECTED_AUTHOR = "Everyday Tech Insight";
-const EXPECTED_SITE_ORIGIN = "https://everyday-tech-insight.vercel.app";
 const CONTENT_TYPES = new Set([
   "guide",
   "checklist",
@@ -55,13 +54,16 @@ function isRealDate(value) {
   );
 }
 
-function todayInPublicationTimeZone() {
+export function todayInPublicationTimeZone(
+  now = new Date(),
+  timeZone = siteConfig.timeZone,
+) {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Los_Angeles",
+    timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).formatToParts(new Date());
+  }).formatToParts(now);
   const values = Object.fromEntries(
     parts
       .filter(({ type }) => type !== "literal")
@@ -113,7 +115,7 @@ export async function readArticleRecords(
   );
 }
 
-function validateArticle(article, allSlugs, expectedDate) {
+function validateArticle(article, allSlugs, { launchDate, today }) {
   const issues = [];
   const { body, data, fileName } = article;
   const slug = data.slug;
@@ -159,9 +161,13 @@ function validateArticle(article, allSlugs, expectedDate) {
       ),
     );
   }
-  if (data.author !== EXPECTED_AUTHOR) {
+  if (data.author !== siteConfig.publicationByline) {
     issues.push(
-      finding("author", fileName, `author must be ${EXPECTED_AUTHOR}.`),
+      finding(
+        "author",
+        fileName,
+        `author must be ${siteConfig.publicationByline}.`,
+      ),
     );
   }
   if (data.status !== "published") {
@@ -210,23 +216,39 @@ function validateArticle(article, allSlugs, expectedDate) {
     }
   }
 
-  for (const field of ["datePublished", "lastReviewed"]) {
-    if (!isRealDate(data[field]) || data[field] !== expectedDate) {
-      issues.push(
-        finding(
-          field === "datePublished" ? "publication-date" : "review-date",
-          fileName,
-          `${field} must be the real launch date ${expectedDate}.`,
-        ),
-      );
-    }
+  if (
+    !isRealDate(data.datePublished) ||
+    data.datePublished < launchDate ||
+    data.datePublished > today
+  ) {
+    issues.push(
+      finding(
+        "publication-date",
+        fileName,
+        `datePublished must be a real date from launch (${launchDate}) through today (${today}).`,
+      ),
+    );
+  }
+  if (
+    !isRealDate(data.lastReviewed) ||
+    data.lastReviewed < launchDate ||
+    data.lastReviewed > today ||
+    (isRealDate(data.datePublished) && data.lastReviewed < data.datePublished)
+  ) {
+    issues.push(
+      finding(
+        "review-date",
+        fileName,
+        `lastReviewed must be no earlier than publication and no later than today (${today}).`,
+      ),
+    );
   }
   if (data.dateModified !== undefined) {
     if (
       !isRealDate(data.dateModified) ||
       !isRealDate(data.datePublished) ||
       data.dateModified <= data.datePublished ||
-      data.dateModified > todayInPublicationTimeZone()
+      data.dateModified > today
     ) {
       issues.push(
         finding(
@@ -325,7 +347,11 @@ function validateArticle(article, allSlugs, expectedDate) {
           );
         }
       }
-      if (!isRealDate(source.accessed) || source.accessed > expectedDate) {
+      if (
+        !isRealDate(source.accessed) ||
+        source.accessed < launchDate ||
+        source.accessed > today
+      ) {
         issues.push(
           finding(
             "source-accessed",
@@ -422,7 +448,13 @@ function validateArticle(article, allSlugs, expectedDate) {
   }
   if (data.canonicalOverride) {
     try {
-      if (new URL(data.canonicalOverride).origin !== EXPECTED_SITE_ORIGIN) {
+      const canonicalOverride = new URL(data.canonicalOverride);
+      if (
+        canonicalOverride.protocol !== "https:" ||
+        canonicalOverride.origin !== siteOrigin ||
+        canonicalOverride.username ||
+        canonicalOverride.password
+      ) {
         issues.push(
           finding(
             "canonical-override",
@@ -463,15 +495,18 @@ function validateArticle(article, allSlugs, expectedDate) {
 
 export function validateContentPortfolio(
   articles,
-  { expectedDate = EXPECTED_PUBLICATION_DATE } = {},
+  {
+    launchDate = siteConfig.launchDate,
+    today = todayInPublicationTimeZone(),
+  } = {},
 ) {
   const issues = [];
-  if (articles.length !== 15) {
+  if (articles.length < 15) {
     issues.push(
       finding(
         "portfolio-count",
         "portfolio",
-        `expected exactly 15 articles; found ${articles.length}.`,
+        `expected at least 15 articles; found ${articles.length}.`,
       ),
     );
   }
@@ -480,12 +515,12 @@ export function validateContentPortfolio(
     const count = articles.filter(
       ({ data }) => data.category === category,
     ).length;
-    if (count !== 3) {
+    if (count < 3) {
       issues.push(
         finding(
           "category-count",
           category,
-          `expected exactly 3 articles; found ${count}.`,
+          `expected at least 3 articles; found ${count}.`,
         ),
       );
     }
@@ -517,7 +552,7 @@ export function validateContentPortfolio(
       .filter((slug) => typeof slug === "string"),
   );
   for (const article of articles) {
-    issues.push(...validateArticle(article, allSlugs, expectedDate));
+    issues.push(...validateArticle(article, allSlugs, { launchDate, today }));
   }
 
   return issues;

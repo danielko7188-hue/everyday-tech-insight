@@ -3,12 +3,14 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { load } from "cheerio";
+import { SaxesParser } from "saxes";
 
 import {
   printFindings,
   readArticleRecords,
   REQUIRED_CATEGORY_SLUGS,
 } from "./qa-content.mjs";
+import { siteConfig, siteUrl as configuredSiteUrl } from "../site.config.mjs";
 
 const FIXED_INDEXABLE_ROUTES = [
   "/",
@@ -43,17 +45,6 @@ function htmlFileToRoute(fileName) {
     return `/${normalized.slice(0, -"index.html".length)}`;
   }
   return `/${normalized}`;
-}
-
-function normalizedAbsolute(value, siteUrl) {
-  try {
-    const url = new URL(value, siteUrl);
-    url.hash = "";
-    url.search = "";
-    return url.toString();
-  } catch {
-    return null;
-  }
 }
 
 function routeToFileName(route) {
@@ -92,6 +83,237 @@ function structuredDataTypes(value, result = []) {
   for (const nested of Object.values(value))
     structuredDataTypes(nested, result);
   return result;
+}
+
+function hasExactObjectKeys(value, expectedKeys) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const actual = Object.keys(value).sort();
+  const expected = [...expectedKeys].sort();
+  return (
+    actual.length === expected.length &&
+    actual.every((key, index) => key === expected[index])
+  );
+}
+
+function validatePublicAbsoluteUrl(value, siteUrl) {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return { valid: false, message: "must be an absolute HTTPS URL." };
+  }
+
+  const configured = new URL(siteUrl);
+  if (url.protocol !== "https:") {
+    return { valid: false, message: "must be an absolute HTTPS URL." };
+  }
+  if (url.origin !== configured.origin || url.username || url.password) {
+    return { valid: false, message: "must use the configured origin." };
+  }
+  if (value.includes("?") || value.includes("#")) {
+    return { valid: false, message: "must not contain a query or fragment." };
+  }
+  return { valid: true, absolute: url.toString() };
+}
+
+function visibleBreadcrumbItems($, expectedCanonical, siteUrl) {
+  return $("nav.breadcrumbs[aria-label='Breadcrumb'] ol > li")
+    .map((_index, element) => {
+      const node = $(element);
+      const anchor = node.find("a[href]").first();
+      return {
+        name: node.text().replace(/\s+/g, " ").trim(),
+        item:
+          anchor.length > 0
+            ? new URL(anchor.attr("href"), siteUrl).toString()
+            : expectedCanonical,
+      };
+    })
+    .get();
+}
+
+function validateStructuredData({
+  $,
+  fileName,
+  route,
+  siteUrl,
+  expectedCanonical,
+  description,
+  isNotFound,
+}) {
+  const issues = [];
+  const documents = [];
+  $('script[type="application/ld+json"]').each((_index, element) => {
+    try {
+      documents.push(JSON.parse($(element).text()));
+    } catch {
+      issues.push(finding("json-ld", fileName, "JSON-LD must parse as JSON."));
+    }
+  });
+
+  const allowedTypes = new Set(["WebSite", "BreadcrumbList", "ListItem"]);
+  const allowedTopLevelTypes = new Set(["WebSite", "BreadcrumbList"]);
+  const types = documents.flatMap((document) => structuredDataTypes(document));
+  const unsupported = [
+    ...new Set(types.filter((type) => !allowedTypes.has(type))),
+  ];
+  if (unsupported.length > 0) {
+    issues.push(
+      finding(
+        "json-ld-type",
+        fileName,
+        `unsupported structured-data types: ${unsupported.join(", ")}.`,
+      ),
+    );
+  }
+
+  const reportShapeIssue = () => {
+    if (issues.some(({ code }) => code === "json-ld-shape")) return;
+    issues.push(
+      finding(
+        "json-ld-shape",
+        fileName,
+        "JSON-LD documents must use only the exact implemented WebSite or BreadcrumbList shapes.",
+      ),
+    );
+  };
+  if (
+    documents.some(
+      (document) =>
+        !document ||
+        typeof document !== "object" ||
+        Array.isArray(document) ||
+        !allowedTopLevelTypes.has(document["@type"]),
+    )
+  ) {
+    reportShapeIssue();
+  }
+
+  if (isNotFound) {
+    if (documents.length > 0) {
+      issues.push(
+        finding(
+          "json-ld-404",
+          fileName,
+          "the non-indexable 404 page must not publish structured-data claims.",
+        ),
+      );
+    }
+    return issues;
+  }
+
+  const websiteDocuments = documents.filter(
+    (document) => document?.["@type"] === "WebSite",
+  );
+  const breadcrumbDocuments = documents.filter(
+    (document) => document?.["@type"] === "BreadcrumbList",
+  );
+
+  if (route === "/") {
+    if (websiteDocuments.length !== 1 || breadcrumbDocuments.length !== 0) {
+      issues.push(
+        finding(
+          "json-ld-website",
+          fileName,
+          "home must expose exactly one WebSite JSON-LD document.",
+        ),
+      );
+      return issues;
+    }
+
+    const website = websiteDocuments[0];
+    if (
+      !hasExactObjectKeys(website, [
+        "@context",
+        "@type",
+        "name",
+        "url",
+        "description",
+        "inLanguage",
+      ])
+    ) {
+      reportShapeIssue();
+    }
+    const visibleName = $(".site-name")
+      .first()
+      .text()
+      .replace(/\s+/g, " ")
+      .trim();
+    const visibleLanguage = $("html").attr("lang")?.trim();
+    if (
+      website?.["@context"] !== "https://schema.org" ||
+      website?.name !== siteConfig.name ||
+      website?.name !== visibleName ||
+      website?.url !== expectedCanonical ||
+      website?.url !== siteUrl ||
+      website?.description !== description ||
+      website?.inLanguage !== siteConfig.locale ||
+      website?.inLanguage !== visibleLanguage
+    ) {
+      issues.push(
+        finding(
+          "json-ld-website-visible",
+          fileName,
+          "WebSite JSON-LD must match the configured name, canonical URL, visible name, meta description, and page language.",
+        ),
+      );
+    }
+    return issues;
+  }
+
+  if (breadcrumbDocuments.length !== 1 || websiteDocuments.length !== 0) {
+    issues.push(
+      finding(
+        "json-ld-breadcrumb",
+        fileName,
+        "indexable inner pages need exactly one BreadcrumbList JSON-LD document.",
+      ),
+    );
+    return issues;
+  }
+
+  const breadcrumb = breadcrumbDocuments[0];
+  const structuredItems = Array.isArray(breadcrumb?.itemListElement)
+    ? breadcrumb.itemListElement
+    : [];
+  const visibleItems = visibleBreadcrumbItems($, expectedCanonical, siteUrl);
+  if (
+    !hasExactObjectKeys(breadcrumb, ["@context", "@type", "itemListElement"]) ||
+    structuredItems.some(
+      (item) =>
+        !hasExactObjectKeys(item, ["@type", "position", "name", "item"]),
+    )
+  ) {
+    reportShapeIssue();
+  }
+  let mismatch =
+    breadcrumb?.["@context"] !== "https://schema.org" ||
+    structuredItems.length === 0 ||
+    structuredItems.length !== visibleItems.length;
+  for (const [index, visible] of visibleItems.entries()) {
+    const item = structuredItems[index];
+    const itemUrl = validatePublicAbsoluteUrl(item?.item, siteUrl);
+    if (
+      item?.["@type"] !== "ListItem" ||
+      item?.position !== index + 1 ||
+      item?.name !== visible.name ||
+      !itemUrl.valid ||
+      itemUrl.absolute !== visible.item
+    ) {
+      mismatch = true;
+    }
+  }
+  if (mismatch) {
+    issues.push(
+      finding(
+        "json-ld-breadcrumb-visible",
+        fileName,
+        "BreadcrumbList names, positions, and URLs must match the visible breadcrumb trail and canonical page.",
+      ),
+    );
+  }
+
+  return issues;
 }
 
 function internalTarget(value, siteUrl) {
@@ -193,41 +415,17 @@ function validatePage({
     }
   }
 
-  const jsonLdTypes = [];
-  $('script[type="application/ld+json"]').each((_index, element) => {
-    try {
-      const parsed = JSON.parse($(element).text());
-      structuredDataTypes(parsed, jsonLdTypes);
-    } catch {
-      issues.push(finding("json-ld", fileName, "JSON-LD must parse as JSON."));
-    }
-  });
-  const prohibitedTypes = jsonLdTypes.filter((type) =>
-    ["Person", "Organization"].includes(type),
+  issues.push(
+    ...validateStructuredData({
+      $,
+      fileName,
+      route,
+      siteUrl,
+      expectedCanonical,
+      description,
+      isNotFound,
+    }),
   );
-  if (prohibitedTypes.length > 0) {
-    issues.push(
-      finding(
-        "json-ld-entity-claim",
-        fileName,
-        `unsubstantiated structured-data types: ${prohibitedTypes.join(", ")}.`,
-      ),
-    );
-  }
-  if (!isNotFound && route === "/" && !jsonLdTypes.includes("WebSite")) {
-    issues.push(
-      finding("json-ld-website", fileName, "home must expose WebSite JSON-LD."),
-    );
-  }
-  if (!isNotFound && route !== "/" && !jsonLdTypes.includes("BreadcrumbList")) {
-    issues.push(
-      finding(
-        "json-ld-breadcrumb",
-        fileName,
-        "indexable inner pages need BreadcrumbList JSON-LD.",
-      ),
-    );
-  }
 
   $("a[href]").each((_index, element) => {
     const href = $(element).attr("href");
@@ -321,16 +519,47 @@ function validatePage({
   return { issues, title, description, $ };
 }
 
-function xmlLocations(xml, selector, siteUrl) {
+function xmlLocations(xml, selector, { siteUrl, fileName, code, issues }) {
   const $ = load(xml, { xmlMode: true });
-  return new Set(
-    $(selector)
-      .map((_index, element) =>
-        normalizedAbsolute($(element).text().trim(), siteUrl),
-      )
-      .get()
-      .filter(Boolean),
-  );
+  const locations = new Set();
+  const rawLocations = [];
+  const absoluteLocations = [];
+  $(selector).each((_index, element) => {
+    const raw = $(element).text().trim();
+    rawLocations.push(raw);
+    const result = validatePublicAbsoluteUrl(raw, siteUrl);
+    if (!result.valid) {
+      issues.push(
+        finding(code, fileName, `${raw || "[empty URL]"} ${result.message}`),
+      );
+    } else {
+      locations.add(result.absolute);
+      absoluteLocations.push(result.absolute);
+    }
+  });
+  return { $, absoluteLocations, locations, rawLocations };
+}
+
+function hasSingleXmlRoot($, rootName) {
+  const roots = $.root().children();
+  return roots.length === 1 && roots.filter(rootName).length === 1;
+}
+
+export function isWellFormedXml(xml) {
+  try {
+    new SaxesParser().write(xml).close();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function everyElement($, selector, predicate) {
+  let valid = true;
+  $(selector).each((_index, element) => {
+    if (!predicate($(element))) valid = false;
+  });
+  return valid;
 }
 
 export function validateBuiltOutput({
@@ -492,14 +721,67 @@ export function validateBuiltOutput({
       ),
     );
   } else {
-    const indexedSitemaps = xmlLocations(
-      sitemapIndex,
-      "sitemap > loc",
+    if (!isWellFormedXml(sitemapIndex)) {
+      issues.push(
+        finding(
+          "sitemap-xml",
+          "sitemap-index.xml",
+          "sitemap index must be well-formed XML.",
+        ),
+      );
+    }
+    if (!isWellFormedXml(sitemap)) {
+      issues.push(
+        finding(
+          "sitemap-xml",
+          "sitemap-0.xml",
+          "sitemap must be well-formed XML.",
+        ),
+      );
+    }
+    const sitemapIndexParsed = load(sitemapIndex, { xmlMode: true });
+    const sitemapIndexEntries = sitemapIndexParsed("sitemapindex > sitemap");
+    const validSitemapIndexStructure =
+      hasSingleXmlRoot(sitemapIndexParsed, "sitemapindex") &&
+      sitemapIndexEntries.length > 0 &&
+      sitemapIndexEntries.length === sitemapIndexParsed("sitemap").length &&
+      everyElement(
+        sitemapIndexParsed,
+        "sitemapindex > sitemap",
+        (entry) => entry.children("loc").length === 1,
+      ) &&
+      sitemapIndexParsed("sitemapindex > sitemap > loc").length ===
+        sitemapIndexParsed("loc").length;
+    if (!validSitemapIndexStructure) {
+      issues.push(
+        finding(
+          "sitemap-structure",
+          "sitemap-index.xml",
+          "sitemap index needs one sitemapindex root and one direct loc in every direct sitemap entry.",
+        ),
+      );
+    }
+    const {
+      absoluteLocations: indexedSitemapValues,
+      locations: indexedSitemaps,
+    } = xmlLocations(sitemapIndex, "sitemapindex > sitemap > loc", {
       siteUrl,
-    );
+      fileName: "sitemap-index.xml",
+      code: "sitemap-url",
+      issues,
+    });
     const expectedSitemap = new Set([
       new URL("/sitemap-0.xml", siteUrl).toString(),
     ]);
+    if (new Set(indexedSitemapValues).size !== indexedSitemapValues.length) {
+      issues.push(
+        finding(
+          "sitemap-duplicate",
+          "sitemap-index.xml",
+          "sitemap index locations must be unique.",
+        ),
+      );
+    }
     if (!sameSet(indexedSitemaps, expectedSitemap)) {
       issues.push(
         finding(
@@ -509,10 +791,46 @@ export function validateBuiltOutput({
         ),
       );
     }
+    const sitemapParsed = load(sitemap, { xmlMode: true });
+    const sitemapEntries = sitemapParsed("urlset > url");
+    const validSitemapStructure =
+      hasSingleXmlRoot(sitemapParsed, "urlset") &&
+      sitemapEntries.length > 0 &&
+      sitemapEntries.length === sitemapParsed("url").length &&
+      everyElement(
+        sitemapParsed,
+        "urlset > url",
+        (entry) => entry.children("loc").length === 1,
+      ) &&
+      sitemapParsed("urlset > url > loc").length ===
+        sitemapParsed("loc").length;
+    if (!validSitemapStructure) {
+      issues.push(
+        finding(
+          "sitemap-structure",
+          "sitemap-0.xml",
+          "sitemap needs one urlset root and one direct loc in every direct url entry.",
+        ),
+      );
+    }
+    const { absoluteLocations: sitemapValues, locations: sitemapLocations } =
+      xmlLocations(sitemap, "urlset > url > loc", {
+        siteUrl,
+        fileName: "sitemap-0.xml",
+        code: "sitemap-url",
+        issues,
+      });
+    if (new Set(sitemapValues).size !== sitemapValues.length) {
+      issues.push(
+        finding(
+          "sitemap-duplicate",
+          "sitemap-0.xml",
+          "sitemap URL locations must be unique.",
+        ),
+      );
+    }
     const actualSitemapRoutes = new Set(
-      [...xmlLocations(sitemap, "url > loc", siteUrl)].map(
-        (absolute) => new URL(absolute).pathname,
-      ),
+      [...sitemapLocations].map((absolute) => new URL(absolute).pathname),
     );
     if (!sameSet(actualSitemapRoutes, expectedIndexableRoutes)) {
       issues.push(
@@ -529,10 +847,115 @@ export function validateBuiltOutput({
   if (!rss) {
     issues.push(finding("feed-file", "rss.xml", "RSS feed is missing."));
   } else {
+    if (!isWellFormedXml(rss)) {
+      issues.push(
+        finding("feed-xml", "rss.xml", "RSS feed must be well-formed XML."),
+      );
+    }
+    const rssParsed = load(rss, { xmlMode: true });
+    const channels = rssParsed("rss > channel");
+    const feedItems = rssParsed("rss > channel > item");
+    const validFeedStructure =
+      hasSingleXmlRoot(rssParsed, "rss") &&
+      channels.length === 1 &&
+      channels.length === rssParsed("channel").length &&
+      feedItems.length === rssParsed("item").length &&
+      channels.first().children("link").length === 1 &&
+      everyElement(
+        rssParsed,
+        "rss > channel > item",
+        (item) =>
+          item.children("link").length === 1 &&
+          item.children("guid").length === 1,
+      ) &&
+      rssParsed("rss > channel > item > link").length ===
+        rssParsed("item link").length &&
+      rssParsed("rss > channel > item > guid").length ===
+        rssParsed("item guid").length;
+    if (!validFeedStructure) {
+      issues.push(
+        finding(
+          "feed-structure",
+          "rss.xml",
+          "RSS needs one channel under one rss root, direct items under that channel, and one direct link and guid per item.",
+        ),
+      );
+    }
+    const channel = xmlLocations(rss, "rss > channel > link", {
+      siteUrl,
+      fileName: "rss.xml",
+      code: "feed-url",
+      issues,
+    });
+    if (
+      channel.$("rss > channel > link").length !== 1 ||
+      !sameSet(channel.locations, new Set([new URL(siteUrl).toString()]))
+    ) {
+      issues.push(
+        finding(
+          "feed-channel",
+          "rss.xml",
+          "RSS channel link must be the configured canonical home URL.",
+        ),
+      );
+    }
+    const itemLinks = xmlLocations(rss, "rss > channel > item > link", {
+      siteUrl,
+      fileName: "rss.xml",
+      code: "feed-url",
+      issues,
+    });
+    const itemGuids = xmlLocations(rss, "rss > channel > item > guid", {
+      siteUrl,
+      fileName: "rss.xml",
+      code: "feed-url",
+      issues,
+    });
+    const itemCount = itemLinks.$("rss > channel > item").length;
+    let itemPairMismatch = false;
+    const seenItemLinks = new Set();
+    itemLinks.$("rss > channel > item").each((_index, element) => {
+      const item = itemLinks.$(element);
+      const links = item.children("link");
+      const guids = item.children("guid");
+      const link = validatePublicAbsoluteUrl(
+        links.first().text().trim(),
+        siteUrl,
+      );
+      const guid = validatePublicAbsoluteUrl(
+        guids.first().text().trim(),
+        siteUrl,
+      );
+      if (
+        links.length !== 1 ||
+        guids.length !== 1 ||
+        !link.valid ||
+        !guid.valid ||
+        link.absolute !== guid.absolute ||
+        seenItemLinks.has(link.absolute)
+      ) {
+        itemPairMismatch = true;
+      }
+      if (link.valid) seenItemLinks.add(link.absolute);
+    });
+    if (
+      itemLinks.$("rss > channel > item > link").length !== itemCount ||
+      itemLinks.$("rss > channel > item > guid").length !== itemCount ||
+      itemLinks.locations.size !== itemCount ||
+      itemGuids.locations.size !== itemCount ||
+      !sameSet(itemLinks.locations, itemGuids.locations) ||
+      itemPairMismatch
+    ) {
+      issues.push(
+        finding(
+          "feed-item-url",
+          "rss.xml",
+          "every RSS item must have matching validated link and guid URLs.",
+        ),
+      );
+    }
     const actualFeedRoutes = new Set(
-      [...xmlLocations(rss, "item > link", siteUrl)].map(
-        (absolute) => new URL(absolute).pathname,
-      ),
+      [...itemLinks.locations].map((absolute) => new URL(absolute).pathname),
     );
     if (!sameSet(actualFeedRoutes, expectedArticleRoutes)) {
       issues.push(
@@ -651,7 +1074,7 @@ async function main() {
     files,
     articles,
     categorySlugs: REQUIRED_CATEGORY_SLUGS,
-    siteUrl: "https://everyday-tech-insight.vercel.app/",
+    siteUrl: configuredSiteUrl,
   });
   printFindings("Built-output QA", issues);
   if (issues.length > 0) process.exitCode = 1;
