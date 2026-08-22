@@ -35,6 +35,13 @@ const representativeRoutes = [
   },
 ] as const;
 const requiredWidths = [360, 390, 768, 1024, 1280, 1440, 1920] as const;
+const categorySlugs = [
+  "ai-automation",
+  "business-software",
+  "cybersecurity-data-protection",
+  "digital-operations",
+  "technology-strategy",
+] as const;
 const representativeLeafSelector = [
   "a",
   "button",
@@ -306,36 +313,38 @@ test("compact story metadata stays inside its card at tablet width", async ({
   expect(overflow).toEqual([]);
 });
 
-test("category lead begins in the opening mobile viewport", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/categories/ai-automation/");
-  await page.evaluate(async () => {
-    await document.fonts.ready;
+for (const categorySlug of categorySlugs) {
+  test(`${categorySlug} lead begins in the opening mobile viewport`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/categories/${categorySlug}/`);
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+
+    const leadTitle = page.locator(".category-hero__lead .article-card__title");
+    await expect(leadTitle).toBeVisible();
+    const titleBox = await leadTitle.boundingBox();
+
+    expect(titleBox).not.toBeNull();
+    expect(titleBox!.y + titleBox!.height).toBeLessThanOrEqual(820);
   });
 
-  const leadTitle = page.locator(".category-hero__lead .article-card__title");
-  await expect(leadTitle).toBeVisible();
-  const titleBox = await leadTitle.boundingBox();
+  test(`${categorySlug} lead starts before the desktop opening threshold`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/categories/${categorySlug}/`);
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
 
-  expect(titleBox).not.toBeNull();
-  expect(titleBox!.y + titleBox!.height).toBeLessThanOrEqual(820);
-});
+    const titleBox = await page
+      .locator(".category-hero__lead .article-card__title")
+      .boundingBox();
 
-test("category lead starts before the desktop opening threshold", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/categories/ai-automation/");
-  await page.evaluate(async () => {
-    await document.fonts.ready;
+    expect(titleBox).not.toBeNull();
+    expect(titleBox!.y).toBeLessThanOrEqual(760);
   });
-
-  const titleBox = await page
-    .locator(".category-hero__lead .article-card__title")
-    .boundingBox();
-
-  expect(titleBox).not.toBeNull();
-  expect(titleBox!.y).toBeLessThanOrEqual(760);
-});
+}

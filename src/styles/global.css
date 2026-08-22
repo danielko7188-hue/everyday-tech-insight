@@ -1803,6 +1803,10 @@ strong {
     grid-column: 1 / span 5;
   }
 
+  .category-hero__copy h1 {
+    font-size: clamp(2.5rem, 1.8rem + 3.5vw, 4.5rem);
+  }
+
   .category-hero__visual {
     grid-column: 6 / -1;
     grid-row: 1;
