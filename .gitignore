@@ -11,3 +11,4 @@ test-results/
 .lighthouseci.pending/
 coverage/
 *.log
+.worktrees/
