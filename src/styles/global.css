@@ -1,5 +1,26 @@
-@import "@fontsource-variable/newsreader/opsz.css";
-@import "@fontsource-variable/source-sans-3/wght.css";
+@font-face {
+  font-family: "Newsreader Variable";
+  font-style: normal;
+  font-display: optional;
+  font-weight: 600 800;
+  src: url("/fonts/newsreader-variable-english.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0020-007E, U+00A0, U+00B7, U+2010-2015, U+2018-2019, U+201C-201D, U+2022,
+    U+2026, U+2032-2033, U+20AC, U+2122, U+2190-2193, U+2212, U+2215;
+}
+
+@font-face {
+  font-family: "Source Sans 3 Variable";
+  font-style: normal;
+  font-display: optional;
+  font-weight: 200 900;
+  src: url("/fonts/source-sans-3-variable-english.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0020-007E, U+00A0, U+00B7, U+2010-2015, U+2018-2019, U+201C-201D, U+2022,
+    U+2026, U+2032-2033, U+20AC, U+2122, U+2190-2193, U+2212, U+2215;
+}
 
 :root {
   --color-ink: #171918;
@@ -680,10 +701,6 @@ strong {
 
 .article-card--list .story-meta {
   align-self: start;
-}
-
-.latest-articles .article-card__summary {
-  display: none;
 }
 
 /* Category directory and category pages */

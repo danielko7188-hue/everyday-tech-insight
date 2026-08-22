@@ -1,6 +1,7 @@
 ---
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
+import EditorialVisualSymbols from "../components/EditorialVisualSymbols.astro";
 import type { CategorySlug } from "../data/categories";
 import { site } from "../data/site";
 import "../styles/global.css";
@@ -13,6 +14,7 @@ interface Props {
   robots?: "index,follow" | "noindex,follow";
   ogType?: "website" | "article";
   activeCategory?: CategorySlug;
+  includeEditorialVisualSymbols?: boolean;
   structuredData?: Record<string, unknown> | Record<string, unknown>[];
 }
 
@@ -24,6 +26,7 @@ const {
   robots = "index,follow",
   ogType = "website",
   activeCategory,
+  includeEditorialVisualSymbols = false,
   structuredData = [],
 } = Astro.props;
 
@@ -43,6 +46,20 @@ const jsonLdItems = Array.isArray(structuredData)
     <meta name="robots" content={robots} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="/fonts/newsreader-variable-english.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      href="/fonts/source-sans-3-variable-english.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -58,6 +75,7 @@ const jsonLdItems = Array.isArray(structuredData)
     }
   </head>
   <body>
+    {includeEditorialVisualSymbols && <EditorialVisualSymbols />}
     <a class="skip-link" href="#main-content">Skip to content</a>
     <Header currentPath={path} activeCategory={activeCategory} />
     <main id="main-content" tabindex="-1">

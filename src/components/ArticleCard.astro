@@ -12,9 +12,15 @@ interface Props {
   article: CollectionEntry<"articles">;
   variant?: ArticleCardVariant;
   headingLevel?: 2 | 3;
+  showSummary?: boolean;
 }
 
-const { article, variant = "standard", headingLevel = 2 } = Astro.props;
+const {
+  article,
+  variant = "standard",
+  headingLevel = 2,
+  showSummary: showSummaryOverride,
+} = Astro.props;
 const Heading = `h${headingLevel}` as "h2" | "h3";
 const category = categoriesBySlug.get(article.data.category);
 
@@ -27,6 +33,7 @@ const visualRatio = variant === "lead" ? "wide" : "landscape";
 const showVisual =
   variant === "lead" || variant === "feature" || variant === "standard";
 const showOutcome = variant === "lead" || variant === "standard";
+const showSummary = showSummaryOverride ?? variant !== "list";
 const isCompactMeta = variant === "compact" || variant === "list";
 ---
 
@@ -59,7 +66,7 @@ const isCompactMeta = variant === "compact" || variant === "list";
     <Heading class="article-card__title">
       <a href={`/articles/${article.data.slug}/`}>{article.data.title}</a>
     </Heading>
-    <p class="article-card__summary">{article.data.summary}</p>
+    {showSummary && <p class="article-card__summary">{article.data.summary}</p>}
     {
       showOutcome && (
         <p class="card-outcome">
