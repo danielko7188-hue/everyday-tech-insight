@@ -1,8 +1,22 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { siteUrl } from "../../site.config.mjs";
 
 const articleSlug = "how-to-identify-business-tasks-for-automation";
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
+
+async function uniqueArticleHrefs(scope: Locator): Promise<string[]> {
+  return scope
+    .locator('a[href^="/articles/"]')
+    .evaluateAll((links) =>
+      Array.from(
+        new Set(
+          links
+            .map((link) => link.getAttribute("href"))
+            .filter((href): href is string => href !== null),
+        ),
+      ).sort(),
+    );
+}
 
 const aiArticleHrefs = [
   "/articles/evaluate-ai-output-quality-in-a-small-team-pilot/",
@@ -98,6 +112,46 @@ test("home presents the complete editorial hierarchy and trust paths", async ({
   await expect(startHere).toBeVisible();
   await expect(latestArticles).toBeVisible();
 
+  const leadHrefs = await uniqueArticleHrefs(
+    topStories.locator(".article-card--lead"),
+  );
+  const featureHrefs = await uniqueArticleHrefs(
+    topStories.locator(".article-card--feature"),
+  );
+  await expect(latestBriefing.locator(".article-card--compact")).toHaveCount(3);
+  const briefingHrefs = await uniqueArticleHrefs(
+    latestBriefing.locator(".article-card--compact"),
+  );
+  const startHereHrefs = await uniqueArticleHrefs(
+    startHere.locator(".article-card"),
+  );
+  const latestListCount = await latestArticles
+    .locator(".article-card--list")
+    .count();
+  const latestHrefs = await uniqueArticleHrefs(
+    latestArticles.locator(".article-card--list"),
+  );
+
+  expect(leadHrefs).toHaveLength(1);
+  expect(featureHrefs).toHaveLength(featureCount);
+  expect(briefingHrefs).toHaveLength(3);
+  expect(startHereHrefs.length).toBeGreaterThan(0);
+  expect(latestListCount).toBeGreaterThan(0);
+  expect(latestHrefs).toHaveLength(latestListCount);
+  expect(
+    new Set([
+      ...leadHrefs,
+      ...featureHrefs,
+      ...briefingHrefs,
+      ...startHereHrefs,
+    ]).size,
+  ).toBe(
+    leadHrefs.length +
+      featureHrefs.length +
+      briefingHrefs.length +
+      startHereHrefs.length,
+  );
+
   const topicSections = page.locator(".topic-section[data-category]");
   await expect(topicSections).toHaveCount(categories.length);
   expect(
@@ -108,10 +162,27 @@ test("home presents the complete editorial hierarchy and trust paths", async ({
     ).sort(),
   ).toEqual(categories.map(({ slug }) => slug).sort());
 
-  for (const variant of ["lead", "feature", "compact", "list"] as const) {
+  for (const category of categories) {
+    const topicSection = page.locator(
+      `.topic-section[data-category="${category.slug}"]`,
+    );
+    await expect(topicSection).toBeVisible();
     await expect(
-      page.locator(`.article-card--${variant}`).first(),
-    ).toBeVisible();
+      topicSection
+        .getByRole("link", { name: category.name, exact: true })
+        .first(),
+    ).toHaveAttribute("href", `/categories/${category.slug}/`);
+
+    const topicCards = topicSection.locator(".article-card");
+    await expect(topicCards).toHaveCount(3);
+    expect(await uniqueArticleHrefs(topicCards)).toHaveLength(3);
+    for (let index = 0; index < 3; index += 1) {
+      await expect(
+        topicCards
+          .nth(index)
+          .getByRole("link", { name: category.name, exact: true }),
+      ).toHaveAttribute("href", `/categories/${category.slug}/`);
+    }
   }
 
   await expect(
@@ -217,6 +288,16 @@ test("AI category has a lead, supporting features, complete membership, and stor
   const hero = page.locator('.category-hero[data-category="ai-automation"]');
   await expect(hero).toBeVisible();
   await expect(hero.locator("[data-editorial-visual]")).toBeVisible();
+  const categoryAccent = await hero.evaluate((element) =>
+    getComputedStyle(element).getPropertyValue("--category-accent").trim(),
+  );
+  expect(categoryAccent).not.toBe("");
+  expect(
+    await page.evaluate(
+      (color) => CSS.supports("color", color),
+      categoryAccent,
+    ),
+  ).toBe(true);
   await expect(page.locator(".article-card--lead")).toHaveCount(1);
   await expect(page.locator(".article-card--feature")).toHaveCount(2);
 

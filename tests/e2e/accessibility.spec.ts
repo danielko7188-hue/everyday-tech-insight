@@ -3,6 +3,7 @@ import { expect, test, type Locator } from "@playwright/test";
 
 const articlePath = "/articles/how-to-identify-business-tasks-for-automation/";
 const categoryPath = "/categories/ai-automation/";
+const wcagTags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 const categories = [
   { name: "AI & Automation", slug: "ai-automation" },
   { name: "Business Software & SaaS", slug: "business-software" },
@@ -172,9 +173,7 @@ for (const route of ["/", categoryPath, articlePath]) {
   }) => {
     await page.goto(route);
 
-    const results = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-      .analyze();
+    const results = await new AxeBuilder({ page }).withTags(wcagTags).analyze();
     const blockingViolations = results.violations.filter(({ impact }) =>
       ["serious", "critical"].includes(impact ?? ""),
     );
@@ -223,13 +222,24 @@ test("390px native menu opens from the keyboard and exposes every topic", async 
   await expect(menu).toHaveAttribute("open", "");
 
   for (const category of categories) {
-    await expect(
-      menu.getByRole("link", { name: category.name, exact: true }),
-    ).toBeVisible();
+    const topicLink = menu.getByRole("link", {
+      name: category.name,
+      exact: true,
+    });
+    await expect(topicLink).toBeVisible();
+    const topicLinkBox = await topicLink.boundingBox();
+    expect(
+      topicLinkBox?.height ?? 0,
+      `${category.name} mobile touch target`,
+    ).toBeGreaterThanOrEqual(44);
   }
-  await expect(
-    menu.getByRole("link", { name: "About", exact: true }),
-  ).toBeVisible();
+  const aboutLink = menu.getByRole("link", { name: "About", exact: true });
+  await expect(aboutLink).toBeVisible();
+  const aboutLinkBox = await aboutLink.boundingBox();
+  expect(
+    aboutLinkBox?.height ?? 0,
+    "About mobile touch target",
+  ).toBeGreaterThanOrEqual(44);
   await expect(
     menu.getByRole("link", { name: "AI & Automation", exact: true }),
   ).toHaveAttribute("aria-current", "page");
@@ -278,13 +288,22 @@ test("mobile article TOC and data table stay accessible inside the page boundary
   expect(overflow.document).toBeLessThanOrEqual(overflow.viewport);
   expect(overflow.body).toBeLessThanOrEqual(overflow.viewport);
 
-  const results = await new AxeBuilder({ page })
-    .withRules(["scrollable-region-focusable"])
-    .analyze();
+  const results = await new AxeBuilder({ page }).withTags(wcagTags).analyze();
   const blockingViolations = results.violations
     .filter(({ impact }) => ["serious", "critical"].includes(impact ?? ""))
     .map(({ id, impact, nodes }) => ({ id, impact, nodes: nodes.length }));
   expect(blockingViolations).toEqual([]);
+
+  const scrollableRegionResults = await new AxeBuilder({ page })
+    .withRules(["scrollable-region-focusable"])
+    .analyze();
+  expect(
+    scrollableRegionResults.violations.map(({ id, impact, nodes }) => ({
+      id,
+      impact,
+      nodes: nodes.length,
+    })),
+  ).toEqual([]);
 });
 
 test("reduced motion removes effective transition and animation durations", async ({
