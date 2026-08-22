@@ -17,13 +17,13 @@ The design balances approximately 80% timeless editorial character with 20% mode
 
 - Display and headline family: **Newsreader Variable**.
 - Body, user-interface, and metadata family: **Source Sans 3 Variable**.
-- Planned self-hosted packages: `@fontsource-variable/newsreader` and `@fontsource-variable/source-sans-3`.
-- Both planned packages distribute the selected font software under the **SIL Open Font License 1.1 (OFL-1.1)**. Retain the package license files when the dependencies are installed and recheck the installed package metadata before release.
+- Installed self-hosted packages: `@fontsource-variable/newsreader@5.3.0` and `@fontsource-variable/source-sans-3@5.3.0`.
+- The installed package metadata and bundled license files were inspected on 2026-08-22; both declare the **SIL Open Font License 1.1 (OFL-1.1)**. Retain those package license files in dependency distributions.
 - Only the required upright variable CSS should be imported. Use `font-display: swap` and keep suitable system fallbacks.
 - Article body text should be 18–19px responsively, with generous leading and a 65–75 character measure.
 - Headlines use optical sizing and restrained negative tracking. Metadata must remain at least 14px with strong contrast.
 
-The font packages are planned dependencies in this phase; this record does not claim they are already installed.
+The exact font packages above are installed dependencies in this phase, and the stylesheet imports only their upright variable CSS.
 
 ## Color tokens
 
