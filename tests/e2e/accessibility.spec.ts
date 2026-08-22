@@ -428,9 +428,17 @@ test("mobile article TOC and data table stay accessible inside the page boundary
   await expectVisibleFocusIndicator(tocSummary, tocSummaryUnfocused);
   await page.keyboard.press("Enter");
   await expect(tocDisclosure).toHaveAttribute("open", "");
-  await expect(
-    page.locator("article.article-page table").first(),
-  ).toBeVisible();
+  const tableRegion = page.getByRole("region", {
+    name: "Scrollable data table",
+  });
+  await expect(tableRegion).toHaveCount(1);
+  await expect(tableRegion).toHaveAttribute("tabindex", "0");
+  await expect(tableRegion.locator("table")).toBeVisible();
+
+  const tableRegionUnfocused = await captureFocusAppearance(tableRegion);
+  await reachByTab(page, tableRegion, 80);
+  await expect(tableRegion).toBeFocused();
+  await expectVisibleFocusIndicator(tableRegion, tableRegionUnfocused);
 
   const overflow = await page.evaluate(() => ({
     body: document.body.scrollWidth,

@@ -518,6 +518,21 @@ test("trust pages are reachable and state the public evidence boundary", async (
   await expect(page.getByText(/transparent correction note/i)).toBeVisible();
 });
 
+test("markdown tables render once inside a named keyboard region", async ({
+  page,
+}) => {
+  await page.goto(`/articles/${articleSlug}/`);
+
+  const table = page.locator("article.article-page table");
+  const region = page.getByRole("region", { name: "Scrollable data table" });
+  await expect(table).toHaveCount(1);
+  await expect(region).toHaveCount(1);
+  await expect(region).toHaveAttribute("data-horizontal-scroll", "");
+  await expect(region).toHaveAttribute("tabindex", "0");
+  await expect(region.locator(":scope > table")).toHaveCount(1);
+  await expect(region.locator(".table-scroll")).toHaveCount(0);
+});
+
 test("every public HTML route has one H1 and unique core metadata", async ({
   page,
 }) => {

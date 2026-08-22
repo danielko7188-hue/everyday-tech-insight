@@ -412,3 +412,195 @@ test("wide article headline wrapping is stable", async ({ page }) => {
   expect(linesAt1440).toBeGreaterThan(0);
   expect(linesAt1920).toBeLessThanOrEqual(linesAt1440);
 });
+
+test("shared chrome uses the balanced 900px header breakpoint", async ({
+  page,
+}) => {
+  for (const width of [768, 899]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(
+      page.locator(".site-header__mobile-menu"),
+      `${width}px menu`,
+    ).toBeVisible();
+    await expect(
+      page.locator(".site-header__utility"),
+      `${width}px utility`,
+    ).toBeHidden();
+    await expect(
+      page.locator(".site-header__topics"),
+      `${width}px topics`,
+    ).toBeHidden();
+  }
+
+  for (const width of [900, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(
+      page.locator(".site-header__mobile-menu"),
+      `${width}px menu`,
+    ).toBeHidden();
+    await expect(
+      page.locator(".site-header__utility"),
+      `${width}px utility`,
+    ).toBeVisible();
+    await expect(
+      page.locator(".site-header__topics"),
+      `${width}px topics`,
+    ).toBeVisible();
+  }
+});
+
+test("open tablet menu expands as an opaque full-width row without overflow", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 899, height: 900 });
+  await page.goto("/categories/ai-automation/");
+
+  const identityRow = page.locator(".site-header__identity-row");
+  const menu = page.locator(".site-header__mobile-menu");
+  const summary = menu.locator("summary");
+  const closedHeight = (await identityRow.boundingBox())?.height ?? 0;
+
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  await expect(menu).toHaveAttribute("open", "");
+
+  const geometry = await page.evaluate(() => {
+    const row = document.querySelector<HTMLElement>(
+      ".site-header__identity-row",
+    )!;
+    const details = document.querySelector<HTMLElement>(
+      ".site-header__mobile-menu",
+    )!;
+    const summaryElement = details.querySelector<HTMLElement>("summary")!;
+    const navElement = details.querySelector<HTMLElement>("nav")!;
+    const rowBox = row.getBoundingClientRect();
+    const detailsBox = details.getBoundingClientRect();
+    const summaryBox = summaryElement.getBoundingClientRect();
+    const navBox = navElement.getBoundingClientRect();
+    const navStyles = getComputedStyle(navElement);
+    return {
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      rowHeight: rowBox.height,
+      detailsLeft: detailsBox.left,
+      detailsRight: detailsBox.right,
+      rowLeft: rowBox.left,
+      rowRight: rowBox.right,
+      summaryBottom: summaryBox.bottom,
+      navTop: navBox.top,
+      navBottom: navBox.bottom,
+      rowBottom: rowBox.bottom,
+      navPosition: navStyles.position,
+      navBackground: navStyles.backgroundColor,
+    };
+  });
+
+  expect(geometry.rowHeight).toBeGreaterThan(closedHeight + 100);
+  expect(geometry.detailsLeft).toBeCloseTo(geometry.rowLeft, 0);
+  expect(geometry.detailsRight).toBeCloseTo(geometry.rowRight, 0);
+  expect(geometry.navTop).toBeGreaterThanOrEqual(geometry.summaryBottom);
+  expect(geometry.navBottom).toBeLessThanOrEqual(geometry.rowBottom + 1);
+  expect(geometry.navPosition).toBe("static");
+  expect(geometry.navBackground).not.toBe("rgba(0, 0, 0, 0)");
+  expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+});
+
+test("mobile footer keeps four navigation groups in two equal columns", async ({
+  page,
+}) => {
+  for (const width of [360, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/");
+
+    const footerGrid = await page
+      .locator(".site-footer__groups")
+      .evaluate((groups) => {
+        const styles = getComputedStyle(groups);
+        const items = Array.from(groups.children, (child) => {
+          const box = child.getBoundingClientRect();
+          return { left: Math.round(box.left), width: box.width };
+        });
+        return { columns: styles.gridTemplateColumns.split(" "), items };
+      });
+
+    expect(footerGrid.columns, `${width}px computed columns`).toHaveLength(2);
+    expect(new Set(footerGrid.items.map(({ left }) => left)).size).toBe(2);
+    expect(footerGrid.items).toHaveLength(4);
+    const firstColumnWidth = footerGrid.columns[0];
+    expect(firstColumnWidth).toBeDefined();
+    if (!firstColumnWidth)
+      throw new Error("Footer has no computed first column");
+    for (const item of footerGrid.items) {
+      expect(item.width).toBeGreaterThan(0);
+      expect(item.width).toBeCloseTo(Number.parseFloat(firstColumnWidth), 0);
+    }
+  }
+});
+
+test("trust pages center breadcrumbs and content in one readable frame", async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/about/");
+
+    const frame = await page.evaluate(() => {
+      const shell = document.querySelector<HTMLElement>(".page-shell")!;
+      const breadcrumbs = shell.querySelector<HTMLElement>(".breadcrumbs")!;
+      const content = shell.querySelector<HTMLElement>(".trust-content")!;
+      const shellBox = shell.getBoundingClientRect();
+      const breadcrumbBox = breadcrumbs.getBoundingClientRect();
+      const contentBox = content.getBoundingClientRect();
+      return { shellBox, breadcrumbBox, contentBox };
+    });
+
+    expect(frame.contentBox.width).toBeLessThanOrEqual(760);
+    expect(frame.breadcrumbBox.width).toBeCloseTo(frame.contentBox.width, 0);
+    expect(frame.breadcrumbBox.left).toBeCloseTo(frame.contentBox.left, 0);
+    expect(frame.contentBox.left - frame.shellBox.left).toBeCloseTo(
+      frame.shellBox.right - frame.contentBox.right,
+      0,
+    );
+  }
+});
+
+test("mobile tables use a readable contained horizontal region", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+
+  const region = page.getByRole("region", { name: "Scrollable data table" });
+  await expect(region).toHaveCount(1);
+  await expect(region).toHaveAttribute("tabindex", "0");
+  const geometry = await region.evaluate((element) => {
+    const table = element.querySelector("table")!;
+    const regionBox = element.getBoundingClientRect();
+    const styles = getComputedStyle(element);
+    const tableStyles = getComputedStyle(table);
+    return {
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      regionLeft: regionBox.left,
+      regionRight: regionBox.right,
+      overflowX: styles.overflowX,
+      fontSize: Number.parseFloat(tableStyles.fontSize),
+      tableLayout: tableStyles.tableLayout,
+      tableWidth: table.scrollWidth,
+      regionWidth: element.clientWidth,
+    };
+  });
+
+  expect(geometry.overflowX).toBe("auto");
+  expect(geometry.fontSize).toBeGreaterThanOrEqual(16);
+  expect(geometry.tableLayout).toBe("auto");
+  expect(geometry.tableWidth).toBeGreaterThan(geometry.regionWidth);
+  expect(geometry.regionLeft).toBeGreaterThanOrEqual(-1);
+  expect(geometry.regionRight).toBeLessThanOrEqual(geometry.viewportWidth + 1);
+  expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+});
