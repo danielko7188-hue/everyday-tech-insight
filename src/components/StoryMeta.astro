@@ -1,5 +1,7 @@
 ---
 import type { CategorySlug } from "../data/categories";
+import { site } from "../data/site";
+import { formatPublicationDate } from "../utils/presentation";
 
 interface Props {
   categoryName: string;
@@ -19,19 +21,11 @@ const {
   compact = false,
 } = Astro.props;
 
-const displayDate = new Date(
-  publicationDate.includes("T")
-    ? publicationDate
-    : `${publicationDate}T00:00:00Z`,
-);
-const formattedDate = Number.isNaN(displayDate.valueOf())
-  ? publicationDate
-  : new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: compact ? "short" : "long",
-      day: "numeric",
-      timeZone: publicationDate.includes("T") ? undefined : "UTC",
-    }).format(displayDate);
+const formattedDate = formatPublicationDate(publicationDate, {
+  timeZone: site.timeZone,
+  locale: site.locale,
+  compact,
+});
 const contentTypeLabel = contentType
   .split(/[-_\s]+/)
   .filter(Boolean)

@@ -2,7 +2,7 @@ const DEFAULT_WORDS_PER_MINUTE = 225;
 
 function markdownToReadableText(markdown: string): string {
   return markdown
-    .replace(/^---\s*$[\s\S]*?^---\s*$/m, " ")
+    .replace(/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, " ")
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/~~~[\s\S]*?~~~/g, " ")
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
@@ -30,6 +30,33 @@ export function estimateReadingTime(
   );
 
   return Math.max(1, Math.ceil((words?.length ?? 0) / readingRate));
+}
+
+export interface PublicationDateFormatOptions {
+  timeZone: string;
+  compact?: boolean;
+  locale?: string;
+}
+
+export function formatPublicationDate(
+  publicationDate: string,
+  { timeZone, compact = false, locale = "en-US" }: PublicationDateFormatOptions,
+): string {
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(publicationDate);
+  const date = new Date(
+    isDateOnly ? `${publicationDate}T00:00:00Z` : publicationDate,
+  );
+
+  if (Number.isNaN(date.valueOf())) {
+    return publicationDate;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: compact ? "short" : "long",
+    day: "numeric",
+    timeZone: isDateOnly ? "UTC" : timeZone,
+  }).format(date);
 }
 
 export function visualVariantForSlug(slug: string, range: number): number {

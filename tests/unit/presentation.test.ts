@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   estimateReadingTime,
+  formatPublicationDate,
   visualVariantForSlug,
 } from "../../src/utils/presentation";
 
@@ -24,6 +25,14 @@ describe("estimateReadingTime", () => {
 
     expect(estimateReadingTime(markdown)).toBe(1);
   });
+
+  it("preserves article-body text between thematic breaks", () => {
+    const firstSection = Array(225).fill("first").join(" ");
+    const secondSection = Array(225).fill("second").join(" ");
+    const markdown = `${firstSection}\n\n---\n\n${secondSection}\n\n---`;
+
+    expect(estimateReadingTime(markdown)).toBe(2);
+  });
 });
 
 describe("visualVariantForSlug", () => {
@@ -43,4 +52,22 @@ describe("visualVariantForSlug", () => {
       expect(visualVariantForSlug("evaluate-saas", range)).toBe(0);
     },
   );
+});
+
+describe("formatPublicationDate", () => {
+  const publicationOptions = {
+    timeZone: "America/Los_Angeles",
+  } as const;
+
+  it("formats a date-only value without a timezone shift", () => {
+    expect(formatPublicationDate("2026-08-21", publicationOptions)).toBe(
+      "August 21, 2026",
+    );
+  });
+
+  it("formats a timestamp in the publication timezone", () => {
+    expect(
+      formatPublicationDate("2026-08-21T23:30:00Z", publicationOptions),
+    ).toBe("August 21, 2026");
+  });
 });
