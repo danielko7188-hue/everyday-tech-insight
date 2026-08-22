@@ -357,14 +357,14 @@ test("mobile article TOC and data table stay accessible inside the page boundary
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(articlePath);
 
-  const tocSummary = page
-    .locator("article.article-page summary")
+  const tocDisclosure = page.locator("article.article-page details").filter({
+    has: page.locator("summary").filter({ hasText: /^On this page$/ }),
+  });
+  const tocSummary = tocDisclosure
+    .locator("summary")
     .filter({ hasText: /^On this page$/ });
   await expect(tocSummary).toBeVisible();
   await expect(tocSummary).toHaveAccessibleName("On this page");
-  const tocDisclosure = page
-    .locator("article.article-page details")
-    .filter({ has: tocSummary });
   await expect(tocDisclosure).not.toHaveAttribute("open", "");
   const tocSummaryUnfocused = await captureFocusAppearance(tocSummary);
   await reachByTab(page, tocSummary, 40);
