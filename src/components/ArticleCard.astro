@@ -13,6 +13,7 @@ interface Props {
   variant?: ArticleCardVariant;
   headingLevel?: 2 | 3;
   showSummary?: boolean;
+  showVisual?: boolean;
 }
 
 const {
@@ -20,6 +21,7 @@ const {
   variant = "standard",
   headingLevel = 2,
   showSummary: showSummaryOverride,
+  showVisual: showVisualOverride,
 } = Astro.props;
 const Heading = `h${headingLevel}` as "h2" | "h3";
 const category = categoriesBySlug.get(article.data.category);
@@ -31,7 +33,7 @@ if (!category) {
 const readingMinutes = estimateReadingTime(article.body ?? "");
 const visualRatio = variant === "lead" ? "wide" : "landscape";
 const showVisual =
-  variant === "lead" || variant === "feature" || variant === "standard";
+  showVisualOverride ?? (variant === "lead" || variant === "standard");
 const showOutcome = variant === "lead" || variant === "standard";
 const showSummary = showSummaryOverride ?? variant !== "list";
 const isCompactMeta = variant === "compact" || variant === "list";

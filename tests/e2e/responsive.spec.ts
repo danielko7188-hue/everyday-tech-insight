@@ -194,6 +194,82 @@ for (const route of representativeRoutes) {
   }
 }
 
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 1440, height: 900 },
+]) {
+  test(`homepage lead headline is visible at ${viewport.width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+
+    const box = await page
+      .locator(".front-page__lead .article-card__title")
+      .boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+    expect(
+      await page.locator("main").evaluate((main) => main.scrollHeight),
+    ).toBeLessThan(viewport.width === 390 ? 11_000 : 7_000);
+  });
+}
+
+test("homepage issue label stays semantic without entering the layout", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  const box = await page.locator("#front-page-heading").boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.width).toBeLessThanOrEqual(1);
+  expect(box!.height).toBeLessThanOrEqual(1);
+});
+
+test("homepage briefing cards keep metadata above their headline", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+
+  const cards = page.locator(".latest-briefing__list .article-card--list");
+  await expect(cards).toHaveCount(3);
+  const geometry = await cards.evaluateAll((elements) =>
+    elements.map((element) => {
+      const metadata = element.querySelector(".story-meta")!;
+      const title = element.querySelector(".article-card__title")!;
+      const summary = element.querySelector(".article-card__summary")!;
+      const cardBox = element.getBoundingClientRect();
+      const metadataBox = metadata.getBoundingClientRect();
+      const titleBox = title.getBoundingClientRect();
+      const summaryBox = summary.getBoundingClientRect();
+      return {
+        cardWidth: cardBox.width,
+        metadataWidth: metadataBox.width,
+        metadataBottom: metadataBox.bottom,
+        titleTop: titleBox.top,
+        titleWidth: titleBox.width,
+        titleBottom: titleBox.bottom,
+        summaryTop: summaryBox.top,
+      };
+    }),
+  );
+
+  for (const card of geometry) {
+    expect(card.metadataWidth).toBeGreaterThan(card.cardWidth * 0.75);
+    expect(card.titleWidth).toBeGreaterThan(card.cardWidth * 0.75);
+    expect(card.titleTop).toBeGreaterThanOrEqual(card.metadataBottom - 1);
+    expect(card.summaryTop).toBeGreaterThanOrEqual(card.titleBottom - 1);
+  }
+});
+
 test("compact story metadata stays inside its card at tablet width", async ({
   page,
 }) => {

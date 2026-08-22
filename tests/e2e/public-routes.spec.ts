@@ -1,22 +1,8 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { siteUrl } from "../../site.config.mjs";
 
 const articleSlug = "how-to-identify-business-tasks-for-automation";
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
-
-async function uniqueArticleHrefs(scope: Locator): Promise<string[]> {
-  return scope
-    .locator('a[href^="/articles/"]')
-    .evaluateAll((links) =>
-      Array.from(
-        new Set(
-          links
-            .map((link) => link.getAttribute("href"))
-            .filter((href): href is string => href !== null),
-        ),
-      ).sort(),
-    );
-}
 
 const aiArticleHrefs = [
   "/articles/evaluate-ai-output-quality-in-a-small-team-pilot/",
@@ -75,10 +61,8 @@ test("home explains the publication and links all five categories", async ({
       name: /practical business technology/i,
     }),
   ).toBeVisible();
-  await expect(page.getByText(/small-business decision makers/i)).toBeVisible();
-  await expect(
-    page.getByText(/business needs and technology decisions/i),
-  ).toBeVisible();
+  await expect(page.getByText(/source-backed guidance/i).first()).toBeVisible();
+  await expect(page.getByText(/without product hype/i)).toBeVisible();
 
   for (const category of categories) {
     await expect(
@@ -87,102 +71,62 @@ test("home explains the publication and links all five categories", async ({
   }
 });
 
-test("home presents the complete editorial hierarchy and trust paths", async ({
-  page,
-}) => {
+test("home is a de-duplicated issue front page", async ({ page }) => {
   await page.goto("/");
 
-  const topStories = page.getByRole("region", { name: "Top stories" });
+  const articleLinks = page.locator('main a[href^="/articles/"]');
+  const articleHrefs = await articleLinks.evaluateAll((links) =>
+    links.map((link) => link.getAttribute("href")),
+  );
+
+  expect(articleHrefs).toHaveLength(15);
+  expect(new Set(articleHrefs).size).toBe(15);
+
+  const currentIssue = page.getByRole("region", { name: "Current issue" });
   const latestBriefing = page.getByRole("region", {
     name: "Latest briefing",
   });
   const startHere = page.getByRole("region", { name: "Start here" });
-  const latestArticles = page.getByRole("region", {
-    name: "Latest articles",
+  const moreGuides = page.getByRole("region", {
+    name: "More guides",
   });
 
-  await expect(topStories).toBeVisible();
-  await expect(topStories.locator(".article-card--lead")).toHaveCount(1);
-  const featureCount = await topStories
-    .locator(".article-card--feature")
-    .count();
-  expect(featureCount).toBeGreaterThanOrEqual(2);
-  expect(featureCount).toBeLessThanOrEqual(3);
+  await expect(currentIssue).toBeVisible();
+  await expect(
+    currentIssue.locator(".front-page__lead .article-card--lead"),
+  ).toHaveCount(1);
+  await expect(
+    currentIssue.locator(".front-page__support .article-card--feature"),
+  ).toHaveCount(2);
   await expect(latestBriefing).toBeVisible();
+  await expect(latestBriefing.locator(".article-card--list")).toHaveCount(3);
   await expect(startHere).toBeVisible();
-  await expect(latestArticles).toBeVisible();
+  await expect(startHere.locator(".article-card--list")).toHaveCount(3);
+  await expect(moreGuides).toBeVisible();
+  await expect(moreGuides.locator(".article-card--list")).toHaveCount(6);
 
-  const leadHrefs = await uniqueArticleHrefs(
-    topStories.locator(".article-card--lead"),
-  );
-  const featureHrefs = await uniqueArticleHrefs(
-    topStories.locator(".article-card--feature"),
-  );
-  await expect(latestBriefing.locator(".article-card--compact")).toHaveCount(3);
-  const briefingHrefs = await uniqueArticleHrefs(
-    latestBriefing.locator(".article-card--compact"),
-  );
-  const startHereHrefs = await uniqueArticleHrefs(
-    startHere.locator(".article-card"),
-  );
-  const latestListCount = await latestArticles
-    .locator(".article-card--list")
-    .count();
-  const latestHrefs = await uniqueArticleHrefs(
-    latestArticles.locator(".article-card--list"),
-  );
-
-  expect(leadHrefs).toHaveLength(1);
-  expect(featureHrefs).toHaveLength(featureCount);
-  expect(briefingHrefs).toHaveLength(3);
-  expect(startHereHrefs.length).toBeGreaterThan(0);
-  expect(latestListCount).toBeGreaterThan(0);
-  expect(latestHrefs).toHaveLength(latestListCount);
-  expect(
-    new Set([
-      ...leadHrefs,
-      ...featureHrefs,
-      ...briefingHrefs,
-      ...startHereHrefs,
-    ]).size,
-  ).toBe(
-    leadHrefs.length +
-      featureHrefs.length +
-      briefingHrefs.length +
-      startHereHrefs.length,
-  );
-
-  const topicSections = page.locator(".topic-section[data-category]");
-  await expect(topicSections).toHaveCount(categories.length);
+  const topicRows = page.locator(".topic-directory--compact li");
+  await expect(topicRows).toHaveCount(categories.length);
+  await expect(
+    page.locator('.topic-directory--compact a[href^="/articles/"]'),
+  ).toHaveCount(0);
   expect(
     (
-      await topicSections.evaluateAll((sections) =>
-        sections.map((section) => section.getAttribute("data-category")),
+      await topicRows.evaluateAll((rows) =>
+        rows.map((row) => row.getAttribute("data-category")),
       )
     ).sort(),
   ).toEqual(categories.map(({ slug }) => slug).sort());
 
   for (const category of categories) {
-    const topicSection = page.locator(
-      `.topic-section[data-category="${category.slug}"]`,
+    const topicRow = page.locator(
+      `.topic-directory--compact li[data-category="${category.slug}"]`,
     );
-    await expect(topicSection).toBeVisible();
+    await expect(topicRow).toBeVisible();
     await expect(
-      topicSection
-        .getByRole("link", { name: category.name, exact: true })
-        .first(),
+      topicRow.getByRole("link", { name: new RegExp(category.name, "i") }),
     ).toHaveAttribute("href", `/categories/${category.slug}/`);
-
-    const topicCards = topicSection.locator(".article-card");
-    await expect(topicCards).toHaveCount(3);
-    expect(await uniqueArticleHrefs(topicCards)).toHaveLength(3);
-    for (let index = 0; index < 3; index += 1) {
-      await expect(
-        topicCards
-          .nth(index)
-          .getByRole("link", { name: category.name, exact: true }),
-      ).toHaveAttribute("href", `/categories/${category.slug}/`);
-    }
+    await expect(topicRow).toContainText(/3 guides/i);
   }
 
   await expect(
@@ -194,30 +138,37 @@ test("home presents the complete editorial hierarchy and trust paths", async ({
     "/articles/back-up-business-files-with-the-3-2-1-method/",
   );
 
+  const evidence = page.locator("header.home-opening + .publication-evidence");
+  await expect(evidence).toHaveCount(1);
+  await expect(evidence).toContainText(/source-led guidance/i);
+  await expect(evidence).toContainText(/corrections/i);
+  await expect(evidence).toContainText(/commercial status/i);
+  await expect(evidence).toContainText(/publication-name byline/i);
   await expect(
-    startHere.locator(".card-outcome").filter({
-      hasText: "Create a scoped backup inventory",
-    }),
-  ).toContainText("Use it to: Create a scoped backup inventory");
-
-  const trust = page.getByRole("region", {
-    name: "How this publication works",
-  });
-  await expect(trust).toContainText(/publication-name byline/i);
-  await expect(trust).toContainText(
-    "Read the Publisher boundary or use Contact",
-  );
-  await expect(
-    trust.getByRole("link", { name: "Editorial standards" }),
+    evidence.getByRole("link", { name: "Editorial standards" }),
   ).toHaveAttribute("href", "/editorial-standards/");
-  await expect(trust.getByRole("link", { name: "Publisher" })).toHaveAttribute(
-    "href",
-    "/publisher/",
-  );
-  await expect(trust.getByRole("link", { name: "Contact" })).toHaveAttribute(
+  await expect(
+    evidence.getByRole("link", { name: "Corrections" }),
+  ).toHaveAttribute("href", "/corrections/");
+  await expect(
+    evidence.getByRole("link", { name: "Advertising disclosure" }),
+  ).toHaveAttribute("href", "/advertising-disclosure/");
+  await expect(
+    evidence.getByRole("link", { name: "Publisher" }),
+  ).toHaveAttribute("href", "/publisher/");
+  await expect(evidence.getByRole("link", { name: "Contact" })).toHaveAttribute(
     "href",
     "/contact/",
   );
+  await expect(evidence).toHaveAttribute(
+    "aria-labelledby",
+    "publication-evidence-heading",
+  );
+  await expect(
+    page.getByRole("region", {
+      name: "Publication evidence",
+    }),
+  ).toBeVisible();
 });
 
 test("desktop masthead exposes every topic and marks the current route", async ({

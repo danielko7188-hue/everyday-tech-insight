@@ -2,12 +2,11 @@
 import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
 
-import AdSlot from "../components/AdSlot.astro";
 import ArticleCard from "../components/ArticleCard.astro";
 import SectionHeading from "../components/SectionHeading.astro";
 import TrustModule from "../components/TrustModule.astro";
 import { categories } from "../data/categories";
-import { resolveHomepageCuration } from "../data/editorial";
+import { allocateHomepageEdition } from "../data/editorial";
 import { site } from "../data/site";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
@@ -24,30 +23,18 @@ const allArticles = await getCollection("articles");
 const publishedArticles = allArticles
   .filter(({ data }) => data.status === "published")
   .sort(compareArticles);
-const curatedArticles = resolveHomepageCuration(allArticles);
-const [leadArticle] = curatedArticles.lead;
-const featureArticles = curatedArticles.features;
-const briefingArticles = curatedArticles.briefing;
-const startHereArticles = curatedArticles.startHere;
-const selectedPrimarySlugs = new Set(
-  Object.values(curatedArticles)
-    .flat()
-    .map((article) => article.data.slug),
-);
-const latestArticles = publishedArticles.filter(
-  (article) => !selectedPrimarySlugs.has(article.data.slug),
-);
-const topicArticles = new Map(
+const homepageEdition = allocateHomepageEdition(publishedArticles);
+const [leadArticle] = homepageEdition.lead;
+const featureArticles = homepageEdition.features;
+const briefingArticles = homepageEdition.briefing;
+const startHereArticles = homepageEdition.startHere;
+const moreGuides = homepageEdition.moreGuides;
+const topicCounts = new Map(
   categories.map((category) => [
     category.slug,
-    publishedArticles
-      .filter((article) => article.data.category === category.slug)
-      .sort(
-        (left, right) =>
-          Number(right.data.featured) - Number(left.data.featured) ||
-          compareArticles(left, right),
-      )
-      .slice(0, 3),
+    publishedArticles.filter(
+      (article) => article.data.category === category.slug,
+    ).length,
   ]),
 );
 
@@ -72,64 +59,52 @@ const websiteStructuredData = {
   structuredData={websiteStructuredData}
 >
   <div class="page-shell home-page">
-    <header class="home-hero">
-      <div class="home-hero__copy">
+    <header class="home-opening">
+      <div class="home-opening__promise">
         <p class="eyebrow">Independent practical guidance</p>
         <h1>Practical business technology, explained clearly</h1>
         <p class="lead-summary">
-          Everyday Tech Insight connects business needs and technology decisions
-          for small-business decision makers who need useful next steps, not
-          product hype.
+          Source-backed guidance for small-business technology decisions,
+          without product hype.
         </p>
       </div>
-      <p class="home-hero__note">
-        Each guide starts with a business problem, defines who it serves, and
-        states the practical outcome it supports.
-      </p>
+      <section class="front-page" aria-labelledby="front-page-heading">
+        <h2 id="front-page-heading" class="visually-hidden">Current issue</h2>
+        <div class="front-page__lead">
+          {
+            leadArticle && (
+              <ArticleCard
+                article={leadArticle}
+                variant="lead"
+                headingLevel={3}
+              />
+            )
+          }
+        </div>
+        <div class="front-page__support">
+          {
+            featureArticles.map((article) => (
+              <ArticleCard
+                article={article}
+                variant="feature"
+                headingLevel={3}
+              />
+            ))
+          }
+        </div>
+      </section>
     </header>
 
-    {
-      leadArticle && (
-        <section
-          class="home-section top-stories"
-          aria-labelledby="top-stories-heading"
-        >
-          <SectionHeading
-            eyebrow="Editorial selection"
-            title="Top stories"
-            description="Selected starting points chosen for their practical range across the publication, not popularity or trend claims."
-            id="top-stories-heading"
-          />
-          <div class="top-stories__grid">
-            <ArticleCard
-              article={leadArticle}
-              variant="lead"
-              headingLevel={3}
-            />
-            <div class="top-stories__features">
-              {featureArticles.map((article) => (
-                <ArticleCard
-                  article={article}
-                  variant="feature"
-                  headingLevel={3}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      )
-    }
-
-    <AdSlot size="leaderboard" class="home-page__ad-slot" />
+    <TrustModule />
 
     <section
       class="home-section latest-briefing"
       aria-labelledby="latest-briefing-heading"
     >
       <SectionHeading
-        eyebrow="Three practical reads"
+        eyebrow="Latest"
         title="Latest briefing"
-        description="A concise cross-section of current publication guidance, selected editorially from the launch collection."
+        description="Three current guides for practical technology decisions."
         id="latest-briefing-heading"
       />
       <ol class="latest-briefing__list">
@@ -138,8 +113,9 @@ const websiteStructuredData = {
             <li>
               <ArticleCard
                 article={article}
-                variant="compact"
+                variant="list"
                 headingLevel={3}
+                showSummary
               />
             </li>
           ))
@@ -154,78 +130,66 @@ const websiteStructuredData = {
       <SectionHeading
         eyebrow="Practical foundations"
         title="Start here"
-        description="Begin with bounded guides that produce a concrete record, test, or decision."
+        description="Begin with a bounded guide that produces a useful record, test, or decision."
         id="start-here-heading"
       />
-      <div class="start-here__grid">
+      <ol class="start-here__list">
         {
           startHereArticles.map((article) => (
-            <ArticleCard
-              article={article}
-              variant="standard"
-              headingLevel={3}
-            />
+            <li>
+              <ArticleCard
+                article={article}
+                variant="list"
+                headingLevel={3}
+                showSummary
+              />
+            </li>
           ))
         }
-      </div>
+      </ol>
     </section>
 
-    <AdSlot size="leaderboard" class="home-page__ad-slot" />
-
-    <div class="home-topics" aria-label="Publication topics">
-      {
-        categories.map((category, categoryIndex) => (
-          <section
-            class:list={[
-              "home-section",
-              "topic-section",
-              {
-                "topic-section--reverse": categoryIndex % 2 === 1,
-              },
-            ]}
-            data-category={category.slug}
-            style={`--category-accent: ${category.accent};`}
-            aria-labelledby={`topic-${category.slug}-heading`}
-          >
-            <SectionHeading
-              eyebrow="Topic"
-              title={category.name}
-              description={category.description}
-              href={`/categories/${category.slug}/`}
-              linkLabel={`View all ${category.name}`}
-              id={`topic-${category.slug}-heading`}
-            />
-            <div class="topic-section__stories">
-              {topicArticles
-                .get(category.slug)
-                ?.map((article, articleIndex) => (
-                  <ArticleCard
-                    article={article}
-                    variant={articleIndex === 0 ? "standard" : "compact"}
-                    headingLevel={3}
-                  />
-                ))}
-            </div>
-          </section>
-        ))
-      }
-    </div>
-
     <section
-      class="home-section latest-articles"
-      aria-labelledby="latest-articles-heading"
+      class="home-section topic-directory topic-directory--compact"
+      aria-labelledby="topics-heading"
     >
       <SectionHeading
-        eyebrow="Complete the launch collection"
-        title="Latest articles"
-        description="The remaining published guides, ordered by publication date and title for a stable index."
-        href="/categories/"
-        linkLabel="Browse every topic"
-        id="latest-articles-heading"
+        eyebrow="Five decision areas"
+        title="Browse by topic"
+        description="Choose the business decision area that matches the work in front of you."
+        id="topics-heading"
       />
-      <ol class="latest-articles__list">
+      <ol>
         {
-          latestArticles.map((article) => (
+          categories.map((category) => (
+            <li
+              data-category={category.slug}
+              style={`--category-accent: ${category.accent};`}
+            >
+              <a href={`/categories/${category.slug}/`}>
+                <span>{category.name}</span>
+                <span>{topicCounts.get(category.slug)} guides</span>
+              </a>
+              <p>{category.description}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section
+      class="home-section more-guides"
+      aria-labelledby="more-guides-heading"
+    >
+      <SectionHeading
+        eyebrow="Complete issue"
+        title="More guides"
+        description="The remaining published guides, kept in a stable reading order."
+        id="more-guides-heading"
+      />
+      <ol>
+        {
+          moreGuides.map((article) => (
             <li>
               <ArticleCard article={article} variant="list" headingLevel={3} />
             </li>
@@ -233,7 +197,5 @@ const websiteStructuredData = {
         }
       </ol>
     </section>
-
-    <TrustModule />
   </div>
 </BaseLayout>
