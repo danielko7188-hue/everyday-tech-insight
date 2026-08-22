@@ -4,7 +4,6 @@ import { getCollection } from "astro:content";
 
 import ArticleCard from "../../components/ArticleCard.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
-import CategoryNav from "../../components/CategoryNav.astro";
 import EditorialVisual from "../../components/EditorialVisual.astro";
 import SectionHeading from "../../components/SectionHeading.astro";
 import {
@@ -98,8 +97,6 @@ const description = category.description;
         />
       </div>
     </header>
-
-    <CategoryNav activeCategory={category.slug} />
 
     {
       leadArticle ? (

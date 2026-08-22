@@ -32,6 +32,7 @@ interface FocusAppearance {
   ancestorBackgrounds: string[];
   backgroundColor: string;
   boxShadow: string;
+  color: string;
   outlineColor: string;
   outlineOffset: string;
   outlineStyle: string;
@@ -126,12 +127,52 @@ async function captureFocusAppearance(
       ancestorBackgrounds,
       backgroundColor: styles.backgroundColor,
       boxShadow: styles.boxShadow,
+      color: styles.color,
       outlineColor: styles.outlineColor,
       outlineOffset: styles.outlineOffset,
       outlineStyle: styles.outlineStyle,
       outlineWidth: Number.parseFloat(styles.outlineWidth),
     };
   });
+}
+
+async function expectFocusedTextContrast(
+  page: Page,
+  locator: Locator,
+  maxTabs: number,
+): Promise<void> {
+  await reachByTab(page, locator, maxTabs);
+  await expect(locator).toBeFocused();
+  await page.waitForTimeout(220);
+
+  const appearance = await captureFocusAppearance(locator);
+  const foreground = parseCssColor(appearance.color);
+  expect(foreground).not.toBeNull();
+
+  const white: RgbaColor = {
+    red: 255,
+    green: 255,
+    blue: 255,
+    alpha: 1,
+  };
+  const nearestBackground = appearance.ancestorBackgrounds
+    .map(parseCssColor)
+    .find((color): color is RgbaColor => Boolean(color && color.alpha > 0));
+  const surrounding = nearestBackground
+    ? compositeColor(nearestBackground, white)
+    : white;
+  const elementBackground = parseCssColor(appearance.backgroundColor);
+  const effectiveBackground = elementBackground
+    ? compositeColor(elementBackground, surrounding)
+    : surrounding;
+  const ratio = foreground
+    ? contrastRatio(
+        compositeColor(foreground, effectiveBackground),
+        effectiveBackground,
+      )
+    : 0;
+
+  expect(ratio).toBeGreaterThanOrEqual(4.5);
 }
 
 async function reachByTab(
@@ -349,6 +390,21 @@ test("article body links are visibly underlined and keyboard focus is visible", 
   await reachByTab(page, sourceLink, 80);
   await expect(sourceLink).toBeFocused();
   await expectVisibleFocusIndicator(sourceLink, sourceLinkUnfocused);
+});
+
+test("focused editorial links retain WCAG AA text contrast", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+
+  const storyMetaLink = page.locator(".story-meta a").first();
+  const sectionLink = page.locator(".section-heading__link").first();
+  await expect(storyMetaLink).toBeVisible();
+  await expect(sectionLink).toBeVisible();
+
+  await expectFocusedTextContrast(page, storyMetaLink, 30);
+  await expectFocusedTextContrast(page, sectionLink, 120);
 });
 
 test("mobile article TOC and data table stay accessible inside the page boundary", async ({
