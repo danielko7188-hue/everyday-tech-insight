@@ -12,7 +12,6 @@ intendedAudience: "Small-business decision makers selecting a first or next work
 readerOutcome: "Produce a ranked shortlist of automation candidates and a one-page pilot brief with measures, safeguards, ownership, and a stop condition."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-dateModified: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: true
 summary: "Start with a task inventory, score repeatability and risk, reject poor candidates early, and pilot one bounded workflow with a human-owned fallback."
@@ -29,7 +28,9 @@ sourceList:
     url: "https://www.nist.gov/itl/smallbusinesscyber/nist-cybersecurity-framework-0"
     publisher: "National Institute of Standards and Technology"
     accessed: "2026-08-21"
-relatedArticles: []
+relatedArticles:
+  - "evaluate-ai-output-quality-in-a-small-team-pilot"
+  - "document-a-repetitive-workflow-before-automating"
 noindex: false
 ---
 
