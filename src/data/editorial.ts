@@ -79,3 +79,58 @@ export function resolveHomepageCuration<T extends CuratableArticle>(
 
   return resolved;
 }
+
+export const homepageSectionSizes = {
+  lead: 1,
+  features: 2,
+  briefing: 3,
+  startHere: 3,
+} as const satisfies Record<HomepageCurationSection, number>;
+
+export interface HomepageEdition<T> {
+  lead: T[];
+  features: T[];
+  briefing: T[];
+  startHere: T[];
+  moreGuides: T[];
+}
+
+export function allocateHomepageEdition<T extends CuratableArticle>(
+  articles: readonly T[],
+  curation: HomepageCurationConfig = homepageCuration,
+): HomepageEdition<T> {
+  const configured = resolveHomepageCuration(articles, curation);
+  const published = articles.filter(
+    (article) => article.data.status === "published",
+  );
+  const assigned = new Set<string>();
+  const edition: HomepageEdition<T> = {
+    lead: [],
+    features: [],
+    briefing: [],
+    startHere: [],
+    moreGuides: [],
+  };
+
+  for (const section of homepageCurationSections) {
+    const target = edition[section];
+    for (const article of configured[section]) {
+      if (!assigned.has(article.data.slug)) {
+        target.push(article);
+        assigned.add(article.data.slug);
+      }
+    }
+    for (const article of published) {
+      if (target.length >= homepageSectionSizes[section]) break;
+      if (!assigned.has(article.data.slug)) {
+        target.push(article);
+        assigned.add(article.data.slug);
+      }
+    }
+  }
+
+  edition.moreGuides = published.filter(
+    (article) => !assigned.has(article.data.slug),
+  );
+  return edition;
+}
