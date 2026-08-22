@@ -40,8 +40,9 @@ interface FocusAppearance {
 
 function parseCssColor(value: string): RgbaColor | null {
   const hexMatch = value.trim().match(/^#([\da-f]{3,8})$/i);
-  if (hexMatch) {
-    let hex = hexMatch[1];
+  const matchedHex = hexMatch?.[1];
+  if (matchedHex) {
+    let hex = matchedHex;
     if (hex.length === 3 || hex.length === 4) {
       hex = [...hex].map((character) => character.repeat(2)).join("");
     }
@@ -62,14 +63,17 @@ function parseCssColor(value: string): RgbaColor | null {
     return null;
   }
   const channels = value.match(/[\d.]+/g)?.map(Number);
-  if (!channels || channels.length < 3) {
+  const red = channels?.[0];
+  const green = channels?.[1];
+  const blue = channels?.[2];
+  if (red === undefined || green === undefined || blue === undefined) {
     return null;
   }
   return {
-    red: channels[0],
-    green: channels[1],
-    blue: channels[2],
-    alpha: channels[3] ?? 1,
+    red,
+    green,
+    blue,
+    alpha: channels?.[3] ?? 1,
   };
 }
 
