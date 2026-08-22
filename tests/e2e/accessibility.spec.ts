@@ -458,6 +458,44 @@ test("mobile article TOC and data table stay accessible inside the page boundary
   ).toEqual([]);
 });
 
+test("mobile business technology fit disclosure is keyboard accessible without an exposed duplicate", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(articlePath);
+
+  const desktopFit = page.locator("section.fit-summary--desktop");
+  const mobileFit = page.locator("details.fit-summary--mobile");
+  const summary = mobileFit.locator("summary");
+
+  await expect(desktopFit).toBeHidden();
+  await expect(mobileFit).toBeVisible();
+  await expect(mobileFit).not.toHaveAttribute("open", "");
+  await expect(summary).toBeVisible();
+  await expect(summary).toHaveAccessibleName("Business technology fit");
+  const summaryBox = await summary.boundingBox();
+  expect(summaryBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+  const summaryUnfocused = await captureFocusAppearance(summary);
+  await reachByTab(page, summary, 40);
+  await expect(summary).toBeFocused();
+  await expectVisibleFocusIndicator(summary, summaryUnfocused);
+  await page.keyboard.press("Enter");
+  await expect(mobileFit).toHaveAttribute("open", "");
+  await expect(
+    mobileFit.getByText("Business problem", { exact: true }),
+  ).toBeVisible();
+
+  const accessibilityResults = await new AxeBuilder({ page })
+    .withTags(wcagTags)
+    .analyze();
+  expect(
+    accessibilityResults.violations.filter(({ impact }) =>
+      ["serious", "critical"].includes(impact ?? ""),
+    ),
+  ).toEqual([]);
+});
+
 test("reduced motion removes effective motion from rendered elements and pseudos", async ({
   page,
 }) => {

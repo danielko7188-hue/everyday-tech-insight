@@ -3,6 +3,7 @@ import type { MarkdownHeading } from "astro";
 import type { CollectionEntry } from "astro:content";
 
 import ArticleCard from "../components/ArticleCard.astro";
+import ArticleEvidence from "../components/ArticleEvidence.astro";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import EditorialVisual from "../components/EditorialVisual.astro";
 import FitSummary from "../components/FitSummary.astro";
@@ -50,6 +51,7 @@ const formatDate = (date: string) =>
 >
   <div class="page-shell article-shell">
     <Breadcrumbs
+      compactCurrent
       items={[
         { name: "Home", href: "/" },
         { name: "Categories", href: "/categories/" },
@@ -93,12 +95,12 @@ const formatDate = (date: string) =>
                 </p>
               )
             }
-            <p>
-              Reviewed <time datetime={data.lastReviewed}
-                >{formatDate(data.lastReviewed)}</time
-              >
-            </p>
           </div>
+          <ArticleEvidence
+            sourceCount={data.sourceList.length}
+            reviewedDate={data.lastReviewed}
+            reviewedLabel={formatDate(data.lastReviewed)}
+          />
         </div>
         <div class="article-hero__visual" data-editorial-visual>
           <EditorialVisual

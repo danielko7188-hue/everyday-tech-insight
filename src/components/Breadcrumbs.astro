@@ -8,9 +8,10 @@ export interface BreadcrumbItem {
 
 interface Props {
   items: BreadcrumbItem[];
+  compactCurrent?: boolean;
 }
 
-const { items } = Astro.props;
+const { items, compactCurrent = false } = Astro.props;
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -23,7 +24,13 @@ const structuredData = {
 };
 ---
 
-<nav class="breadcrumbs" aria-label="Breadcrumb">
+<nav
+  class:list={[
+    "breadcrumbs",
+    { "breadcrumbs--compact-current": compactCurrent },
+  ]}
+  aria-label="Breadcrumb"
+>
   <ol>
     {
       items.map((item, index) => (

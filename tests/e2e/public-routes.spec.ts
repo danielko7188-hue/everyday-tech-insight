@@ -371,6 +371,33 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
   );
 });
 
+test("article surfaces its evidence boundary near the headline", async ({
+  page,
+}) => {
+  await page.goto(`/articles/${articleSlug}/`);
+
+  const hero = page.locator(".article-hero");
+  const evidence = page.getByRole("region", { name: "Article evidence" });
+  await expect(evidence).toBeVisible();
+  await expect(evidence).toContainText("3 cited sources");
+  await expect(evidence.locator('time[datetime="2026-08-21"]')).toHaveText(
+    "August 21, 2026",
+  );
+  await expect(
+    evidence.getByRole("link", { name: "Editorial standards" }),
+  ).toHaveAttribute("href", "/editorial-standards/");
+  await expect(
+    evidence.getByRole("link", { name: "Corrections" }),
+  ).toHaveAttribute("href", "/corrections/");
+
+  const heroBox = await hero.boundingBox();
+  const evidenceBox = await evidence.boundingBox();
+  expect(heroBox).not.toBeNull();
+  expect(evidenceBox).not.toBeNull();
+  expect(evidenceBox!.y).toBeGreaterThanOrEqual(heroBox!.y);
+  expect(evidenceBox!.y).toBeLessThanOrEqual(heroBox!.y + heroBox!.height + 1);
+});
+
 test("article table of contents links only to real body heading IDs", async ({
   page,
 }) => {

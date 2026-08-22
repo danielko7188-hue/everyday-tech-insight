@@ -8,26 +8,41 @@ interface Props {
 
 const { businessProblem, technologyFocus, intendedAudience, readerOutcome } =
   Astro.props;
+const fields = [
+  ["Business problem", businessProblem],
+  ["Technology focus", technologyFocus],
+  ["Intended reader", intendedAudience],
+  ["Practical outcome", readerOutcome],
+] as const;
 ---
 
-<section class="fit-summary" aria-labelledby="fit-heading">
-  <h2 id="fit-heading">Business technology fit</h2>
+<section
+  class="fit-summary fit-summary--desktop"
+  aria-labelledby="fit-heading-desktop"
+>
+  <h2 id="fit-heading-desktop">Business technology fit</h2>
   <dl>
-    <div>
-      <dt>Business problem</dt>
-      <dd>{businessProblem}</dd>
-    </div>
-    <div>
-      <dt>Technology focus</dt>
-      <dd>{technologyFocus}</dd>
-    </div>
-    <div>
-      <dt>Intended reader</dt>
-      <dd>{intendedAudience}</dd>
-    </div>
-    <div>
-      <dt>Practical outcome</dt>
-      <dd>{readerOutcome}</dd>
-    </div>
+    {
+      fields.map(([term, value]) => (
+        <div>
+          <dt>{term}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))
+    }
   </dl>
 </section>
+
+<details class="fit-summary fit-summary--mobile">
+  <summary>Business technology fit</summary>
+  <dl>
+    {
+      fields.map(([term, value]) => (
+        <div>
+          <dt>{term}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</details>

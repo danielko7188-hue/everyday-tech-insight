@@ -348,3 +348,67 @@ for (const categorySlug of categorySlugs) {
     expect(titleBox!.y).toBeLessThanOrEqual(760);
   });
 }
+
+test("mobile article reaches the reading body quickly", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+
+  await expect(page.locator(".article-hero__visual")).toBeHidden();
+  const fit = page.locator("details.fit-summary--mobile");
+  await expect(fit).toBeVisible();
+  await expect(fit).not.toHaveAttribute("open", "");
+
+  const firstParagraph = await page
+    .locator(".article-body > p")
+    .first()
+    .boundingBox();
+  expect(firstParagraph).not.toBeNull();
+  expect(firstParagraph!.y).toBeLessThanOrEqual(1_477);
+});
+
+test("mobile article breadcrumb hides only its current page and orphaned separator", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+
+  const breadcrumbs = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(breadcrumbs.getByRole("link", { name: "Home" })).toBeVisible();
+  await expect(
+    breadcrumbs.getByRole("link", { name: "AI & Automation" }),
+  ).toBeVisible();
+  await expect(breadcrumbs.locator('[aria-current="page"]')).toBeHidden();
+  expect(
+    await breadcrumbs
+      .locator("li:nth-last-child(2)")
+      .evaluate((item) => getComputedStyle(item, "::after").display),
+  ).toBe("none");
+});
+
+test("wide article headline wrapping is stable", async ({ page }) => {
+  const countHeadlineLines = async (width: number): Promise<number> => {
+    await page.setViewportSize({ width, height: 1080 });
+    await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+
+    return page.locator(".article-hero h1").evaluate((heading) => {
+      const range = document.createRange();
+      range.selectNodeContents(heading);
+      const lineTops = Array.from(range.getClientRects(), (rect) =>
+        Math.round(rect.top),
+      );
+      return new Set(lineTops).size;
+    });
+  };
+
+  const linesAt1440 = await countHeadlineLines(1440);
+  const linesAt1920 = await countHeadlineLines(1920);
+
+  expect(linesAt1440).toBeGreaterThan(0);
+  expect(linesAt1920).toBeLessThanOrEqual(linesAt1440);
+});
