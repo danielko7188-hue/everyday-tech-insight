@@ -39,7 +39,7 @@ const minutes = Math.max(1, Math.ceil(readingMinutes));
   aria-label="Story details"
 >
   <li class="story-meta__type">{contentTypeLabel}</li>
-  <li>
+  <li class="story-meta__category">
     <a href={`/categories/${categorySlug}/`}>{categoryName}</a>
   </li>
   <li><time datetime={publicationDate}>{formattedDate}</time></li>
@@ -71,6 +71,16 @@ const minutes = Math.max(1, Math.ceil(readingMinutes));
   .story-meta li + li::before {
     color: var(--color-rule, #c9c5ba);
     content: "/";
+  }
+
+  .story-meta .story-meta__category {
+    flex: 0 1 auto;
+    min-inline-size: 0;
+    white-space: normal;
+  }
+
+  .story-meta__category a {
+    min-inline-size: 0;
   }
 
   .story-meta a {

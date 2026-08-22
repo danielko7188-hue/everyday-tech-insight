@@ -193,3 +193,39 @@ for (const route of representativeRoutes) {
     });
   }
 }
+
+test("compact story metadata stays inside its card at tablet width", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto("/");
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+
+  const overflow = await page
+    .locator(".article-card--compact .story-meta")
+    .evaluateAll((metadataLists) =>
+      metadataLists.flatMap((metadataList, listIndex) => {
+        const card = metadataList.closest(".article-card");
+        if (!card) {
+          return [
+            { listIndex, itemIndex: -1, overflow: Number.POSITIVE_INFINITY },
+          ];
+        }
+
+        const cardBox = card.getBoundingClientRect();
+        return Array.from(metadataList.children).flatMap((item, itemIndex) => {
+          const itemBox = item.getBoundingClientRect();
+          const excess = Math.max(
+            cardBox.left - itemBox.left,
+            itemBox.right - cardBox.right,
+            0,
+          );
+          return excess > 1 ? [{ listIndex, itemIndex, overflow: excess }] : [];
+        });
+      }),
+    );
+
+  expect(overflow).toEqual([]);
+});
