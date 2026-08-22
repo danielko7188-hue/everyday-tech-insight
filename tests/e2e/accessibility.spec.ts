@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const articlePath = "/articles/how-to-identify-business-tasks-for-automation/";
 const categoryPath = "/categories/ai-automation/";
@@ -26,6 +26,16 @@ interface RgbaColor {
   green: number;
   blue: number;
   alpha: number;
+}
+
+interface FocusAppearance {
+  ancestorBackgrounds: string[];
+  backgroundColor: string;
+  boxShadow: string;
+  outlineColor: string;
+  outlineOffset: string;
+  outlineStyle: string;
+  outlineWidth: number;
 }
 
 function parseCssColor(value: string): RgbaColor | null {
@@ -97,8 +107,10 @@ function contrastRatio(first: RgbaColor, second: RgbaColor): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-async function expectVisibleFocusIndicator(locator: Locator): Promise<void> {
-  const appearance = await locator.evaluate((element) => {
+async function captureFocusAppearance(
+  locator: Locator,
+): Promise<FocusAppearance> {
+  return locator.evaluate((element) => {
     const styles = getComputedStyle(element);
     const ancestorBackgrounds: string[] = [];
     let ancestor = element.parentElement;
@@ -108,16 +120,60 @@ async function expectVisibleFocusIndicator(locator: Locator): Promise<void> {
     }
     return {
       ancestorBackgrounds,
+      backgroundColor: styles.backgroundColor,
       boxShadow: styles.boxShadow,
       outlineColor: styles.outlineColor,
+      outlineOffset: styles.outlineOffset,
       outlineStyle: styles.outlineStyle,
       outlineWidth: Number.parseFloat(styles.outlineWidth),
     };
   });
+}
+
+async function reachByTab(
+  page: Page,
+  target: Locator,
+  maxTabs = 60,
+): Promise<void> {
+  await expect(target).toBeVisible();
+  for (let index = 0; index < maxTabs; index += 1) {
+    await page.keyboard.press("Tab");
+    if (
+      await target.evaluate((element) => element === document.activeElement)
+    ) {
+      return;
+    }
+  }
+
+  const activeElement = await page.evaluate(() => {
+    const active = document.activeElement;
+    return active
+      ? `${active.tagName.toLowerCase()}#${active.id}.${active.className}`
+      : "none";
+  });
+  throw new Error(
+    `Target was not reached within ${maxTabs} Tab presses; active element: ${activeElement}`,
+  );
+}
+
+async function expectVisibleFocusIndicator(
+  locator: Locator,
+  unfocused: FocusAppearance,
+): Promise<void> {
+  const appearance = await captureFocusAppearance(locator);
+  const outlineChanged =
+    appearance.outlineColor !== unfocused.outlineColor ||
+    appearance.outlineOffset !== unfocused.outlineOffset ||
+    appearance.outlineStyle !== unfocused.outlineStyle ||
+    appearance.outlineWidth !== unfocused.outlineWidth;
+  const shadowChanged = appearance.boxShadow !== unfocused.boxShadow;
+
+  expect(outlineChanged || shadowChanged).toBe(true);
 
   const outlineColor = parseCssColor(appearance.outlineColor);
   const indicatorColors: RgbaColor[] = [];
   if (
+    outlineChanged &&
     !["none", "hidden"].includes(appearance.outlineStyle) &&
     appearance.outlineWidth > 0 &&
     outlineColor &&
@@ -125,12 +181,14 @@ async function expectVisibleFocusIndicator(locator: Locator): Promise<void> {
   ) {
     indicatorColors.push(outlineColor);
   }
-  for (const colorValue of appearance.boxShadow.match(
-    /rgba?\([^)]+\)|#[\da-f]{3,8}/gi,
-  ) ?? []) {
-    const color = parseCssColor(colorValue);
-    if (color && color.alpha > 0) {
-      indicatorColors.push(color);
+  if (shadowChanged) {
+    for (const colorValue of appearance.boxShadow.match(
+      /rgba?\([^)]+\)|#[\da-f]{3,8}/gi,
+    ) ?? []) {
+      const color = parseCssColor(colorValue);
+      if (color && color.alpha > 0) {
+        indicatorColors.push(color);
+      }
     }
   }
 
@@ -142,18 +200,37 @@ async function expectVisibleFocusIndicator(locator: Locator): Promise<void> {
     blue: 255,
     alpha: 1,
   };
-  const nearestBackground = appearance.ancestorBackgrounds
+  const nearestBackgroundColor = appearance.ancestorBackgrounds
     .map(parseCssColor)
     .find((color): color is RgbaColor => Boolean(color && color.alpha > 0));
-  const background = nearestBackground
-    ? compositeColor(nearestBackground, white)
+  const surroundingBackground = nearestBackgroundColor
+    ? compositeColor(nearestBackgroundColor, white)
     : white;
-  const strongestContrast = Math.max(
-    ...indicatorColors.map((color) =>
-      contrastRatio(compositeColor(color, background), background),
-    ),
+  const elementBackground = parseCssColor(appearance.backgroundColor);
+  const effectiveElementBackground = elementBackground
+    ? compositeColor(elementBackground, surroundingBackground)
+    : surroundingBackground;
+  const relevantSurfaces = [
+    surroundingBackground,
+    effectiveElementBackground,
+  ].filter(
+    (surface, index, surfaces) =>
+      surfaces.findIndex(
+        (candidate) =>
+          candidate.red === surface.red &&
+          candidate.green === surface.green &&
+          candidate.blue === surface.blue,
+      ) === index,
   );
-  expect(strongestContrast).toBeGreaterThanOrEqual(3);
+
+  for (const surface of relevantSurfaces) {
+    const strongestContrast = Math.max(
+      ...indicatorColors.map((color) =>
+        contrastRatio(compositeColor(color, surface), surface),
+      ),
+    );
+    expect(strongestContrast).toBeGreaterThanOrEqual(3);
+  }
 }
 
 function longestDuration(value: string): number {
@@ -186,17 +263,19 @@ test("skip link is first, visibly focused, and moves focus to main", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.keyboard.press("Tab");
 
   const skipLink = page.getByRole("link", { name: "Skip to content" });
+  const skipLinkUnfocused = await captureFocusAppearance(skipLink);
+  await page.keyboard.press("Tab");
   await expect(skipLink).toBeFocused();
   await expect(skipLink).toBeVisible();
-  await expectVisibleFocusIndicator(skipLink);
+  await expectVisibleFocusIndicator(skipLink, skipLinkUnfocused);
 
-  await page.keyboard.press("Enter");
   const mainContent = page.locator("#main-content");
+  const mainContentUnfocused = await captureFocusAppearance(mainContent);
+  await page.keyboard.press("Enter");
   await expect(mainContent).toBeFocused();
-  await expectVisibleFocusIndicator(mainContent);
+  await expectVisibleFocusIndicator(mainContent, mainContentUnfocused);
 });
 
 test("390px native menu opens from the keyboard and exposes every topic", async ({
@@ -215,9 +294,10 @@ test("390px native menu opens from the keyboard and exposes every topic", async 
   expect(summaryBox?.width ?? 0).toBeGreaterThanOrEqual(44);
   expect(summaryBox?.height ?? 0).toBeGreaterThanOrEqual(44);
 
-  await summary.focus();
+  const summaryUnfocused = await captureFocusAppearance(summary);
+  await reachByTab(page, summary, 20);
   await expect(summary).toBeFocused();
-  await expectVisibleFocusIndicator(summary);
+  await expectVisibleFocusIndicator(summary, summaryUnfocused);
   await page.keyboard.press("Enter");
   await expect(menu).toHaveAttribute("open", "");
 
@@ -261,8 +341,10 @@ test("article body links are visibly underlined and keyboard focus is visible", 
     ),
   ).toBe(true);
 
-  await sourceLink.focus();
-  await expectVisibleFocusIndicator(sourceLink);
+  const sourceLinkUnfocused = await captureFocusAppearance(sourceLink);
+  await reachByTab(page, sourceLink, 80);
+  await expect(sourceLink).toBeFocused();
+  await expectVisibleFocusIndicator(sourceLink, sourceLinkUnfocused);
 });
 
 test("mobile article TOC and data table stay accessible inside the page boundary", async ({
@@ -276,6 +358,16 @@ test("mobile article TOC and data table stay accessible inside the page boundary
     .filter({ hasText: /^On this page$/ });
   await expect(tocSummary).toBeVisible();
   await expect(tocSummary).toHaveAccessibleName("On this page");
+  const tocDisclosure = page
+    .locator("article.article-page details")
+    .filter({ has: tocSummary });
+  await expect(tocDisclosure).not.toHaveAttribute("open", "");
+  const tocSummaryUnfocused = await captureFocusAppearance(tocSummary);
+  await reachByTab(page, tocSummary, 40);
+  await expect(tocSummary).toBeFocused();
+  await expectVisibleFocusIndicator(tocSummary, tocSummaryUnfocused);
+  await page.keyboard.press("Enter");
+  await expect(tocDisclosure).toHaveAttribute("open", "");
   await expect(
     page.locator("article.article-page table").first(),
   ).toBeVisible();
@@ -306,25 +398,58 @@ test("mobile article TOC and data table stay accessible inside the page boundary
   ).toEqual([]);
 });
 
-test("reduced motion removes effective transition and animation durations", async ({
+test("reduced motion removes effective motion from rendered elements and pseudos", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto(categoryPath);
 
-  const topicLink = page.locator(
-    'header.site-header a[href="/categories/ai-automation/"]:visible',
-  );
-  await expect(topicLink).toBeVisible();
-  const durations = await topicLink.evaluate((element) => {
-    const styles = getComputedStyle(element);
-    return {
-      animation: styles.animationDuration,
-      transition: styles.transitionDuration,
-    };
-  });
+  for (const route of ["/", categoryPath, articlePath]) {
+    await page.goto(route);
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
 
-  expect(longestDuration(durations.transition)).toBeLessThanOrEqual(0.01);
-  expect(longestDuration(durations.animation)).toBeLessThanOrEqual(0.01);
+    const durations = await page
+      .locator("html, body, body *")
+      .evaluateAll((elements) =>
+        elements.flatMap((element) => {
+          const elementStyles = getComputedStyle(element);
+          if (
+            elementStyles.display === "none" ||
+            elementStyles.visibility === "hidden" ||
+            element.getClientRects().length === 0
+          ) {
+            return [];
+          }
+
+          const label = `${element.tagName.toLowerCase()}${
+            element.id ? `#${element.id}` : ""
+          }`;
+          return ([null, "::before", "::after"] as const).flatMap((pseudo) => {
+            const styles = getComputedStyle(element, pseudo);
+            if (
+              pseudo &&
+              (styles.content === "none" || styles.content === "normal")
+            ) {
+              return [];
+            }
+            return [
+              {
+                animation: styles.animationDuration,
+                element: `${label}${pseudo ?? ""}`,
+                transition: styles.transitionDuration,
+              },
+            ];
+          });
+        }),
+      );
+    const movingElements = durations.filter(
+      ({ animation, transition }) =>
+        longestDuration(animation) > 0.001 ||
+        longestDuration(transition) > 0.001,
+    );
+
+    expect(movingElements, route).toEqual([]);
+  }
 });

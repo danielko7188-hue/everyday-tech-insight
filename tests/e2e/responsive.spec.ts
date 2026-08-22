@@ -1,21 +1,75 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const representativeRoutes = [
-  "/",
-  "/categories/ai-automation/",
-  "/articles/how-to-identify-business-tasks-for-automation/",
+  {
+    name: "home",
+    path: "/",
+    keySelectors: [
+      "header.site-header",
+      "main",
+      ".home-page",
+      "footer.site-footer",
+    ],
+  },
+  {
+    name: "category",
+    path: "/categories/ai-automation/",
+    keySelectors: [
+      "header.site-header",
+      "main",
+      ".category-hero",
+      "footer.site-footer",
+    ],
+  },
+  {
+    name: "article",
+    path: "/articles/how-to-identify-business-tasks-for-automation/",
+    keySelectors: [
+      "header.site-header",
+      "main",
+      ".article-page",
+      ".article-hero",
+      ".article-body",
+      "footer.site-footer",
+    ],
+  },
 ] as const;
 const requiredWidths = [360, 390, 768, 1024, 1280, 1440, 1920] as const;
 
-test("home, category, and article stay within every required viewport", async ({
-  page,
-}) => {
-  for (const width of requiredWidths) {
-    await page.setViewportSize({ width, height: width < 768 ? 844 : 900 });
+async function expectWithinViewport(
+  page: Page,
+  selector: string,
+  viewportWidth: number,
+  label: string,
+): Promise<void> {
+  const boxes = await page.locator(selector).evaluateAll((elements) =>
+    elements
+      .filter((element) => element.getClientRects().length > 0)
+      .map((element) => {
+        const box = element.getBoundingClientRect();
+        return { left: box.left, right: box.right };
+      }),
+  );
+  expect(boxes.length, `${label} is rendered`).toBeGreaterThan(0);
+  for (const box of boxes) {
+    expect(box.left, `${label} left boundary`).toBeGreaterThanOrEqual(-1);
+    expect(box.right, `${label} right boundary`).toBeLessThanOrEqual(
+      viewportWidth + 1,
+    );
+  }
+}
 
-    for (const route of representativeRoutes) {
-      const response = await page.goto(route);
-      expect(response?.status(), `${route} at ${width}px`).toBe(200);
+for (const route of representativeRoutes) {
+  for (const width of requiredWidths) {
+    test(`${route.name} at ${width}px stays inside the viewport`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: width < 768 ? 844 : 900 });
+      const response = await page.goto(route.path);
+      expect(response?.status()).toBe(200);
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
 
       const overflow = await page.evaluate(() => ({
         body: document.body.scrollWidth,
@@ -24,12 +78,41 @@ test("home, category, and article stay within every required viewport", async ({
       }));
       expect(
         overflow.document,
-        `${route} at ${width}px document overflow`,
+        `${route.path} at ${width}px document overflow`,
       ).toBeLessThanOrEqual(overflow.viewport);
       expect(
         overflow.body,
-        `${route} at ${width}px body overflow`,
+        `${route.path} at ${width}px body overflow`,
       ).toBeLessThanOrEqual(overflow.viewport);
-    }
+
+      for (const selector of route.keySelectors) {
+        await expectWithinViewport(
+          page,
+          selector,
+          overflow.viewport,
+          `${route.path} at ${width}px ${selector}`,
+        );
+      }
+
+      if (route.name === "article") {
+        const table = page.locator("article.article-page table").first();
+        await expect(table).toBeVisible();
+        const tableBoundary = await table.evaluate((element) => {
+          let candidate: Element | null = element;
+          while (candidate && candidate !== document.body) {
+            const overflowX = getComputedStyle(candidate).overflowX;
+            if (overflowX === "auto" || overflowX === "scroll") {
+              const box = candidate.getBoundingClientRect();
+              return { left: box.left, right: box.right };
+            }
+            candidate = candidate.parentElement;
+          }
+          const box = element.getBoundingClientRect();
+          return { left: box.left, right: box.right };
+        });
+        expect(tableBoundary.left).toBeGreaterThanOrEqual(-1);
+        expect(tableBoundary.right).toBeLessThanOrEqual(overflow.viewport + 1);
+      }
+    });
   }
-});
+}
