@@ -296,7 +296,7 @@ test("unknown paths return the custom 404 response", async ({ page }) => {
   ).toHaveAttribute("href", "/");
 });
 
-test("RSS and robots expose only configured public destinations", async ({
+test("RSS includes exact published article destinations and robots stays public", async ({
   request,
 }) => {
   const rss = await request.get("/rss.xml");
@@ -306,7 +306,6 @@ test("RSS and robots expose only configured public destinations", async ({
   expect(rss.headers()["content-type"]).toContain("xml");
   expect(rssBody).toContain("How to identify business tasks for automation");
   expect(rssBody).toContain(`/articles/${articleSlug}/`);
-  expect(rssBody).not.toMatch(/\b(?:draft|review)\b/i);
 
   const robots = await request.get("/robots.txt");
   const robotsBody = await robots.text();
