@@ -300,6 +300,11 @@ test("category routes use one visual anchor and distinct guide links", async ({
     await page.goto(`/categories/${category.slug}/`);
 
     await expect(page.locator("main [data-editorial-visual]")).toHaveCount(1);
+    const categoryPage = page.locator(".category-page");
+    await expect(categoryPage).toHaveAttribute("data-guide-count", /^\d+$/);
+    const sourceGuideCount = Number(
+      await categoryPage.getAttribute("data-guide-count"),
+    );
 
     const articleHrefs = await page
       .locator('main a[href^="/articles/"]')
@@ -309,8 +314,9 @@ test("category routes use one visual anchor and distinct guide links", async ({
           .filter((href): href is string => href !== null),
       );
 
-    expect(articleHrefs.length, category.slug).toBeGreaterThanOrEqual(3);
-    expect(new Set(articleHrefs).size, category.slug).toBe(articleHrefs.length);
+    expect(sourceGuideCount, category.slug).toBeGreaterThanOrEqual(3);
+    expect(articleHrefs.length, category.slug).toBe(sourceGuideCount);
+    expect(new Set(articleHrefs).size, category.slug).toBe(sourceGuideCount);
   }
 });
 

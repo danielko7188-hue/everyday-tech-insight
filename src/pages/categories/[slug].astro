@@ -73,7 +73,7 @@ const description = category.description;
   activeCategory={category.slug}
   includeEditorialVisualSymbols
 >
-  <div class="page-shell category-page">
+  <div class="page-shell category-page" data-guide-count={articles.length}>
     <Breadcrumbs
       items={[
         { name: "Home", href: "/" },
