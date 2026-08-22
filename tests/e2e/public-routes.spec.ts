@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { siteUrl } from "../../site.config.mjs";
 
-const siteUrl = "https://everyday-tech-insight.vercel.app";
 const articleSlug = "how-to-identify-business-tasks-for-automation";
+const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
 
 const categories = [
   { name: "AI & Automation", slug: "ai-automation" },
@@ -64,6 +65,75 @@ test("home explains the publication and links all five categories", async ({
       page.getByRole("link", { name: category.name, exact: true }).first(),
     ).toHaveAttribute("href", `/categories/${category.slug}/`);
   }
+});
+
+test("home separates featured and latest guides and exposes its trust paths", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const featured = page.getByRole("region", {
+    name: "Featured practical guides",
+  });
+  const latest = page.getByRole("region", {
+    name: "Latest published guides",
+  });
+
+  await expect(featured).toBeVisible();
+  await expect(latest).toBeVisible();
+  await expect(
+    featured.getByRole("link", {
+      name: "How to back up business files with the 3-2-1 method",
+    }),
+  ).toHaveAttribute(
+    "href",
+    "/articles/back-up-business-files-with-the-3-2-1-method/",
+  );
+
+  const featuredHrefs = await featured
+    .locator(".article-card h3 a")
+    .evaluateAll((links) =>
+      links
+        .map((link) => link.getAttribute("href"))
+        .filter((href): href is string => href !== null),
+    );
+  const latestHrefs = await latest
+    .locator(".article-card h3 a")
+    .evaluateAll((links) =>
+      links
+        .map((link) => link.getAttribute("href"))
+        .filter((href): href is string => href !== null),
+    );
+
+  expect(featuredHrefs.length).toBeGreaterThan(0);
+  expect(latestHrefs.length).toBeGreaterThan(0);
+  expect(featuredHrefs.filter((href) => latestHrefs.includes(href))).toEqual(
+    [],
+  );
+  await expect(
+    featured.locator(".card-outcome").filter({
+      hasText: "Create a scoped backup inventory",
+    }),
+  ).toContainText("Use it to: Create a scoped backup inventory");
+
+  const trust = page.getByRole("region", {
+    name: "How this publication works",
+  });
+  await expect(trust).toContainText(/publication-name byline/i);
+  await expect(trust).toContainText(
+    "Read the Publisher boundary or use Contact",
+  );
+  await expect(
+    trust.getByRole("link", { name: "Editorial standards" }),
+  ).toHaveAttribute("href", "/editorial-standards/");
+  await expect(trust.getByRole("link", { name: "Publisher" })).toHaveAttribute(
+    "href",
+    "/publisher/",
+  );
+  await expect(trust.getByRole("link", { name: "Contact" })).toHaveAttribute(
+    "href",
+    "/contact/",
+  );
 });
 
 test("category and published article routes expose useful editorial content", async ({
@@ -199,7 +269,7 @@ test("every public HTML route has one H1 and unique core metadata", async ({
 
     expect(title.length, route).toBeGreaterThan(10);
     expect(description.length, route).toBeGreaterThan(40);
-    expect(canonical, route).toBe(`${siteUrl}${route}`);
+    expect(canonical, route).toBe(absoluteSiteUrl(route));
     await expect(page.locator('meta[name="robots"]'), route).toHaveAttribute(
       "content",
       "index,follow",
@@ -222,7 +292,7 @@ test("every public HTML route has one H1 and unique core metadata", async ({
     await expect(
       page.locator('meta[property="og:url"]'),
       route,
-    ).toHaveAttribute("content", `${siteUrl}${route}`);
+    ).toHaveAttribute("content", absoluteSiteUrl(route));
     await expect(page.locator('meta[property="og:image"]'), route).toHaveCount(
       0,
     );
@@ -314,7 +384,7 @@ test("RSS includes exact published article destinations and robots stays public"
   expect(robotsBody).toContain("User-agent: *");
   expect(robotsBody).toContain("Allow: /");
   expect(robotsBody).toContain(
-    "Sitemap: https://everyday-tech-insight.vercel.app/sitemap-index.xml",
+    `Sitemap: ${absoluteSiteUrl("/sitemap-index.xml")}`,
   );
   expect(robotsBody).not.toContain("Disallow: /");
 });
