@@ -14,8 +14,8 @@
 | Published Markdown entries                              |            15 |
 | Categories                                              |             5 |
 | Entries per category                                    |        3 each |
-| Total article body words                                |        17,203 |
-| Body word-count range                                   |   1,030–1,670 |
+| Total article body whitespace-delimited Markdown tokens |        17,488 |
+| Body whitespace-token range                             |   1,030–1,670 |
 | Source citations                                        |            33 |
 | Distinct source URLs                                    |            29 |
 | Direct source URLs returning HTTP 200 on the audit date |      29 of 29 |
@@ -23,7 +23,7 @@
 | Initial entries with `dateModified`                     |             0 |
 | Columns based on owner experience                       |             0 |
 
-Word counts are descriptive audit evidence, not a ranking or publication rule. Content quality was not inferred from length alone.
+The length measure is a count of whitespace-delimited Markdown tokens: each article body is trimmed, split on one or more whitespace characters, and filtered for empty results. It includes Markdown markers and does not claim to be a linguistic word count. Token counts are descriptive audit evidence, not a ranking or publication rule. Content quality was not inferred from length alone.
 
 ## Tests run
 
@@ -51,11 +51,22 @@ Expected red result: the original automation article had zero related entries. T
 
 Fix: linked the original article to the AI-output evaluation guide and workflow-documentation guide.
 
-Final focused result:
+Result at that stage:
 
 ```text
 Test Files  1 passed (1)
 Tests       7 passed (7)
+```
+
+### Editorial regression remediation
+
+Four targeted assertions were added before the editorial corrections. The first focused run failed 4 tests and passed 7, specifically detecting the missing literal two-media backup distinction, unconditional exit-cost treatment, mismatched pilot summary, and mislabeled length measure.
+
+After the three article corrections, the focused run failed only the still-stale audit metric and passed 10 tests. The audit was then relabeled, its current token values were recomputed, and the final focused result was:
+
+```text
+Test Files  1 passed (1)
+Tests       11 passed (11)
 ```
 
 ### Astro schema and production generation
@@ -80,7 +91,9 @@ npm run check:links
 Results:
 
 - `Content QA: PASS`
-- `External source links: 29 PASS, 0 FAIL, 0 UNVERIFIED (29 unique).`
+- `External HTTPS links: 32 PASS, 0 FAIL, 0 UNVERIFIED (32 unique).`
+
+The current checker covers the 29 distinct article sources plus three public publication/platform destinations. The article-source figures in the portfolio and source-audit sections remain 29.
 
 Full repository lint, type checking, built-output QA, Playwright, axe, and Lighthouse are tracked separately in `TECHNICAL_QA.md`; this content audit does not claim those final project checks occurred here.
 
@@ -100,7 +113,9 @@ The content portfolio test verifies:
 - source hosts restricted to the reviewed official or first-party allowlist;
 - every listed source URL cited in the article body;
 - two distinct, non-self, resolvable related published articles per entry;
-- at least 650 body words and four second-level sections per entry;
+- at least 650 whitespace-delimited Markdown body tokens and four second-level sections per entry;
+- explicit distinctions for literal two-media 3-2-1, contingent exit exposure, and the four pilot weeks;
+- audit totals that must equal the portfolio’s current whitespace-token calculation;
 - explicit limitation language; and
 - no match for a defined set of unsupported first-person testing claims.
 
@@ -164,13 +179,17 @@ The HTTP snapshot is not continuous monitoring and does not prove future availab
 3. **Unresolved related-reading gap:** The original automation guide had an empty related list. A failing relationship test was added, then two genuinely related published slugs were assigned.
 4. **Strict TypeScript captures:** The file-based portfolio parser initially treated regular-expression groups as always defined. Explicit guards were added without weakening assertions.
 5. **Potential AI-pilot overlap:** The AI topic was narrowed to output-quality evaluation while the strategy article retained the general 30-day pilot workflow.
+6. **Length-label overclaim:** The audit called a whitespace split a body-word count. It now documents the exact Markdown-token method, and a regression assertion recomputes the reported total and range.
+7. **Backup media ambiguity:** The 3-2-1 example relied on account or provider boundaries without naming a second medium. It now gives a literal disk-and-tape example and labels an all-cloud design as a resilience adaptation unless two media types can be established.
+8. **Exit-cost overstatement:** The total-cost guide implied exit belonged in every horizon total. It now includes exit only in a scenario that assumes exit or decommissioning within the horizon and otherwise reports contingent exposure separately.
+9. **Pilot-summary mismatch:** The pilot summary placed failure rehearsal in the final week. It now matches the body: normal cases in week 2, exceptions and failure in week 3, and export and decision in week 4.
 
 ## Remaining limitations
 
 - Every article is source-checked, not represented as personally tested.
 - No software product, price, account configuration, backup restore, MFA rollout, phishing incident, migration, or technology pilot was performed for the publication.
 - A successful build and source check do not prove legal, privacy, security, accessibility, accounting, employment, records, or sector suitability.
-- Automated word, phrase, and metadata checks cannot establish full originality, fairness, clarity, or factual completeness.
+- Automated token, phrase, and metadata checks cannot establish full originality, fairness, clarity, or factual completeness.
 - Source pages, laws, contracts, product plans, APIs, and technical guidance can change after the review date.
 - The public byline is the publication name; real owner identity and biography remain unknown.
 - The site has no genuine private contact email, owner legal facts, AdSense account, publisher identifier, consent-management platform, analytics, advertising, or `ads.txt` record.

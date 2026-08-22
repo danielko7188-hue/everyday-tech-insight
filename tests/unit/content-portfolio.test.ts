@@ -7,6 +7,7 @@ import { categorySlugs } from "../../src/data/categories";
 import { BUSINESS_TECHNOLOGY_FIT_FIELDS } from "../../src/utils/content-contract";
 
 const articlesDirectory = join(process.cwd(), "src", "content", "articles");
+const contentAuditPath = join(process.cwd(), "docs", "CONTENT_AUDIT.md");
 const publicationDate = "2026-08-21";
 const officialSourceHosts = new Set([
   "airc.nist.gov",
@@ -41,6 +42,16 @@ function articleRecords(): ArticleRecord[] {
 
       return { fileName, frontmatter: match[1], body: match[2] };
     });
+}
+
+function articleBySlug(slug: string): ArticleRecord {
+  const article = articleRecords().find(
+    (candidate) => scalar(candidate, "slug") === slug,
+  );
+
+  if (!article) throw new Error(`Missing article: ${slug}`);
+
+  return article;
 }
 
 function scalar(article: ArticleRecord, field: string): string {
@@ -81,7 +92,7 @@ function sequenceValues(article: ArticleRecord, field: string): string[] {
   return values;
 }
 
-function wordCount(value: string): number {
+function whitespaceTokenCount(value: string): number {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
 
@@ -207,9 +218,10 @@ describe("published content portfolio", () => {
 
   it("provides substantive, structured guidance with an explicit limitation", () => {
     for (const article of articleRecords()) {
-      expect(wordCount(article.body), article.fileName).toBeGreaterThanOrEqual(
-        650,
-      );
+      expect(
+        whitespaceTokenCount(article.body),
+        article.fileName,
+      ).toBeGreaterThanOrEqual(650);
       expect(
         article.body.match(/^##\s+/gm)?.length ?? 0,
         `${article.fileName}: section count`,
@@ -224,5 +236,71 @@ describe("published content portfolio", () => {
         /\b(?:I|we)\s+(?:tested|used|reviewed|found|observed|measured|deployed)\b/,
       );
     }
+  });
+
+  it("distinguishes literal two-media 3-2-1 from an all-cloud resilience adaptation", () => {
+    const article = articleBySlug(
+      "back-up-business-files-with-the-3-2-1-method",
+    );
+
+    expect(article.body).toMatch(
+      /literal[\s\S]{0,240}two different media types/i,
+    );
+    expect(article.body).toMatch(/\b(?:tape|optical media)\b/i);
+    expect(article.body).toMatch(
+      /all-cloud[\s\S]{0,240}(?:resilience adaptation|not literal 3-2-1)/i,
+    );
+  });
+
+  it("keeps contingent exit exposure outside a total unless exit occurs within the horizon", () => {
+    const article = articleBySlug(
+      "calculate-the-total-cost-of-business-software",
+    );
+
+    expect(scalar(article, "summary")).toMatch(/contingent exit exposure/i);
+    expect(article.body).toMatch(
+      /include[\s\S]{0,160}exit cost[\s\S]{0,160}total only when[\s\S]{0,160}within the (?:chosen )?horizon/i,
+    );
+    expect(article.body).toMatch(
+      /contingent exit exposure[\s\S]{0,160}(?:separately|outside the total)/i,
+    );
+  });
+
+  it("maps the pilot summary to the four weekly stages in the article", () => {
+    const summary = scalar(
+      articleBySlug("run-a-30-day-business-technology-pilot"),
+      "summary",
+    );
+
+    expect(summary).toMatch(
+      /week 1[\s\S]*week 2[\s\S]*week 3[\s\S]*(?:exceptions|failure)[\s\S]*week 4[\s\S]*(?:export|decision)/i,
+    );
+  });
+
+  it("reports current whitespace-delimited Markdown token totals without calling them words", () => {
+    const audit = readFileSync(contentAuditPath, "utf8");
+    const totalPattern =
+      /\|\s*Total article body whitespace-delimited Markdown tokens\s*\|\s*([\d,]+)\s*\|/;
+    const rangePattern =
+      /\|\s*Body whitespace-token range\s*\|\s*([\d,]+)–([\d,]+)\s*\|/;
+
+    expect(audit).toMatch(totalPattern);
+    expect(audit).toMatch(rangePattern);
+    expect(audit).not.toMatch(/\b(?:body words|word-count|word counts)\b/i);
+
+    const totalMatch = audit.match(totalPattern);
+    const rangeMatch = audit.match(rangePattern);
+    if (!totalMatch?.[1] || !rangeMatch?.[1] || !rangeMatch[2]) return;
+
+    const tokenCounts = articleRecords().map((article) =>
+      whitespaceTokenCount(article.body),
+    );
+    const parseNumber = (value: string) => Number(value.replaceAll(",", ""));
+
+    expect(parseNumber(totalMatch[1])).toBe(
+      tokenCounts.reduce((total, count) => total + count, 0),
+    );
+    expect(parseNumber(rangeMatch[1])).toBe(Math.min(...tokenCounts));
+    expect(parseNumber(rangeMatch[2])).toBe(Math.max(...tokenCounts));
   });
 });

@@ -1,6 +1,6 @@
 ---
 title: "How to calculate the total cost of business software"
-description: "A practical total-cost model covering licenses, implementation, migration, integrations, training, administration, risk, change, and exit over a defined period."
+description: "A practical total-cost model covering licenses, implementation, migration, integrations, training, administration, risk, change, and contingent exit exposure."
 slug: "calculate-the-total-cost-of-business-software"
 category: "technology-strategy"
 author: "Everyday Tech Insight"
@@ -14,7 +14,7 @@ verificationStatus: "source-checked"
 datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: true
-summary: "Choose a time horizon, model a normal operating scenario, include loaded internal labor and exit work, and present ranges instead of a false single-number forecast."
+summary: "Choose a horizon, model normal and stress scenarios, include loaded labor, and show contingent exit exposure separately unless exit occurs within the horizon."
 sourceList:
   - title: "Estimate Burden"
     url: "https://digital.gov/guides/pra/estimate-burden"
@@ -30,7 +30,7 @@ relatedArticles:
 noindex: false
 ---
 
-The total cost of business software is the cost to adopt, operate, govern, change, and exit the system for a defined use and period. A per-user subscription is one input. It is not the decision total.
+The total cost of business software is the cost to adopt, operate, govern, and change the system for a defined use and period, plus exit or decommissioning when the scenario places that event inside the period. A per-user subscription is one input. It is not the decision total. When exit is outside the chosen horizon, its estimated cost remains a separate exposure rather than an automatic addition to the period total.
 
 Digital.gov’s [Estimate Burden guide](https://digital.gov/guides/pra/estimate-burden) asks about subscriptions, installation, training, technology, processing, storage, review, and fully loaded labor when estimating burden in a federal information-collection context. [NIST SP 800-146](https://csrc.nist.gov/pubs/sp/800/146/final) discusses cloud opportunities and risks, including portability and interoperability. The model below adapts those cost categories for a small-business comparison; it is not an accounting standard or a NIST cost formula.
 
@@ -97,9 +97,9 @@ Avoid hiding optional projects in a percentage. If a likely expansion requires a
 
 Track concentration. One system may replace several subscriptions and reduce duplicate administration, while another may create an additional source of truth. Count decommissioning savings only after old contracts, data, integrations, and operating work can actually stop.
 
-## Price the exit
+## Price and classify the exit
 
-An exit is part of ownership even if it never occurs during the chosen horizon. Estimate:
+Exit difficulty is part of the ownership decision even when no exit occurs during the chosen horizon. Estimate:
 
 - termination and notice requirements;
 - data and attachment export;
@@ -112,7 +112,11 @@ An exit is part of ownership even if it never occurs during the chosen horizon. 
 - record retention and deletion confirmation; and
 - temporary productivity loss.
 
-Use an export rehearsal to ground the estimate. If the data cannot be interpreted outside the product, the exit cost is not merely a future subscription. It may include manual reconstruction or lost history.
+Use an export rehearsal to ground the estimate. If the data cannot be interpreted outside the product, the exit exposure is not merely a future subscription. It may include manual reconstruction or lost history.
+
+Include an exit cost in the scenario total only when that scenario assumes exit or decommissioning within the chosen horizon. For example, a three-year replacement scenario can include migration and shutdown in year three. If the scenario assumes continued use through the end of year three, report the contingent exit exposure separately outside the total so it remains visible without overstating the period cost.
+
+If an expected-value view is genuinely useful, probability-weight the exit only with an explicit, justified probability tied to a documented decision plan or relevant observed evidence. Show the full unweighted exit range and the probability beside the result. When the probability cannot be defended, compare named continue and exit scenarios instead of inventing one.
 
 ## Present a range and cost drivers
 
@@ -128,7 +132,9 @@ A clear table can use:
 | Internal operations  |     |          |      | Hours by role          |
 | Integrations         |     |          |      | Connection inventory   |
 | Change allowance     |     |          |      | Named scenario         |
-| Exit                 |     |          |      | Rehearsal and terms    |
+| Exit within horizon  |     |          |      | Named exit scenario    |
+
+Place contingent exit exposure in a separate line outside the scenario total when the modeled option continues through the horizon. This keeps portability risk visible without treating a possible later event as a cost already assumed to occur.
 
 Highlight the variables that change the decision: adoption, migration complexity, required plan tier, internal support time, integration count, growth, and exit difficulty. Do not let a precise spreadsheet hide weak inputs.
 

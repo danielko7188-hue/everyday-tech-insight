@@ -14,7 +14,7 @@ verificationStatus: "source-checked"
 datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
-summary: "Use the first week to baseline and configure, two weeks to test normal and difficult cases, and the final week to rehearse failure, export, and the decision."
+summary: "Use week 1 to baseline and configure, week 2 for normal cases, week 3 for exceptions and failure, and week 4 for export and the decision."
 sourceList:
   - title: "Software Acquisition Guide for Government Enterprise Consumers"
     url: "https://www.cisa.gov/sites/default/files/2024-07/PDM24050%20Software%20Acquisition%20Guide%20for%20Government%20Enterprise%20ConsumersV2_508c.pdf"

@@ -55,15 +55,17 @@ Do not back up unnecessary sensitive information indefinitely. Retention should 
 
 ## Translate 3-2-1 into a real design
 
-The three copies include the live copy plus two backups. The two-media principle reduces dependence on one storage type or system. The offsite copy protects against events affecting the primary location.
+The three copies include the live copy plus two backups. The two-media principle reduces dependence on one storage medium, while the offsite copy protects against events affecting the primary location. Account, provider, or region separation can improve failure independence, but it does not by itself prove CISA’s literal requirement for two different media types.
 
-A small-business design might use:
+One literal 3-2-1 example is:
 
-1. live files in an approved cloud collaboration service;
-2. a scheduled backup to a separate backup service or controlled storage system; and
-3. a protected copy in another location or account boundary.
+1. live files on a primary disk-based server;
+2. a scheduled backup on a separate disk-based backup appliance; and
+3. an encrypted tape backup stored at an approved offsite location.
 
-Another design might combine a local server, offline encrypted media, and a remote backup. The labels matter less than failure independence. Two folders in the same cloud account are not meaningfully separate if one compromised administrator, deletion command, billing failure, or provider outage can affect both.
+That example has three copies, uses disk and tape as two actual media types, and keeps the tape copy offsite. It is an illustration, not a recommendation for every small business. Tape hardware, encryption, rotation, compatibility, capacity, and restoration must be evaluated and tested before adoption.
+
+An all-cloud design—such as live files in a collaboration service plus backups in separately administered providers, accounts, or regions—may still improve resilience. Describe it as a resilience adaptation, not literal 3-2-1, unless the business can establish that the copies use two different media types. Two folders in one cloud account are even less independent if one compromised administrator, deletion command, billing failure, or provider outage can affect both.
 
 Document which event each copy is intended to survive: accidental deletion, ransomware, account takeover, hardware failure, facility loss, provider outage, malicious administrator, or configuration error. Identify shared dependencies such as identity provider, network, encryption key, backup software, and payment account.
 
