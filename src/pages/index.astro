@@ -7,7 +7,7 @@ import ArticleCard from "../components/ArticleCard.astro";
 import SectionHeading from "../components/SectionHeading.astro";
 import TrustModule from "../components/TrustModule.astro";
 import { categories } from "../data/categories";
-import { homepageCuration } from "../data/editorial";
+import { resolveHomepageCuration } from "../data/editorial";
 import { site } from "../data/site";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
@@ -20,41 +20,20 @@ const compareArticles = (left: ArticleEntry, right: ArticleEntry) => {
   return dateOrder || left.data.title.localeCompare(right.data.title, "en");
 };
 
-const publishedArticles = (
-  await getCollection("articles", ({ data }) => data.status === "published")
-).sort(compareArticles);
-const articlesBySlug = new Map(
-  publishedArticles.map((article) => [article.data.slug, article]),
+const allArticles = await getCollection("articles");
+const publishedArticles = allArticles
+  .filter(({ data }) => data.status === "published")
+  .sort(compareArticles);
+const curatedArticles = resolveHomepageCuration(allArticles);
+const [leadArticle] = curatedArticles.lead;
+const featureArticles = curatedArticles.features;
+const briefingArticles = curatedArticles.briefing;
+const startHereArticles = curatedArticles.startHere;
+const selectedPrimarySlugs = new Set(
+  Object.values(curatedArticles)
+    .flat()
+    .map((article) => article.data.slug),
 );
-const selectedPrimarySlugs = new Set<string>();
-
-function takeCurated(slugs: readonly string[], count: number): ArticleEntry[] {
-  const selected: ArticleEntry[] = [];
-
-  for (const slug of slugs) {
-    const article = articlesBySlug.get(slug);
-    if (article && !selectedPrimarySlugs.has(slug)) {
-      selected.push(article);
-      selectedPrimarySlugs.add(slug);
-    }
-    if (selected.length === count) return selected;
-  }
-
-  for (const article of publishedArticles) {
-    if (!selectedPrimarySlugs.has(article.data.slug)) {
-      selected.push(article);
-      selectedPrimarySlugs.add(article.data.slug);
-    }
-    if (selected.length === count) break;
-  }
-
-  return selected;
-}
-
-const [leadArticle] = takeCurated(homepageCuration.lead, 1);
-const featureArticles = takeCurated(homepageCuration.features, 2);
-const briefingArticles = takeCurated(homepageCuration.briefing, 3);
-const startHereArticles = takeCurated(homepageCuration.startHere, 3);
 const latestArticles = publishedArticles.filter(
   (article) => !selectedPrimarySlugs.has(article.data.slug),
 );

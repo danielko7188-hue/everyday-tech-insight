@@ -11,17 +11,45 @@ const items = headings.filter(
     (heading.depth === 2 || heading.depth === 3) &&
     heading.slug.trim().length > 0,
 );
+
+interface HeadingGroup {
+  heading: MarkdownHeading;
+  children: MarkdownHeading[];
+}
+
+const groups: HeadingGroup[] = [];
+let activeH2: HeadingGroup | undefined;
+
+for (const heading of items) {
+  if (heading.depth === 2) {
+    activeH2 = { heading, children: [] };
+    groups.push(activeH2);
+  } else if (activeH2) {
+    activeH2.children.push(heading);
+  } else {
+    groups.push({ heading, children: [] });
+  }
+}
 ---
 
 {
-  items.length > 0 && (
+  groups.length > 0 && (
     <div class="table-of-contents">
       <nav class="table-of-contents__desktop" aria-label="On this page">
         <p aria-hidden="true">On this page</p>
         <ol>
-          {items.map((heading) => (
+          {groups.map(({ heading, children }) => (
             <li class={`table-of-contents__depth-${heading.depth}`}>
               <a href={`#${heading.slug}`}>{heading.text}</a>
+              {children.length > 0 && (
+                <ol class="table-of-contents__sublist">
+                  {children.map((child) => (
+                    <li class="table-of-contents__depth-3">
+                      <a href={`#${child.slug}`}>{child.text}</a>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </li>
           ))}
         </ol>
@@ -30,9 +58,18 @@ const items = headings.filter(
       <details class="table-of-contents__mobile">
         <summary>On this page</summary>
         <ol>
-          {items.map((heading) => (
+          {groups.map(({ heading, children }) => (
             <li class={`table-of-contents__depth-${heading.depth}`}>
               <a href={`#${heading.slug}`}>{heading.text}</a>
+              {children.length > 0 && (
+                <ol class="table-of-contents__sublist">
+                  {children.map((child) => (
+                    <li class="table-of-contents__depth-3">
+                      <a href={`#${child.slug}`}>{child.text}</a>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </li>
           ))}
         </ol>

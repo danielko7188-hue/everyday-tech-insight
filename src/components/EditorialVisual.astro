@@ -1,5 +1,5 @@
 ---
-import type { CategorySlug } from "../data/categories";
+import { categoryAccents, type CategorySlug } from "../data/categories";
 import { visualVariantForSlug } from "../utils/presentation";
 
 type VisualRatio = "wide" | "landscape" | "square";
@@ -20,14 +20,6 @@ const {
   class: className,
 } = Astro.props;
 
-const categoryColors: Record<CategorySlug, string> = {
-  "ai-automation": "#0f746c",
-  "business-software": "#315f98",
-  "cybersecurity-data-protection": "#a83d3a",
-  "digital-operations": "#397143",
-  "technology-strategy": "#9a5b13",
-};
-
 const aspectRatios: Record<VisualRatio, string> = {
   wide: "16 / 9",
   landscape: "3 / 2",
@@ -38,7 +30,7 @@ const variant = visualVariantForSlug(slug, 4);
 const horizontalShift = [0, 18, -14, 28][variant] ?? 0;
 const verticalShift = [0, -12, 16, 8][variant] ?? 0;
 const rotation = [0, 4, -5, 7][variant] ?? 0;
-const accent = categoryColors[category];
+const accent = categoryAccents[category];
 const visualStyle = `--editorial-accent: ${accent}; --editorial-ratio: ${aspectRatios[ratio]};`;
 ---
 

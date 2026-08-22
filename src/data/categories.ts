@@ -8,11 +8,19 @@ export const categorySlugs = [
 
 export type CategorySlug = (typeof categorySlugs)[number];
 
+export const categoryAccents = {
+  "ai-automation": "#0f746c",
+  "business-software": "#315f98",
+  "cybersecurity-data-protection": "#a83d3a",
+  "digital-operations": "#397143",
+  "technology-strategy": "#9a5b13",
+} as const satisfies Record<CategorySlug, string>;
+
 export interface CategoryRecord {
   slug: CategorySlug;
   name: string;
   description: string;
-  accent: string;
+  accent: (typeof categoryAccents)[CategorySlug];
 }
 
 export const categories = [
@@ -21,35 +29,35 @@ export const categories = [
     name: "AI & Automation",
     description:
       "Practical ways to assess, govern, and apply AI and workflow automation in a small business.",
-    accent: "#0f746c",
+    accent: categoryAccents["ai-automation"],
   },
   {
     slug: "business-software",
     name: "Business Software & SaaS",
     description:
       "Decision frameworks for selecting, comparing, and managing the software services a business relies on.",
-    accent: "#315f98",
+    accent: categoryAccents["business-software"],
   },
   {
     slug: "cybersecurity-data-protection",
     name: "Cybersecurity & Data Protection",
     description:
       "Plain-language guidance for reducing security risk and protecting business information.",
-    accent: "#a83d3a",
+    accent: categoryAccents["cybersecurity-data-protection"],
   },
   {
     slug: "digital-operations",
     name: "Digital Operations & Productivity",
     description:
       "Reliable processes for collaboration, documentation, continuity, and day-to-day digital work.",
-    accent: "#397143",
+    accent: categoryAccents["digital-operations"],
   },
   {
     slug: "technology-strategy",
     name: "Technology Decisions & Strategy",
     description:
       "Structured approaches to technology planning, budgeting, procurement, and lifecycle decisions.",
-    accent: "#9a5b13",
+    accent: categoryAccents["technology-strategy"],
   },
 ] as const satisfies readonly CategoryRecord[];
 
