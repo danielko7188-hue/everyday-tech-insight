@@ -18,7 +18,7 @@ export default defineConfig({
     command: "npm run build && npm run preview -- --host 127.0.0.1",
     env: { ASTRO_PREVIEW_BACKGROUND: "1" },
     port: 4321,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
   projects: [

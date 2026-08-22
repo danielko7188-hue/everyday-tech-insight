@@ -13,6 +13,7 @@
 ### Task 1: Foundation and failing contracts
 
 **Files:**
+
 - Create: `package.json`, `astro.config.mjs`, `tsconfig.json`, `eslint.config.js`, `vitest.config.ts`, `playwright.config.ts`, `vercel.json`
 - Create: `src/content.config.ts`, `src/data/site.ts`, `src/data/categories.ts`
 - Create: `tests/unit/content-contract.test.ts`, `tests/unit/site-config.test.ts`
@@ -27,6 +28,7 @@
 ### Task 2: Public architecture and design system
 
 **Files:**
+
 - Create: `src/layouts/BaseLayout.astro`, `src/layouts/ArticleLayout.astro`
 - Create: `src/components/Header.astro`, `Footer.astro`, `Breadcrumbs.astro`, `ArticleCard.astro`, `CategoryNav.astro`, `SourceList.astro`, `FitSummary.astro`
 - Create: `src/styles/global.css`
@@ -44,6 +46,7 @@
 ### Task 3: Fifteen source-backed articles and editorial records
 
 **Files:**
+
 - Create: `src/content/articles/*.md` (15 published entries)
 - Create: `docs/CONTENT_PLAN.md`, `docs/POLICY_SOURCE_LOG.md`, `docs/CONTENT_AUDIT.md`
 - Create: `docs/HUMAN_REVIEW_CHECKLIST.md`, `docs/PRIVACY_AND_CONSENT_REVIEW.md`
@@ -59,6 +62,7 @@
 ### Task 4: Built-output QA, documentation, and performance
 
 **Files:**
+
 - Create: `scripts/qa-content.mjs`, `scripts/qa-build.mjs`, `scripts/check-external-links.mjs`
 - Create: `tests/unit/qa-rules.test.ts`
 - Create: `docs/TECHNICAL_QA.md`, `docs/DEPLOYMENT_GUIDE.md`, `docs/ASSUMPTIONS.md`, `README.md`, `AGENTS.md`
@@ -75,6 +79,7 @@
 ### Task 5: Independent review, GitHub release, and Vercel production
 
 **Files:**
+
 - Modify only files required to close review findings
 - Vercel writes ignored `.vercel/` linkage metadata locally
 
@@ -87,4 +92,3 @@
 - [ ] If the hostname differs from the configured canonical, update the configuration, repeat full QA, push the correction, and redeploy.
 - [ ] Verify production HTTP status, canonical metadata, robots, sitemap, RSS, representative routes, and absence of deployment errors.
 - [ ] Report the truthful AdSense boundary: disabled, no publisher ID added, no review requested, and Google alone decides approval.
-

@@ -53,7 +53,7 @@ interface Props {
 const { category, articles } = Astro.props;
 const path = `/categories/${category.slug}/`;
 const title = `${category.name} for small business | ${site.name}`;
-const description = `${category.description} ${categoryPurposes[category.slug]}`;
+const description = category.description;
 ---
 
 <BaseLayout title={title} description={description} path={path}>

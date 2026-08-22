@@ -151,4 +151,3 @@ Before GitHub push and Vercel deployment:
 - the exact pushed commit is deployed to Vercel and the production URLs are rechecked.
 
 Google alone decides AdSense approval. This build does not request review and cannot guarantee approval.
-
