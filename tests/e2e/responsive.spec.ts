@@ -35,6 +35,19 @@ const representativeRoutes = [
   },
 ] as const;
 const requiredWidths = [360, 390, 768, 1024, 1280, 1440, 1920] as const;
+const representativeLeafSelector = [
+  "a",
+  "button",
+  "summary",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "[data-editorial-visual]",
+  ".article-card",
+].join(", ");
 
 async function expectWithinViewport(
   page: Page,
@@ -57,6 +70,65 @@ async function expectWithinViewport(
       viewportWidth + 1,
     );
   }
+}
+
+async function expectVisibleLeavesWithinViewport(
+  page: Page,
+  viewportWidth: number,
+  label: string,
+): Promise<void> {
+  const roundingTolerance = 2;
+  const clippedLeaves = await page
+    .locator(representativeLeafSelector)
+    .evaluateAll(
+      (elements, bounds) =>
+        elements.flatMap((element, index) => {
+          const styles = getComputedStyle(element);
+          const box = element.getBoundingClientRect();
+          const isVisible =
+            element.getClientRects().length > 0 &&
+            box.width > 0 &&
+            box.height > 0 &&
+            styles.display !== "none" &&
+            styles.visibility !== "hidden" &&
+            styles.visibility !== "collapse" &&
+            Number.parseFloat(styles.opacity) > 0;
+          const isInsideIntentionalScroller = Boolean(
+            element.closest(
+              "article.article-page table, [data-horizontal-scroll]",
+            ),
+          );
+
+          if (!isVisible || isInsideIntentionalScroller) {
+            return [];
+          }
+
+          if (
+            box.left >= -bounds.tolerance &&
+            box.right <= bounds.viewportWidth + bounds.tolerance
+          ) {
+            return [];
+          }
+
+          const id = element.id ? `#${element.id}` : "";
+          const classes = Array.from(element.classList)
+            .slice(0, 3)
+            .map((className) => `.${className}`)
+            .join("");
+          return [
+            {
+              element: `${element.tagName.toLowerCase()}${id}${classes} (${index})`,
+              left: box.left,
+              right: box.right,
+            },
+          ];
+        }),
+      { tolerance: roundingTolerance, viewportWidth },
+    );
+
+  expect(clippedLeaves, `${label} clipped visible editorial elements`).toEqual(
+    [],
+  );
 }
 
 for (const route of representativeRoutes) {
@@ -93,6 +165,11 @@ for (const route of representativeRoutes) {
           `${route.path} at ${width}px ${selector}`,
         );
       }
+      await expectVisibleLeavesWithinViewport(
+        page,
+        overflow.viewport,
+        `${route.path} at ${width}px`,
+      );
 
       if (route.name === "article") {
         const table = page.locator("article.article-page table").first();
