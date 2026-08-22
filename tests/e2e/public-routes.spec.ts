@@ -108,6 +108,11 @@ test("home is a de-duplicated issue front page", async ({ page }) => {
   const topicRows = page.locator(".topic-directory--compact li");
   await expect(topicRows).toHaveCount(categories.length);
   await expect(
+    page
+      .getByRole("region", { name: "Browse by topic" })
+      .getByRole("link", { name: "View all topics" }),
+  ).toHaveAttribute("href", "/categories/");
+  await expect(
     page.locator('.topic-directory--compact a[href^="/articles/"]'),
   ).toHaveCount(0);
   expect(
