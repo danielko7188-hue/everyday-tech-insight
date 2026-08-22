@@ -4,6 +4,12 @@ import { siteUrl } from "../../site.config.mjs";
 const articleSlug = "how-to-identify-business-tasks-for-automation";
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
 
+const aiArticleHrefs = [
+  "/articles/evaluate-ai-output-quality-in-a-small-team-pilot/",
+  "/articles/how-to-identify-business-tasks-for-automation/",
+  "/articles/write-a-practical-ai-acceptable-use-policy/",
+] as const;
+
 const categories = [
   { name: "AI & Automation", slug: "ai-automation" },
   { name: "Business Software & SaaS", slug: "business-software" },
@@ -67,22 +73,49 @@ test("home explains the publication and links all five categories", async ({
   }
 });
 
-test("home separates featured and latest guides and exposes its trust paths", async ({
+test("home presents the complete editorial hierarchy and trust paths", async ({
   page,
 }) => {
   await page.goto("/");
 
-  const featured = page.getByRole("region", {
-    name: "Featured practical guides",
+  const topStories = page.getByRole("region", { name: "Top stories" });
+  const latestBriefing = page.getByRole("region", {
+    name: "Latest briefing",
   });
-  const latest = page.getByRole("region", {
-    name: "Latest published guides",
+  const startHere = page.getByRole("region", { name: "Start here" });
+  const latestArticles = page.getByRole("region", {
+    name: "Latest articles",
   });
 
-  await expect(featured).toBeVisible();
-  await expect(latest).toBeVisible();
+  await expect(topStories).toBeVisible();
+  await expect(topStories.locator(".article-card--lead")).toHaveCount(1);
+  const featureCount = await topStories
+    .locator(".article-card--feature")
+    .count();
+  expect(featureCount).toBeGreaterThanOrEqual(2);
+  expect(featureCount).toBeLessThanOrEqual(3);
+  await expect(latestBriefing).toBeVisible();
+  await expect(startHere).toBeVisible();
+  await expect(latestArticles).toBeVisible();
+
+  const topicSections = page.locator(".topic-section[data-category]");
+  await expect(topicSections).toHaveCount(categories.length);
+  expect(
+    (
+      await topicSections.evaluateAll((sections) =>
+        sections.map((section) => section.getAttribute("data-category")),
+      )
+    ).sort(),
+  ).toEqual(categories.map(({ slug }) => slug).sort());
+
+  for (const variant of ["lead", "feature", "compact", "list"] as const) {
+    await expect(
+      page.locator(`.article-card--${variant}`).first(),
+    ).toBeVisible();
+  }
+
   await expect(
-    featured.getByRole("link", {
+    startHere.getByRole("link", {
       name: "How to back up business files with the 3-2-1 method",
     }),
   ).toHaveAttribute(
@@ -90,28 +123,8 @@ test("home separates featured and latest guides and exposes its trust paths", as
     "/articles/back-up-business-files-with-the-3-2-1-method/",
   );
 
-  const featuredHrefs = await featured
-    .locator(".article-card h3 a")
-    .evaluateAll((links) =>
-      links
-        .map((link) => link.getAttribute("href"))
-        .filter((href): href is string => href !== null),
-    );
-  const latestHrefs = await latest
-    .locator(".article-card h3 a")
-    .evaluateAll((links) =>
-      links
-        .map((link) => link.getAttribute("href"))
-        .filter((href): href is string => href !== null),
-    );
-
-  expect(featuredHrefs.length).toBeGreaterThan(0);
-  expect(latestHrefs.length).toBeGreaterThan(0);
-  expect(featuredHrefs.filter((href) => latestHrefs.includes(href))).toEqual(
-    [],
-  );
   await expect(
-    featured.locator(".card-outcome").filter({
+    startHere.locator(".card-outcome").filter({
       hasText: "Create a scoped backup inventory",
     }),
   ).toContainText("Use it to: Create a scoped backup inventory");
@@ -134,6 +147,26 @@ test("home separates featured and latest guides and exposes its trust paths", as
     "href",
     "/contact/",
   );
+});
+
+test("desktop masthead exposes every topic and marks the current route", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/categories/ai-automation/");
+
+  const header = page.locator("header.site-header");
+  for (const category of categories) {
+    const topicLink = header.locator(
+      `a[href="/categories/${category.slug}/"]:visible`,
+    );
+    await expect(topicLink).toHaveCount(1);
+    await expect(topicLink).toHaveText(category.name);
+  }
+
+  await expect(
+    header.locator('a[href="/categories/ai-automation/"]:visible'),
+  ).toHaveAttribute("aria-current", "page");
 });
 
 test("category and published article routes expose useful editorial content", async ({
@@ -174,6 +207,126 @@ test("category and published article routes expose useful editorial content", as
   await expect(
     page.getByRole("link", { name: /request a correction/i }),
   ).toHaveAttribute("href", "/corrections/");
+});
+
+test("AI category has a lead, supporting features, complete membership, and story metadata", async ({
+  page,
+}) => {
+  await page.goto("/categories/ai-automation/");
+
+  const hero = page.locator('.category-hero[data-category="ai-automation"]');
+  await expect(hero).toBeVisible();
+  await expect(hero.locator("[data-editorial-visual]")).toBeVisible();
+  await expect(page.locator(".article-card--lead")).toHaveCount(1);
+  await expect(page.locator(".article-card--feature")).toHaveCount(2);
+
+  const articleHrefs = await page
+    .locator('main a[href^="/articles/"]')
+    .evaluateAll((links) =>
+      Array.from(
+        new Set(
+          links
+            .map((link) => link.getAttribute("href"))
+            .filter((href): href is string => href !== null),
+        ),
+      ).sort(),
+    );
+  expect(articleHrefs).toEqual([...aiArticleHrefs].sort());
+
+  const storyCards = page.locator(
+    ".article-card--lead, .article-card--feature",
+  );
+  await expect(storyCards).toHaveCount(aiArticleHrefs.length);
+  for (let index = 0; index < aiArticleHrefs.length; index += 1) {
+    const storyMeta = storyCards
+      .nth(index)
+      .getByRole("list", { name: "Story details" });
+    await expect(storyMeta).toBeVisible();
+    await expect(storyMeta.locator("time[datetime]")).toHaveCount(1);
+    await expect(storyMeta).toContainText(/\b\d+ min read\b/);
+    await expect(storyMeta).toContainText(
+      /Guide|Framework|Checklist|Comparison/,
+    );
+    await expect(
+      storyMeta.getByRole("link", { name: "AI & Automation" }),
+    ).toHaveAttribute("href", "/categories/ai-automation/");
+  }
+});
+
+test("article exposes editorial art, semantic story metadata, and explicit related guides", async ({
+  page,
+}) => {
+  await page.goto(`/articles/${articleSlug}/`);
+
+  const article = page.locator("article.article-page");
+  const hero = article.locator(".article-hero");
+  await expect(hero.locator("[data-editorial-visual]")).toBeVisible();
+
+  const storyMeta = hero.getByRole("list", { name: "Story details" });
+  await expect(storyMeta).toContainText("Framework");
+  await expect(storyMeta).toContainText(/\b\d+ min read\b/);
+  await expect(storyMeta.locator('time[datetime="2026-08-21"]')).toHaveCount(1);
+  await expect(
+    storyMeta.getByRole("link", { name: "AI & Automation" }),
+  ).toHaveAttribute("href", "/categories/ai-automation/");
+
+  await expect(
+    article.getByRole("heading", {
+      level: 2,
+      name: "Business technology fit",
+    }),
+  ).toBeVisible();
+  await expect(article.getByRole("region", { name: "Sources" })).toBeVisible();
+  await expect(
+    article.getByRole("region", { name: "About the publication byline" }),
+  ).toContainText(/publication-name byline.*not.*named person/i);
+
+  const relatedGuides = article.locator("section.related-articles");
+  await expect(
+    relatedGuides.getByRole("link", {
+      name: "How to evaluate AI output quality in a small-team pilot",
+    }),
+  ).toHaveAttribute(
+    "href",
+    "/articles/evaluate-ai-output-quality-in-a-small-team-pilot/",
+  );
+  await expect(
+    relatedGuides.getByRole("link", {
+      name: "Document a repetitive workflow before automating it",
+    }),
+  ).toHaveAttribute(
+    "href",
+    "/articles/document-a-repetitive-workflow-before-automating/",
+  );
+});
+
+test("article table of contents links only to real body heading IDs", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`/articles/${articleSlug}/`);
+
+  const tableOfContents = page.getByRole("navigation", {
+    name: "On this page",
+  });
+  await expect(tableOfContents).toBeVisible();
+
+  const headingHrefs = await tableOfContents
+    .locator('a[href^="#"]')
+    .evaluateAll((links) =>
+      links
+        .map((link) => link.getAttribute("href"))
+        .filter((href): href is string => Boolean(href && href.length > 1)),
+    );
+  expect(headingHrefs.length).toBeGreaterThan(1);
+  expect(new Set(headingHrefs).size).toBe(headingHrefs.length);
+
+  const bodyHeadingIds = await page
+    .locator(".article-body :is(h2, h3, h4, h5, h6)[id]")
+    .evaluateAll((headings) => headings.map((heading) => heading.id));
+  for (const href of headingHrefs) {
+    expect(bodyHeadingIds).toContain(decodeURIComponent(href.slice(1)));
+  }
 });
 
 test("publication byline links to its truthful profile and published article index", async ({
