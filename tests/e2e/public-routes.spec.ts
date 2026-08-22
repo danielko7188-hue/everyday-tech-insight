@@ -290,6 +290,27 @@ test("AI category has a lead, supporting features, complete membership, and stor
   }
 });
 
+test("category routes use one visual anchor and three distinct guide links", async ({
+  page,
+}) => {
+  for (const category of categories) {
+    await page.goto(`/categories/${category.slug}/`);
+
+    await expect(page.locator("main [data-editorial-visual]")).toHaveCount(1);
+
+    const articleHrefs = await page
+      .locator('main a[href^="/articles/"]')
+      .evaluateAll((links) =>
+        links
+          .map((link) => link.getAttribute("href"))
+          .filter((href): href is string => href !== null),
+      );
+
+    expect(articleHrefs, category.slug).toHaveLength(3);
+    expect(new Set(articleHrefs).size, category.slug).toBe(3);
+  }
+});
+
 test("article exposes editorial art, semantic story metadata, and explicit related guides", async ({
   page,
 }) => {

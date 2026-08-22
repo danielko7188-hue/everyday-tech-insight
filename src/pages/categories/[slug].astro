@@ -90,6 +90,18 @@ const description = category.description;
         <p class="page-deck">{category.description}</p>
         <p>{categoryPurposes[category.slug]}</p>
       </div>
+      {
+        leadArticle && (
+          <div class="category-hero__lead">
+            <ArticleCard
+              article={leadArticle}
+              variant="lead"
+              headingLevel={2}
+              showVisual={false}
+            />
+          </div>
+        )
+      }
       <div class="category-hero__visual" data-editorial-visual>
         <EditorialVisual
           category={category.slug}
@@ -100,35 +112,31 @@ const description = category.description;
     </header>
 
     {
-      leadArticle ? (
+      featureArticles.length > 0 ? (
         <section
           class="category-stories"
           aria-labelledby="category-stories-heading"
         >
           <SectionHeading
             eyebrow="Published guidance"
-            title="Start with these guides"
+            title="Continue with these guides"
             description={`Every published ${category.name} guide remains available in this topic directory.`}
             id="category-stories-heading"
           />
-          <div class="category-stories__lead">
-            <ArticleCard
-              article={leadArticle}
-              variant="lead"
-              headingLevel={3}
-            />
-          </div>
-          <div class="category-stories__features">
+          <ol class="category-stories__features">
             {featureArticles.map((article) => (
-              <ArticleCard
-                article={article}
-                variant="feature"
-                headingLevel={3}
-              />
+              <li>
+                <ArticleCard
+                  article={article}
+                  variant="feature"
+                  headingLevel={3}
+                  showVisual={false}
+                />
+              </li>
             ))}
-          </div>
+          </ol>
         </section>
-      ) : (
+      ) : !leadArticle ? (
         <section class="empty-category" aria-labelledby="scope-heading">
           <h2 id="scope-heading">Current scope</h2>
           <p>
@@ -137,7 +145,7 @@ const description = category.description;
             complete source support appear here.
           </p>
         </section>
-      )
+      ) : null
     }
 
     {

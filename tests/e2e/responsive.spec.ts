@@ -305,3 +305,37 @@ test("compact story metadata stays inside its card at tablet width", async ({
 
   expect(overflow).toEqual([]);
 });
+
+test("category lead begins in the opening mobile viewport", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/categories/ai-automation/");
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+
+  const leadTitle = page.locator(".category-hero__lead .article-card__title");
+  await expect(leadTitle).toBeVisible();
+  const titleBox = await leadTitle.boundingBox();
+
+  expect(titleBox).not.toBeNull();
+  expect(titleBox!.y + titleBox!.height).toBeLessThanOrEqual(820);
+});
+
+test("category lead starts before the desktop opening threshold", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/categories/ai-automation/");
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+
+  const titleBox = await page
+    .locator(".category-hero__lead .article-card__title")
+    .boundingBox();
+
+  expect(titleBox).not.toBeNull();
+  expect(titleBox!.y).toBeLessThanOrEqual(760);
+});
