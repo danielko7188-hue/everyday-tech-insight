@@ -13,6 +13,7 @@ import {
 } from "../../data/categories";
 import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { partitionCategoryEdition } from "../../utils/category-edition";
 
 const categoryPurposes: Record<CategorySlug, string> = {
   "ai-automation":
@@ -55,9 +56,11 @@ interface Props {
 }
 
 const { category, articles } = Astro.props;
-const [leadArticle, ...supportingArticles] = articles;
-const featureArticles = supportingArticles.slice(0, 2);
-const remainingArticles = supportingArticles.slice(2);
+const {
+  lead: leadArticle,
+  features: featureArticles,
+  remainder: remainingArticles,
+} = partitionCategoryEdition(articles);
 const path = `/categories/${category.slug}/`;
 const title = `${category.name} for small business | ${site.name}`;
 const description = category.description;
@@ -107,6 +110,7 @@ const description = category.description;
           category={category.slug}
           slug={`${category.slug}-category`}
           ratio="wide"
+          fit="contain"
         />
       </div>
     </header>

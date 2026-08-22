@@ -244,6 +244,9 @@ test("AI category has a lead, supporting features, complete membership, and stor
   const hero = page.locator('.category-hero[data-category="ai-automation"]');
   await expect(hero).toBeVisible();
   await expect(hero.locator("[data-editorial-visual]")).toBeVisible();
+  await expect(
+    hero.locator(".category-hero__visual svg.editorial-visual"),
+  ).toHaveAttribute("preserveAspectRatio", "xMidYMid meet");
   const categoryAccent = await hero.evaluate((element) =>
     getComputedStyle(element).getPropertyValue("--category-accent").trim(),
   );
@@ -290,7 +293,7 @@ test("AI category has a lead, supporting features, complete membership, and stor
   }
 });
 
-test("category routes use one visual anchor and three distinct guide links", async ({
+test("category routes use one visual anchor and distinct guide links", async ({
   page,
 }) => {
   for (const category of categories) {
@@ -306,8 +309,8 @@ test("category routes use one visual anchor and three distinct guide links", asy
           .filter((href): href is string => href !== null),
       );
 
-    expect(articleHrefs, category.slug).toHaveLength(3);
-    expect(new Set(articleHrefs).size, category.slug).toBe(3);
+    expect(articleHrefs.length, category.slug).toBeGreaterThanOrEqual(3);
+    expect(new Set(articleHrefs).size, category.slug).toBe(articleHrefs.length);
   }
 });
 
@@ -319,6 +322,10 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
   const article = page.locator("article.article-page");
   const hero = article.locator(".article-hero");
   await expect(hero.locator("[data-editorial-visual]")).toBeVisible();
+  await expect(hero.locator("svg.editorial-visual")).toHaveAttribute(
+    "preserveAspectRatio",
+    "xMidYMid slice",
+  );
 
   const storyMeta = hero.getByRole("list", { name: "Story details" });
   await expect(storyMeta).toContainText("Framework");
