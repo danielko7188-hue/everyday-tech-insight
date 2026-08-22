@@ -1,33 +1,77 @@
 ---
+import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
 
+import AdSlot from "../components/AdSlot.astro";
 import ArticleCard from "../components/ArticleCard.astro";
+import SectionHeading from "../components/SectionHeading.astro";
+import TrustModule from "../components/TrustModule.astro";
 import { categories } from "../data/categories";
+import { homepageCuration } from "../data/editorial";
 import { site } from "../data/site";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-const publishedArticles = (
-  await getCollection("articles", ({ data }) => data.status === "published")
-).sort((left, right) => {
+type ArticleEntry = CollectionEntry<"articles">;
+
+const compareArticles = (left: ArticleEntry, right: ArticleEntry) => {
   const dateOrder =
     Date.parse(`${right.data.datePublished}T00:00:00Z`) -
     Date.parse(`${left.data.datePublished}T00:00:00Z`);
   return dateOrder || left.data.title.localeCompare(right.data.title, "en");
-});
-const featuredCandidates = publishedArticles.filter(
-  ({ data }) => data.featured,
+};
+
+const publishedArticles = (
+  await getCollection("articles", ({ data }) => data.status === "published")
+).sort(compareArticles);
+const articlesBySlug = new Map(
+  publishedArticles.map((article) => [article.data.slug, article]),
 );
-const featuredLimit =
-  publishedArticles.length > 1
-    ? Math.min(4, publishedArticles.length - 1)
-    : publishedArticles.length;
-const featuredArticles = (
-  featuredCandidates.length > 0 ? featuredCandidates : publishedArticles
-).slice(0, featuredLimit);
-const featuredSlugs = new Set(featuredArticles.map(({ data }) => data.slug));
-const latestArticles = publishedArticles
-  .filter(({ data }) => !featuredSlugs.has(data.slug))
-  .slice(0, 4);
+const selectedPrimarySlugs = new Set<string>();
+
+function takeCurated(slugs: readonly string[], count: number): ArticleEntry[] {
+  const selected: ArticleEntry[] = [];
+
+  for (const slug of slugs) {
+    const article = articlesBySlug.get(slug);
+    if (article && !selectedPrimarySlugs.has(slug)) {
+      selected.push(article);
+      selectedPrimarySlugs.add(slug);
+    }
+    if (selected.length === count) return selected;
+  }
+
+  for (const article of publishedArticles) {
+    if (!selectedPrimarySlugs.has(article.data.slug)) {
+      selected.push(article);
+      selectedPrimarySlugs.add(article.data.slug);
+    }
+    if (selected.length === count) break;
+  }
+
+  return selected;
+}
+
+const [leadArticle] = takeCurated(homepageCuration.lead, 1);
+const featureArticles = takeCurated(homepageCuration.features, 2);
+const briefingArticles = takeCurated(homepageCuration.briefing, 3);
+const startHereArticles = takeCurated(homepageCuration.startHere, 3);
+const latestArticles = publishedArticles.filter(
+  (article) => !selectedPrimarySlugs.has(article.data.slug),
+);
+const topicArticles = new Map(
+  categories.map((category) => [
+    category.slug,
+    publishedArticles
+      .filter((article) => article.data.category === category.slug)
+      .sort(
+        (left, right) =>
+          Number(right.data.featured) - Number(left.data.featured) ||
+          compareArticles(left, right),
+      )
+      .slice(0, 3),
+  ]),
+);
+
 const title = `${site.name} | Practical Business Technology`;
 const description =
   "Practical, source-backed guidance that helps small-business decision makers choose, use, secure, and govern everyday technology.";
@@ -48,138 +92,168 @@ const websiteStructuredData = {
   structuredData={websiteStructuredData}
 >
   <div class="page-shell home-page">
-    <section class="editorial-lead" aria-labelledby="home-heading">
-      <div class="lead-copy">
+    <header class="home-hero">
+      <div class="home-hero__copy">
         <p class="eyebrow">Independent practical guidance</p>
-        <h1 id="home-heading">
-          Practical business technology, explained clearly
-        </h1>
+        <h1>Practical business technology, explained clearly</h1>
         <p class="lead-summary">
           Everyday Tech Insight connects business needs and technology decisions
           for small-business decision makers who need useful next steps, not
           product hype.
         </p>
       </div>
-      <div class="lead-note">
-        <p>
-          Each published guide starts with a business problem, identifies the
-          relevant technology, defines the reader, and states a practical
-          outcome.
-        </p>
-      </div>
-    </section>
-
-    <section
-      class="category-section home-section"
-      aria-labelledby="category-heading"
-    >
-      <p class="eyebrow">Explore by decision</p>
-      <h2 id="category-heading">
-        Five parts of the technology operating picture
-      </h2>
-      <p class="page-deck">
-        Use the category index to move from a business question to focused,
-        source-backed guidance.
+      <p class="home-hero__note">
+        Each guide starts with a business problem, defines who it serves, and
+        states the practical outcome it supports.
       </p>
-      <ul class="category-index">
-        {
-          categories.map((category) => (
-            <li>
-              <h2>
-                <a href={`/categories/${category.slug}/`}>{category.name}</a>
-              </h2>
-              <p>{category.description}</p>
-            </li>
-          ))
-        }
-      </ul>
-    </section>
+    </header>
 
     {
-      featuredArticles.length > 0 && (
+      leadArticle && (
         <section
-          class="featured-section home-section"
-          aria-labelledby="featured-heading"
+          class="home-section top-stories"
+          aria-labelledby="top-stories-heading"
         >
-          <p class="eyebrow">Selected starting points</p>
-          <h2 id="featured-heading">Featured practical guides</h2>
-          <p class="section-summary">
-            Start with these practical guides selected from across the
-            publication's five business-technology categories.
-          </p>
-          <ul class="article-list">
-            {featuredArticles.map((article) => (
-              <li>
-                <ArticleCard article={article} headingLevel={3} />
-              </li>
-            ))}
-          </ul>
+          <SectionHeading
+            eyebrow="Editorial selection"
+            title="Top stories"
+            description="Selected starting points chosen for their practical range across the publication, not popularity or trend claims."
+            id="top-stories-heading"
+          />
+          <div class="top-stories__grid">
+            <ArticleCard
+              article={leadArticle}
+              variant="lead"
+              headingLevel={3}
+            />
+            <div class="top-stories__features">
+              {featureArticles.map((article) => (
+                <ArticleCard
+                  article={article}
+                  variant="feature"
+                  headingLevel={3}
+                />
+              ))}
+            </div>
+          </div>
         </section>
       )
     }
 
+    <AdSlot size="leaderboard" class="home-page__ad-slot" />
+
     <section
-      class="latest-section home-section"
-      aria-labelledby="latest-heading"
+      class="home-section latest-briefing"
+      aria-labelledby="latest-briefing-heading"
     >
-      <p class="eyebrow">Recently published</p>
-      <h2 id="latest-heading">Latest published guides</h2>
-      <p class="section-summary">
-        Publication dates determine this order. Guides published on the same
-        date are ordered by title for a stable, transparent index.
-      </p>
-      {
-        latestArticles.length > 0 ? (
-          <ul class="article-list">
-            {latestArticles.map((article) => (
-              <li>
-                <ArticleCard article={article} headingLevel={3} />
-              </li>
-            ))}
-          </ul>
-        ) : publishedArticles.length > 0 ? (
-          <p>
-            The current published guide is featured above. The category index
-            provides the full publication scope.
-          </p>
-        ) : (
-          <p>
-            No guides currently have published status. The category index
-            describes the publication's scope.
-          </p>
-        )
-      }
+      <SectionHeading
+        eyebrow="Three practical reads"
+        title="Latest briefing"
+        description="A concise cross-section of current publication guidance, selected editorially from the launch collection."
+        id="latest-briefing-heading"
+      />
+      <ol class="latest-briefing__list">
+        {
+          briefingArticles.map((article) => (
+            <li>
+              <ArticleCard
+                article={article}
+                variant="compact"
+                headingLevel={3}
+              />
+            </li>
+          ))
+        }
+      </ol>
     </section>
 
     <section
-      class="home-trust home-section"
-      aria-labelledby="home-trust-heading"
+      class="home-section start-here"
+      aria-labelledby="start-here-heading"
     >
-      <p class="eyebrow">Trust and accountability</p>
-      <h2 id="home-trust-heading">How this publication works</h2>
-      <div class="home-trust-grid">
-        <article>
-          <h3>Editorial standards</h3>
-          <p>
-            Guides state who they are for, the outcome they support, and the
-            sources reviewed. Our <a href="/editorial-standards/"
-              >Editorial standards</a
-            > explain sourcing, verification labels, corrections, and the line between
-            evidence and inference.
-          </p>
-        </article>
-        <article>
-          <h3>Publisher and contact</h3>
-          <p>
-            Everyday Tech Insight is the publication-name byline used on this
-            site. It does not identify a named person, legal entity,
-            credentialed team, or hands-on product-testing operation. Read the
-            {" "}<a href="/publisher/">Publisher</a> boundary or use{" "}<a
-              href="/contact/">Contact</a
-            > for a public issue without private information.
-          </p>
-        </article>
+      <SectionHeading
+        eyebrow="Practical foundations"
+        title="Start here"
+        description="Begin with bounded guides that produce a concrete record, test, or decision."
+        id="start-here-heading"
+      />
+      <div class="start-here__grid">
+        {
+          startHereArticles.map((article) => (
+            <ArticleCard
+              article={article}
+              variant="standard"
+              headingLevel={3}
+            />
+          ))
+        }
       </div>
     </section>
+
+    <AdSlot size="leaderboard" class="home-page__ad-slot" />
+
+    <div class="home-topics" aria-label="Publication topics">
+      {
+        categories.map((category, categoryIndex) => (
+          <section
+            class:list={[
+              "home-section",
+              "topic-section",
+              {
+                "topic-section--reverse": categoryIndex % 2 === 1,
+              },
+            ]}
+            data-category={category.slug}
+            style={`--category-accent: ${category.accent};`}
+            aria-labelledby={`topic-${category.slug}-heading`}
+          >
+            <SectionHeading
+              eyebrow="Topic"
+              title={category.name}
+              description={category.description}
+              href={`/categories/${category.slug}/`}
+              linkLabel={`View all ${category.name}`}
+              id={`topic-${category.slug}-heading`}
+            />
+            <div class="topic-section__stories">
+              {topicArticles
+                .get(category.slug)
+                ?.map((article, articleIndex) => (
+                  <ArticleCard
+                    article={article}
+                    variant={articleIndex === 0 ? "standard" : "compact"}
+                    headingLevel={3}
+                  />
+                ))}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+
+    <section
+      class="home-section latest-articles"
+      aria-labelledby="latest-articles-heading"
+    >
+      <SectionHeading
+        eyebrow="Complete the launch collection"
+        title="Latest articles"
+        description="The remaining published guides, ordered by publication date and title for a stable index."
+        href="/categories/"
+        linkLabel="Browse every topic"
+        id="latest-articles-heading"
+      />
+      <ol class="latest-articles__list">
+        {
+          latestArticles.map((article) => (
+            <li>
+              <ArticleCard article={article} variant="list" headingLevel={3} />
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <TrustModule />
   </div>
 </BaseLayout>

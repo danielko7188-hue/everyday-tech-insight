@@ -5,6 +5,8 @@ import { getCollection } from "astro:content";
 import ArticleCard from "../../components/ArticleCard.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import CategoryNav from "../../components/CategoryNav.astro";
+import EditorialVisual from "../../components/EditorialVisual.astro";
+import SectionHeading from "../../components/SectionHeading.astro";
 import {
   categories,
   type CategoryRecord,
@@ -38,8 +40,11 @@ export async function getStaticPaths() {
       category,
       articles: publishedArticles
         .filter(({ data }) => data.category === category.slug)
-        .sort((left, right) =>
-          right.data.datePublished.localeCompare(left.data.datePublished),
+        .sort(
+          (left, right) =>
+            Number(right.data.featured) - Number(left.data.featured) ||
+            right.data.datePublished.localeCompare(left.data.datePublished) ||
+            left.data.title.localeCompare(right.data.title, "en"),
         ),
     },
   }));
@@ -51,13 +56,21 @@ interface Props {
 }
 
 const { category, articles } = Astro.props;
+const [leadArticle, ...supportingArticles] = articles;
+const featureArticles = supportingArticles.slice(0, 2);
+const remainingArticles = supportingArticles.slice(2);
 const path = `/categories/${category.slug}/`;
 const title = `${category.name} for small business | ${site.name}`;
 const description = category.description;
 ---
 
-<BaseLayout title={title} description={description} path={path}>
-  <div class="page-shell">
+<BaseLayout
+  title={title}
+  description={description}
+  path={path}
+  activeCategory={category.slug}
+>
+  <div class="page-shell category-page">
     <Breadcrumbs
       items={[
         { name: "Home", href: "/" },
@@ -65,26 +78,57 @@ const description = category.description;
         { name: category.name, href: path },
       ]}
     />
-    <header class="page-intro">
-      <p class="eyebrow">Business technology category</p>
-      <h1>{category.name}</h1>
-      <p class="page-deck">{category.description}</p>
-      <p>{categoryPurposes[category.slug]}</p>
+
+    <header
+      class="category-hero"
+      data-category={category.slug}
+      style={`--category-accent: ${category.accent};`}
+    >
+      <div class="category-hero__copy">
+        <p class="eyebrow">Business technology topic</p>
+        <h1>{category.name}</h1>
+        <p class="page-deck">{category.description}</p>
+        <p>{categoryPurposes[category.slug]}</p>
+      </div>
+      <div class="category-hero__visual" data-editorial-visual>
+        <EditorialVisual
+          category={category.slug}
+          slug={`${category.slug}-category`}
+          ratio="wide"
+        />
+      </div>
     </header>
 
-    <CategoryNav />
+    <CategoryNav activeCategory={category.slug} />
 
     {
-      articles.length > 0 ? (
-        <section aria-labelledby="guides-heading">
-          <h2 id="guides-heading">Published guides</h2>
-          <ul class="article-list">
-            {articles.map((article) => (
-              <li>
-                <ArticleCard article={article} />
-              </li>
+      leadArticle ? (
+        <section
+          class="category-stories"
+          aria-labelledby="category-stories-heading"
+        >
+          <SectionHeading
+            eyebrow="Published guidance"
+            title="Start with these guides"
+            description={`Every published ${category.name} guide remains available in this topic directory.`}
+            id="category-stories-heading"
+          />
+          <div class="category-stories__lead">
+            <ArticleCard
+              article={leadArticle}
+              variant="lead"
+              headingLevel={3}
+            />
+          </div>
+          <div class="category-stories__features">
+            {featureArticles.map((article) => (
+              <ArticleCard
+                article={article}
+                variant="feature"
+                headingLevel={3}
+              />
             ))}
-          </ul>
+          </div>
         </section>
       ) : (
         <section class="empty-category" aria-labelledby="scope-heading">
@@ -94,6 +138,28 @@ const description = category.description;
             currently has no published guide; only reviewed entries with
             complete source support appear here.
           </p>
+        </section>
+      )
+    }
+
+    {
+      remainingArticles.length > 0 && (
+        <section class="category-more" aria-labelledby="category-more-heading">
+          <SectionHeading
+            title="More in this topic"
+            id="category-more-heading"
+          />
+          <ol>
+            {remainingArticles.map((article) => (
+              <li>
+                <ArticleCard
+                  article={article}
+                  variant="list"
+                  headingLevel={3}
+                />
+              </li>
+            ))}
+          </ol>
         </section>
       )
     }

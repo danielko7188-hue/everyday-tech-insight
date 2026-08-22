@@ -1,21 +1,53 @@
 ---
+import { categories } from "../data/categories";
 import { site } from "../data/site";
+import PublicationMark from "./PublicationMark.astro";
 ---
 
 <footer class="site-footer">
-  <div class="footer-inner">
-    <div>
-      <p class="footer-name">{site.name}</p>
-      <p>{site.tagline}</p>
-    </div>
-    <nav aria-label="Publication information">
+  <div class="site-footer__intro">
+    <PublicationMark class="site-footer__mark" />
+    <p>{site.tagline}</p>
+  </div>
+
+  <div class="site-footer__groups">
+    <nav aria-labelledby="footer-publication-heading">
+      <h2 id="footer-publication-heading">Publication</h2>
       <ul>
+        <li><a href="/about/">About</a></li>
         <li><a href="/publisher/">Publisher</a></li>
+        <li><a href="/contact/">Contact</a></li>
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="footer-topics-heading">
+      <h2 id="footer-topics-heading">Topics</h2>
+      <ul>
+        {
+          categories.map((category) => (
+            <li>
+              <a href={`/categories/${category.slug}/`}>{category.name}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="footer-standards-heading">
+      <h2 id="footer-standards-heading">Standards &amp; transparency</h2>
+      <ul>
         <li><a href="/editorial-standards/">Editorial standards</a></li>
         <li><a href="/corrections/">Corrections</a></li>
-        <li><a href="/contact/">Contact</a></li>
+        <li>
+          <a href="/advertising-disclosure/">Advertising disclosure</a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="footer-legal-heading">
+      <h2 id="footer-legal-heading">Legal &amp; feeds</h2>
+      <ul>
         <li><a href="/privacy/">Privacy</a></li>
-        <li><a href="/advertising-disclosure/">Advertising disclosure</a></li>
         <li><a href="/sitemap/">Sitemap</a></li>
         <li><a href="/rss.xml">RSS</a></li>
       </ul>

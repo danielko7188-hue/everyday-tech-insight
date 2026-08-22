@@ -1,0 +1,42 @@
+---
+import type { MarkdownHeading } from "astro";
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+const items = headings.filter(
+  (heading) =>
+    (heading.depth === 2 || heading.depth === 3) &&
+    heading.slug.trim().length > 0,
+);
+---
+
+{
+  items.length > 0 && (
+    <div class="table-of-contents">
+      <nav class="table-of-contents__desktop" aria-label="On this page">
+        <p aria-hidden="true">On this page</p>
+        <ol>
+          {items.map((heading) => (
+            <li class={`table-of-contents__depth-${heading.depth}`}>
+              <a href={`#${heading.slug}`}>{heading.text}</a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <details class="table-of-contents__mobile">
+        <summary>On this page</summary>
+        <ol>
+          {items.map((heading) => (
+            <li class={`table-of-contents__depth-${heading.depth}`}>
+              <a href={`#${heading.slug}`}>{heading.text}</a>
+            </li>
+          ))}
+        </ol>
+      </details>
+    </div>
+  )
+}

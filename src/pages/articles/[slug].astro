@@ -4,6 +4,7 @@ import { getCollection, render } from "astro:content";
 
 import { categoriesBySlug, type CategoryRecord } from "../../data/categories";
 import ArticleLayout from "../../layouts/ArticleLayout.astro";
+import { estimateReadingTime } from "../../utils/presentation";
 
 export async function getStaticPaths() {
   const publishedArticles = await getCollection(
@@ -40,12 +41,15 @@ if (!category) {
   throw new Error(`Unknown article category: ${article.data.category}`);
 }
 
-const { Content } = await render(article);
+const { Content, headings } = await render(article);
+const readingMinutes = estimateReadingTime(article.body ?? "");
 ---
 
 <ArticleLayout
   article={article}
   category={category}
+  headings={headings}
+  readingMinutes={readingMinutes}
   relatedArticles={relatedArticles}
 >
   <Content />

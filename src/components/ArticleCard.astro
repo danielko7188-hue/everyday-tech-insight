@@ -1,23 +1,71 @@
 ---
 import type { CollectionEntry } from "astro:content";
 
+import { categoriesBySlug } from "../data/categories";
+import { estimateReadingTime } from "../utils/presentation";
+import EditorialVisual from "./EditorialVisual.astro";
+import StoryMeta from "./StoryMeta.astro";
+
+type ArticleCardVariant = "lead" | "feature" | "standard" | "compact" | "list";
+
 interface Props {
   article: CollectionEntry<"articles">;
+  variant?: ArticleCardVariant;
   headingLevel?: 2 | 3;
 }
 
-const { article, headingLevel = 2 } = Astro.props;
+const { article, variant = "standard", headingLevel = 2 } = Astro.props;
 const Heading = `h${headingLevel}` as "h2" | "h3";
+const category = categoriesBySlug.get(article.data.category);
+
+if (!category) {
+  throw new Error(`Unknown article category: ${article.data.category}`);
+}
+
+const readingMinutes = estimateReadingTime(article.body ?? "");
+const visualRatio = variant === "lead" ? "wide" : "landscape";
+const showVisual =
+  variant === "lead" || variant === "feature" || variant === "standard";
+const showOutcome = variant === "lead" || variant === "standard";
+const isCompactMeta = variant === "compact" || variant === "list";
 ---
 
-<article class="article-card">
-  <p class="card-kicker">{article.data.contentType}</p>
-  <Heading>
-    <a href={`/articles/${article.data.slug}/`}>{article.data.title}</a>
-  </Heading>
-  <p>{article.data.summary}</p>
-  <p class="card-outcome">
-    <strong>Use it to:</strong>{" "}
-    {article.data.readerOutcome}
-  </p>
+<article
+  class:list={["article-card", `article-card--${variant}`]}
+  data-category={category.slug}
+  style={`--category-accent: ${category.accent};`}
+>
+  {
+    showVisual && (
+      <div class="article-card__visual" data-editorial-visual>
+        <EditorialVisual
+          category={category.slug}
+          slug={article.data.slug}
+          ratio={visualRatio}
+        />
+      </div>
+    )
+  }
+
+  <div class="article-card__copy">
+    <StoryMeta
+      categoryName={category.name}
+      categorySlug={category.slug}
+      contentType={article.data.contentType}
+      publicationDate={article.data.datePublished}
+      readingMinutes={readingMinutes}
+      compact={isCompactMeta}
+    />
+    <Heading class="article-card__title">
+      <a href={`/articles/${article.data.slug}/`}>{article.data.title}</a>
+    </Heading>
+    <p class="article-card__summary">{article.data.summary}</p>
+    {
+      showOutcome && (
+        <p class="card-outcome">
+          <strong>Use it to:</strong> {article.data.readerOutcome}
+        </p>
+      )
+    }
+  </div>
 </article>

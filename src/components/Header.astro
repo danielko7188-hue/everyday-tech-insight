@@ -1,19 +1,91 @@
 ---
-import { site } from "../data/site";
+import { categories, type CategorySlug } from "../data/categories";
+import PublicationMark from "./PublicationMark.astro";
+
+interface Props {
+  currentPath?: string;
+  activeCategory?: CategorySlug;
+}
+
+const { currentPath = Astro.url.pathname, activeCategory } = Astro.props;
+const normalizePath = (path: string) =>
+  path === "/" ? path : `${path.replace(/\/+$/, "")}/`;
+const normalizedCurrentPath = normalizePath(currentPath);
+const isCurrentPath = (path: string) =>
+  normalizedCurrentPath === normalizePath(path);
+const isCurrentCategory = (slug: CategorySlug) =>
+  activeCategory === slug || isCurrentPath(`/categories/${slug}/`);
 ---
 
 <header class="site-header">
-  <div class="header-inner">
-    <a class="site-identity" href="/" aria-label={`${site.name} home`}>
-      <span class="site-name">{site.name}</span>
-      <span class="site-tagline">{site.tagline}</span>
-    </a>
-    <nav class="primary-nav" aria-label="Primary navigation">
+  <div class="site-header__identity-row">
+    <PublicationMark class="site-header__mark" />
+    <nav class="site-header__utility" aria-label="Publication">
       <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="/categories/">Categories</a></li>
-        <li><a href="/about/">About</a></li>
+        <li>
+          <a
+            href="/about/"
+            aria-current={isCurrentPath("/about/") ? "page" : undefined}
+            >About</a
+          >
+        </li>
+        <li>
+          <a
+            href="/editorial-standards/"
+            aria-current={isCurrentPath("/editorial-standards/")
+              ? "page"
+              : undefined}>Editorial standards</a
+          >
+        </li>
       </ul>
     </nav>
+
+    <details class="site-header__mobile-menu">
+      <summary>Menu</summary>
+      <nav aria-label="Mobile navigation">
+        <ul>
+          {
+            categories.map((category) => (
+              <li>
+                <a
+                  href={`/categories/${category.slug}/`}
+                  aria-current={
+                    isCurrentCategory(category.slug) ? "page" : undefined
+                  }
+                >
+                  {category.name}
+                </a>
+              </li>
+            ))
+          }
+          <li>
+            <a
+              href="/about/"
+              aria-current={isCurrentPath("/about/") ? "page" : undefined}
+              >About</a
+            >
+          </li>
+        </ul>
+      </nav>
+    </details>
   </div>
+
+  <nav class="site-header__topics" aria-label="Topics">
+    <ul>
+      {
+        categories.map((category) => (
+          <li>
+            <a
+              href={`/categories/${category.slug}/`}
+              aria-current={
+                isCurrentCategory(category.slug) ? "page" : undefined
+              }
+            >
+              {category.name}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
 </header>

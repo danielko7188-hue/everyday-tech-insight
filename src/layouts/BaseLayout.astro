@@ -1,6 +1,7 @@
 ---
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
+import type { CategorySlug } from "../data/categories";
 import { site } from "../data/site";
 import "../styles/global.css";
 
@@ -11,6 +12,7 @@ interface Props {
   canonical?: string;
   robots?: "index,follow" | "noindex,follow";
   ogType?: "website" | "article";
+  activeCategory?: CategorySlug;
   structuredData?: Record<string, unknown> | Record<string, unknown>[];
 }
 
@@ -21,6 +23,7 @@ const {
   canonical: canonicalOverride,
   robots = "index,follow",
   ogType = "website",
+  activeCategory,
   structuredData = [],
 } = Astro.props;
 
@@ -56,7 +59,7 @@ const jsonLdItems = Array.isArray(structuredData)
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
-    <Header />
+    <Header currentPath={path} activeCategory={activeCategory} />
     <main id="main-content" tabindex="-1">
       <slot />
     </main>

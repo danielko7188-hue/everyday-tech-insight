@@ -1,5 +1,7 @@
 ---
+import { site } from "../data/site";
 import type { ArticleSource } from "../utils/content-contract";
+import { formatPublicationDate } from "../utils/presentation";
 
 interface Props {
   sources: ArticleSource[];
@@ -9,18 +11,31 @@ const { sources } = Astro.props;
 ---
 
 <section class="source-list" aria-labelledby="sources-heading">
-  <h2 id="sources-heading">Sources</h2>
-  <p>
-    These primary sources support the framework and risk checks used in this
-    article. Access dates record the latest editorial verification.
-  </p>
+  <header>
+    <h2 id="sources-heading">Sources</h2>
+    <p>
+      These primary sources support the framework and risk checks used in this
+      article. Access dates record the latest editorial verification.
+    </p>
+  </header>
   <ol>
     {
       sources.map((source) => (
         <li>
-          <a href={source.url}>{source.title}</a>
-          <span>
-            {source.publisher}; accessed {source.accessed}
+          <cite>
+            <a href={source.url} rel="external">
+              {source.title}
+            </a>
+          </cite>
+          <span class="source-list__publisher">{source.publisher}</span>
+          <span class="source-list__accessed">
+            Accessed{" "}
+            <time datetime={source.accessed}>
+              {formatPublicationDate(source.accessed, {
+                timeZone: site.timeZone,
+                locale: site.locale,
+              })}
+            </time>
           </span>
         </li>
       ))

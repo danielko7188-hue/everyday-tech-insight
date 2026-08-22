@@ -1,13 +1,27 @@
 ---
-import { categories } from "../data/categories";
+import { categories, type CategorySlug } from "../data/categories";
+
+interface Props {
+  activeCategory?: CategorySlug;
+}
+
+const { activeCategory } = Astro.props;
 ---
 
 <nav class="category-nav" aria-label="Article categories">
   <ul>
     {
       categories.map((category) => (
-        <li>
-          <a href={`/categories/${category.slug}/`}>{category.name}</a>
+        <li
+          data-category={category.slug}
+          style={`--category-accent: ${category.accent};`}
+        >
+          <a
+            href={`/categories/${category.slug}/`}
+            aria-current={activeCategory === category.slug ? "page" : undefined}
+          >
+            {category.name}
+          </a>
         </li>
       ))
     }

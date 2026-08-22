@@ -2,6 +2,8 @@
 import { getCollection } from "astro:content";
 
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import EditorialVisual from "../../components/EditorialVisual.astro";
+import SectionHeading from "../../components/SectionHeading.astro";
 import { categories } from "../../data/categories";
 import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
@@ -16,7 +18,7 @@ const description =
 ---
 
 <BaseLayout title={title} description={description} path="/categories/">
-  <div class="page-shell">
+  <div class="page-shell category-directory-page">
     <Breadcrumbs
       items={[
         { name: "Home", href: "/" },
@@ -24,35 +26,62 @@ const description =
       ]}
     />
     <header class="page-intro">
-      <p class="eyebrow">Topic index</p>
+      <p class="eyebrow">Topic directory</p>
       <h1>Business technology categories</h1>
       <p class="page-deck">
-        Each category groups decisions that a small business can evaluate in
-        practical terms: the problem, the technology, the risk, and the next
-        step.
+        Move from a business question to practical guidance organized around the
+        problem, technology, risk, and next decision.
       </p>
     </header>
-    <ul class="category-index">
-      {
-        categories.map((category) => {
-          const count = publishedArticles.filter(
-            ({ data }) => data.category === category.slug,
-          ).length;
-          return (
-            <li>
-              <h2>
-                <a href={`/categories/${category.slug}/`}>{category.name}</a>
-              </h2>
-              <p>{category.description}</p>
-              <p class="card-outcome">
-                {count === 1
-                  ? "1 published guide"
-                  : `${count} published guides`}
-              </p>
-            </li>
-          );
-        })
-      }
-    </ul>
+
+    <section
+      class="category-directory"
+      aria-labelledby="category-directory-heading"
+    >
+      <SectionHeading
+        title="Explore the five-topic operating picture"
+        description="Each topic has three source-backed launch guides and a distinct decision focus."
+        id="category-directory-heading"
+      />
+      <ol class="category-directory__list">
+        {
+          categories.map((category) => {
+            const count = publishedArticles.filter(
+              ({ data }) => data.category === category.slug,
+            ).length;
+            return (
+              <li>
+                <article
+                  class="category-directory__entry"
+                  data-category={category.slug}
+                  style={`--category-accent: ${category.accent};`}
+                >
+                  <div class="category-directory__visual" data-editorial-visual>
+                    <EditorialVisual
+                      category={category.slug}
+                      slug={category.slug}
+                      ratio="landscape"
+                    />
+                  </div>
+                  <div class="category-directory__copy">
+                    <p class="category-directory__count">
+                      {count === 1
+                        ? "1 published guide"
+                        : `${count} published guides`}
+                    </p>
+                    <h3>
+                      <a href={`/categories/${category.slug}/`}>
+                        {category.name}
+                      </a>
+                    </h3>
+                    <p>{category.description}</p>
+                  </div>
+                </article>
+              </li>
+            );
+          })
+        }
+      </ol>
+    </section>
   </div>
 </BaseLayout>
