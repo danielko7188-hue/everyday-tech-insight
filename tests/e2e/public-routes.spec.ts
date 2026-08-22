@@ -245,6 +245,26 @@ test("trust pages are reachable and state the public evidence boundary", async (
   await expect(
     page.getByText(/affiliate|sponsored compensation/i),
   ).toBeVisible();
+
+  await page.goto("/editorial-standards/");
+  await expect(
+    page.getByText(/software comparisons use stated criteria/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/do not purchase favorable conclusions/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/AI tools assisted this initial project/i),
+  ).toBeVisible();
+  await expect(page.getByText(/human or expert review/i)).toBeVisible();
+
+  await page.goto("/corrections/");
+  await expect(page.getByText(/does not silently backdate/i)).toBeVisible();
+  await expect(page.getByText(/minor typographical/i)).toBeVisible();
+  await expect(
+    page.getByText(/may not receive a formal update note/i),
+  ).toBeVisible();
+  await expect(page.getByText(/transparent correction note/i)).toBeVisible();
 });
 
 test("every public HTML route has one H1 and unique core metadata", async ({
