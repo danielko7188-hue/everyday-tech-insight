@@ -1,0 +1,35 @@
+---
+import { site } from "../data/site";
+
+type AdSlotSize = "leaderboard" | "rectangle" | "mobile-banner";
+
+interface Props {
+  size?: AdSlotSize;
+  class?: string;
+}
+
+const { size = "leaderboard", class: className } = Astro.props;
+const dimensions: Record<AdSlotSize, { width: number; height: number }> = {
+  leaderboard: { width: 728, height: 90 },
+  rectangle: { width: 300, height: 250 },
+  "mobile-banner": { width: 320, height: 100 },
+};
+const { width, height } = dimensions[size];
+const enabled = Boolean(site.integrations.monetization.enabled);
+const reservedDimensions = `box-sizing: border-box; display: grid; inline-size: min(100%, ${width}px); min-block-size: ${height}px; place-items: center; border: 1px solid var(--color-rule, #c9c5ba); color: var(--color-muted, #59605e); background: var(--color-paper, #fffdf8);`;
+---
+
+{
+  enabled && (
+    <aside
+      class:list={["ad-slot", className]}
+      aria-label="Advertising"
+      data-ad-size={size}
+      data-reserved-width={width}
+      data-reserved-height={height}
+      style={reservedDimensions}
+    >
+      <span>Advertising</span>
+    </aside>
+  )
+}

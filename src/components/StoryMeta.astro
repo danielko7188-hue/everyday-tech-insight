@@ -1,0 +1,94 @@
+---
+import type { CategorySlug } from "../data/categories";
+
+interface Props {
+  categoryName: string;
+  categorySlug: CategorySlug;
+  contentType: string;
+  publicationDate: string;
+  readingMinutes: number;
+  compact?: boolean;
+}
+
+const {
+  categoryName,
+  categorySlug,
+  contentType,
+  publicationDate,
+  readingMinutes,
+  compact = false,
+} = Astro.props;
+
+const displayDate = new Date(
+  publicationDate.includes("T")
+    ? publicationDate
+    : `${publicationDate}T00:00:00Z`,
+);
+const formattedDate = Number.isNaN(displayDate.valueOf())
+  ? publicationDate
+  : new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: compact ? "short" : "long",
+      day: "numeric",
+      timeZone: publicationDate.includes("T") ? undefined : "UTC",
+    }).format(displayDate);
+const contentTypeLabel = contentType
+  .split(/[-_\s]+/)
+  .filter(Boolean)
+  .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+  .join(" ");
+const minutes = Math.max(1, Math.ceil(readingMinutes));
+---
+
+<ul
+  class:list={["story-meta", { "story-meta--compact": compact }]}
+  aria-label="Story details"
+>
+  <li class="story-meta__type">{contentTypeLabel}</li>
+  <li>
+    <a href={`/categories/${categorySlug}/`}>{categoryName}</a>
+  </li>
+  <li><time datetime={publicationDate}>{formattedDate}</time></li>
+  <li>{minutes} min read</li>
+</ul>
+
+<style>
+  .story-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    margin: 0;
+    padding: 0;
+    color: var(--color-muted, #59605e);
+    font-family: "Source Sans 3 Variable", "Segoe UI", sans-serif;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    list-style: none;
+  }
+
+  .story-meta li {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .story-meta li + li::before {
+    color: var(--color-rule, #c9c5ba);
+    content: "/";
+  }
+
+  .story-meta a {
+    color: inherit;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+  }
+
+  .story-meta__type {
+    color: var(--color-ink, #171918);
+    font-weight: 700;
+  }
+
+  .story-meta--compact {
+    font-size: 0.875rem;
+  }
+</style>

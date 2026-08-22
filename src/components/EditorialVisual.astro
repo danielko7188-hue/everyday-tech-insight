@@ -1,0 +1,329 @@
+---
+import type { CategorySlug } from "../data/categories";
+import { visualVariantForSlug } from "../utils/presentation";
+
+type VisualRatio = "wide" | "landscape" | "square";
+
+interface Props {
+  category: CategorySlug;
+  slug: string;
+  ratio?: VisualRatio;
+  sizeClass?: string;
+  class?: string;
+}
+
+const {
+  category,
+  slug,
+  ratio = "landscape",
+  sizeClass,
+  class: className,
+} = Astro.props;
+
+const categoryColors: Record<CategorySlug, string> = {
+  "ai-automation": "#0f746c",
+  "business-software": "#315f98",
+  "cybersecurity-data-protection": "#a83d3a",
+  "digital-operations": "#397143",
+  "technology-strategy": "#9a5b13",
+};
+
+const aspectRatios: Record<VisualRatio, string> = {
+  wide: "16 / 9",
+  landscape: "3 / 2",
+  square: "1 / 1",
+};
+
+const variant = visualVariantForSlug(slug, 4);
+const horizontalShift = [0, 18, -14, 28][variant] ?? 0;
+const verticalShift = [0, -12, 16, 8][variant] ?? 0;
+const rotation = [0, 4, -5, 7][variant] ?? 0;
+const accent = categoryColors[category];
+const visualStyle = `--editorial-accent: ${accent}; --editorial-ratio: ${aspectRatios[ratio]};`;
+---
+
+<svg
+  class:list={[
+    "editorial-visual",
+    `editorial-visual--${ratio}`,
+    sizeClass,
+    className,
+  ]}
+  style={visualStyle}
+  viewBox="0 0 720 480"
+  preserveAspectRatio="xMidYMid slice"
+  aria-hidden="true"
+  focusable="false"
+  data-category={category}
+  data-variant={variant}
+>
+  <rect class="editorial-visual__paper" width="720" height="480"></rect>
+  <path class="editorial-visual__rule" d="M48 48H672M48 432H672"></path>
+
+  {
+    category === "ai-automation" && (
+      <g transform={`translate(${horizontalShift} ${verticalShift})`}>
+        <path
+          class="editorial-visual__structure"
+          d="M126 240H244M300 240H366M366 240V132H464M366 240V348H464M520 132H608M520 348H608"
+        />
+        <path
+          class="editorial-visual__accent"
+          d="M126 240H244M394 132H464M394 348H464"
+        />
+        <rect
+          class="editorial-visual__node"
+          x="70"
+          y="204"
+          width="56"
+          height="72"
+        />
+        <path
+          class="editorial-visual__node"
+          d="M272 202 310 240 272 278 234 240Z"
+        />
+        <circle class="editorial-visual__node" cx="492" cy="132" r="28" />
+        <circle
+          class="editorial-visual__accent-fill"
+          cx="492"
+          cy="348"
+          r="28"
+        />
+        <rect
+          class="editorial-visual__node"
+          x="608"
+          y="104"
+          width="44"
+          height="56"
+        />
+        <rect
+          class="editorial-visual__node"
+          x="608"
+          y="320"
+          width="44"
+          height="56"
+        />
+      </g>
+    )
+  }
+
+  {
+    category === "business-software" && (
+      <g
+        transform={`translate(${horizontalShift} ${verticalShift}) rotate(${rotation} 360 240)`}
+      >
+        <rect
+          class="editorial-visual__node"
+          x="82"
+          y="118"
+          width="188"
+          height="116"
+        />
+        <rect
+          class="editorial-visual__accent-fill"
+          x="116"
+          y="154"
+          width="188"
+          height="116"
+        />
+        <rect
+          class="editorial-visual__node"
+          x="398"
+          y="106"
+          width="208"
+          height="92"
+        />
+        <rect
+          class="editorial-visual__node"
+          x="430"
+          y="282"
+          width="176"
+          height="92"
+        />
+        <path
+          class="editorial-visual__structure"
+          d="M304 212H350V152H398M350 212V328H430"
+        />
+        <circle
+          class="editorial-visual__accent-fill"
+          cx="350"
+          cy="212"
+          r="13"
+        />
+        <path class="editorial-visual__accent" d="M440 152H562M472 328H562" />
+      </g>
+    )
+  }
+
+  {
+    category === "cybersecurity-data-protection" && (
+      <g transform={`translate(${horizontalShift / 2} ${verticalShift / 2})`}>
+        <path
+          class="editorial-visual__structure editorial-visual__structure--heavy"
+          d="M360 70 566 138V260C566 340 482 394 360 418 238 394 154 340 154 260V138Z"
+        />
+        <path
+          class="editorial-visual__accent"
+          d="M360 112 514 162V254C514 309 457 349 360 372 263 349 206 309 206 254V162Z"
+        />
+        <path
+          class="editorial-visual__rule"
+          d="M258 190H462M258 242H332M388 242H462M258 294H462"
+        />
+        <rect
+          class="editorial-visual__node"
+          x="322"
+          y="216"
+          width="76"
+          height="84"
+        />
+        <path
+          class="editorial-visual__structure"
+          d="M340 216V194C340 167 380 167 380 194V216"
+        />
+        <path class="editorial-visual__accent" d="M360 250V276" />
+        <circle class="editorial-visual__accent-fill" cx="360" cy="246" r="8" />
+      </g>
+    )
+  }
+
+  {
+    category === "digital-operations" && (
+      <g transform={`translate(${horizontalShift} ${verticalShift})`}>
+        <path class="editorial-visual__lane" d="M74 126H646" />
+        <path class="editorial-visual__lane" d="M74 240H646" />
+        <path class="editorial-visual__lane" d="M74 354H646" />
+        <path
+          class="editorial-visual__accent"
+          d="M96 126H242C286 126 286 240 330 240H450C494 240 494 354 538 354H624"
+        />
+        <path
+          class="editorial-visual__structure"
+          d="M96 354H206C250 354 250 240 294 240H410C454 240 454 126 498 126H624"
+        />
+        <circle class="editorial-visual__node" cx="242" cy="126" r="18" />
+        <circle
+          class="editorial-visual__accent-fill"
+          cx="330"
+          cy="240"
+          r="18"
+        />
+        <rect
+          class="editorial-visual__node"
+          x="432"
+          y="108"
+          width="36"
+          height="36"
+        />
+        <rect
+          class="editorial-visual__accent-fill"
+          x="520"
+          y="336"
+          width="36"
+          height="36"
+        />
+      </g>
+    )
+  }
+
+  {
+    category === "technology-strategy" && (
+      <g transform={`rotate(${rotation} 360 240)`}>
+        <path
+          class="editorial-visual__structure"
+          d="M126 382V96M126 382H636M296 96V382M466 96V382M126 238H636"
+        />
+        <path
+          class="editorial-visual__accent"
+          d={`M168 ${330 - verticalShift} 292 ${270 - verticalShift} 430 ${286 + verticalShift} 574 ${142 + verticalShift}`}
+        />
+        <path
+          class="editorial-visual__accent-fill"
+          d={`M574 ${142 + verticalShift} 542 ${150 + verticalShift} 566 ${174 + verticalShift}Z`}
+        />
+        <circle
+          class="editorial-visual__node"
+          cx="292"
+          cy={270 - verticalShift}
+          r="18"
+        />
+        <circle
+          class="editorial-visual__accent-fill"
+          cx="430"
+          cy={286 + verticalShift}
+          r="18"
+        />
+        <path class="editorial-visual__rule" d="M144 112H278M484 364H618" />
+      </g>
+    )
+  }
+</svg>
+
+<style>
+  .editorial-visual {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: var(--editorial-ratio);
+    overflow: hidden;
+    color: var(--editorial-accent);
+    background: var(--color-paper, #fffdf8);
+  }
+
+  .editorial-visual__paper {
+    fill: var(--color-paper, #fffdf8);
+  }
+
+  .editorial-visual__rule,
+  .editorial-visual__structure,
+  .editorial-visual__accent,
+  .editorial-visual__lane,
+  .editorial-visual__node {
+    vector-effect: non-scaling-stroke;
+  }
+
+  .editorial-visual__rule {
+    fill: none;
+    stroke: var(--color-rule, #c9c5ba);
+    stroke-width: 2;
+  }
+
+  .editorial-visual__structure {
+    fill: none;
+    stroke: var(--color-ink, #171918);
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    stroke-width: 3;
+  }
+
+  .editorial-visual__structure--heavy {
+    stroke-width: 5;
+  }
+
+  .editorial-visual__accent {
+    fill: none;
+    stroke: var(--editorial-accent);
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    stroke-width: 5;
+  }
+
+  .editorial-visual__lane {
+    fill: none;
+    stroke: var(--color-rule, #c9c5ba);
+    stroke-dasharray: 10 12;
+    stroke-width: 3;
+  }
+
+  .editorial-visual__node {
+    fill: var(--color-paper, #fffdf8);
+    stroke: var(--color-ink, #171918);
+    stroke-width: 3;
+  }
+
+  .editorial-visual__accent-fill {
+    fill: var(--editorial-accent);
+    stroke: var(--color-paper, #fffdf8);
+    stroke-width: 3;
+    vector-effect: non-scaling-stroke;
+  }
+</style>
