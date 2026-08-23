@@ -65,6 +65,7 @@ function htmlFixture({
   title = "Fixture page | Everyday Tech Insight",
   description = "A distinct fixture description for production smoke validation.",
   canonical = `${fixtureOrigin}/fixture/`,
+  socialImage = `${fixtureOrigin}/social/default.png`,
   extra = "",
 } = {}) {
   return `<!doctype html>
@@ -76,13 +77,13 @@ function htmlFixture({
         <link rel="icon" href="/favicon.svg">
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
         <link rel="manifest" href="/manifest.webmanifest">
-        <meta property="og:image" content="${fixtureOrigin}/social/default.png">
+        <meta property="og:image" content="${socialImage}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
         <meta property="og:image:type" content="image/png">
         <meta property="og:image:alt" content="Social preview for this fixture page.">
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:image" content="${fixtureOrigin}/social/default.png">
+        <meta name="twitter:image" content="${socialImage}">
         <meta name="twitter:image:alt" content="Social preview for this fixture page.">
       </head>
       <body>
@@ -132,6 +133,14 @@ describe("normalizeOrigin", () => {
     );
   });
 });
+
+function fixtureSocialImagePath(routePath: string) {
+  const category = /^\/categories\/([^/]+)\/$/.exec(routePath)?.[1];
+  if (category) return `/social/category-${category}.png`;
+  const article = /^\/articles\/([^/]+)\/$/.exec(routePath)?.[1];
+  if (article) return `/social/article-${article}.png`;
+  return "/social/default.png";
+}
 
 describe("collectInternalAssets", () => {
   it("collects unique root-relative resources and downloadable files", async () => {
@@ -368,6 +377,26 @@ describe("inspectHtml", () => {
         ),
     },
     {
+      name: "default social image on a category route",
+      code: "social-image",
+      route: "/categories/ai-automation/",
+      html: () =>
+        htmlFixture({
+          canonical: `${fixtureOrigin}/categories/ai-automation/`,
+          socialImage: `${fixtureOrigin}/social/default.png`,
+        }),
+    },
+    {
+      name: "swapped social image on an article route",
+      code: "social-image",
+      route: "/articles/how-to-identify-business-tasks-for-automation/",
+      html: () =>
+        htmlFixture({
+          canonical: `${fixtureOrigin}/articles/how-to-identify-business-tasks-for-automation/`,
+          socialImage: `${fixtureOrigin}/social/article-evaluate-saas-with-a-practical-checklist.png`,
+        }),
+    },
+    {
       name: "incomplete social image dimensions",
       code: "social-image-width",
       html: () =>
@@ -510,7 +539,7 @@ describe("production route smoke", () => {
       if (
         url.pathname === "/favicon.svg" ||
         url.pathname === "/apple-touch-icon.png" ||
-        url.pathname === "/social/default.png"
+        (url.pathname.startsWith("/social/") && url.pathname.endsWith(".png"))
       ) {
         return new Response(override.body ?? "<svg></svg>", {
           status: override.status ?? 200,
@@ -576,6 +605,7 @@ describe("production route smoke", () => {
               override.description ??
               `Production smoke description for the unique route ${route.path}`,
             canonical: `${fixtureOrigin}${route.canonicalPath ?? route.path}`,
+            socialImage: `${fixtureOrigin}${fixtureSocialImagePath(route.path)}`,
           }),
         {
           status,
@@ -613,12 +643,12 @@ describe("production route smoke", () => {
     });
 
     expect(result).toMatchObject({
-      checkedAssets: 4,
+      checkedAssets: 14,
       checkedRoutes: requiredPaths.length,
       issues: [],
       routeResults: requiredPaths.map((path) => ({ path, status: "PASS" })),
     });
-    expect(fetchImpl).toHaveBeenCalledTimes(requiredPaths.length + 4);
+    expect(fetchImpl).toHaveBeenCalledTimes(requiredPaths.length + 14);
     for (const [, options] of fetchImpl.mock.calls) {
       expect(options).toMatchObject({ redirect: "manual" });
     }

@@ -316,6 +316,15 @@ function hasLegacyHomepageShell($, route) {
   );
 }
 
+export function expectedSocialImagePath(route) {
+  if (typeof route !== "string") return "/social/default.png";
+  const categorySlug = /^\/categories\/([^/]+)\/$/.exec(route)?.[1];
+  if (categorySlug) return `/social/category-${categorySlug}.png`;
+  const articleSlug = /^\/articles\/([^/]+)\/$/.exec(route)?.[1];
+  if (articleSlug) return `/social/article-${articleSlug}.png`;
+  return "/social/default.png";
+}
+
 export function inspectHtml(
   html,
   { origin, route = "[HTML page]", canonicalPath = route } = {},
@@ -414,6 +423,7 @@ export function inspectHtml(
 
   const socialImageNodes = $('meta[property="og:image"]');
   const socialImage = socialImageNodes.attr("content")?.trim() ?? "";
+  const expectedSocialPath = expectedSocialImagePath(route);
   let socialImagePath;
   let validSocialImage = socialImageNodes.length === 1;
   if (validSocialImage) {
@@ -421,8 +431,7 @@ export function inspectHtml(
       const socialImageUrl = new URL(socialImage);
       validSocialImage =
         socialImageUrl.origin === expectedOrigin &&
-        socialImageUrl.pathname.startsWith("/social/") &&
-        socialImageUrl.pathname.endsWith(".png") &&
+        socialImageUrl.pathname === expectedSocialPath &&
         !socialImageUrl.search &&
         !socialImageUrl.hash;
       if (validSocialImage) socialImagePath = socialImageUrl.pathname;
@@ -435,7 +444,7 @@ export function inspectHtml(
       finding(
         "social-image",
         route,
-        `expected one absolute same-origin PNG social image at ${expectedOrigin}/social/.`,
+        `expected one absolute social image at ${expectedOrigin}${expectedSocialPath}.`,
       ),
     );
   }

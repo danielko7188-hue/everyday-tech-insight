@@ -263,7 +263,12 @@ test("toolkit landing publishes four outcome-led cards with detail, guide, and C
       `.toolkit-card[data-toolkit-id="${expected.id}"]`,
     );
     await expect(card).toHaveCount(1);
-    await expect(card).toContainText(/Record produced:/i);
+    const outcomeText = await card
+      .locator(".toolkit-card__outcome")
+      .textContent();
+    expect(outcomeText, `${expected.id} raw outcome text`).toContain(
+      "Record produced: ",
+    );
     await expect(
       card.getByRole("link", { name: "View worksheet guide" }),
     ).toHaveAttribute("href", `/toolkit/${expected.id}/`);
@@ -1215,6 +1220,11 @@ test("trust pages are reachable and state the public evidence boundary", async (
     page.getByText(/AI tools assisted this initial project/i),
   ).toBeVisible();
   await expect(page.getByText(/human or expert review/i)).toBeVisible();
+
+  await page.goto("/contact/");
+  await expect(page.locator(".trust-page > p").first()).toContainText(
+    "corrections process first.",
+  );
 
   await page.goto("/corrections/");
   await expect(page.getByText(/does not silently backdate/i)).toBeVisible();
