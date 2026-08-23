@@ -7,6 +7,7 @@ export default [
   {
     ignores: [
       ".astro/**",
+      ".gstack/**",
       ".vercel/**",
       "coverage/**",
       "dist/**",
