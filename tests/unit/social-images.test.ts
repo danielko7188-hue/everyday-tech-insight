@@ -243,4 +243,31 @@ describe("social image portfolio", () => {
       );
     },
   );
+
+  it("rejects an existing symlinked social image before writing", async () => {
+    const parent = mkdtempSync(join(tmpdir(), "eti-social-file-symlink-"));
+    temporaryRoots.push(parent);
+    const ownedRoot = join(parent, "eti-social-owned-root");
+    const socialRoot = join(ownedRoot, "social");
+    const outsideTarget = join(parent, "outside-target");
+    const sentinelPath =
+      process.platform === "win32"
+        ? join(outsideTarget, "sentinel.txt")
+        : outsideTarget;
+    const sentinel = "outside target must remain unchanged";
+    mkdirSync(socialRoot, { recursive: true });
+    if (process.platform === "win32") {
+      mkdirSync(outsideTarget);
+      writeFileSync(sentinelPath, sentinel);
+      symlinkSync(outsideTarget, join(socialRoot, "default.png"), "junction");
+    } else {
+      writeFileSync(sentinelPath, sentinel);
+      symlinkSync(outsideTarget, join(socialRoot, "default.png"), "file");
+    }
+
+    await expect(
+      generateSocialImages({ outputRoot: ownedRoot }),
+    ).rejects.toThrow(/symbolic link/i);
+    expect(readFileSync(sentinelPath, "utf8")).toBe(sentinel);
+  });
 });

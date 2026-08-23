@@ -316,13 +316,16 @@ export async function generateSocialImages({
   }
 
   for (const record of SOCIAL_IMAGE_RECORDS) {
+    const outputPath = path.join(resolvedSocialDir, record.fileName);
+    assertNoSymbolicLinkInPath(outputPath);
     await writePng(
       renderSocialSvg(record),
-      path.join(resolvedSocialDir, record.fileName),
+      outputPath,
       SOCIAL_IMAGE_WIDTH,
       SOCIAL_IMAGE_HEIGHT,
     );
   }
+  assertNoSymbolicLinkInPath(resolvedAppleIconPath);
   await writePng(renderAppleIconSvg(), resolvedAppleIconPath, 180, 180);
 
   return {
