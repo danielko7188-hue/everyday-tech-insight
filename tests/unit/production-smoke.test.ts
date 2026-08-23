@@ -549,6 +549,75 @@ describe("inspectHtml", () => {
     expect(codes).not.toContain("tracking-signature");
   });
 
+  it("rejects off-origin resources hidden in style elements and style attributes", async () => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const result = productionSmoke.inspectHtml(
+      htmlFixture({
+        extra: `
+          <style>
+            @import "https://styles.tracker.example/publication.css";
+            .pixel { background-image: url(https://images.tracker.example/pixel.gif); }
+          </style>
+          <div style="background-image: url('//inline.tracker.example/pixel.gif')"></div>
+        `,
+      }),
+      { origin: fixtureOrigin, route: "/fixture/" },
+    );
+
+    expect(
+      result.issues.map((issue: { code: string }) => issue.code),
+    ).toContain("external-resource-url");
+  });
+
+  it("rejects a mixed srcset when a data URL precedes an external candidate", async () => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const result = productionSmoke.inspectHtml(
+      htmlFixture({
+        extra: `
+          <img
+            alt=""
+            srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw== 1x, https://images.tracker.example/pixel.gif 2x"
+          >
+        `,
+      }),
+      { origin: fixtureOrigin, route: "/fixture/" },
+    );
+
+    expect(
+      result.issues.map((issue: { code: string }) => issue.code),
+    ).toContain("external-resource-url");
+  });
+
+  it("allows same-origin and data-only URLs in inline CSS and srcset", async () => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const result = productionSmoke.inspectHtml(
+      htmlFixture({
+        extra: `
+          <style>
+            @import "/styles/print.css";
+            .icon { background-image: url("data:image/svg+xml,%3Csvg%3E%3C/svg%3E"); }
+          </style>
+          <div style="background-image: url('/images/local.svg')"></div>
+          <img alt="" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw== 1x">
+        `,
+      }),
+      { origin: fixtureOrigin, route: "/fixture/" },
+    );
+
+    expect(
+      result.issues.map((issue: { code: string }) => issue.code),
+    ).not.toContain("external-resource-url");
+  });
+
   it("allows JSON-LD and advertising, analytics, and tracking words in ordinary prose", async () => {
     const productionSmoke = asFixtureProductionSmoke(
       await import("../../scripts/check-production.mjs"),

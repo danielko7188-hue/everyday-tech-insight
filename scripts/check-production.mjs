@@ -417,22 +417,54 @@ function isExecutableScriptType(type) {
 function srcsetCandidates(value) {
   const normalized = value.trim();
   if (!normalized) return [];
-  if (normalized.toLowerCase().startsWith("data:")) return [normalized];
+  if (normalized.toLowerCase().startsWith("data:")) {
+    const payload = normalized.slice(normalized.indexOf(",") + 1);
+    const hasAdditionalCandidate =
+      /\s+\d+(?:\.\d+)?[wx]\s*,\s*\S/i.test(payload) ||
+      /,\s+(?=\S)/.test(payload) ||
+      /,\s*(?=(?:https?:)?\/\/)/i.test(payload);
+    return [{ forceUnsafe: hasAdditionalCandidate, value: normalized }];
+  }
   return normalized
     .split(",")
     .map((candidate) => candidate.trim().split(/\s+/, 1)[0])
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((candidate) => ({ forceUnsafe: false, value: candidate }));
+}
+
+function cssResourceUrls(value) {
+  const css = value.replace(/\/\*[\s\S]*?\*\//g, "");
+  const urls = [];
+
+  for (const match of css.matchAll(
+    /url\(\s*(?:(['"])(.*?)\1|([^)]*?))\s*\)/gis,
+  )) {
+    const candidate = (match[2] ?? match[3] ?? "").trim();
+    if (candidate) urls.push(candidate);
+  }
+
+  for (const match of css.matchAll(/@import\s+(['"])(.*?)\1/gis)) {
+    const candidate = (match[2] ?? "").trim();
+    if (candidate) urls.push(candidate);
+  }
+
+  return urls;
 }
 
 function collectResourceUrlAttributes($) {
   const entries = new Map();
 
-  function add(element, attribute, value) {
+  function add(element, attribute, value, forceUnsafe = false) {
     const normalized = value?.trim();
     if (!normalized) return;
     const tag = $(element).prop("tagName")?.toLowerCase() ?? "element";
-    const key = `${tag}\0${attribute}\0${normalized}`;
-    entries.set(key, { attribute, tag, value: normalized });
+    const key = `${tag}\0${attribute}\0${normalized}\0${forceUnsafe}`;
+    entries.set(key, {
+      attribute,
+      forceUnsafe,
+      tag,
+      value: normalized,
+    });
   }
 
   for (const [selector, attribute] of RESOURCE_URL_LOCATIONS) {
@@ -442,8 +474,22 @@ function collectResourceUrlAttributes($) {
   }
 
   $("img[srcset], source[srcset]").each((_index, element) => {
-    for (const candidate of srcsetCandidates($(element).attr("srcset") ?? "")) {
-      add(element, "srcset", candidate);
+    for (const { forceUnsafe, value } of srcsetCandidates(
+      $(element).attr("srcset") ?? "",
+    )) {
+      add(element, "srcset", value, forceUnsafe);
+    }
+  });
+
+  $("style").each((_index, element) => {
+    for (const value of cssResourceUrls($(element).html() ?? "")) {
+      add(element, "text", value);
+    }
+  });
+
+  $("[style]").each((_index, element) => {
+    for (const value of cssResourceUrls($(element).attr("style") ?? "")) {
+      add(element, "style", value);
     }
   });
 
@@ -515,8 +561,9 @@ function inspectPrivacyBoundary($, { origin, route }) {
     );
   }
 
-  const externalResources = resourceEntries.filter(({ value }) =>
-    isExternalOrUnsafeResourceUrl(value, origin, route),
+  const externalResources = resourceEntries.filter(
+    ({ forceUnsafe, value }) =>
+      forceUnsafe || isExternalOrUnsafeResourceUrl(value, origin, route),
   );
   if (externalResources.length > 0) {
     issues.push(
