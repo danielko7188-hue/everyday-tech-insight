@@ -24,13 +24,13 @@ export const trustPages = {
   },
   publisher: {
     path: "/publisher/",
-    title: `Publisher identity boundary | ${site.name}`,
+    title: `Publisher and practical guides | ${site.name}`,
     description:
-      "A plain statement of the verified public publisher identity and the personal, legal, credential, team, and testing claims not made by this publication.",
+      "Learn what Everyday Tech Insight publishes for small-business decision makers, browse its published practical technology guides, and review its public identity boundary.",
     breadcrumbLabel: "Publisher",
-    eyebrow: "Publication scope and accountability",
+    eyebrow: "Publication purpose and guides",
     heading: "Publisher",
-    deck: "This page explains the scope of the Everyday Tech Insight publication-name byline and makes its current public identity boundary explicit.",
+    deck: "Everyday Tech Insight publishes practical guides for small-business decision makers navigating everyday technology decisions.",
   },
   editorialStandards: {
     path: "/editorial-standards/",

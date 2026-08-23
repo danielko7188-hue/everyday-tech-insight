@@ -737,6 +737,61 @@ test("publication byline links to its truthful profile and published article ind
   ).toHaveAttribute("href", `/articles/${articleSlug}/`);
 });
 
+test("publisher intro foregrounds its audience and practical guides", async ({
+  page,
+}) => {
+  await page.goto("/publisher/");
+
+  await expect(page).toHaveTitle(
+    "Publisher and practical guides | Everyday Tech Insight",
+  );
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    /small-business decision makers.*published practical technology guides/i,
+  );
+  const intro = page.locator(".trust-page__intro");
+  await expect(intro.locator(".eyebrow")).toHaveText(
+    "Publication purpose and guides",
+  );
+  await expect(intro.locator(".page-deck")).toContainText(
+    "publishes practical guides for small-business decision makers",
+  );
+  await expect(page.locator(".publisher-purpose")).toContainText(
+    "practical technology decisions",
+  );
+});
+
+test("publisher lists published work before its identity boundary", async ({
+  page,
+}) => {
+  await page.goto("/publisher/");
+
+  const published = page.locator(
+    'section[aria-labelledby="published-articles-heading"]',
+  );
+  const identity = page.locator(
+    'section[aria-labelledby="publisher-identity-boundary-heading"]',
+  );
+  await expect(published).toHaveCount(1);
+  await expect(identity).toHaveCount(1);
+  await expect(
+    identity.locator("#publisher-identity-boundary-heading"),
+  ).toHaveText("Publication identity boundary");
+
+  const publishedPrecedesIdentity = await published.evaluate(
+    (publishedSection, identitySelector) => {
+      const identitySection = document.querySelector(identitySelector);
+      return Boolean(
+        identitySection &&
+        publishedSection.compareDocumentPosition(identitySection) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    },
+    'section[aria-labelledby="publisher-identity-boundary-heading"]',
+  );
+  expect(publishedPrecedesIdentity).toBe(true);
+});
+
 test("trust pages are reachable and state the public evidence boundary", async ({
   page,
 }) => {
