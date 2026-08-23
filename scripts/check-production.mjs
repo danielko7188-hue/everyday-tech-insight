@@ -2,6 +2,7 @@ import { load } from "cheerio";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { SaxesParser } from "saxes";
+import sharp from "sharp";
 
 export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
   "/articles/how-to-identify-business-tasks-for-automation/",
@@ -1452,6 +1453,114 @@ function assetMediaTypeMatches(mediaType, expectedType) {
   return mediaType === expectedType;
 }
 
+const MAX_EXACT_PNG_BYTES = 8 * 1024 * 1024;
+const PNG_SIGNATURE = Object.freeze([137, 80, 78, 71, 13, 10, 26, 10]);
+
+function exactPngExpectation(asset) {
+  if (
+    [...asset.references.values()].some(
+      ({ expectedType, reference }) =>
+        expectedType === "image/png" && reference === "meta[property=og:image]",
+    )
+  ) {
+    return { height: 630, label: "social image", width: 1200 };
+  }
+
+  const pathname = new URL(asset.url, "https://internal.invalid").pathname;
+  if (pathname === "/apple-touch-icon.png") {
+    return { height: 180, label: "Apple touch icon", width: 180 };
+  }
+  return null;
+}
+
+async function readBoundedResponseBytes(response, maximumBytes) {
+  const declaredLength = response.headers.get("content-length");
+  if (declaredLength !== null) {
+    const declaredBytes = Number(declaredLength);
+    if (
+      !Number.isSafeInteger(declaredBytes) ||
+      declaredBytes < 0 ||
+      declaredBytes > maximumBytes
+    ) {
+      throw new RangeError("response exceeds the byte limit");
+    }
+  }
+
+  if (!response.body) return new Uint8Array();
+
+  const reader = response.body.getReader();
+  const chunks = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > maximumBytes) {
+        await reader.cancel().catch(() => undefined);
+        throw new RangeError("response exceeds the byte limit");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
+
+function hasExpectedPngHeader(bytes, { height, width }) {
+  if (bytes.byteLength < 33) return false;
+  if (!PNG_SIGNATURE.every((byte, index) => bytes[index] === byte)) {
+    return false;
+  }
+
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  return (
+    view.getUint32(8) === 13 &&
+    bytes[12] === 73 &&
+    bytes[13] === 72 &&
+    bytes[14] === 68 &&
+    bytes[15] === 82 &&
+    view.getUint32(16) === width &&
+    view.getUint32(20) === height
+  );
+}
+
+async function isDecodableExpectedPng(bytes, expectation) {
+  if (!hasExpectedPngHeader(bytes, expectation)) return false;
+
+  try {
+    const options = {
+      failOn: "error",
+      limitInputPixels: expectation.width * expectation.height,
+    };
+    const metadata = await sharp(bytes, options).metadata();
+    if (
+      metadata.format !== "png" ||
+      metadata.width !== expectation.width ||
+      metadata.height !== expectation.height
+    ) {
+      return false;
+    }
+
+    const { info } = await sharp(bytes, options)
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    return (
+      info.width === expectation.width && info.height === expectation.height
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function runProductionCheck({
   origin,
   fetchImpl = fetch,
@@ -1638,6 +1747,27 @@ export async function runProductionCheck({
           )
           .join(", ")}.`,
       );
+    }
+
+    const pngExpectation = exactPngExpectation(asset);
+    if (pngExpectation && mediaType === "image/png") {
+      let validPng;
+      try {
+        const bytes = await readBoundedResponseBytes(
+          response,
+          MAX_EXACT_PNG_BYTES,
+        );
+        validPng = await isDecodableExpectedPng(bytes, pngExpectation);
+      } catch {
+        validPng = false;
+      }
+      if (!validPng) {
+        addAssetFinding(
+          asset,
+          "asset-image-content",
+          `${pngExpectation.label} must be a fully decodable ${pngExpectation.width}x${pngExpectation.height} PNG no larger than ${MAX_EXACT_PNG_BYTES / (1024 * 1024)} MiB.`,
+        );
+      }
     }
   }
 

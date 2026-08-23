@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 
+import sharp from "sharp";
 import { describe, expect, it, vi } from "vitest";
 
 type ProductionRoute = {
@@ -14,7 +15,7 @@ type FetchInit = Parameters<typeof fetch>[1];
 type FixtureFetch = (input: FetchInput, init?: FetchInit) => Promise<Response>;
 
 type FetchOverride = {
-  body?: string;
+  body?: BodyInit;
   description?: string;
   error?: Error;
   headers?: Record<string, string>;
@@ -75,6 +76,37 @@ function fetchUrl(input: FetchInput) {
 }
 
 const fixtureOrigin = "https://host.example";
+
+async function generatedPngFixture(width: number, height: number) {
+  const buffer = await sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: { r: 26, g: 47, b: 68, alpha: 1 },
+    },
+  })
+    .png()
+    .toBuffer();
+  return Uint8Array.from(buffer).buffer;
+}
+
+async function generatedJpegFixture(width: number, height: number) {
+  const buffer = await sharp({
+    create: {
+      width,
+      height,
+      channels: 3,
+      background: { r: 26, g: 47, b: 68 },
+    },
+  })
+    .jpeg()
+    .toBuffer();
+  return Uint8Array.from(buffer).buffer;
+}
+
+const socialPngFixture = generatedPngFixture(1200, 630);
+const appleTouchPngFixture = generatedPngFixture(180, 180);
 
 function htmlFixture({
   title = "Fixture page | Everyday Tech Insight",
@@ -993,7 +1025,13 @@ describe("production route smoke", () => {
         url.pathname === "/apple-touch-icon.png" ||
         (url.pathname.startsWith("/social/") && url.pathname.endsWith(".png"))
       ) {
-        return new Response(override.body ?? "<svg></svg>", {
+        const defaultBody =
+          url.pathname === "/favicon.svg"
+            ? "<svg></svg>"
+            : url.pathname === "/apple-touch-icon.png"
+              ? (await appleTouchPngFixture).slice(0)
+              : (await socialPngFixture).slice(0);
+        return new Response(override.body ?? defaultBody, {
           status: override.status ?? 200,
           headers: {
             "content-type": url.pathname.endsWith(".svg")
@@ -1536,6 +1574,131 @@ describe("production route smoke", () => {
       expect(result.routeResults).toContainEqual({ path: "/", status: "FAIL" });
     },
   );
+
+  it.each([
+    {
+      name: "an empty MIME-only response",
+      body: async () => new ArrayBuffer(0),
+    },
+    {
+      name: "a PNG signature and IHDR without IDAT or IEND",
+      body: async () => (await socialPngFixture).slice(0, 33),
+    },
+    {
+      name: "a corrupt PNG signature",
+      body: async () => {
+        const bytes = new Uint8Array((await socialPngFixture).slice(0));
+        bytes[0] = 0;
+        return bytes.buffer;
+      },
+    },
+    {
+      name: "JPEG bytes labeled as PNG",
+      body: async () => generatedJpegFixture(1200, 630),
+    },
+  ])("rejects a social image containing $name", async ({ body }) => {
+    const productionSmoke = await loadRunner();
+    const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
+      path: string;
+      expectedStatus: number;
+      kind: "absent" | "html" | "text";
+      canonicalPath?: string;
+    }>;
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      fetchImpl: makeFetch(routes, {
+        "/social/default.png": {
+          body: await body(),
+          headers: { "content-type": "image/png" },
+          status: 200,
+        },
+      }),
+    });
+
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: "asset-image-content",
+        route: "/social/default.png",
+      }),
+    );
+    expect(result.routeResults).toContainEqual({ path: "/", status: "FAIL" });
+  });
+
+  it("rejects a decodable social PNG with incorrect dimensions", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
+      path: string;
+      expectedStatus: number;
+      kind: "absent" | "html" | "text";
+      canonicalPath?: string;
+    }>;
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      fetchImpl: makeFetch(routes, {
+        "/social/default.png": {
+          body: await generatedPngFixture(1199, 630),
+        },
+      }),
+    });
+
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: "asset-image-content",
+        route: "/social/default.png",
+      }),
+    );
+  });
+
+  it("rejects an Apple touch PNG that is not 180 by 180", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
+      path: string;
+      expectedStatus: number;
+      kind: "absent" | "html" | "text";
+      canonicalPath?: string;
+    }>;
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      fetchImpl: makeFetch(routes, {
+        "/apple-touch-icon.png": {
+          body: await generatedPngFixture(180, 179),
+        },
+      }),
+    });
+
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: "asset-image-content",
+        route: "/apple-touch-icon.png",
+      }),
+    );
+  });
+
+  it("rejects an exact PNG asset whose declared body exceeds the decode limit", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
+      path: string;
+      expectedStatus: number;
+      kind: "absent" | "html" | "text";
+      canonicalPath?: string;
+    }>;
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      fetchImpl: makeFetch(routes, {
+        "/social/default.png": {
+          body: (await socialPngFixture).slice(0),
+          headers: { "content-length": "100000000" },
+        },
+      }),
+    });
+
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: "asset-image-content",
+        route: "/social/default.png",
+      }),
+    );
+  });
 
   it("rejects JSON served with 200 status for a PNG reference", async () => {
     const productionSmoke = await loadRunner();
