@@ -50,7 +50,7 @@ The latest completed local QA run passed:
 
 | Lighthouse route   | Performance | Accessibility | Best practices | SEO |
 | ------------------ | ----------: | ------------: | -------------: | --: |
-| Homepage           |          94 |           100 |            100 | 100 |
+| Homepage           |          93 |           100 |            100 | 100 |
 | AI category        |          95 |           100 |            100 | 100 |
 | Automation article |          95 |           100 |            100 | 100 |
 
