@@ -92,14 +92,51 @@ describe("collectInternalAssets", () => {
     `;
 
     expect(productionSmoke.collectInternalAssets(html)).toEqual([
-      "/fonts/publication.woff2",
-      "/images/hero-small.png",
-      "/images/hero.png",
-      "/images/poster.jpg",
-      "/media/story.mp4",
-      "/scripts/site.js?release=1",
-      "/styles/site.css",
-      "/toolkit/checklist.csv",
+      {
+        expectedType: "font",
+        reference: "link[as=font]",
+        url: "/fonts/publication.woff2",
+      },
+      {
+        expectedType: "image",
+        reference: "img[srcset]",
+        url: "/images/hero-small.png",
+      },
+      {
+        expectedType: "image",
+        reference: "img[src]",
+        url: "/images/hero.png",
+      },
+      {
+        expectedType: "image",
+        reference: "img[srcset]",
+        url: "/images/hero.png",
+      },
+      {
+        expectedType: "image",
+        reference: "video[poster]",
+        url: "/images/poster.jpg",
+      },
+      {
+        expectedType: "video",
+        reference: "source[src]",
+        url: "/media/story.mp4",
+      },
+      {
+        expectedType: "script",
+        reference: "script[src]",
+        url: "/scripts/site.js?release=1",
+      },
+      {
+        expectedType: "style",
+        reference: "link[rel=stylesheet]",
+        url: "/styles/site.css",
+      },
+      {
+        expectedType: "text/csv",
+        reference: "a[download]",
+        url: "/toolkit/checklist.csv",
+      },
     ]);
   });
 });
@@ -117,7 +154,13 @@ describe("inspectHtml", () => {
         route: "/fixture/",
       }),
     ).toEqual({
-      assets: ["/favicon.svg"],
+      assets: [
+        {
+          expectedType: "image",
+          reference: "link[rel=icon]",
+          url: "/favicon.svg",
+        },
+      ],
       canonical: `${fixtureOrigin}/fixture/`,
       description:
         "A distinct fixture description for production smoke validation.",
@@ -556,20 +599,56 @@ describe("production route smoke", () => {
       kind: "html" | "text";
       canonicalPath?: string;
     }>;
+    const fetchImpl = makeFetch(routes, {
+      "/about/": {
+        body: htmlFixture({
+          title: "About fixture | Everyday Tech Insight",
+          description: "A unique about fixture with a missing PNG asset.",
+          canonical: `${fixtureOrigin}/about/`,
+          extra: '<img src="/missing.png" alt="">',
+        }),
+      },
+      "/missing.png": {
+        body: "<!doctype html><title>Fallback</title>",
+        headers: { "content-type": "text/html; charset=utf-8" },
+        status: 200,
+      },
+    });
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      fetchImpl,
+    });
+
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: "asset-content-type",
+        route: "/missing.png",
+      }),
+    );
+  });
+
+  it("rejects JSON served with 200 status for a PNG reference", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
+      path: string;
+      expectedStatus: number;
+      kind: "html" | "text";
+      canonicalPath?: string;
+    }>;
     const result = await productionSmoke.runProductionCheck({
       origin: fixtureOrigin,
       fetchImpl: makeFetch(routes, {
         "/about/": {
           body: htmlFixture({
-            title: "About fixture | Everyday Tech Insight",
-            description: "A unique about fixture with a missing PNG asset.",
+            title: "About image fixture | Everyday Tech Insight",
+            description: "A unique about fixture with a typed image asset.",
             canonical: `${fixtureOrigin}/about/`,
             extra: '<img src="/missing.png" alt="">',
           }),
         },
         "/missing.png": {
-          body: "<!doctype html><title>Fallback</title>",
-          headers: { "content-type": "text/html; charset=utf-8" },
+          body: '{"fallback":true}',
+          headers: { "content-type": "application/json" },
           status: 200,
         },
       }),
@@ -581,6 +660,88 @@ describe("production route smoke", () => {
         route: "/missing.png",
       }),
     );
+  });
+
+  it("accepts HTML for a same-origin iframe document reference", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
+      path: string;
+      expectedStatus: number;
+      kind: "html" | "text";
+      canonicalPath?: string;
+    }>;
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      fetchImpl: makeFetch(routes, {
+        "/about/": {
+          body: htmlFixture({
+            title: "About iframe fixture | Everyday Tech Insight",
+            description: "A unique about fixture with an embedded document.",
+            canonical: `${fixtureOrigin}/about/`,
+            extra: '<iframe src="/embedded-page/"></iframe>',
+          }),
+        },
+        "/embedded-page/": {
+          body: "<!doctype html><title>Embedded page</title>",
+          headers: { "content-type": "text/html; charset=utf-8" },
+          status: 200,
+        },
+      }),
+    });
+
+    expect(result.issues).toEqual([]);
+  });
+
+  it("marks every owning route failed when its asset validation fails", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
+      path: string;
+      expectedStatus: number;
+      kind: "html" | "text";
+      canonicalPath?: string;
+    }>;
+    const fetchImpl = makeFetch(routes, {
+      "/": {
+        body: htmlFixture({
+          title: "Home owner fixture | Everyday Tech Insight",
+          description: "A unique homepage fixture with an owned bad asset.",
+          canonical: `${fixtureOrigin}/`,
+          extra: '<img src="/owned.png" alt="">',
+        }),
+      },
+      "/about/": {
+        body: htmlFixture({
+          title: "About shared owner fixture | Everyday Tech Insight",
+          description: "A second route that owns the same invalid asset.",
+          canonical: `${fixtureOrigin}/about/`,
+          extra: '<img src="/owned.png" alt="">',
+        }),
+      },
+      "/owned.png": {
+        body: "not an image",
+        headers: { "content-type": "application/json" },
+        status: 200,
+      },
+    });
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      fetchImpl,
+    });
+
+    expect(result.routeResults).toContainEqual({ path: "/", status: "FAIL" });
+    expect(result.routeResults).toContainEqual({
+      path: "/about/",
+      status: "FAIL",
+    });
+    expect(result.routeResults).toContainEqual({
+      path: "/publisher/",
+      status: "PASS",
+    });
+    expect(
+      fetchImpl.mock.calls.filter(
+        ([input]) => new URL(input.href).pathname === "/owned.png",
+      ),
+    ).toHaveLength(1);
   });
 
   it("formats route failures separately from passing routes and the summary", async () => {

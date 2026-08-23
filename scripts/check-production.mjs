@@ -117,36 +117,158 @@ function rootRelativeAsset(value) {
 
 export function collectInternalAssets(html) {
   const $ = load(html);
-  const assets = new Set();
-  const attributes = [
-    ["link[href]", "href"],
-    ["script[src]", "src"],
-    ["img[src]", "src"],
-    ["source[src]", "src"],
-    ["video[src]", "src"],
-    ["video[poster]", "poster"],
-    ["audio[src]", "src"],
-    ["track[src]", "src"],
-    ["iframe[src]", "src"],
-    ["object[data]", "data"],
-    ["a[download][href]", "href"],
-  ];
+  const assets = new Map();
 
-  for (const [selector, attribute] of attributes) {
-    $(selector).each((_index, element) => {
-      const asset = rootRelativeAsset($(element).attr(attribute));
-      if (asset) assets.add(asset);
-    });
+  function addAsset(value, reference, expectedType) {
+    const url = rootRelativeAsset(value);
+    if (!url) return;
+    const asset = { expectedType, reference, url };
+    assets.set(`${url}\0${reference}\0${expectedType}`, asset);
   }
 
-  $("img[srcset], source[srcset]").each((_index, element) => {
-    for (const candidate of ($(element).attr("srcset") ?? "").split(",")) {
-      const asset = rootRelativeAsset(candidate.trim().split(/\s+/, 1)[0]);
-      if (asset) assets.add(asset);
+  function declaredType(element) {
+    return ($(element).attr("type") ?? "")
+      .split(";", 1)[0]
+      .trim()
+      .toLowerCase();
+  }
+
+  function extensionExpectation(url) {
+    const pathname = new URL(url, "https://internal.invalid").pathname;
+    const extension = pathname.slice(pathname.lastIndexOf(".")).toLowerCase();
+    if (
+      [
+        ".avif",
+        ".gif",
+        ".ico",
+        ".jpeg",
+        ".jpg",
+        ".png",
+        ".svg",
+        ".webp",
+      ].includes(extension)
+    )
+      return "image";
+    if ([".js", ".mjs"].includes(extension)) return "script";
+    if (extension === ".css") return "style";
+    if ([".eot", ".otf", ".ttf", ".woff", ".woff2"].includes(extension))
+      return "font";
+    if ([".mp4", ".ogv", ".webm"].includes(extension)) return "video";
+    if ([".aac", ".m4a", ".mp3", ".oga", ".ogg", ".wav"].includes(extension))
+      return "audio";
+    if (extension === ".vtt") return "text/vtt";
+    if ([".htm", ".html"].includes(extension)) return "document";
+    if (extension === ".csv") return "text/csv";
+    if (extension === ".json") return "application/json";
+    if (extension === ".pdf") return "application/pdf";
+    if (extension === ".txt") return "text/plain";
+    if (extension === ".xml") return "xml";
+    if (extension === ".zip") return "archive";
+    return "non-html";
+  }
+
+  $("link[href]").each((_index, element) => {
+    const href = $(element).attr("href");
+    const rel = new Set(
+      ($(element).attr("rel") ?? "").toLowerCase().split(/\s+/).filter(Boolean),
+    );
+    const as = ($(element).attr("as") ?? "").toLowerCase();
+    if (rel.has("stylesheet")) {
+      addAsset(href, "link[rel=stylesheet]", "style");
+    } else if (
+      rel.has("icon") ||
+      rel.has("apple-touch-icon") ||
+      rel.has("mask-icon")
+    ) {
+      addAsset(href, "link[rel=icon]", "image");
+    } else if (rel.has("modulepreload")) {
+      addAsset(href, "link[rel=modulepreload]", "script");
+    } else if (rel.has("preload")) {
+      const expectedType =
+        {
+          audio: "audio",
+          font: "font",
+          image: "image",
+          script: "script",
+          style: "style",
+          video: "video",
+        }[as] ?? declaredType(element);
+      const url = rootRelativeAsset(href);
+      addAsset(
+        href,
+        `link[as=${as || "unknown"}]`,
+        expectedType || (url ? extensionExpectation(url) : "non-html"),
+      );
+    } else {
+      const url = rootRelativeAsset(href);
+      addAsset(
+        href,
+        "link[href]",
+        declaredType(element) || (url ? extensionExpectation(url) : "non-html"),
+      );
     }
   });
 
-  return [...assets].sort((left, right) => left.localeCompare(right));
+  for (const [selector, attribute, reference, expectedType] of [
+    ["script[src]", "src", "script[src]", "script"],
+    ["img[src]", "src", "img[src]", "image"],
+    ["video[src]", "src", "video[src]", "video"],
+    ["video[poster]", "poster", "video[poster]", "image"],
+    ["audio[src]", "src", "audio[src]", "audio"],
+    ["track[src]", "src", "track[src]", "text/vtt"],
+    ["iframe[src]", "src", "iframe[src]", "document"],
+  ]) {
+    $(selector).each((_index, element) => {
+      addAsset($(element).attr(attribute), reference, expectedType);
+    });
+  }
+
+  $("source[src]").each((_index, element) => {
+    const parent = $(element).parent().prop("tagName")?.toLowerCase();
+    const expectedType =
+      parent === "picture"
+        ? "image"
+        : parent === "audio"
+          ? "audio"
+          : parent === "video"
+            ? "video"
+            : declaredType(element) || "non-html";
+    addAsset($(element).attr("src"), "source[src]", expectedType);
+  });
+
+  $("object[data]").each((_index, element) => {
+    const value = $(element).attr("data");
+    const url = rootRelativeAsset(value);
+    addAsset(
+      value,
+      "object[data]",
+      declaredType(element) || (url ? extensionExpectation(url) : "non-html"),
+    );
+  });
+
+  $("a[download][href]").each((_index, element) => {
+    const value = $(element).attr("href");
+    const url = rootRelativeAsset(value);
+    addAsset(
+      value,
+      "a[download]",
+      declaredType(element) || (url ? extensionExpectation(url) : "non-html"),
+    );
+  });
+
+  $("img[srcset], source[srcset]").each((_index, element) => {
+    const reference = `${$(element).prop("tagName").toLowerCase()}[srcset]`;
+    for (const candidate of ($(element).attr("srcset") ?? "").split(",")) {
+      addAsset(candidate.trim().split(/\s+/, 1)[0], reference, "image");
+    }
+  });
+
+  return [...assets.values()].sort(
+    (left, right) =>
+      left.url.localeCompare(right.url) ||
+      left.reference.localeCompare(right.reference) ||
+      left.expectedType.localeCompare(right.expectedType),
+  );
 }
 
 const FOOTER_GROUPS = [
@@ -410,6 +532,55 @@ function expectedRouteMediaTypes(route) {
   return [];
 }
 
+function assetMediaTypeMatches(mediaType, expectedType) {
+  if (!mediaType) return false;
+  if (expectedType === "image") return mediaType.startsWith("image/");
+  if (expectedType === "video") return mediaType.startsWith("video/");
+  if (expectedType === "audio") return mediaType.startsWith("audio/");
+  if (expectedType === "style") return mediaType === "text/css";
+  if (expectedType === "script") {
+    return [
+      "application/ecmascript",
+      "application/javascript",
+      "application/x-javascript",
+      "text/ecmascript",
+      "text/javascript",
+    ].includes(mediaType);
+  }
+  if (expectedType === "font") {
+    return (
+      mediaType.startsWith("font/") ||
+      [
+        "application/font-woff",
+        "application/vnd.ms-fontobject",
+        "application/x-font-opentype",
+        "application/x-font-ttf",
+      ].includes(mediaType)
+    );
+  }
+  if (expectedType === "document") {
+    return ["application/pdf", "application/xhtml+xml", "text/html"].includes(
+      mediaType,
+    );
+  }
+  if (expectedType === "xml") {
+    return (
+      mediaType === "application/xml" ||
+      mediaType === "text/xml" ||
+      mediaType.endsWith("+xml")
+    );
+  }
+  if (expectedType === "archive") {
+    return ["application/x-zip-compressed", "application/zip"].includes(
+      mediaType,
+    );
+  }
+  if (expectedType === "non-html") {
+    return !["application/xhtml+xml", "text/html"].includes(mediaType);
+  }
+  return mediaType === expectedType;
+}
+
 export async function runProductionCheck({
   origin,
   fetchImpl = fetch,
@@ -417,7 +588,8 @@ export async function runProductionCheck({
 } = {}) {
   const normalizedOrigin = normalizeOrigin(origin);
   const issues = [];
-  const assets = new Set();
+  const assets = new Map();
+  const failedAssetOwners = new Set();
   const inspectedPages = [];
 
   for (const route of routes) {
@@ -495,7 +667,22 @@ export async function runProductionCheck({
     });
     issues.push(...inspection.issues);
     inspectedPages.push({ route: route.path, ...inspection });
-    for (const asset of inspection.assets) assets.add(asset);
+    for (const asset of inspection.assets) {
+      let registeredAsset = assets.get(asset.url);
+      if (!registeredAsset) {
+        registeredAsset = {
+          owners: new Set(),
+          references: new Map(),
+          url: asset.url,
+        };
+        assets.set(asset.url, registeredAsset);
+      }
+      registeredAsset.owners.add(route.path);
+      registeredAsset.references.set(
+        `${asset.reference}\0${asset.expectedType}`,
+        asset,
+      );
+    }
   }
 
   for (const field of ["title", "description"]) {
@@ -518,55 +705,58 @@ export async function runProductionCheck({
     }
   }
 
-  for (const asset of [...assets].sort((left, right) =>
-    left.localeCompare(right),
+  function addAssetFinding(asset, code, message) {
+    issues.push(finding(code, asset.url, message));
+    for (const owner of asset.owners) failedAssetOwners.add(owner);
+  }
+
+  for (const asset of [...assets.values()].sort((left, right) =>
+    left.url.localeCompare(right.url),
   )) {
     let response;
     try {
       response = await fetchImpl(
-        new URL(asset, `${normalizedOrigin}/`),
+        new URL(asset.url, `${normalizedOrigin}/`),
         requestOptions(),
       );
     } catch (error) {
-      issues.push(
-        finding(
-          "asset-fetch-error",
-          asset,
-          error instanceof Error ? error.message : String(error),
-        ),
+      addAssetFinding(
+        asset,
+        "asset-fetch-error",
+        error instanceof Error ? error.message : String(error),
       );
       continue;
     }
     if (isRedirect(response.status)) {
-      issues.push(
-        finding(
-          "unexpected-redirect",
-          asset,
-          `asset returned redirect status ${response.status}.`,
-        ),
+      addAssetFinding(
+        asset,
+        "unexpected-redirect",
+        `asset returned redirect status ${response.status}.`,
       );
     }
     if (!response.ok) {
-      issues.push(
-        finding(
-          "asset-status",
-          asset,
-          `expected a successful response; received ${response.status}.`,
-        ),
+      addAssetFinding(
+        asset,
+        "asset-status",
+        `expected a successful response; received ${response.status}.`,
       );
-    } else if (
-      ["text/html", "application/xhtml+xml"].includes(
-        responseMediaType(response),
-      )
-    ) {
-      issues.push(
-        finding(
-          "asset-content-type",
-          asset,
-          `expected a non-HTML asset response; received ${responseMediaType(
-            response,
-          )}.`,
-        ),
+      continue;
+    }
+
+    const mediaType = responseMediaType(response);
+    const invalidReferences = [...asset.references.values()].filter(
+      ({ expectedType }) => !assetMediaTypeMatches(mediaType, expectedType),
+    );
+    if (invalidReferences.length > 0) {
+      addAssetFinding(
+        asset,
+        "asset-content-type",
+        `received ${mediaType || "no Content-Type"}; ${invalidReferences
+          .map(
+            ({ expectedType, reference }) =>
+              `${reference} expects ${expectedType}`,
+          )
+          .join(", ")}.`,
       );
     }
   }
@@ -575,6 +765,7 @@ export async function runProductionCheck({
   const failedRoutes = new Set(
     issues.map((issue) => issue.route).filter((route) => routePaths.has(route)),
   );
+  for (const owner of failedAssetOwners) failedRoutes.add(owner);
   const routeResults = routes.map((route) => ({
     path: route.path,
     status: failedRoutes.has(route.path) ? "FAIL" : "PASS",
