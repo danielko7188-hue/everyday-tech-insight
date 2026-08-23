@@ -289,20 +289,34 @@ function longestDuration(value: string): number {
   );
 }
 
-for (const route of ["/", categoryPath, articlePath]) {
-  test(`${route} has no serious or critical axe violations`, async ({
+for (const route of ["/", categoryPath, articlePath, "/toolkit/"]) {
+  test(`${route} has no moderate, serious, or critical axe violations`, async ({
     page,
   }) => {
+    await page.setViewportSize({ width: 1440, height: 1200 });
     await page.goto(route);
 
     const results = await new AxeBuilder({ page }).withTags(wcagTags).analyze();
     const blockingViolations = results.violations.filter(({ impact }) =>
-      ["serious", "critical"].includes(impact ?? ""),
+      ["moderate", "serious", "critical"].includes(impact ?? ""),
     );
 
     expect(blockingViolations).toEqual([]);
   });
 }
+
+test("desktop navigation landmarks have unique accessible names", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1200 });
+  await page.goto("/toolkit/");
+
+  const results = await new AxeBuilder({ page })
+    .withRules(["landmark-unique"])
+    .analyze();
+
+  expect(results.violations).toEqual([]);
+});
 
 test("skip link is first, visibly focused, and moves focus to main", async ({
   page,

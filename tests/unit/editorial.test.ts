@@ -8,6 +8,7 @@ import {
 import {
   allocateHomepageEdition,
   homepageCuration,
+  homepageMoreGuidesLimit,
   resolveHomepageCuration,
   type HomepageCurationConfig,
 } from "../../src/data/editorial";
@@ -69,8 +70,8 @@ describe("homepage editorial curation", () => {
     ).toThrow(/more than once/i);
   });
 
-  it("assigns every published article exactly once across the homepage edition", () => {
-    const extras = Array.from({ length: 6 }, (_, index) => ({
+  it("keeps the homepage edition unique while capping the additional guides", () => {
+    const extras = Array.from({ length: 9 }, (_, index) => ({
       data: { slug: `extra-${index + 1}`, status: "published" as const },
     }));
     const articles = [...publishedArticles, ...extras];
@@ -84,11 +85,14 @@ describe("homepage editorial curation", () => {
       ...edition.moreGuides,
     ].map((article) => article.data.slug);
 
-    expect(assignedSlugs).toHaveLength(articles.length);
-    expect(new Set(assignedSlugs).size).toBe(articles.length);
-    expect(new Set(assignedSlugs)).toEqual(
-      new Set(articles.map((article) => article.data.slug)),
-    );
+    expect(edition.moreGuides).toHaveLength(homepageMoreGuidesLimit);
+    expect(new Set(assignedSlugs).size).toBe(assignedSlugs.length);
+    expect(
+      assignedSlugs.every((slug) =>
+        articles.some((article) => article.data.slug === slug),
+      ),
+    ).toBe(true);
+    expect(assignedSlugs).not.toContain("extra-7");
   });
 
   it("fills a short features section from the first unassigned published article", () => {

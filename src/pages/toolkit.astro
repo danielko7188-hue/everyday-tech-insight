@@ -17,7 +17,7 @@ const resources = [
     guideHref: "/articles/how-to-identify-business-tasks-for-automation/",
     guideLabel: "Read the automation-candidate guide",
     downloadHref: "/toolkit/automation-candidate-screen.csv",
-    downloadLabel: "Download blank CSV",
+    downloadLabel: "Download automation screen CSV",
     fields: [
       {
         name: "Task and process owner",
@@ -69,7 +69,7 @@ const resources = [
     guideHref: "/articles/evaluate-saas-with-a-practical-checklist/",
     guideLabel: "Read the SaaS evaluation guide",
     downloadHref: "/toolkit/saas-evaluation-evidence-sheet.csv",
-    downloadLabel: "Download blank CSV",
+    downloadLabel: "Download SaaS evidence CSV",
     fields: [
       {
         name: "Requirement and priority",
@@ -121,7 +121,7 @@ const resources = [
     guideHref: "/articles/create-a-simple-technology-risk-register/",
     guideLabel: "Read the technology-risk guide",
     downloadHref: "/toolkit/technology-risk-register.csv",
-    downloadLabel: "Download blank CSV",
+    downloadLabel: "Download technology risk CSV",
     fields: [
       {
         name: "Risk event and consequence",
@@ -173,7 +173,7 @@ const resources = [
     guideHref: "/articles/back-up-business-files-with-the-3-2-1-method/",
     guideLabel: "Read the backup and restore guide",
     downloadHref: "/toolkit/backup-restore-test-log.csv",
-    downloadLabel: "Download blank CSV",
+    downloadLabel: "Download restore-test log CSV",
     fields: [
       {
         name: "Protected data and recovery point",
@@ -208,7 +208,7 @@ const resources = [
       {
         name: "Recovery dependencies",
         guidance:
-          "Note accounts, applications, configuration, network, keys, licenses, and instructions needed to resume work.",
+          "Note accounts, applications, configuration, network, licenses, instructions, and the custodian and separate secure location for required keys. Never record key material.",
       },
       {
         name: "Owner and corrective action",
@@ -244,7 +244,12 @@ const resources = [
         These are blank editorial templates, not completed assessments, observed
         business results, legal advice, security certification, or proof that a
         control works. Adapt them to the real workflow and obtain qualified
-        review where the consequences require it.
+        review where the consequences require it. Never put passwords, tokens,
+        recovery keys, authentication secrets, or raw confidential data in these
+        files. Record only the minimum necessary reference, custodian, approved
+        storage location, or access procedure, and protect completed copies
+        under the referenced data's access, retention, and secure disposal
+        rules.
       </p>
       {resources.map((resource) => <ToolkitResource {...resource} />)}
     </article>

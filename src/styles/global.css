@@ -2112,11 +2112,13 @@ strong {
   }
 }
 
-@media (max-width: 29.99rem) {
+@media (max-width: 47.99rem) {
   .toolkit-resource__scroll-hint {
     display: block;
   }
+}
 
+@media (max-width: 29.99rem) {
   h1 {
     font-size: clamp(2.25rem, 12vw, 3.25rem);
   }

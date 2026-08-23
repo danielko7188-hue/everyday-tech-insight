@@ -1,17 +1,98 @@
 import { expect, test } from "@playwright/test";
 import { load } from "cheerio";
 
+import { readArticleRecords } from "../../scripts/qa-content.mjs";
 import { siteConfig, siteUrl } from "../../site.config.mjs";
-import { homepageSectionSizes } from "../../src/data/editorial";
+import {
+  homepageMoreGuidesLimit,
+  homepageSectionSizes,
+} from "../../src/data/editorial";
 
 const articleSlug = "how-to-identify-business-tasks-for-automation";
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
 
-const aiArticleHrefs = [
+const launchAiArticleHrefs = [
   "/articles/evaluate-ai-output-quality-in-a-small-team-pilot/",
   "/articles/how-to-identify-business-tasks-for-automation/",
   "/articles/write-a-practical-ai-acceptable-use-policy/",
 ] as const;
+
+const toolkitCsvHeaders = {
+  "/toolkit/automation-candidate-screen.csv": [
+    "Task",
+    "Process owner",
+    "Monthly frequency",
+    "Active minutes per run",
+    "Input stability",
+    "Rule stability",
+    "Exception and rework evidence",
+    "Failure consequence",
+    "Sensitive data and access boundary",
+    "Human review point",
+    "Manual fallback",
+    "Pilot decision",
+    "Evidence owner",
+    "Review date",
+  ],
+  "/toolkit/saas-evaluation-evidence-sheet.csv": [
+    "Requirement",
+    "Priority",
+    "Test scenario",
+    "Acceptance condition",
+    "Purchased plan",
+    "Configuration and role",
+    "Observed evidence",
+    "Result",
+    "Limitation",
+    "Implementation effort",
+    "Exit impact",
+    "Follow-up owner",
+    "Due date",
+  ],
+  "/toolkit/technology-risk-register.csv": [
+    "Risk event",
+    "Business consequence",
+    "Affected process or asset",
+    "Existing safeguards",
+    "Likelihood rating",
+    "Likelihood basis",
+    "Impact rating",
+    "Impact basis",
+    "Evidence and uncertainty",
+    "Response",
+    "Target state",
+    "Owner",
+    "Due date",
+    "Review outcome",
+    "Next review date",
+  ],
+  "/toolkit/backup-restore-test-log.csv": [
+    "Protected data",
+    "Recovery point",
+    "Backup copy",
+    "Failure scenario",
+    "Restore destination",
+    "Request time",
+    "Start time",
+    "Completion time",
+    "Active effort",
+    "Validation method",
+    "Result",
+    "Missing items and errors",
+    "Recovery dependencies",
+    "Corrective action",
+    "Owner",
+    "Retest date",
+  ],
+} as const;
+
+interface ArticleSourceRecord {
+  data: {
+    status: string;
+    category: string;
+    slug: string;
+  };
+}
 
 const categories = [
   { name: "AI & Automation", slug: "ai-automation" },
@@ -89,6 +170,9 @@ test("toolkit publishes four practical worksheets with local CSV downloads", asy
     }),
   ).toBeVisible();
   await expect(page.locator(".toolkit-resource")).toHaveCount(4);
+  await expect(
+    page.getByText(/never put passwords, tokens, recovery keys/i),
+  ).toBeVisible();
 
   const downloadHrefs = await page
     .locator(".toolkit-resource a[download]")
@@ -98,11 +182,40 @@ test("toolkit publishes four practical worksheets with local CSV downloads", asy
   expect(downloadHrefs).toHaveLength(4);
   expect(new Set(downloadHrefs).size).toBe(4);
 
+  const downloadNames = await page
+    .locator(".toolkit-resource a[download]")
+    .allTextContents();
+  expect(new Set(downloadNames).size).toBe(4);
+  expect(downloadNames.every((name) => name.endsWith("CSV"))).toBe(true);
+
   for (const href of downloadHrefs) {
     const download = await request.get(href!);
     expect(download.status(), href!).toBe(200);
-    expect(await download.text(), href!).toContain(",");
+    expect(download.headers()["content-type"], href!).toMatch(
+      /^text\/csv(?:;|$)/i,
+    );
+    const records = (await download.text())
+      .split(/\r?\n/)
+      .filter((record) => record.trim().length > 0);
+    expect(records, href!).toHaveLength(1);
+    const headers = records[0]!.split(",");
+    const expectedHeaders =
+      toolkitCsvHeaders[href! as keyof typeof toolkitCsvHeaders];
+    expect(expectedHeaders, href!).toBeDefined();
+    expect(headers, href!).toEqual(expectedHeaders);
   }
+
+  await page.setViewportSize({ width: 600, height: 900 });
+  const firstResource = page.locator(".toolkit-resource").first();
+  const firstTableRegion = firstResource.locator(".table-scroll");
+  const tableWidths = await firstTableRegion.evaluate((region) => ({
+    client: region.clientWidth,
+    scroll: region.scrollWidth,
+  }));
+  expect(tableWidths.scroll).toBeGreaterThan(tableWidths.client);
+  await expect(
+    firstResource.locator(".toolkit-resource__scroll-hint"),
+  ).toBeVisible();
 });
 
 test("home is a de-duplicated issue front page", async ({ page, request }) => {
@@ -130,7 +243,17 @@ test("home is a de-duplicated issue front page", async ({ page, request }) => {
   expect(new Set(publishedArticleHrefs).size).toBe(
     publishedArticleHrefs.length,
   );
-  expect([...articleHrefs].sort()).toEqual([...publishedArticleHrefs].sort());
+  const expectedMoreGuidesCount = Math.min(
+    homepageMoreGuidesLimit,
+    publishedArticleHrefs.length - curatedArticleCount,
+  );
+  expect(articleHrefs).toHaveLength(
+    curatedArticleCount + expectedMoreGuidesCount,
+  );
+  expect(new Set(articleHrefs).size).toBe(articleHrefs.length);
+  expect(
+    articleHrefs.every((href) => publishedArticleHrefs.includes(href ?? "")),
+  ).toBe(true);
 
   const currentIssue = page.getByRole("region", { name: "Current issue" });
   const latestBriefing = page.getByRole("region", {
@@ -158,8 +281,11 @@ test("home is a de-duplicated issue front page", async ({ page, request }) => {
   );
   await expect(moreGuides).toBeVisible();
   await expect(moreGuides.locator(".article-card--list")).toHaveCount(
-    publishedArticleHrefs.length - curatedArticleCount,
+    expectedMoreGuidesCount,
   );
+  await expect(
+    moreGuides.getByRole("link", { name: "View all guides" }),
+  ).toHaveAttribute("href", "/sitemap/");
 
   const topicRows = page.locator(".topic-directory--compact li");
   await expect(topicRows).toHaveCount(categories.length);
@@ -321,9 +447,36 @@ test("category and published article routes expose useful editorial content", as
   ).toHaveAttribute("href", "/corrections/");
 });
 
+test("a substantively revised article exposes its distinct modification date", async ({
+  page,
+}) => {
+  const response = await page.goto(
+    "/articles/back-up-business-files-with-the-3-2-1-method/",
+  );
+
+  expect(response?.status()).toBe(200);
+  await expect(
+    page.locator('meta[property="article:published_time"]'),
+  ).toHaveAttribute("content", "2026-08-21");
+  await expect(
+    page.locator('meta[property="article:modified_time"]'),
+  ).toHaveAttribute("content", "2026-08-22");
+  await expect(page.getByText(/updated august 22, 2026/i)).toBeVisible();
+  await expect(page.getByText(/reviewed august 22, 2026/i)).toBeVisible();
+});
+
 test("AI category has a lead, supporting features, complete membership, and story metadata", async ({
   page,
 }) => {
+  const articleRecords = (await readArticleRecords()) as ArticleSourceRecord[];
+  const expectedArticleHrefs = articleRecords
+    .filter(
+      ({ data }) =>
+        data.status === "published" && data.category === "ai-automation",
+    )
+    .map(({ data }) => `/articles/${data.slug}/`)
+    .sort();
+
   await page.goto("/categories/ai-automation/");
 
   const hero = page.locator('.category-hero[data-category="ai-automation"]');
@@ -356,13 +509,16 @@ test("AI category has a lead, supporting features, complete membership, and stor
         ),
       ).sort(),
     );
-  expect(articleHrefs).toEqual([...aiArticleHrefs].sort());
+  expect(articleHrefs).toEqual(expectedArticleHrefs);
+  for (const launchHref of launchAiArticleHrefs) {
+    expect(articleHrefs).toContain(launchHref);
+  }
 
   const storyCards = page.locator(
-    ".article-card--lead, .article-card--feature",
+    ".article-card--lead, .article-card--feature, .article-card--list",
   );
-  await expect(storyCards).toHaveCount(aiArticleHrefs.length);
-  for (let index = 0; index < aiArticleHrefs.length; index += 1) {
+  await expect(storyCards).toHaveCount(expectedArticleHrefs.length);
+  for (let index = 0; index < expectedArticleHrefs.length; index += 1) {
     const storyMeta = storyCards
       .nth(index)
       .getByRole("list", { name: "Story details" });

@@ -87,6 +87,8 @@ export const homepageSectionSizes = {
   startHere: 3,
 } as const satisfies Record<HomepageCurationSection, number>;
 
+export const homepageMoreGuidesLimit = 6;
+
 export interface HomepageEdition<T> {
   lead: T[];
   features: T[];
@@ -137,10 +139,8 @@ export function allocateHomepageEdition<T extends CuratableArticle>(
     }
   }
 
-  edition.moreGuides = published.filter((article) => {
-    if (assigned.has(article.data.slug)) return false;
-    assigned.add(article.data.slug);
-    return true;
-  });
+  edition.moreGuides = published
+    .filter((article) => !assigned.has(article.data.slug))
+    .slice(0, homepageMoreGuidesLimit);
   return edition;
 }
