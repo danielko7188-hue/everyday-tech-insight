@@ -66,7 +66,7 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 ### Visual release evidence
 
 - The serial `visual-chromium` project owns only `visual-regression.spec.ts`; the regular Chromium project excludes it.
-- It compares 32 reviewed baselines: nine full-page routes at 390, 768, and 1440 CSS pixels, two keyboard-open menu viewport states, and three keyboard-focused skip-link viewport states.
+- It compares 32 reviewed states on each supported test platform: nine full-page routes at 390, 768, and 1440 CSS pixels, two keyboard-open menu viewport states, and three keyboard-focused skip-link viewport states. Windows and Linux references are committed separately, for 64 baseline files.
 - Captures use a fixed 900px viewport height, DPR 1, light mode, `en-US`, `America/Los_Angeles`, reduced motion, both local faces loaded, one animation frame, disabled animation, hidden caret, and CSS-scale screenshots.
 - Snapshot paths include the test file, snapshot argument, Playwright project, and platform. The documented tolerance is `maxDiffPixelRatio: 0.001`; it is not a license to accept an unexplained visual change.
 - Console errors, page errors, failed requests, and cross-origin requests fail the visual run. The intentional missing route permits only its expected primary 404 resource message.
