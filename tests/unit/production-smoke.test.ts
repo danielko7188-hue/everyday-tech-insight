@@ -22,6 +22,21 @@ type FetchOverride = {
   title?: string;
 };
 
+type HtmlFixtureOptions = {
+  canonical?: string;
+  description?: string;
+  extra?: string;
+  ogDescription?: string;
+  ogTitle?: string;
+  ogType?: string;
+  ogUrl?: string;
+  robots?: string;
+  socialImage?: string;
+  title?: string;
+  twitterDescription?: string;
+  twitterTitle?: string;
+};
+
 type ProductionSmokeModule =
   typeof import("../../scripts/check-production.mjs");
 type FixtureProductionSmokeModule = Omit<
@@ -65,24 +80,38 @@ function htmlFixture({
   title = "Fixture page | Everyday Tech Insight",
   description = "A distinct fixture description for production smoke validation.",
   canonical = `${fixtureOrigin}/fixture/`,
+  robots = "index,follow",
+  ogType = "website",
+  ogTitle = title,
+  ogDescription = description,
+  ogUrl = canonical,
   socialImage = `${fixtureOrigin}/social/default.png`,
+  twitterTitle = title,
+  twitterDescription = description,
   extra = "",
-} = {}) {
+}: HtmlFixtureOptions = {}) {
   return `<!doctype html>
     <html lang="en-US">
       <head>
         <title>${title}</title>
         <meta name="description" content="${description}">
+        <meta name="robots" content="${robots}">
         <link rel="canonical" href="${canonical}">
         <link rel="icon" href="/favicon.svg">
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
         <link rel="manifest" href="/manifest.webmanifest">
+        <meta property="og:type" content="${ogType}">
+        <meta property="og:title" content="${ogTitle}">
+        <meta property="og:description" content="${ogDescription}">
+        <meta property="og:url" content="${ogUrl}">
         <meta property="og:image" content="${socialImage}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
         <meta property="og:image:type" content="image/png">
         <meta property="og:image:alt" content="Social preview for this fixture page.">
         <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="${twitterTitle}">
+        <meta name="twitter:description" content="${twitterDescription}">
         <meta name="twitter:image" content="${socialImage}">
         <meta name="twitter:image:alt" content="Social preview for this fixture page.">
       </head>
@@ -140,6 +169,22 @@ function fixtureSocialImagePath(routePath: string) {
   const article = /^\/articles\/([^/]+)\/$/.exec(routePath)?.[1];
   if (article) return `/social/article-${article}.png`;
   return "/social/default.png";
+}
+
+function robotsFixture(origin = fixtureOrigin) {
+  return `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap-index.xml\n`;
+}
+
+function sitemapIndexFixture(origin = fixtureOrigin) {
+  return `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>${origin}/sitemap-0.xml</loc></sitemap></sitemapindex>`;
+}
+
+function sitemapFixture(paths: readonly string[], origin = fixtureOrigin) {
+  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map((path) => `<url><loc>${origin}${path}</loc></url>`).join("")}</urlset>`;
+}
+
+function rssFixture(paths: readonly string[], origin = fixtureOrigin) {
+  return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Everyday Tech Insight</title><link>${origin}/</link><description>Practical business technology guidance.</description>${paths.map((path) => `<item><title>${path}</title><link>${origin}${path}</link><guid>${origin}${path}</guid></item>`).join("")}</channel></rss>`;
 }
 
 describe("collectInternalAssets", () => {
@@ -333,6 +378,57 @@ describe("inspectHtml", () => {
       html: () => htmlFixture({ canonical: `${fixtureOrigin}/fixture/?ref=1` }),
     },
     {
+      name: "missing robots metadata",
+      code: "robots",
+      html: () =>
+        htmlFixture().replace(
+          '<meta name="robots" content="index,follow">',
+          "",
+        ),
+    },
+    {
+      name: "noindex robots metadata on an indexable route",
+      code: "robots",
+      html: () => htmlFixture({ robots: "noindex,follow" }),
+    },
+    {
+      name: "mismatched Open Graph title",
+      code: "og-title",
+      html: () => htmlFixture({ ogTitle: "Different social title" }),
+    },
+    {
+      name: "mismatched Open Graph description",
+      code: "og-description",
+      html: () => htmlFixture({ ogDescription: "Different description" }),
+    },
+    {
+      name: "mismatched Open Graph URL",
+      code: "og-url",
+      html: () => htmlFixture({ ogUrl: `${fixtureOrigin}/wrong/` }),
+    },
+    {
+      name: "website Open Graph type on an article route",
+      code: "og-type",
+      route: "/articles/how-to-identify-business-tasks-for-automation/",
+      html: () =>
+        htmlFixture({
+          canonical: `${fixtureOrigin}/articles/how-to-identify-business-tasks-for-automation/`,
+          ogType: "website",
+          socialImage: `${fixtureOrigin}/social/article-how-to-identify-business-tasks-for-automation.png`,
+        }),
+    },
+    {
+      name: "mismatched Twitter title",
+      code: "twitter-title",
+      html: () => htmlFixture({ twitterTitle: "Different Twitter title" }),
+    },
+    {
+      name: "mismatched Twitter description",
+      code: "twitter-description",
+      html: () =>
+        htmlFixture({ twitterDescription: "Different Twitter description" }),
+    },
+    {
       name: "duplicate fit summary",
       code: "duplicate-fit-summary",
       html: () =>
@@ -436,6 +532,29 @@ describe("inspectHtml", () => {
     ).toContain(code);
   });
 
+  it("allows noindex,follow only for the 404 document", async () => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const result = productionSmoke.inspectHtml(
+      htmlFixture({
+        canonical: `${fixtureOrigin}/404.html`,
+        ogUrl: `${fixtureOrigin}/404.html`,
+        robots: "noindex,follow",
+      }),
+      {
+        canonicalPath: "/404.html",
+        origin: fixtureOrigin,
+        route: "/missing-page/",
+      },
+    );
+
+    expect(
+      result.issues.map((issue: { code: string }) => issue.code),
+    ).not.toContain("robots");
+  });
+
   it.each([
     {
       name: "Current issue",
@@ -507,6 +626,44 @@ describe("inspectHtml", () => {
     expect(codes).toEqual(
       expect.arrayContaining(["executable-script", "tracking-signature"]),
     );
+  });
+
+  it.each(["speculationrules", "application/json", "text/plain"])(
+    "rejects a non-JSON-LD script block with type %s",
+    async (type) => {
+      const productionSmoke = asFixtureProductionSmoke(
+        await import("../../scripts/check-production.mjs"),
+      );
+
+      const result = productionSmoke.inspectHtml(
+        htmlFixture({
+          extra: `<script type="${type}">{"prefetch":[]}</script>`,
+        }),
+        { origin: fixtureOrigin, route: "/fixture/" },
+      );
+
+      expect(
+        result.issues.map((issue: { code: string }) => issue.code),
+      ).toContain("executable-script");
+    },
+  );
+
+  it("allows a normalized JSON-LD script block", async () => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const result = productionSmoke.inspectHtml(
+      htmlFixture({
+        extra:
+          '<script type=" APPLICATION/LD+JSON ; charset=utf-8">{"@context":"https://schema.org"}</script>',
+      }),
+      { origin: fixtureOrigin, route: "/fixture/" },
+    );
+
+    expect(
+      result.issues.map((issue: { code: string }) => issue.code),
+    ).not.toContain("executable-script");
   });
 
   it("rejects an external advertising script as executable, off-origin, and tracking-related", async () => {
@@ -683,10 +840,21 @@ describe("production route smoke", () => {
     "/privacy/",
     "/advertising-disclosure/",
     "/sitemap/",
+    "/sitemap-index.xml",
+    "/sitemap-0.xml",
     "/rss.xml",
     "/robots.txt",
     "/production-smoke-route-that-must-not-exist/",
   ];
+  const expectedArticlePaths = requiredPaths.filter((path) =>
+    /^\/articles\/[^/]+\/$/.test(path),
+  );
+  const expectedIndexablePaths = requiredPaths.filter(
+    (path) =>
+      !path.endsWith(".xml") &&
+      path !== "/robots.txt" &&
+      path !== "/production-smoke-route-that-must-not-exist/",
+  );
 
   async function loadRunner() {
     const productionSmoke = await import("../../scripts/check-production.mjs");
@@ -750,20 +918,35 @@ describe("production route smoke", () => {
         });
       }
       if (route.kind === "text") {
+        const indexablePaths = routes
+          .filter(
+            (candidate) =>
+              candidate.kind === "html" && candidate.expectedStatus === 200,
+          )
+          .map(({ path }) => path);
+        const articlePaths = routes
+          .map(({ path }) => path)
+          .filter((path) => /^\/articles\/[^/]+\/$/.test(path));
         const contentType =
           route.path === "/rss.xml"
             ? "application/rss+xml; charset=utf-8"
-            : "text/plain; charset=utf-8";
-        return new Response(
-          override.body ??
-            (route.path === "/rss.xml"
-              ? '<?xml version="1.0"?><rss></rss>'
-              : "User-agent: *\nAllow: /\n"),
-          {
-            status,
-            headers: { "content-type": contentType, ...override.headers },
-          },
-        );
+            : route.path.endsWith(".xml")
+              ? "application/xml; charset=utf-8"
+              : "text/plain; charset=utf-8";
+        const fixtureBody =
+          route.path === "/rss.xml"
+            ? rssFixture(articlePaths)
+            : route.path === "/robots.txt"
+              ? robotsFixture()
+              : route.path === "/sitemap-index.xml"
+                ? sitemapIndexFixture()
+                : route.path === "/sitemap-0.xml"
+                  ? sitemapFixture(indexablePaths)
+                  : "";
+        return new Response(override.body ?? fixtureBody, {
+          status,
+          headers: { "content-type": contentType, ...override.headers },
+        });
       }
 
       const routeKey = route.path.replaceAll("/", "-") || "home";
@@ -775,6 +958,13 @@ describe("production route smoke", () => {
               override.description ??
               `Production smoke description for the unique route ${route.path}`,
             canonical: `${fixtureOrigin}${route.canonicalPath ?? route.path}`,
+            ogType: /^\/articles\/[^/]+\/$/.test(route.path)
+              ? "article"
+              : "website",
+            robots:
+              route.canonicalPath === "/404.html"
+                ? "noindex,follow"
+                : "index,follow",
             socialImage: `${fixtureOrigin}${fixtureSocialImagePath(route.path)}`,
           }),
         {
@@ -891,6 +1081,230 @@ describe("production route smoke", () => {
       code: "content-type",
       overrides: {
         "/robots.txt": { headers: { "content-type": "application/json" } },
+      },
+    },
+    {
+      name: "HTML response for sitemap XML",
+      code: "content-type",
+      overrides: {
+        "/sitemap-0.xml": { headers: { "content-type": "text/html" } },
+      },
+    },
+    {
+      name: "malformed sitemap index XML",
+      code: "sitemap-xml",
+      overrides: {
+        "/sitemap-index.xml": { body: "<sitemapindex><sitemap>" },
+      },
+    },
+    {
+      name: "empty sitemap XML",
+      code: "sitemap-xml",
+      overrides: { "/sitemap-0.xml": { body: "" } },
+    },
+    {
+      name: "off-origin sitemap index location",
+      code: "sitemap-url",
+      overrides: {
+        "/sitemap-index.xml": {
+          body: sitemapIndexFixture("https://wrong.example"),
+        },
+      },
+    },
+    {
+      name: "sitemap index without the sitemap namespace",
+      code: "sitemap-structure",
+      overrides: {
+        "/sitemap-index.xml": {
+          body: sitemapIndexFixture().replace(
+            ' xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
+            "",
+          ),
+        },
+      },
+    },
+    {
+      name: "incomplete sitemap indexable membership",
+      code: "sitemap-membership",
+      overrides: {
+        "/sitemap-0.xml": {
+          body: sitemapFixture(expectedIndexablePaths.slice(1)),
+        },
+      },
+    },
+    {
+      name: "sitemap URL set without the sitemap namespace",
+      code: "sitemap-structure",
+      overrides: {
+        "/sitemap-0.xml": {
+          body: sitemapFixture(expectedIndexablePaths).replace(
+            ' xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
+            "",
+          ),
+        },
+      },
+    },
+    {
+      name: "incorrect robots sitemap directive",
+      code: "robots-body",
+      overrides: {
+        "/robots.txt": {
+          body: robotsFixture("https://wrong.example"),
+        },
+      },
+    },
+    {
+      name: "missing robots allow rule",
+      code: "robots-body",
+      overrides: {
+        "/robots.txt": {
+          body: `User-agent: *\nSitemap: ${fixtureOrigin}/sitemap-index.xml\n`,
+        },
+      },
+    },
+    {
+      name: "robots rule blocking article routes",
+      code: "robots-body",
+      overrides: {
+        "/robots.txt": {
+          body: `${robotsFixture()}Disallow: /articles/\n`,
+        },
+      },
+    },
+    {
+      name: "robots wildcard disallow rule",
+      code: "robots-body",
+      overrides: {
+        "/robots.txt": {
+          body: `${robotsFixture()}Disallow: /*\n`,
+        },
+      },
+    },
+    {
+      name: "malformed RSS XML",
+      code: "feed-xml",
+      overrides: { "/rss.xml": { body: "<rss><channel>" } },
+    },
+    {
+      name: "RSS document without version 2.0",
+      code: "feed-structure",
+      overrides: {
+        "/rss.xml": {
+          body: rssFixture(expectedArticlePaths).replace(
+            '<rss version="2.0">',
+            "<rss>",
+          ),
+        },
+      },
+    },
+    {
+      name: "RSS channel without a title",
+      code: "feed-structure",
+      overrides: {
+        "/rss.xml": {
+          body: rssFixture(expectedArticlePaths).replace(
+            "<title>Everyday Tech Insight</title>",
+            "",
+          ),
+        },
+      },
+    },
+    {
+      name: "RSS channel without a description",
+      code: "feed-structure",
+      overrides: {
+        "/rss.xml": {
+          body: rssFixture(expectedArticlePaths).replace(
+            "<description>Practical business technology guidance.</description>",
+            "",
+          ),
+        },
+      },
+    },
+    {
+      name: "RSS channel with empty required text",
+      code: "feed-structure",
+      overrides: {
+        "/rss.xml": {
+          body: rssFixture(expectedArticlePaths)
+            .replace("<title>Everyday Tech Insight</title>", "<title></title>")
+            .replace(
+              "<description>Practical business technology guidance.</description>",
+              "<description></description>",
+            ),
+        },
+      },
+    },
+    {
+      name: "RSS item without a title or description",
+      code: "feed-structure",
+      overrides: {
+        "/rss.xml": {
+          body: rssFixture(expectedArticlePaths).replace(
+            `<title>${expectedArticlePaths[0]}</title>`,
+            "",
+          ),
+        },
+      },
+    },
+    {
+      name: "RSS item with only an empty title",
+      code: "feed-structure",
+      overrides: {
+        "/rss.xml": {
+          body: rssFixture(expectedArticlePaths).replace(
+            `<title>${expectedArticlePaths[0]}</title>`,
+            "<title></title>",
+          ),
+        },
+      },
+    },
+    {
+      name: "incomplete RSS article membership",
+      code: "feed-membership",
+      overrides: {
+        "/rss.xml": { body: rssFixture(expectedArticlePaths.slice(1)) },
+      },
+    },
+    {
+      name: "mismatched RSS item guid",
+      code: "feed-item-url",
+      overrides: {
+        "/rss.xml": {
+          body: rssFixture(expectedArticlePaths).replace(
+            `<guid>${fixtureOrigin}${expectedArticlePaths[0]}</guid>`,
+            `<guid>${fixtureOrigin}${expectedArticlePaths[1]}</guid>`,
+          ),
+        },
+      },
+    },
+    {
+      name: "off-origin RSS item URLs",
+      code: "feed-url",
+      overrides: {
+        "/rss.xml": {
+          body: rssFixture(expectedArticlePaths)
+            .replace(
+              `<link>${fixtureOrigin}${expectedArticlePaths[0]}</link>`,
+              `<link>https://wrong.example${expectedArticlePaths[0]}</link>`,
+            )
+            .replace(
+              `<guid>${fixtureOrigin}${expectedArticlePaths[0]}</guid>`,
+              `<guid>https://wrong.example${expectedArticlePaths[0]}</guid>`,
+            ),
+        },
+      },
+    },
+    {
+      name: "incorrect RSS channel link",
+      code: "feed-channel",
+      overrides: {
+        "/rss.xml": {
+          body: rssFixture(expectedArticlePaths).replace(
+            `<link>${fixtureOrigin}/</link>`,
+            `<link>${fixtureOrigin}/about/</link>`,
+          ),
+        },
       },
     },
     {

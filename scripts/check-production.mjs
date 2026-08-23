@@ -1,6 +1,7 @@
 import { load } from "cheerio";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { SaxesParser } from "saxes";
 
 export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
   "/articles/how-to-identify-business-tasks-for-automation/",
@@ -83,6 +84,8 @@ export const PRODUCTION_ROUTES = Object.freeze([
     kind: "html",
   },
   { path: "/sitemap/", expectedStatus: 200, kind: "html" },
+  { path: "/sitemap-index.xml", expectedStatus: 200, kind: "text" },
+  { path: "/sitemap-0.xml", expectedStatus: 200, kind: "text" },
   { path: "/rss.xml", expectedStatus: 200, kind: "text" },
   { path: "/robots.txt", expectedStatus: 200, kind: "text" },
   {
@@ -403,15 +406,8 @@ function normalizedScriptType($, element) {
   return ($(element).attr("type") ?? "").split(";", 1)[0].trim().toLowerCase();
 }
 
-function isExecutableScriptType(type) {
-  if (!type || type === "module") return true;
-  return (
-    /^(?:application|text)\/(?:x-)?(?:java|ecma)script(?:\d(?:\.\d)?)?$/.test(
-      type,
-    ) ||
-    type === "text/jscript" ||
-    type === "text/livescript"
-  );
+function isDisallowedScriptType(type) {
+  return type !== "application/ld+json";
 }
 
 function srcsetCandidates(value) {
@@ -521,7 +517,7 @@ function inspectPrivacyBoundary($, { origin, route }) {
 
   $("script").each((_index, element) => {
     const type = normalizedScriptType($, element);
-    if (!isExecutableScriptType(type)) return;
+    if (!isDisallowedScriptType(type)) return;
 
     executableContexts.push(
       type ? `script[type=${type}]` : "script without a type",
@@ -698,6 +694,60 @@ export function inspectHtml(
       ),
     );
   }
+
+  function requireMeta(selector, expected, code, label) {
+    const nodes = $(selector);
+    const actual = nodes.attr("content")?.trim() ?? "";
+    if (nodes.length !== 1 || actual !== expected) {
+      issues.push(
+        finding(
+          code,
+          route,
+          `${label} must appear once and equal ${expected}.`,
+        ),
+      );
+    }
+  }
+
+  const expectedRobots =
+    expectedCanonical.pathname === "/404.html"
+      ? "noindex,follow"
+      : "index,follow";
+  const expectedOpenGraphType = /^\/articles\/[^/]+\/$/.test(route)
+    ? "article"
+    : "website";
+  requireMeta('meta[name="robots"]', expectedRobots, "robots", "robots");
+  requireMeta(
+    'meta[property="og:type"]',
+    expectedOpenGraphType,
+    "og-type",
+    "og:type",
+  );
+  requireMeta('meta[property="og:title"]', title, "og-title", "og:title");
+  requireMeta(
+    'meta[property="og:description"]',
+    description,
+    "og-description",
+    "og:description",
+  );
+  requireMeta(
+    'meta[property="og:url"]',
+    expectedCanonical.href,
+    "og-url",
+    "og:url",
+  );
+  requireMeta(
+    'meta[name="twitter:title"]',
+    title,
+    "twitter-title",
+    "twitter:title",
+  );
+  requireMeta(
+    'meta[name="twitter:description"]',
+    description,
+    "twitter-description",
+    "twitter:description",
+  );
 
   const socialImageNodes = $('meta[property="og:image"]');
   const socialImage = socialImageNodes.attr("content")?.trim() ?? "";
@@ -919,7 +969,350 @@ function expectedRouteMediaTypes(route) {
   if (route.path === "/rss.xml") {
     return ["application/rss+xml", "application/xml", "text/xml"];
   }
+  if (route.path === "/sitemap-index.xml" || route.path === "/sitemap-0.xml") {
+    return ["application/xml", "text/xml"];
+  }
   if (route.path === "/robots.txt") return ["text/plain"];
+  return [];
+}
+
+function isWellFormedXml(xml) {
+  if (!xml.trim()) return false;
+  try {
+    new SaxesParser().write(xml).close();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function sameSet(left, right) {
+  return (
+    left.size === right.size && [...left].every((value) => right.has(value))
+  );
+}
+
+function hasSingleXmlRoot($, rootName) {
+  const roots = $.root().children();
+  return roots.length === 1 && roots.filter(rootName).length === 1;
+}
+
+function checkedAbsoluteUrl(raw, origin) {
+  try {
+    const url = new URL(raw);
+    const valid =
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      !url.username &&
+      !url.password &&
+      url.origin === origin &&
+      !url.search &&
+      !url.hash;
+    return { href: url.href, valid };
+  } catch {
+    return { href: raw, valid: false };
+  }
+}
+
+function inspectRobots(body, { origin, route }) {
+  const expectedSitemap = `Sitemap: ${
+    new URL("/sitemap-index.xml", `${origin}/`).href
+  }`;
+  const lines = body
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
+  const sitemapLines = lines.filter((line) => /^sitemap:/i.test(line));
+  const valid =
+    lines.filter((line) => line === "User-agent: *").length === 1 &&
+    lines.filter((line) => line === "Allow: /").length === 1 &&
+    sitemapLines.length === 1 &&
+    sitemapLines[0] === expectedSitemap &&
+    !lines.some((line) => /^Disallow:\s*\S+/i.test(line));
+
+  return valid
+    ? []
+    : [
+        finding(
+          "robots-body",
+          route,
+          `robots.txt must contain one User-agent: *, one Allow: /, exactly ${expectedSitemap}, and no nonempty Disallow rule.`,
+        ),
+      ];
+}
+
+function inspectSitemapIndex(xml, { origin, route }) {
+  const issues = [];
+  if (!isWellFormedXml(xml)) {
+    issues.push(
+      finding(
+        "sitemap-xml",
+        route,
+        "sitemap index must be nonempty well-formed XML.",
+      ),
+    );
+  }
+  const $ = load(xml, { xmlMode: true });
+  const entries = $("sitemapindex > sitemap");
+  const locations = $("sitemapindex > sitemap > loc");
+  const validStructure =
+    hasSingleXmlRoot($, "sitemapindex") &&
+    $("sitemapindex").first().attr("xmlns") ===
+      "http://www.sitemaps.org/schemas/sitemap/0.9" &&
+    entries.length === 1 &&
+    entries.length === $("sitemap").length &&
+    locations.length === 1 &&
+    locations.length === $("loc").length &&
+    entries.first().children("loc").length === 1;
+  if (!validStructure) {
+    issues.push(
+      finding(
+        "sitemap-structure",
+        route,
+        "sitemap index must contain one sitemapindex root and one direct sitemap location.",
+      ),
+    );
+  }
+
+  const expected = new URL("/sitemap-0.xml", `${origin}/`).href;
+  const rawLocations = locations
+    .map((_index, element) => $(element).text().trim())
+    .get();
+  const checkedLocations = rawLocations.map((raw) =>
+    checkedAbsoluteUrl(raw, origin),
+  );
+  if (checkedLocations.some(({ valid }) => !valid)) {
+    issues.push(
+      finding(
+        "sitemap-url",
+        route,
+        "sitemap index locations must be absolute URLs on the checked origin without query strings or fragments.",
+      ),
+    );
+  }
+  if (checkedLocations.length !== 1 || checkedLocations[0]?.href !== expected) {
+    issues.push(
+      finding(
+        "sitemap-index",
+        route,
+        `sitemap index must reference exactly ${expected}.`,
+      ),
+    );
+  }
+  return issues;
+}
+
+function inspectSitemap(xml, { origin, route }) {
+  const issues = [];
+  if (!isWellFormedXml(xml)) {
+    issues.push(
+      finding(
+        "sitemap-xml",
+        route,
+        "sitemap must be nonempty well-formed XML.",
+      ),
+    );
+  }
+  const $ = load(xml, { xmlMode: true });
+  const entries = $("urlset > url");
+  const locations = $("urlset > url > loc");
+  const validStructure =
+    hasSingleXmlRoot($, "urlset") &&
+    $("urlset").first().attr("xmlns") ===
+      "http://www.sitemaps.org/schemas/sitemap/0.9" &&
+    entries.length > 0 &&
+    entries.length === $("url").length &&
+    locations.length === entries.length &&
+    locations.length === $("loc").length &&
+    entries.toArray().every((entry) => $(entry).children("loc").length === 1);
+  if (!validStructure) {
+    issues.push(
+      finding(
+        "sitemap-structure",
+        route,
+        "sitemap must contain one urlset root and one direct location per URL entry.",
+      ),
+    );
+  }
+
+  const rawLocations = locations
+    .map((_index, element) => $(element).text().trim())
+    .get();
+  const checkedLocations = rawLocations.map((raw) =>
+    checkedAbsoluteUrl(raw, origin),
+  );
+  if (checkedLocations.some(({ valid }) => !valid)) {
+    issues.push(
+      finding(
+        "sitemap-url",
+        route,
+        "sitemap locations must be absolute URLs on the checked origin without query strings or fragments.",
+      ),
+    );
+  }
+  const actual = new Set(
+    checkedLocations.filter(({ valid }) => valid).map(({ href }) => href),
+  );
+  const expected = new Set(
+    PRODUCTION_ROUTES.filter(
+      ({ expectedStatus, kind }) => kind === "html" && expectedStatus === 200,
+    ).map(({ path: expectedPath }) => new URL(expectedPath, `${origin}/`).href),
+  );
+  if (checkedLocations.length !== expected.size || !sameSet(actual, expected)) {
+    issues.push(
+      finding(
+        "sitemap-membership",
+        route,
+        "sitemap locations must exactly match every indexable production HTML route.",
+      ),
+    );
+  }
+  return issues;
+}
+
+function inspectRss(xml, { origin, route }) {
+  const issues = [];
+  if (!isWellFormedXml(xml)) {
+    issues.push(
+      finding("feed-xml", route, "RSS feed must be nonempty well-formed XML."),
+    );
+  }
+  const $ = load(xml, { xmlMode: true });
+  const channels = $("rss > channel");
+  const items = $("rss > channel > item");
+  const validStructure =
+    hasSingleXmlRoot($, "rss") &&
+    $("rss").first().attr("version") === "2.0" &&
+    channels.length === 1 &&
+    channels.length === $("channel").length &&
+    items.length === $("item").length &&
+    channels.first().children("title").length === 1 &&
+    channels.first().children("title").first().text().trim().length > 0 &&
+    channels.first().children("link").length === 1 &&
+    channels.first().children("description").length === 1 &&
+    channels.first().children("description").first().text().trim().length > 0 &&
+    items.toArray().every((item) => {
+      const itemElement = $(item);
+      const titleNodes = itemElement.children("title");
+      const descriptionNodes = itemElement.children("description");
+      const titleCount = titleNodes.length;
+      const descriptionCount = descriptionNodes.length;
+      return (
+        itemElement.children("link").length === 1 &&
+        itemElement.children("guid").length === 1 &&
+        titleCount <= 1 &&
+        descriptionCount <= 1 &&
+        (titleNodes.first().text().trim().length > 0 ||
+          descriptionNodes.first().text().trim().length > 0)
+      );
+    });
+  if (!validStructure) {
+    issues.push(
+      finding(
+        "feed-structure",
+        route,
+        "RSS 2.0 must contain one channel with title, link, and description, plus one direct link and guid and at least a title or description per direct item.",
+      ),
+    );
+  }
+
+  const channelRaw = channels.first().children("link").first().text().trim();
+  const channelUrl = checkedAbsoluteUrl(channelRaw, origin);
+  const expectedChannel = new URL("/", `${origin}/`).href;
+  if (!channelUrl.valid || channelUrl.href !== expectedChannel) {
+    issues.push(
+      finding(
+        "feed-channel",
+        route,
+        `RSS channel link must be exactly ${expectedChannel}.`,
+      ),
+    );
+  }
+
+  const actualLinks = [];
+  const seenLinks = new Set();
+  let invalidItemUrl = false;
+  items.each((_index, element) => {
+    const item = $(element);
+    const linkNodes = item.children("link");
+    const guidNodes = item.children("guid");
+    const link = checkedAbsoluteUrl(linkNodes.first().text().trim(), origin);
+    const guid = checkedAbsoluteUrl(guidNodes.first().text().trim(), origin);
+    if (
+      linkNodes.length !== 1 ||
+      guidNodes.length !== 1 ||
+      !link.valid ||
+      !guid.valid ||
+      link.href !== guid.href ||
+      seenLinks.has(link.href)
+    ) {
+      invalidItemUrl = true;
+    }
+    if (link.valid) {
+      actualLinks.push(link.href);
+      seenLinks.add(link.href);
+    }
+  });
+  if (invalidItemUrl) {
+    issues.push(
+      finding(
+        "feed-item-url",
+        route,
+        "every RSS item must have one unique same-origin link and an exactly matching guid.",
+      ),
+    );
+  }
+  if (
+    items.toArray().some((item) => {
+      const link = checkedAbsoluteUrl(
+        $(item).children("link").first().text().trim(),
+        origin,
+      );
+      const guid = checkedAbsoluteUrl(
+        $(item).children("guid").first().text().trim(),
+        origin,
+      );
+      return !link.valid || !guid.valid;
+    })
+  ) {
+    issues.push(
+      finding(
+        "feed-url",
+        route,
+        "RSS links and guids must be absolute URLs on the checked origin without query strings or fragments.",
+      ),
+    );
+  }
+
+  const expectedLinks = new Set(
+    PUBLISHED_ARTICLE_PATHS.map(
+      (articlePath) => new URL(articlePath, `${origin}/`).href,
+    ),
+  );
+  const actual = new Set(actualLinks);
+  if (
+    actualLinks.length !== expectedLinks.size ||
+    !sameSet(actual, expectedLinks)
+  ) {
+    issues.push(
+      finding(
+        "feed-membership",
+        route,
+        "RSS item links must exactly match every published article route.",
+      ),
+    );
+  }
+  return issues;
+}
+
+function inspectTextRoute(body, { origin, route }) {
+  if (route === "/robots.txt") return inspectRobots(body, { origin, route });
+  if (route === "/sitemap-index.xml") {
+    return inspectSitemapIndex(body, { origin, route });
+  }
+  if (route === "/sitemap-0.xml") {
+    return inspectSitemap(body, { origin, route });
+  }
+  if (route === "/rss.xml") return inspectRss(body, { origin, route });
   return [];
 }
 
@@ -1034,11 +1427,9 @@ export async function runProductionCheck({
       );
       continue;
     }
-    if (route.kind !== "html") continue;
-
-    let html;
+    let body;
     try {
-      html = await response.text();
+      body = await response.text();
     } catch (error) {
       issues.push(
         finding(
@@ -1051,7 +1442,17 @@ export async function runProductionCheck({
       );
       continue;
     }
-    const inspection = inspectHtml(html, {
+    if (route.kind !== "html") {
+      issues.push(
+        ...inspectTextRoute(body, {
+          origin: normalizedOrigin,
+          route: route.path,
+        }),
+      );
+      continue;
+    }
+
+    const inspection = inspectHtml(body, {
       canonicalPath: route.canonicalPath ?? route.path,
       origin: normalizedOrigin,
       route: route.path,
