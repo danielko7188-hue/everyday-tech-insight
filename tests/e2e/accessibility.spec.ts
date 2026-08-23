@@ -435,6 +435,24 @@ test("390px native menu opens from the keyboard and exposes every topic", async 
   ).toHaveAttribute("aria-current", "page");
 });
 
+test("mobile article navigation exposes one unambiguous current location", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(articlePath);
+
+  const mobileList = page.locator(
+    'header.site-header nav[aria-label="Mobile navigation"] ul',
+  );
+  await expect(mobileList.locator("[aria-current]")).toHaveCount(1);
+  await expect(
+    mobileList.locator('a[href="/categories/ai-automation/"]'),
+  ).toHaveAttribute("aria-current", "location");
+  await expect(mobileList.locator('a[href="/articles/"]')).not.toHaveAttribute(
+    "aria-current",
+  );
+});
+
 test("article body links are visibly underlined and keyboard focus is visible", async ({
   page,
 }) => {
