@@ -43,6 +43,28 @@ const representativeRoutes = [
       "footer.site-footer",
     ],
   },
+  {
+    name: "toolkit landing",
+    path: "/toolkit/",
+    keySelectors: [
+      "header.site-header",
+      "main",
+      ".toolkit-page",
+      ".toolkit-grid",
+      "footer.site-footer",
+    ],
+  },
+  {
+    name: "toolkit detail",
+    path: "/toolkit/automation-candidate-screen/",
+    keySelectors: [
+      "header.site-header",
+      "main",
+      ".toolkit-detail",
+      ".toolkit-field-guide",
+      "footer.site-footer",
+    ],
+  },
 ] as const;
 const requiredWidths = [360, 390, 768, 1024, 1280, 1440, 1920] as const;
 const categorySlugs = [
@@ -234,6 +256,53 @@ for (const viewport of [
     ).toBeLessThan(viewport.width === 390 ? 11_000 : 7_000);
   });
 }
+
+test("390px Toolkit details use visible stacked field cards without a horizontal primary guide", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  for (const slug of [
+    "automation-candidate-screen",
+    "saas-evaluation-evidence-sheet",
+    "technology-risk-register",
+    "backup-restore-test-log",
+  ]) {
+    await page.goto(`/toolkit/${slug}/`);
+    const cards = page.locator(".toolkit-field-card");
+    await expect(cards, slug).toHaveCount(8);
+    await expect(cards.first(), slug).toBeVisible();
+    await expect(page.locator(".toolkit-field-guide table"), slug).toHaveCount(
+      0,
+    );
+    await expect(page.locator("[data-horizontal-scroll]"), slug).toHaveCount(0);
+
+    const listBox = await page
+      .locator(".toolkit-field-guide__list")
+      .boundingBox();
+    const firstCardBox = await cards.first().boundingBox();
+    expect(listBox, `${slug} field list`).not.toBeNull();
+    expect(firstCardBox, `${slug} first field card`).not.toBeNull();
+    expect(Math.abs(firstCardBox!.x - listBox!.x), slug).toBeLessThanOrEqual(1);
+    expect(
+      Math.abs(
+        firstCardBox!.x + firstCardBox!.width - (listBox!.x + listBox!.width),
+      ),
+      slug,
+    ).toBeLessThanOrEqual(1);
+
+    const boundaries = await cards.evaluateAll((items) =>
+      items.map((item) => {
+        const box = item.getBoundingClientRect();
+        return { left: box.left, right: box.right };
+      }),
+    );
+    for (const boundary of boundaries) {
+      expect(boundary.left, slug).toBeGreaterThanOrEqual(-1);
+      expect(boundary.right, slug).toBeLessThanOrEqual(391);
+    }
+  }
+});
 
 test("wide homepage lead keeps automation on one rendered line", async ({
   page,

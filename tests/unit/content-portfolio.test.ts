@@ -105,6 +105,99 @@ const expectedArticleVisuals = {
   },
 } as const;
 
+const expectedToolkitResources = [
+  {
+    id: "automation-candidate-screen",
+    articleSlug: "how-to-identify-business-tasks-for-automation",
+    guideHref: "/articles/how-to-identify-business-tasks-for-automation/",
+    downloadHref: "/toolkit/automation-candidate-screen.csv",
+    csvHeaders: [
+      "Task",
+      "Process owner",
+      "Monthly frequency",
+      "Active minutes per run",
+      "Input stability",
+      "Rule stability",
+      "Exception and rework evidence",
+      "Failure consequence",
+      "Sensitive data and access boundary",
+      "Human review point",
+      "Manual fallback",
+      "Pilot decision",
+      "Evidence owner",
+      "Review date",
+    ],
+  },
+  {
+    id: "saas-evaluation-evidence-sheet",
+    articleSlug: "evaluate-saas-with-a-practical-checklist",
+    guideHref: "/articles/evaluate-saas-with-a-practical-checklist/",
+    downloadHref: "/toolkit/saas-evaluation-evidence-sheet.csv",
+    csvHeaders: [
+      "Requirement",
+      "Priority",
+      "Test scenario",
+      "Acceptance condition",
+      "Purchased plan",
+      "Configuration and role",
+      "Observed evidence",
+      "Result",
+      "Limitation",
+      "Implementation effort",
+      "Exit impact",
+      "Follow-up owner",
+      "Due date",
+    ],
+  },
+  {
+    id: "technology-risk-register",
+    articleSlug: "create-a-simple-technology-risk-register",
+    guideHref: "/articles/create-a-simple-technology-risk-register/",
+    downloadHref: "/toolkit/technology-risk-register.csv",
+    csvHeaders: [
+      "Risk event",
+      "Business consequence",
+      "Affected process or asset",
+      "Existing safeguards",
+      "Likelihood rating",
+      "Likelihood basis",
+      "Impact rating",
+      "Impact basis",
+      "Evidence and uncertainty",
+      "Response",
+      "Target state",
+      "Owner",
+      "Due date",
+      "Review outcome",
+      "Next review date",
+    ],
+  },
+  {
+    id: "backup-restore-test-log",
+    articleSlug: "back-up-business-files-with-the-3-2-1-method",
+    guideHref: "/articles/back-up-business-files-with-the-3-2-1-method/",
+    downloadHref: "/toolkit/backup-restore-test-log.csv",
+    csvHeaders: [
+      "Protected data",
+      "Recovery point",
+      "Backup copy",
+      "Failure scenario",
+      "Restore destination",
+      "Request time",
+      "Start time",
+      "Completion time",
+      "Active effort",
+      "Validation method",
+      "Result",
+      "Missing items and errors",
+      "Recovery dependencies",
+      "Corrective action",
+      "Owner",
+      "Retest date",
+    ],
+  },
+] as const;
+
 function articleRecords(): ArticleRecord[] {
   return readdirSync(articlesDirectory)
     .filter((fileName) => fileName.endsWith(".md"))
@@ -217,6 +310,70 @@ function whitespaceTokenCount(value: string): number {
 }
 
 describe("published content portfolio", () => {
+  it("centralizes four complete Toolkit records with stable article and CSV contracts", async () => {
+    const toolkitModule = await import("../../src/data/toolkit").catch(
+      () => null,
+    );
+
+    expect(toolkitModule).not.toBeNull();
+    if (!toolkitModule) return;
+
+    const resources = toolkitModule.toolkitResources;
+    expect(resources).toHaveLength(4);
+    expect(new Set(resources.map(({ id }) => id)).size).toBe(4);
+    expect(new Set(resources.map(({ detailHref }) => detailHref)).size).toBe(4);
+    expect(
+      new Set(resources.map(({ downloadHref }) => downloadHref)).size,
+    ).toBe(4);
+    expect(new Set(resources.map(({ articleSlug }) => articleSlug)).size).toBe(
+      4,
+    );
+
+    for (const expected of expectedToolkitResources) {
+      const resource = resources.find(({ id }) => id === expected.id);
+      expect(resource, expected.id).toBeDefined();
+      if (!resource) continue;
+
+      expect(resource.detailHref).toBe(`/toolkit/${expected.id}/`);
+      expect(resource.downloadHref).toBe(expected.downloadHref);
+      expect(resource.guideHref).toBe(expected.guideHref);
+      expect(resource.articleSlug).toBe(expected.articleSlug);
+      expect(resource.csvHeaders).toEqual(expected.csvHeaders);
+      expect(resource.fields).toHaveLength(8);
+
+      for (const value of [
+        resource.title,
+        resource.outcome,
+        resource.purpose,
+        resource.intendedAudience,
+        resource.limitation,
+        resource.dataNotice,
+      ]) {
+        expect(
+          value.trim().length,
+          `${expected.id} complete copy`,
+        ).toBeGreaterThan(20);
+      }
+      expect(resource.whenToUse.length).toBeGreaterThan(0);
+      expect(resource.whenNotToUse.length).toBeGreaterThan(0);
+      for (const field of resource.fields) {
+        expect(field.name.trim().length).toBeGreaterThan(0);
+        expect(field.guidance.trim().length).toBeGreaterThan(20);
+      }
+
+      const csvPath = join(
+        process.cwd(),
+        "public",
+        resource.downloadHref.replace(/^\//, ""),
+      );
+      const rows = readFileSync(csvPath, "utf8")
+        .split(/\r?\n/)
+        .filter((row) => row.trim().length > 0);
+      expect(rows, expected.id).toHaveLength(1);
+      expect(rows[0]?.split(","), expected.id).toEqual(expected.csvHeaders);
+    }
+  });
+
   it("contains at least fifteen Markdown articles and three in every category", () => {
     const articles = articleRecords();
     const categoryCounts = Object.fromEntries(

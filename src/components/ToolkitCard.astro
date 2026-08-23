@@ -1,0 +1,32 @@
+---
+import type { ToolkitResource } from "../data/toolkit";
+
+interface Props {
+  resource: ToolkitResource;
+}
+
+const { resource } = Astro.props;
+const headingId = `toolkit-card-${resource.id}`;
+---
+
+<article
+  class="toolkit-card"
+  data-toolkit-id={resource.id}
+  aria-labelledby={headingId}
+>
+  <div class="toolkit-card__copy">
+    <h2 id={headingId}>{resource.title}</h2>
+    <p>{resource.purpose}</p>
+    <p class="toolkit-card__outcome">
+      <strong>Record produced:</strong>
+      {resource.outcome}
+    </p>
+  </div>
+  <nav class="toolkit-card__actions" aria-label={`${resource.title} actions`}>
+    <a class="toolkit-card__primary" href={resource.detailHref}
+      >View worksheet guide</a
+    >
+    <a href={resource.guideHref}>{resource.guideLabel}</a>
+    <a href={resource.downloadHref} download>{resource.downloadLabel}</a>
+  </nav>
+</article>

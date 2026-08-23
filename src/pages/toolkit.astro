@@ -1,223 +1,13 @@
 ---
 import Breadcrumbs from "../components/Breadcrumbs.astro";
-import ToolkitResource from "../components/ToolkitResource.astro";
+import ToolkitCard from "../components/ToolkitCard.astro";
 import { site } from "../data/site";
+import { toolkitResources } from "../data/toolkit";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const title = `Business technology decision toolkit | ${site.name}`;
 const description =
   "Download four blank CSV worksheets for screening automation, evaluating SaaS, recording technology risk, and testing backup restoration.";
-
-const resources = [
-  {
-    id: "automation-candidate-screen",
-    title: "Automation candidate screen",
-    description:
-      "Compare repeatability, exception burden, failure impact, review needs, and fallback readiness before selecting a task for a pilot.",
-    guideHref: "/articles/how-to-identify-business-tasks-for-automation/",
-    guideLabel: "Read the automation-candidate guide",
-    downloadHref: "/toolkit/automation-candidate-screen.csv",
-    downloadLabel: "Download automation screen CSV",
-    fields: [
-      {
-        name: "Task and process owner",
-        guidance:
-          "Name one bounded unit of work and the person accountable for the current process.",
-      },
-      {
-        name: "Frequency and active time",
-        guidance:
-          "Record observed volume and hands-on time using a representative period.",
-      },
-      {
-        name: "Input and rule stability",
-        guidance:
-          "Describe whether inputs are structured and rules remain consistent across normal cases.",
-      },
-      {
-        name: "Exceptions and rework",
-        guidance:
-          "Count common exceptions, corrections, escalations, and cases that require judgment.",
-      },
-      {
-        name: "Failure consequence",
-        guidance:
-          "State what can happen if the task is delayed, wrong, duplicated, exposed, or silently skipped.",
-      },
-      {
-        name: "Data and access boundary",
-        guidance:
-          "Identify sensitive inputs, approved systems, permissions, retention, and prohibited data.",
-      },
-      {
-        name: "Human review and fallback",
-        guidance:
-          "Name the review point and a usable manual path if the automated step fails.",
-      },
-      {
-        name: "Pilot decision",
-        guidance:
-          "Record proceed, revise, or reject with the evidence and owner for the next action.",
-      },
-    ],
-  },
-  {
-    id: "saas-evaluation-evidence-sheet",
-    title: "SaaS evaluation evidence sheet",
-    description:
-      "Turn requirements into test scenarios and retain what was observed on the plan the business would actually purchase.",
-    guideHref: "/articles/evaluate-saas-with-a-practical-checklist/",
-    guideLabel: "Read the SaaS evaluation guide",
-    downloadHref: "/toolkit/saas-evaluation-evidence-sheet.csv",
-    downloadLabel: "Download SaaS evidence CSV",
-    fields: [
-      {
-        name: "Requirement and priority",
-        guidance:
-          "Write one business requirement and classify it as a gate, must-have, or useful option.",
-      },
-      {
-        name: "Test scenario",
-        guidance:
-          "Describe a representative action and the result that would count as acceptable.",
-      },
-      {
-        name: "Purchased plan and configuration",
-        guidance:
-          "Record the exact plan, role, settings, integration, and data scope used for the check.",
-      },
-      {
-        name: "Observed evidence",
-        guidance:
-          "Link or describe the output, export, log, permission screen, timing, or other reviewable evidence.",
-      },
-      {
-        name: "Result and limitation",
-        guidance:
-          "Record pass, partial, fail, or unverified and explain the boundary of the observation.",
-      },
-      {
-        name: "Implementation effort",
-        guidance:
-          "Capture setup, migration, training, administration, support, and recurring review work.",
-      },
-      {
-        name: "Exit impact",
-        guidance:
-          "Record export format, completeness, dependencies, retention, and the likely effort to leave.",
-      },
-      {
-        name: "Owner and follow-up",
-        guidance:
-          "Assign unresolved evidence, a due date, and the person who can accept or reject the result.",
-      },
-    ],
-  },
-  {
-    id: "technology-risk-register",
-    title: "Technology risk register",
-    description:
-      "Connect a technology condition to a business consequence, accountable response, and dated evidence review.",
-    guideHref: "/articles/create-a-simple-technology-risk-register/",
-    guideLabel: "Read the technology-risk guide",
-    downloadHref: "/toolkit/technology-risk-register.csv",
-    downloadLabel: "Download technology risk CSV",
-    fields: [
-      {
-        name: "Risk event and consequence",
-        guidance:
-          "Write a specific event-to-business-impact statement rather than a one-word topic.",
-      },
-      {
-        name: "Affected process or asset",
-        guidance:
-          "Name the workflow, information, system, customer service, or obligation at risk.",
-      },
-      {
-        name: "Existing safeguards",
-        guidance:
-          "List controls that are actually in place and the evidence that they operate.",
-      },
-      {
-        name: "Likelihood and impact",
-        guidance:
-          "Use the business's defined scales and record the basis for each rating.",
-      },
-      {
-        name: "Evidence and uncertainty",
-        guidance:
-          "Link observations, incidents, tests, contracts, logs, or gaps; do not hide unknowns.",
-      },
-      {
-        name: "Response and target state",
-        guidance:
-          "Choose avoid, reduce, transfer, accept, or investigate and describe the intended change.",
-      },
-      {
-        name: "Owner and due date",
-        guidance:
-          "Assign one accountable owner and a date appropriate to the consequence and workload.",
-      },
-      {
-        name: "Review outcome",
-        guidance:
-          "Record movement, residual concern, accepted evidence, next review date, and escalation need.",
-      },
-    ],
-  },
-  {
-    id: "backup-restore-test-log",
-    title: "Backup restore-test log",
-    description:
-      "Record a controlled restoration from request through validation so a green backup job is not mistaken for proven recovery.",
-    guideHref: "/articles/back-up-business-files-with-the-3-2-1-method/",
-    guideLabel: "Read the backup and restore guide",
-    downloadHref: "/toolkit/backup-restore-test-log.csv",
-    downloadLabel: "Download restore-test log CSV",
-    fields: [
-      {
-        name: "Protected data and recovery point",
-        guidance:
-          "Name the scoped data set, authoritative source, backup copy, and point selected for recovery.",
-      },
-      {
-        name: "Failure scenario",
-        guidance:
-          "State whether the test covers deletion, corruption, ransomware, account loss, outage, or another event.",
-      },
-      {
-        name: "Restore destination",
-        guidance:
-          "Use a controlled location that will not overwrite or expose live business data.",
-      },
-      {
-        name: "Request start and completion",
-        guidance:
-          "Record timestamps and active effort without presenting an untested objective as a result.",
-      },
-      {
-        name: "Validation method",
-        guidance:
-          "Open required files and compare selected counts, values, hashes, permissions, or application behavior.",
-      },
-      {
-        name: "Result and missing items",
-        guidance:
-          "Record pass, partial, or fail plus errors, omissions, inaccessible keys, and help required.",
-      },
-      {
-        name: "Recovery dependencies",
-        guidance:
-          "Note accounts, applications, configuration, network, licenses, instructions, and the custodian and separate secure location for required keys. Never record key material.",
-      },
-      {
-        name: "Owner and corrective action",
-        guidance:
-          "Assign remediation, evidence, due date, retest date, and the person accountable for closure.",
-      },
-    ],
-  },
-] as const;
 ---
 
 <BaseLayout title={title} description={description} path="/toolkit/">
@@ -251,7 +41,13 @@ const resources = [
         under the referenced data's access, retention, and secure disposal
         rules.
       </p>
-      {resources.map((resource) => <ToolkitResource {...resource} />)}
+      <div class="toolkit-grid">
+        {
+          toolkitResources.map((resource) => (
+            <ToolkitCard resource={resource} />
+          ))
+        }
+      </div>
     </article>
   </div>
 </BaseLayout>

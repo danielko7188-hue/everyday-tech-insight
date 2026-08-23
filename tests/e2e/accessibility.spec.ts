@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const articlePath = "/articles/how-to-identify-business-tasks-for-automation/";
 const categoryPath = "/categories/ai-automation/";
+const toolkitDetailPath = "/toolkit/automation-candidate-screen/";
 const wcagTags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 const categories = [
   { name: "AI & Automation", slug: "ai-automation" },
@@ -295,6 +296,7 @@ for (const route of [
   categoryPath,
   articlePath,
   "/toolkit/",
+  toolkitDetailPath,
 ]) {
   test(`${route} has no moderate, serious, or critical axe violations`, async ({
     page,

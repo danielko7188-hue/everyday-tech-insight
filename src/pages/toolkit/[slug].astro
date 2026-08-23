@@ -1,0 +1,19 @@
+---
+import { toolkitResources, type ToolkitResource } from "../../data/toolkit";
+import ToolkitDetailLayout from "../../layouts/ToolkitDetailLayout.astro";
+
+export function getStaticPaths() {
+  return toolkitResources.map((resource) => ({
+    params: { slug: resource.id },
+    props: { resource },
+  }));
+}
+
+interface Props {
+  resource: ToolkitResource;
+}
+
+const { resource } = Astro.props;
+---
+
+<ToolkitDetailLayout resource={resource} />

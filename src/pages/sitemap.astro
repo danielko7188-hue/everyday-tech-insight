@@ -4,6 +4,7 @@ import { getCollection } from "astro:content";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import { categories } from "../data/categories";
 import { site } from "../data/site";
+import { toolkitResources } from "../data/toolkit";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const publishedArticles = (
@@ -63,6 +64,18 @@ const informationPages = [
               <a href={`/articles/${article.data.slug}/`}>
                 {article.data.title}
               </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+    <section aria-labelledby="sitemap-toolkit">
+      <h2 id="sitemap-toolkit">Toolkit worksheets</h2>
+      <ul>
+        {
+          toolkitResources.map((resource) => (
+            <li>
+              <a href={resource.detailHref}>{resource.title}</a>
             </li>
           ))
         }

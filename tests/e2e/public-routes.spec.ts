@@ -86,6 +86,45 @@ const toolkitCsvHeaders = {
   ],
 } as const;
 
+const toolkitRouteExpectations = [
+  {
+    id: "automation-candidate-screen",
+    title: "Automation candidate screen",
+    articleSlug: "how-to-identify-business-tasks-for-automation",
+    guideHref: "/articles/how-to-identify-business-tasks-for-automation/",
+    guideLabel: "Read the automation-candidate guide",
+    downloadHref: "/toolkit/automation-candidate-screen.csv",
+    downloadLabel: "Download automation screen CSV",
+  },
+  {
+    id: "saas-evaluation-evidence-sheet",
+    title: "SaaS evaluation evidence sheet",
+    articleSlug: "evaluate-saas-with-a-practical-checklist",
+    guideHref: "/articles/evaluate-saas-with-a-practical-checklist/",
+    guideLabel: "Read the SaaS evaluation guide",
+    downloadHref: "/toolkit/saas-evaluation-evidence-sheet.csv",
+    downloadLabel: "Download SaaS evidence CSV",
+  },
+  {
+    id: "technology-risk-register",
+    title: "Technology risk register",
+    articleSlug: "create-a-simple-technology-risk-register",
+    guideHref: "/articles/create-a-simple-technology-risk-register/",
+    guideLabel: "Read the technology-risk guide",
+    downloadHref: "/toolkit/technology-risk-register.csv",
+    downloadLabel: "Download technology risk CSV",
+  },
+  {
+    id: "backup-restore-test-log",
+    title: "Backup restore-test log",
+    articleSlug: "back-up-business-files-with-the-3-2-1-method",
+    guideHref: "/articles/back-up-business-files-with-the-3-2-1-method/",
+    guideLabel: "Read the backup and restore guide",
+    downloadHref: "/toolkit/backup-restore-test-log.csv",
+    downloadLabel: "Download restore-test log CSV",
+  },
+] as const;
+
 interface ArticleSourceRecord {
   data: {
     status: string;
@@ -141,6 +180,7 @@ const htmlRoutes = [
   "/categories/",
   "/articles/",
   "/toolkit/",
+  ...toolkitRouteExpectations.map(({ id }) => `/toolkit/${id}/`),
   ...categories.map(({ slug }) => `/categories/${slug}/`),
   `/articles/${articleSlug}/`,
   ...trustPages.map(({ path }) => path),
@@ -169,7 +209,7 @@ test("home explains the publication and links all five categories", async ({
   }
 });
 
-test("toolkit publishes four practical worksheets with local CSV downloads", async ({
+test("toolkit landing publishes four outcome-led cards with detail, guide, and CSV actions", async ({
   page,
   request,
 }) => {
@@ -182,13 +222,13 @@ test("toolkit publishes four practical worksheets with local CSV downloads", asy
       name: "Business technology decision toolkit",
     }),
   ).toBeVisible();
-  await expect(page.locator(".toolkit-resource")).toHaveCount(4);
+  await expect(page.locator(".toolkit-card")).toHaveCount(4);
   await expect(
     page.getByText(/never put passwords, tokens, recovery keys/i),
   ).toBeVisible();
 
   const downloadHrefs = await page
-    .locator(".toolkit-resource a[download]")
+    .locator(".toolkit-card a[download]")
     .evaluateAll((links) =>
       links.map((link) => link.getAttribute("href")).filter(Boolean),
     );
@@ -196,7 +236,7 @@ test("toolkit publishes four practical worksheets with local CSV downloads", asy
   expect(new Set(downloadHrefs).size).toBe(4);
 
   const downloadNames = await page
-    .locator(".toolkit-resource a[download]")
+    .locator(".toolkit-card a[download]")
     .allTextContents();
   expect(new Set(downloadNames).size).toBe(4);
   expect(downloadNames.every((name) => name.endsWith("CSV"))).toBe(true);
@@ -218,17 +258,100 @@ test("toolkit publishes four practical worksheets with local CSV downloads", asy
     expect(headers, href!).toEqual(expectedHeaders);
   }
 
-  await page.setViewportSize({ width: 600, height: 900 });
-  const firstResource = page.locator(".toolkit-resource").first();
-  const firstTableRegion = firstResource.locator(".table-scroll");
-  const tableWidths = await firstTableRegion.evaluate((region) => ({
-    client: region.clientWidth,
-    scroll: region.scrollWidth,
-  }));
-  expect(tableWidths.scroll).toBeGreaterThan(tableWidths.client);
+  for (const expected of toolkitRouteExpectations) {
+    const card = page.locator(
+      `.toolkit-card[data-toolkit-id="${expected.id}"]`,
+    );
+    await expect(card).toHaveCount(1);
+    await expect(card).toContainText(/Record produced:/i);
+    await expect(
+      card.getByRole("link", { name: "View worksheet guide" }),
+    ).toHaveAttribute("href", `/toolkit/${expected.id}/`);
+    await expect(
+      card.getByRole("link", { name: expected.guideLabel }),
+    ).toHaveAttribute("href", expected.guideHref);
+    await expect(
+      card.getByRole("link", { name: expected.downloadLabel }),
+    ).toHaveAttribute("href", expected.downloadHref);
+  }
+
   await expect(
-    firstResource.locator(".toolkit-resource__scroll-hint"),
-  ).toBeVisible();
+    page.locator(".toolkit-resource, .toolkit-resource__scroll-hint"),
+  ).toHaveCount(0);
+});
+
+test("every Toolkit detail page explains use boundaries and exposes a stacked field guide", async ({
+  page,
+}) => {
+  for (const expected of toolkitRouteExpectations) {
+    const response = await page.goto(`/toolkit/${expected.id}/`);
+    expect(response?.status(), expected.id).toBe(200);
+    await expect(
+      page.getByRole("heading", { level: 1, name: expected.title }),
+    ).toBeVisible();
+
+    for (const heading of [
+      "Purpose",
+      "Intended audience",
+      "When to use it",
+      "When not to use it",
+      "Field guide",
+      "Limitations",
+      "Data notice",
+    ]) {
+      await expect(
+        page.getByRole("heading", { name: heading, exact: true }),
+        `${expected.id}: ${heading}`,
+      ).toBeVisible();
+    }
+
+    const fields = page.locator(".toolkit-field-card");
+    await expect(fields, expected.id).toHaveCount(8);
+    for (const field of await fields.all()) {
+      await expect(field.getByRole("heading", { level: 3 })).not.toBeEmpty();
+      await expect(field.locator("p")).not.toBeEmpty();
+    }
+    await expect(page.locator(".toolkit-field-guide table")).toHaveCount(0);
+    await expect(page.locator("[data-horizontal-scroll]")).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: expected.guideLabel }),
+    ).toHaveAttribute("href", expected.guideHref);
+    await expect(
+      page.getByRole("link", { name: expected.downloadLabel }),
+    ).toHaveAttribute("href", expected.downloadHref);
+  }
+});
+
+test("only the four mapped guides show one contextual Toolkit callout", async ({
+  page,
+}) => {
+  const articleRecords = (await readArticleRecords()) as ArticleSourceRecord[];
+  const expectedBySlug = new Map<
+    string,
+    (typeof toolkitRouteExpectations)[number]
+  >(
+    toolkitRouteExpectations.map((resource) => [
+      resource.articleSlug,
+      resource,
+    ]),
+  );
+
+  for (const { data } of articleRecords) {
+    await page.goto(`/articles/${data.slug}/`);
+    const callout = page.locator("aside.article-toolkit-callout");
+    const expected = expectedBySlug.get(data.slug);
+
+    if (!expected) {
+      await expect(callout, data.slug).toHaveCount(0);
+      continue;
+    }
+
+    await expect(callout, data.slug).toHaveCount(1);
+    await expect(callout).toContainText(/worksheet helps produce/i);
+    await expect(
+      callout.getByRole("link", { name: "Open the worksheet guide" }),
+    ).toHaveAttribute("href", `/toolkit/${expected.id}/`);
+  }
 });
 
 test("home publishes only the approved nine-guide curation", async ({

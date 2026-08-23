@@ -12,6 +12,7 @@ import StoryMeta from "../components/StoryMeta.astro";
 import TableOfContents from "../components/TableOfContents.astro";
 import type { CategoryRecord } from "../data/categories";
 import { site } from "../data/site";
+import { getToolkitResourceForArticle } from "../data/toolkit";
 import { formatPublicationDate } from "../utils/presentation";
 import BaseLayout from "./BaseLayout.astro";
 
@@ -32,6 +33,7 @@ const {
 } = Astro.props;
 const { data } = article;
 const articlePath = `/articles/${data.slug}/`;
+const toolkitResource = getToolkitResourceForArticle(data.slug);
 const title = `${data.title} | ${site.name}`;
 const formatDate = (date: string) =>
   formatPublicationDate(date, {
@@ -131,6 +133,32 @@ const formatDate = (date: string) =>
           <div class="article-body">
             <slot />
           </div>
+
+          {
+            toolkitResource && (
+              <aside
+                class="article-toolkit-callout"
+                aria-labelledby={`article-toolkit-${toolkitResource.id}`}
+              >
+                <p class="eyebrow">Toolkit worksheet</p>
+                <h2 id={`article-toolkit-${toolkitResource.id}`}>
+                  {toolkitResource.title}
+                </h2>
+                <p>
+                  This worksheet helps produce a bounded working record for the
+                  decision in this guide.
+                </p>
+                <p class="article-toolkit-callout__outcome">
+                  <strong>Record produced:</strong> {toolkitResource.outcome}
+                </p>
+                <p class="article-toolkit-callout__action">
+                  <a href={toolkitResource.detailHref}>
+                    Open the worksheet guide
+                  </a>
+                </p>
+              </aside>
+            )
+          }
 
           <SourceList sources={data.sourceList} />
         </div>

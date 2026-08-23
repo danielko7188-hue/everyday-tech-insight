@@ -18,12 +18,19 @@ const TRUST_NAVIGATION = JSON.parse(
     "utf8",
   ),
 );
+const TOOLKIT_DETAIL_ROUTES = [
+  "/toolkit/automation-candidate-screen/",
+  "/toolkit/saas-evaluation-evidence-sheet/",
+  "/toolkit/technology-risk-register/",
+  "/toolkit/backup-restore-test-log/",
+];
 
 const FIXED_INDEXABLE_ROUTES = [
   "/",
   "/categories/",
   "/articles/",
   "/toolkit/",
+  ...TOOLKIT_DETAIL_ROUTES,
   ...TRUST_NAVIGATION.map(({ path: routePath }) => routePath),
   "/sitemap/",
 ];

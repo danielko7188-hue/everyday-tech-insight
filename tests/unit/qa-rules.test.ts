@@ -174,6 +174,10 @@ function validBuiltFixture() {
     "/categories/",
     "/articles/",
     "/toolkit/",
+    "/toolkit/automation-candidate-screen/",
+    "/toolkit/saas-evaluation-evidence-sheet/",
+    "/toolkit/technology-risk-register/",
+    "/toolkit/backup-restore-test-log/",
     ...trustRoutePaths,
     "/sitemap/",
   ];

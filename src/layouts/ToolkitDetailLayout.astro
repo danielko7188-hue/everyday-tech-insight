@@ -1,0 +1,103 @@
+---
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import type { ToolkitResource } from "../data/toolkit";
+import { site } from "../data/site";
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  resource: ToolkitResource;
+}
+
+const { resource } = Astro.props;
+const title = `${resource.title} | ${site.name}`;
+const description = resource.purpose;
+---
+
+<BaseLayout title={title} description={description} path={resource.detailHref}>
+  <div class="page-shell">
+    <Breadcrumbs
+      items={[
+        { name: "Home", href: "/" },
+        { name: "Toolkit", href: "/toolkit/" },
+        { name: resource.title, href: resource.detailHref },
+      ]}
+    />
+
+    <article class="trust-content toolkit-detail" data-toolkit-id={resource.id}>
+      <header class="toolkit-detail__intro">
+        <p class="eyebrow">Blank working record</p>
+        <h1>{resource.title}</h1>
+        <p class="page-deck">{resource.outcome}</p>
+        <nav
+          class="toolkit-detail__actions"
+          aria-label={`${resource.title} primary actions`}
+        >
+          <a href={resource.downloadHref} download>{resource.downloadLabel}</a>
+          <a href={resource.guideHref}>{resource.guideLabel}</a>
+        </nav>
+      </header>
+
+      <section aria-labelledby={`${resource.id}-purpose`}>
+        <h2 id={`${resource.id}-purpose`}>Purpose</h2>
+        <p>{resource.purpose}</p>
+      </section>
+
+      <section aria-labelledby={`${resource.id}-audience`}>
+        <h2 id={`${resource.id}-audience`}>Intended audience</h2>
+        <p>{resource.intendedAudience}</p>
+      </section>
+
+      <div class="toolkit-use-boundaries">
+        <section aria-labelledby={`${resource.id}-when`}>
+          <h2 id={`${resource.id}-when`}>When to use it</h2>
+          <ul>
+            {resource.whenToUse.map((item) => <li>{item}</li>)}
+          </ul>
+        </section>
+        <section aria-labelledby={`${resource.id}-when-not`}>
+          <h2 id={`${resource.id}-when-not`}>When not to use it</h2>
+          <ul>
+            {resource.whenNotToUse.map((item) => <li>{item}</li>)}
+          </ul>
+        </section>
+      </div>
+
+      <section
+        class="toolkit-field-guide"
+        aria-labelledby={`${resource.id}-fields`}
+      >
+        <h2 id={`${resource.id}-fields`}>Field guide</h2>
+        <p>
+          The downloadable CSV retains the exact ordered headers. These grouped
+          definitions explain what the related fields are intended to record.
+        </p>
+        <ol class="toolkit-field-guide__list">
+          {
+            resource.fields.map((field, index) => (
+              <li class="toolkit-field-card">
+                <h3>{`${index + 1}. ${field.name}`}</h3>
+                <p>{field.guidance}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <section
+        class="notice toolkit-detail__limitation"
+        aria-labelledby={`${resource.id}-limitations`}
+      >
+        <h2 id={`${resource.id}-limitations`}>Limitations</h2>
+        <p>{resource.limitation}</p>
+      </section>
+
+      <section
+        class="notice toolkit-detail__data-notice"
+        aria-labelledby={`${resource.id}-data-notice`}
+      >
+        <h2 id={`${resource.id}-data-notice`}>Data notice</h2>
+        <p>{resource.dataNotice}</p>
+      </section>
+    </article>
+  </div>
+</BaseLayout>
