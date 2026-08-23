@@ -674,7 +674,8 @@ test("publication byline links to its truthful profile and published article ind
   await page.goto(`/articles/${articleSlug}/`);
 
   const article = page.locator("article.article-page");
-  const publicationDetails = article.getByLabel("Publication details");
+  const publicationDetails = article.locator(".article-facts");
+  await expect(publicationDetails).not.toHaveAttribute("aria-label");
   await expect(
     publicationDetails.getByRole("link", {
       name: "Everyday Tech Insight",
