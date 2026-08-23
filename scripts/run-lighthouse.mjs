@@ -71,20 +71,23 @@ export function aggregateLighthouseScores(runScores) {
     }),
   );
 
-  const medianPerformance = scores.performance;
-  const representativeRunIndex =
-    typeof medianPerformance === "number"
-      ? runScores.reduce((closestIndex, run, index) => {
-          const performance = run?.performance;
-          if (typeof performance !== "number") return closestIndex;
-          const closestPerformance = runScores[closestIndex]?.performance;
-          if (typeof closestPerformance !== "number") return index;
-          return Math.abs(performance - medianPerformance) <
-            Math.abs(closestPerformance - medianPerformance)
-            ? index
-            : closestIndex;
-        }, 0)
-      : 0;
+  const categoryNames = Object.keys(THRESHOLDS);
+  const distanceFromMedians = (run) =>
+    categoryNames.reduce((distance, category) => {
+      const score = run?.[category];
+      const median = scores[category];
+      if (typeof score !== "number" || typeof median !== "number") {
+        return Number.POSITIVE_INFINITY;
+      }
+      return distance + Math.abs(score - median);
+    }, 0);
+  const representativeRunIndex = runScores.reduce(
+    (closestIndex, run, index) =>
+      distanceFromMedians(run) < distanceFromMedians(runScores[closestIndex])
+        ? index
+        : closestIndex,
+    0,
+  );
 
   return { scores, representativeRunIndex };
 }

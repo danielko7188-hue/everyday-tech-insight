@@ -1086,6 +1086,39 @@ describe("Lighthouse thresholds", () => {
     ).toContain("accessibility");
   });
 
+  it("selects the run closest to every category median as representative", () => {
+    const result = aggregateLighthouseScores([
+      {
+        performance: 0.9,
+        accessibility: 1,
+        "best-practices": 1,
+        seo: 1,
+      },
+      {
+        performance: 0.91,
+        accessibility: 0.95,
+        "best-practices": 0.95,
+        seo: 0.95,
+      },
+      {
+        performance: 0.92,
+        accessibility: 0.99,
+        "best-practices": 0.99,
+        seo: 0.99,
+      },
+    ]);
+
+    expect(result).toMatchObject({
+      scores: {
+        performance: 0.91,
+        accessibility: 0.99,
+        "best-practices": 0.99,
+        seo: 0.99,
+      },
+      representativeRunIndex: 2,
+    });
+  });
+
   it("records three runs and bases summary status on median failures", () => {
     const runScores = [
       {
