@@ -43,16 +43,18 @@ The screenshots and measurement file under `.gstack/editorial-balance-v2/` are l
 The latest completed local QA run passed:
 
 - 119 unit tests;
-- 72 Playwright browser tests;
+- 74 Playwright browser tests, including explicit regressions for wide-title word integrity and the tablet review-date layout;
 - production build of 31 static pages;
 - content, SEO, and external-link checks; and
 - Lighthouse thresholds using the median of three runs per representative route.
 
 | Lighthouse route   | Performance | Accessibility | Best practices | SEO |
 | ------------------ | ----------: | ------------: | -------------: | --: |
-| Homepage           |          92 |           100 |            100 | 100 |
-| AI category        |          94 |           100 |            100 | 100 |
-| Automation article |          93 |           100 |            100 | 100 |
+| Homepage           |          94 |           100 |            100 | 100 |
+| AI category        |          95 |           100 |            100 | 100 |
+| Automation article |          95 |           100 |            100 | 100 |
+
+The final independent screenshot re-review returned PASS with no High or Medium findings at the corrected 1920px homepage and 768px article states.
 
 These are local pre-deploy results. They do not establish that GitHub or Vercel has received this revision.
 

@@ -109,21 +109,25 @@ The article slug selects a stable numeric variant so placement and rhythm change
 - Shared metadata contains the real content type, category, publication date, and computed reading time.
 - Labels are typographic, not universal pills.
 - Lead, feature, and standard treatments may use original editorial art. Compact lists remain image-free.
+- Editorial headlines must preserve whole words at every required QA width; a larger display size is never allowed to create an isolated character or mid-word line break.
 
 ### Homepage and categories
 
-- The homepage leads with one dominant story and two secondary stories, followed by a three-item numbered briefing strip.
-- A Start Here module uses selected existing practical guides.
-- Each of the five topic sections contains one highlighted article and two supporting articles. Orientation may vary while source order remains logical.
-- A compact latest feed must scale beyond the initial fifteen articles.
+- The homepage leads with one dominant illustrated story and two typographic secondary stories, followed by a three-item numbered briefing strip.
+- A Start Here module uses selected existing practical guides. On the initial fifteen-article edition, each real article appears once in the homepage story allocation rather than being repeated across modules.
+- Each of the five topic rows provides a direct category path and a concise editorial cue without repeating the same article cards.
+- A compact More Guides feed owns the remaining article allocation and must scale beyond the initial fifteen articles without reintroducing duplicates.
+- The homepage and each category opening use at most one editorial illustration. Additional hierarchy comes from typography, numbering, rules, and whitespace.
 - The transparency module may describe sourcing, corrections, guide production, and the publication-name byline only within the verified factual boundary.
-- Category pages use one lead, two supporting features, and a complete compact listing. Every real category article remains linked.
+- Category pages place their practical selection guidance before the story list, then use one illustrated lead and a complete typographic listing. Every real category article remains linked exactly once, including future additions.
 
 ### Article pages
 
-- Headers contain real category/content-type labels, headline, deck, publication-name byline, genuine dates, computed reading time, and category artwork.
+- Headers contain real category/content-type labels, headline, deck, publication-name byline, genuine dates, computed reading time, and restrained category artwork. The artwork is suppressed on narrow mobile screens so the evidence and article body begin sooner.
 - The Business Technology Fit module retains its four factual decision fields.
-- A table of contents is generated only from real Markdown headings: sticky on desktop and native collapsible on mobile.
+- Article evidence exposes only measured facts: cited-source count, genuine publication and review dates, and links to standards and corrections. At tablet width it uses a balanced two-by-two grid, expanding to one desktop row only when there is enough space.
+- The Business Technology Fit module and table of contents are generated from real content: sticky on desktop and native collapsible on mobile.
+- Markdown tables sit inside named, keyboard-focusable horizontal regions and retain a 16px minimum text size on narrow screens.
 - Body links remain visibly underlined, and sources, corrections, truthful byline boundaries, and explicit related-article relationships remain prominent.
 - Do not add fictional Person, Organization, or Article entities.
 
