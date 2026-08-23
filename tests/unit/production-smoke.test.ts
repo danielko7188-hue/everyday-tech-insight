@@ -2,6 +2,63 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
+type ProductionRoute = {
+  path: string;
+  expectedStatus: number;
+  kind: "html" | "text";
+  canonicalPath?: string;
+};
+
+type FetchInput = Parameters<typeof fetch>[0];
+type FetchInit = Parameters<typeof fetch>[1];
+type FixtureFetch = (input: FetchInput, init?: FetchInit) => Promise<Response>;
+
+type FetchOverride = {
+  body?: string;
+  description?: string;
+  error?: Error;
+  headers?: Record<string, string>;
+  status?: number;
+  title?: string;
+};
+
+type ProductionSmokeModule =
+  typeof import("../../scripts/check-production.mjs");
+type FixtureProductionSmokeModule = Omit<
+  ProductionSmokeModule,
+  "inspectHtml" | "runProductionCheck"
+> & {
+  inspectHtml: (
+    html: string,
+    options: {
+      origin: string;
+      route?: string;
+      canonicalPath?: string;
+    },
+  ) => ReturnType<ProductionSmokeModule["inspectHtml"]>;
+  runProductionCheck: (options: {
+    origin: string;
+    fetchImpl?: FixtureFetch;
+    routes?: ReadonlyArray<ProductionRoute>;
+  }) => ReturnType<ProductionSmokeModule["runProductionCheck"]>;
+};
+
+function asFixtureProductionSmoke(
+  productionSmoke: ProductionSmokeModule,
+): FixtureProductionSmokeModule {
+  return productionSmoke as unknown as FixtureProductionSmokeModule;
+}
+
+function fetchUrl(input: FetchInput) {
+  return new URL(
+    typeof input === "string"
+      ? input
+      : input instanceof URL
+        ? input.href
+        : input.url,
+  );
+}
+
 const fixtureOrigin = "https://host.example";
 
 function htmlFixture({
@@ -143,7 +200,9 @@ describe("collectInternalAssets", () => {
 
 describe("inspectHtml", () => {
   it("accepts the current publication shell and returns its metadata and assets", async () => {
-    const productionSmoke = await import("../../scripts/check-production.mjs");
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
 
     expect(productionSmoke).toHaveProperty("inspectHtml");
     if (!("inspectHtml" in productionSmoke)) return;
@@ -270,7 +329,9 @@ describe("inspectHtml", () => {
       html: () => htmlFixture({ extra: '<div id="page-title"></div>' }),
     },
   ])("rejects $name", async ({ code, html, route = "/fixture/" }) => {
-    const productionSmoke = await import("../../scripts/check-production.mjs");
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
 
     expect(productionSmoke).toHaveProperty("inspectHtml");
     if (!("inspectHtml" in productionSmoke)) return;
@@ -298,8 +359,9 @@ describe("inspectHtml", () => {
   ])(
     "rejects the minified homepage $name shell signature adjacent to following text",
     async ({ extra }) => {
-      const productionSmoke =
-        await import("../../scripts/check-production.mjs");
+      const productionSmoke = asFixtureProductionSmoke(
+        await import("../../scripts/check-production.mjs"),
+      );
 
       const result = productionSmoke.inspectHtml(
         minifiedHtmlFixture({
@@ -316,7 +378,9 @@ describe("inspectHtml", () => {
   );
 
   it("allows legacy-shell words in ordinary article prose", async () => {
-    const productionSmoke = await import("../../scripts/check-production.mjs");
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
     const route = "/articles/ordinary-prose/";
 
     const result = productionSmoke.inspectHtml(
@@ -367,36 +431,16 @@ describe("production route smoke", () => {
     expect(productionSmoke).toHaveProperty("PRODUCTION_ROUTES");
     expect(productionSmoke).toHaveProperty("runProductionCheck");
     expect(productionSmoke).toHaveProperty("formatProductionReport");
-    return productionSmoke;
+    return asFixtureProductionSmoke(productionSmoke);
   }
 
   function makeFetch(
-    routes: ReadonlyArray<{
-      path: string;
-      expectedStatus: number;
-      kind: "html" | "text";
-      canonicalPath?: string;
-    }>,
-    overrides: Record<
-      string,
-      {
-        body?: string;
-        description?: string;
-        error?: Error;
-        headers?: Record<string, string>;
-        status?: number;
-        title?: string;
-      }
-    > = {},
+    routes: ReadonlyArray<ProductionRoute>,
+    overrides: Record<string, FetchOverride> = {},
   ) {
-    return vi.fn(async (input: Parameters<typeof fetch>[0]) => {
-      const url = new URL(
-        typeof input === "string"
-          ? input
-          : input instanceof URL
-            ? input.href
-            : input.url,
-      );
+    return vi.fn(async (input: FetchInput, init?: FetchInit) => {
+      void init;
+      const url = fetchUrl(input);
       const override = overrides[url.pathname] ?? {};
       if (override.error) throw override.error;
 
@@ -513,7 +557,11 @@ describe("production route smoke", () => {
     expect(lines.at(-1)).toMatch(/^Production smoke: PASS /);
   });
 
-  it.each([
+  const routeFailureCases: ReadonlyArray<{
+    name: string;
+    code: string;
+    overrides: Record<string, FetchOverride>;
+  }> = [
     {
       name: "unexpected route status",
       code: "status",
@@ -568,7 +616,9 @@ describe("production route smoke", () => {
       code: "fetch-error",
       overrides: { "/about/": { error: new Error("offline") } },
     },
-  ])("reports $name", async ({ code, overrides }) => {
+  ];
+
+  it.each(routeFailureCases)("reports $name", async ({ code, overrides }) => {
     const productionSmoke = await loadRunner();
     if (
       !("PRODUCTION_ROUTES" in productionSmoke) ||
@@ -739,7 +789,7 @@ describe("production route smoke", () => {
     });
     expect(
       fetchImpl.mock.calls.filter(
-        ([input]) => new URL(input.href).pathname === "/owned.png",
+        ([input]) => fetchUrl(input).pathname === "/owned.png",
       ),
     ).toHaveLength(1);
   });
