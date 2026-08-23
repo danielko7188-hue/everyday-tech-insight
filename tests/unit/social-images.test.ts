@@ -292,6 +292,69 @@ describe("social image portfolio", () => {
     expect(existsSync(join(root, "escaped.png"))).toBe(false);
   });
 
+  it("rejects an unrelated link anywhere below the output root", async () => {
+    const parent = mkdtempSync(join(tmpdir(), "eti-social-tree-link-"));
+    temporaryRoots.push(parent);
+    const ownedRoot = join(parent, "eti-social-owned-root");
+    const nestedRoot = join(ownedRoot, "downloads");
+    const outsideTarget = join(parent, "outside-target");
+    const linkPath = join(nestedRoot, "outside-file.txt");
+    mkdirSync(nestedRoot, { recursive: true });
+
+    if (process.platform === "win32") {
+      mkdirSync(outsideTarget);
+      writeFileSync(join(outsideTarget, "outside-file.txt"), "outside");
+      symlinkSync(outsideTarget, linkPath, "junction");
+    } else {
+      writeFileSync(outsideTarget, "outside");
+      symlinkSync(outsideTarget, linkPath, "file");
+    }
+
+    await expect(
+      generateSocialImages({ outputRoot: ownedRoot }),
+    ).rejects.toThrow(/symbolic link/i);
+    expect(existsSync(join(ownedRoot, "social", "default.png"))).toBe(false);
+  });
+
+  it("rejects an unexpected directory inside the social output directory", async () => {
+    const root = mkdtempSync(join(tmpdir(), "eti-social-directory-"));
+    temporaryRoots.push(root);
+    const unexpectedDirectory = join(root, "social", "unexpected");
+    const sentinelPath = join(unexpectedDirectory, "sentinel.txt");
+    mkdirSync(unexpectedDirectory, { recursive: true });
+    writeFileSync(sentinelPath, "preserve");
+
+    await expect(generateSocialImages({ outputRoot: root })).rejects.toThrow(
+      /non-regular.*social/i,
+    );
+    expect(readFileSync(sentinelPath, "utf8")).toBe("preserve");
+    expect(existsSync(join(root, "social", "default.png"))).toBe(false);
+  });
+
+  it("rejects an unexpected link inside the social output directory", async () => {
+    const parent = mkdtempSync(join(tmpdir(), "eti-social-entry-link-"));
+    temporaryRoots.push(parent);
+    const ownedRoot = join(parent, "eti-social-owned-root");
+    const socialRoot = join(ownedRoot, "social");
+    const outsideTarget = join(parent, "outside-target");
+    const linkPath = join(socialRoot, "unexpected.png");
+    mkdirSync(socialRoot, { recursive: true });
+
+    if (process.platform === "win32") {
+      mkdirSync(outsideTarget);
+      writeFileSync(join(outsideTarget, "sentinel.txt"), "outside");
+      symlinkSync(outsideTarget, linkPath, "junction");
+    } else {
+      writeFileSync(outsideTarget, "outside");
+      symlinkSync(outsideTarget, linkPath, "file");
+    }
+
+    await expect(
+      generateSocialImages({ outputRoot: ownedRoot }),
+    ).rejects.toThrow(/symbolic link/i);
+    expect(existsSync(join(socialRoot, "default.png"))).toBe(false);
+  });
+
   it.each(["root", "social", "apple"] as const)(
     "rejects an existing symlinked %s output before cleanup or writes",
     async (targetKind) => {

@@ -275,6 +275,31 @@ function assertNoSymbolicLinkInPath(candidate) {
   }
 }
 
+function assertNoSymbolicLinksBelow(candidate) {
+  let entries;
+  try {
+    entries = readdirSync(candidate, { withFileTypes: true });
+  } catch (error) {
+    if (error && typeof error === "object" && error.code === "ENOENT") {
+      return;
+    }
+    throw error;
+  }
+
+  for (const entry of entries) {
+    const entryPath = path.join(candidate, entry.name);
+    const stats = lstatSync(entryPath);
+    if (stats.isSymbolicLink()) {
+      throw new Error(
+        `Refusing to generate social images while a symbolic link exists below the output root: ${entryPath}`,
+      );
+    }
+    if (stats.isDirectory()) {
+      assertNoSymbolicLinksBelow(entryPath);
+    }
+  }
+}
+
 function safeOutputTargets(outputRoot) {
   const resolvedOutputRoot = path.resolve(outputRoot);
   const filesystemRoot = path.parse(resolvedOutputRoot).root;
@@ -309,6 +334,7 @@ function safeOutputTargets(outputRoot) {
   assertNoSymbolicLinkInPath(resolvedOutputRoot);
   assertNoSymbolicLinkInPath(resolvedSocialDir);
   assertNoSymbolicLinkInPath(resolvedAppleIconPath);
+  assertNoSymbolicLinksBelow(resolvedOutputRoot);
 
   return { resolvedAppleIconPath, resolvedSocialDir };
 }
@@ -352,8 +378,14 @@ export async function generateSocialImages({
     outputRecords.map(({ outputPath }) => path.basename(outputPath)),
   );
   for (const entry of readdirSync(resolvedSocialDir, { withFileTypes: true })) {
-    if (entry.isFile() && !expectedNames.has(entry.name)) {
-      unlinkSync(path.join(resolvedSocialDir, entry.name));
+    const entryPath = path.join(resolvedSocialDir, entry.name);
+    if (!lstatSync(entryPath).isFile()) {
+      throw new Error(
+        `Refusing a non-regular entry in the social image output directory: ${entryPath}`,
+      );
+    }
+    if (!expectedNames.has(entry.name)) {
+      unlinkSync(entryPath);
     }
   }
 
