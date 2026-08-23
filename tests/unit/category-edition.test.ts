@@ -1,49 +1,77 @@
 import { describe, expect, it } from "vitest";
 
-import { partitionCategoryEdition } from "../../src/utils/category-edition";
+import {
+  partitionCategoryEdition,
+  selectCategoryLayout,
+} from "../../src/utils/category-edition";
 
-describe("category edition partition", () => {
-  it("returns empty branches for an empty category", () => {
+describe("category layout selection", () => {
+  it.each([
+    [0, "compact"],
+    [3, "compact"],
+    [6, "editorial"],
+    [11, "editorial"],
+    [12, "archive"],
+  ] as const)("selects %s articles as %s", (count, expected) => {
+    expect(selectCategoryLayout(count)).toBe(expected);
+  });
+
+  it("returns all compact articles once without manufacturing a lead", () => {
     expect(partitionCategoryEdition([])).toEqual({
-      lead: undefined,
-      features: [],
-      remainder: [],
+      layout: "compact",
+      articles: [],
+    });
+    const articles = ["first", "second", "third"];
+    expect(partitionCategoryEdition(articles)).toEqual({
+      layout: "compact",
+      articles,
     });
   });
 
-  it("keeps a single article as the lead without manufacturing support", () => {
-    expect(partitionCategoryEdition(["lead"])).toEqual({
-      lead: "lead",
-      features: [],
-      remainder: [],
-    });
-  });
+  it.each([6, 11])(
+    "uses one lead, two features, and an ordered remainder for %s articles",
+    (count) => {
+      const articles = Array.from({ length: count }, (_, index) => index + 1);
+      const edition = partitionCategoryEdition(articles);
 
-  it("uses one lead and two features for the current three-article edition", () => {
-    expect(
-      partitionCategoryEdition(["lead", "feature-1", "feature-2"]),
-    ).toEqual({
-      lead: "lead",
-      features: ["feature-1", "feature-2"],
-      remainder: [],
-    });
-  });
+      expect(edition).toEqual({
+        layout: "editorial",
+        lead: 1,
+        features: [2, 3],
+        remainder: articles.slice(3),
+      });
+    },
+  );
 
-  it("preserves every 4+ article once and in stable order", () => {
-    const articles = ["lead", "feature-1", "feature-2", "more-1", "more-2"];
+  it("uses the first three featured, next three recent, and the ordered archive at twelve", () => {
+    const articles = Array.from({ length: 12 }, (_, index) => index + 1);
     const edition = partitionCategoryEdition(articles);
-    const flattened = [
-      ...(edition.lead === undefined ? [] : [edition.lead]),
-      ...edition.features,
-      ...edition.remainder,
-    ];
 
     expect(edition).toEqual({
-      lead: "lead",
-      features: ["feature-1", "feature-2"],
-      remainder: ["more-1", "more-2"],
+      layout: "archive",
+      featured: [1, 2, 3],
+      recent: [4, 5, 6],
+      archive: [7, 8, 9, 10, 11, 12],
     });
-    expect(flattened).toEqual(articles);
-    expect(new Set(flattened).size).toBe(articles.length);
   });
+
+  it.each([0, 3, 6, 11, 12])(
+    "preserves membership and stable order at %s articles",
+    (count) => {
+      const articles = Array.from(
+        { length: count },
+        (_, index) => `guide-${index + 1}`,
+      );
+      const edition = partitionCategoryEdition(articles);
+      const flattened =
+        edition.layout === "compact"
+          ? edition.articles
+          : edition.layout === "editorial"
+            ? [edition.lead, ...edition.features, ...edition.remainder]
+            : [...edition.featured, ...edition.recent, ...edition.archive];
+
+      expect(flattened).toEqual(articles);
+      expect(new Set(flattened).size).toBe(articles.length);
+    },
+  );
 });

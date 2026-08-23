@@ -22,6 +22,7 @@ const TRUST_NAVIGATION = JSON.parse(
 const FIXED_INDEXABLE_ROUTES = [
   "/",
   "/categories/",
+  "/articles/",
   "/toolkit/",
   ...TRUST_NAVIGATION.map(({ path: routePath }) => routePath),
   "/sitemap/",
@@ -378,7 +379,7 @@ function validatePage({
     );
   }
 
-  if (route.startsWith("/articles/")) {
+  if (route.startsWith("/articles/") && route !== "/articles/") {
     const fitSummaries = $(".fit-summary");
     if (fitSummaries.length !== 1) {
       issues.push(
@@ -589,7 +590,10 @@ function validatePage({
     );
   }
 
-  const expectedOgType = route.startsWith("/articles/") ? "article" : "website";
+  const expectedOgType =
+    route.startsWith("/articles/") && route !== "/articles/"
+      ? "article"
+      : "website";
   const ogChecks = [
     ["og:type", expectedOgType, "og-type"],
     ["og:title", title, "og-title"],
@@ -1163,7 +1167,7 @@ export function validateBuiltOutput({
     const $ = parsedPages.get(route);
     if (!$) continue;
     const actual = new Set(
-      $("a[href]")
+      $("main a[href]")
         .map((_index, element) =>
           internalTarget($(element).attr("href"), siteUrl),
         )
@@ -1181,6 +1185,31 @@ export function validateBuiltOutput({
           "category-membership",
           route,
           membershipMessage(actual, expected),
+        ),
+      );
+    }
+  }
+
+  const articleArchive = parsedPages.get("/articles/");
+  if (articleArchive) {
+    const archiveRoutes = articleArchive("main a[href]")
+      .map((_index, element) =>
+        internalTarget(articleArchive(element).attr("href"), siteUrl),
+      )
+      .get()
+      .filter(
+        (target) => target?.startsWith("/articles/") && target !== "/articles/",
+      );
+    const actualArchiveRoutes = new Set(archiveRoutes);
+    if (
+      archiveRoutes.length !== expectedArticleRoutes.size ||
+      !sameSet(actualArchiveRoutes, expectedArticleRoutes)
+    ) {
+      issues.push(
+        finding(
+          "article-archive-membership",
+          "/articles/",
+          membershipMessage(actualArchiveRoutes, expectedArticleRoutes),
         ),
       );
     }

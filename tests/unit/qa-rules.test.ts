@@ -172,6 +172,7 @@ function validBuiltFixture() {
   const fixedRoutes = [
     "/",
     "/categories/",
+    "/articles/",
     "/toolkit/",
     ...trustRoutePaths,
     "/sitemap/",
@@ -196,6 +197,11 @@ function validBuiltFixture() {
         .map((href) => `<a href="${href}">${href}</a>`)
         .join("");
     }
+    if (route === "/articles/") {
+      body += articleRoutes
+        .map((href) => `<a href="${href}">${href}</a>`)
+        .join("");
+    }
     const category = categorySlugs.find(
       (slug) => route === `/categories/${slug}/`,
     );
@@ -207,7 +213,7 @@ function validBuiltFixture() {
         )
         .join("");
     }
-    if (route.startsWith("/articles/")) {
+    if (route.startsWith("/articles/") && route !== "/articles/") {
       body += `<section class="fit-summary" aria-labelledby="fit-heading">
         <h2 id="fit-heading">At a glance</h2><dl><div><dt>Business problem</dt><dd>Problem</dd></div></dl>
       </section>
@@ -230,7 +236,10 @@ function validBuiltFixture() {
         description: `A unique and complete page description number ${index + 1} for this practical technology resource.`,
         body,
         bodyOwnsHeading: isTrustRoute,
-        ogType: route.startsWith("/articles/") ? "article" : "website",
+        ogType:
+          route.startsWith("/articles/") && route !== "/articles/"
+            ? "article"
+            : "website",
         jsonLd:
           route === "/"
             ? {
@@ -436,6 +445,48 @@ describe("built-output QA rules", () => {
         siteUrl,
       }),
     ).toEqual([]);
+  });
+
+  it("treats the all-guides route as a website and scopes category membership to main", () => {
+    const fixture = validBuiltFixture();
+    const categoryFile = "categories/ai-automation/index.html";
+    fixture.files.set(
+      categoryFile,
+      fixture.files
+        .get(categoryFile)!
+        .replace(
+          "</body>",
+          '<footer><a href="/articles/">Guides</a></footer></body>',
+        ),
+    );
+
+    const issues = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    });
+
+    expect(issues).toEqual([]);
+  });
+
+  it("rejects incomplete all-guides archive membership", () => {
+    const fixture = validBuiltFixture();
+    fixture.files.set(
+      "articles/index.html",
+      fixture.files
+        .get("articles/index.html")!
+        .replace(/<a href="\/articles\/[^"]+\/">[^<]+<\/a>/, ""),
+    );
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).map(({ code }) => code);
+
+    expect(codes).toContain("article-archive-membership");
   });
 
   it("rejects duplicate article fit, TOC, heading-link, and ID structures", () => {

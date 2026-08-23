@@ -1,0 +1,81 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
+
+import ArticleCard from "../../components/ArticleCard.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import { categories } from "../../data/categories";
+import { site } from "../../data/site";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+type ArticleEntry = CollectionEntry<"articles">;
+
+const compareArticles = (left: ArticleEntry, right: ArticleEntry) =>
+  right.data.datePublished.localeCompare(left.data.datePublished) ||
+  left.data.title.localeCompare(right.data.title, "en");
+
+const publishedArticles = (
+  await getCollection("articles", ({ data }) => data.status === "published")
+).sort(compareArticles);
+const categoryGroups = categories.map((category) => ({
+  category,
+  articles: publishedArticles.filter(
+    ({ data }) => data.category === category.slug,
+  ),
+}));
+const title = `All guides | ${site.name}`;
+const description =
+  "Browse every published Everyday Tech Insight guide, grouped across five practical business-technology decision areas.";
+---
+
+<BaseLayout title={title} description={description} path="/articles/">
+  <div class="page-shell guide-archive">
+    <Breadcrumbs
+      items={[
+        { name: "Home", href: "/" },
+        { name: "All guides", href: "/articles/" },
+      ]}
+    />
+
+    <header class="page-intro guide-archive__intro">
+      <p class="eyebrow">Complete guide archive</p>
+      <h1>All guides</h1>
+      <p class="page-deck">
+        Every published guide, grouped by the business decision it helps a small
+        team make. Dates shown are genuine publication dates.
+      </p>
+    </header>
+
+    {
+      categoryGroups.map(({ category, articles }) => (
+        <section
+          class="guide-archive__category"
+          data-category={category.slug}
+          style={`--category-accent: ${category.accent};`}
+          aria-labelledby={`archive-${category.slug}`}
+        >
+          <header class="guide-archive__category-heading">
+            <div>
+              <p class="eyebrow">{articles.length} guides</p>
+              <h2 id={`archive-${category.slug}`}>{category.name}</h2>
+            </div>
+            <p>{category.description}</p>
+          </header>
+          <ol class="guide-archive__list">
+            {articles.map((article) => (
+              <li>
+                <ArticleCard
+                  article={article}
+                  variant="compact"
+                  headingLevel={3}
+                  showSummary
+                  showVisual={false}
+                />
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>

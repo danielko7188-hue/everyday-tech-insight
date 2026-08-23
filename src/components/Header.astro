@@ -13,6 +13,12 @@ const normalizePath = (path: string) =>
 const normalizedCurrentPath = normalizePath(currentPath);
 const isCurrentPath = (path: string) =>
   normalizedCurrentPath === normalizePath(path);
+const sectionCurrentState = (path: string) => {
+  const normalizedPath = normalizePath(path);
+  if (normalizedCurrentPath === normalizedPath) return "page";
+  if (normalizedCurrentPath.startsWith(normalizedPath)) return "location";
+  return undefined;
+};
 const categoryCurrentState = (slug: CategorySlug) => {
   if (isCurrentPath(`/categories/${slug}/`)) return "page";
   if (activeCategory === slug) return "location";
@@ -26,25 +32,20 @@ const categoryCurrentState = (slug: CategorySlug) => {
     <nav class="site-header__utility" aria-label="Publication navigation">
       <ul>
         <li>
-          <a
-            href="/about/"
-            aria-current={isCurrentPath("/about/") ? "page" : undefined}
-            >About</a
+          <a href="/articles/" aria-current={sectionCurrentState("/articles/")}
+            >Guides</a
           >
         </li>
         <li>
-          <a
-            href="/toolkit/"
-            aria-current={isCurrentPath("/toolkit/") ? "page" : undefined}
+          <a href="/toolkit/" aria-current={sectionCurrentState("/toolkit/")}
             >Toolkit</a
           >
         </li>
         <li>
           <a
-            href="/editorial-standards/"
-            aria-current={isCurrentPath("/editorial-standards/")
-              ? "page"
-              : undefined}>Editorial standards</a
+            href="/about/"
+            aria-current={isCurrentPath("/about/") ? "page" : undefined}
+            >About</a
           >
         </li>
       </ul>
@@ -54,6 +55,24 @@ const categoryCurrentState = (slug: CategorySlug) => {
       <summary>Menu</summary>
       <nav aria-label="Mobile navigation">
         <ul>
+          <li>
+            <a
+              href="/articles/"
+              aria-current={sectionCurrentState("/articles/")}>Guides</a
+            >
+          </li>
+          <li>
+            <a href="/toolkit/" aria-current={sectionCurrentState("/toolkit/")}
+              >Toolkit</a
+            >
+          </li>
+          <li>
+            <a
+              href="/about/"
+              aria-current={isCurrentPath("/about/") ? "page" : undefined}
+              >About</a
+            >
+          </li>
           {
             categories.map((category) => (
               <li>
@@ -66,28 +85,6 @@ const categoryCurrentState = (slug: CategorySlug) => {
               </li>
             ))
           }
-          <li>
-            <a
-              href="/about/"
-              aria-current={isCurrentPath("/about/") ? "page" : undefined}
-              >About</a
-            >
-          </li>
-          <li>
-            <a
-              href="/toolkit/"
-              aria-current={isCurrentPath("/toolkit/") ? "page" : undefined}
-              >Toolkit</a
-            >
-          </li>
-          <li>
-            <a
-              href="/editorial-standards/"
-              aria-current={isCurrentPath("/editorial-standards/")
-                ? "page"
-                : undefined}>Editorial standards</a
-            >
-          </li>
         </ul>
       </nav>
     </details>

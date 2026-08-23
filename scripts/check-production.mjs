@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 export const PRODUCTION_ROUTES = Object.freeze([
   { path: "/", expectedStatus: 200, kind: "html" },
   { path: "/categories/", expectedStatus: 200, kind: "html" },
+  { path: "/articles/", expectedStatus: 200, kind: "html" },
   {
     path: "/categories/ai-automation/",
     expectedStatus: 200,

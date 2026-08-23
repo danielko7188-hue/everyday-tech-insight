@@ -12,6 +12,16 @@ const representativeRoutes = [
     ],
   },
   {
+    name: "guide archive",
+    path: "/articles/",
+    keySelectors: [
+      "header.site-header",
+      "main",
+      ".guide-archive",
+      "footer.site-footer",
+    ],
+  },
+  {
     name: "category",
     path: "/categories/ai-automation/",
     keySelectors: [
@@ -298,16 +308,36 @@ test("tablet article evidence keeps the reviewed date on one line", async ({
   expect(renderedLines).toBe(1);
 });
 
-test("homepage issue label stays semantic without entering the layout", async ({
+test("publication mark keeps the full name on one line when room permits and falls back narrowly", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/");
+  for (const width of [390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
 
-  const box = await page.locator("#front-page-heading").boundingBox();
-  expect(box).not.toBeNull();
-  expect(box!.width).toBeLessThanOrEqual(1);
-  expect(box!.height).toBeLessThanOrEqual(1);
+    const name = page.locator(".site-header__mark .publication-mark__name");
+    await expect(name, `${width}px publication name`).toBeVisible();
+    const renderedLines = await name.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return new Set(
+        Array.from(range.getClientRects(), (rect) => Math.round(rect.top)),
+      ).size;
+    });
+    expect(renderedLines, `${width}px publication name lines`).toBe(1);
+  }
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto("/");
+  await expect(
+    page.locator(".site-header__mark .publication-mark__initials"),
+  ).toBeVisible();
+  await expect(
+    page.locator(".site-header__mark .publication-mark__name"),
+  ).toBeHidden();
 });
 
 test("homepage briefing cards keep metadata above their headline", async ({
@@ -387,38 +417,35 @@ test("compact story metadata stays inside its card at tablet width", async ({
 });
 
 for (const categorySlug of categorySlugs) {
-  test(`${categorySlug} lead begins in the opening mobile viewport`, async ({
+  test(`${categorySlug} compact directory balances three guides without a forced lead`, async ({
     page,
   }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`/categories/${categorySlug}/`);
-    await page.evaluate(async () => {
-      await document.fonts.ready;
-    });
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(`/categories/${categorySlug}/`);
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
 
-    const leadTitle = page.locator(".category-hero__lead .article-card__title");
-    await expect(leadTitle).toBeVisible();
-    const titleBox = await leadTitle.boundingBox();
-
-    expect(titleBox).not.toBeNull();
-    expect(titleBox!.y + titleBox!.height).toBeLessThanOrEqual(820);
-  });
-
-  test(`${categorySlug} lead starts before the desktop opening threshold`, async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(`/categories/${categorySlug}/`);
-    await page.evaluate(async () => {
-      await document.fonts.ready;
-    });
-
-    const titleBox = await page
-      .locator(".category-hero__lead .article-card__title")
-      .boundingBox();
-
-    expect(titleBox).not.toBeNull();
-    expect(titleBox!.y).toBeLessThanOrEqual(760);
+      await expect(page.locator(".category-hero__lead")).toHaveCount(0);
+      const cards = page.locator(".category-compact .article-card--compact");
+      await expect(cards).toHaveCount(3);
+      const boxes = await cards.evaluateAll((elements) =>
+        elements.map((element) => {
+          const box = element.getBoundingClientRect();
+          return { left: box.left, right: box.right, width: box.width };
+        }),
+      );
+      for (const box of boxes) {
+        expect(box.left).toBeGreaterThanOrEqual(-1);
+        expect(box.right).toBeLessThanOrEqual(viewport.width + 1);
+        expect(box.width).toBeGreaterThan(0);
+      }
+    }
   });
 }
 

@@ -4,7 +4,7 @@ import { load } from "cheerio";
 import { readArticleRecords } from "../../scripts/qa-content.mjs";
 import { siteConfig, siteUrl } from "../../site.config.mjs";
 import {
-  homepageMoreGuidesLimit,
+  homepageCuration,
   homepageSectionSizes,
 } from "../../src/data/editorial";
 
@@ -91,6 +91,11 @@ interface ArticleSourceRecord {
     status: string;
     category: string;
     slug: string;
+    title: string;
+    contentType: string;
+    datePublished: string;
+    summary: string;
+    featured: boolean;
   };
 }
 
@@ -127,6 +132,7 @@ const trustPages = [
 const htmlRoutes = [
   "/",
   "/categories/",
+  "/articles/",
   "/toolkit/",
   ...categories.map(({ slug }) => `/categories/${slug}/`),
   `/articles/${articleSlug}/`,
@@ -218,10 +224,15 @@ test("toolkit publishes four practical worksheets with local CSV downloads", asy
   ).toBeVisible();
 });
 
-test("home is a de-duplicated issue front page", async ({ page, request }) => {
+test("home publishes only the approved nine-guide curation", async ({
+  page,
+  request,
+}) => {
   await page.goto("/");
 
-  const articleLinks = page.locator('main a[href^="/articles/"]');
+  const articleLinks = page.locator(
+    '.article-card a[href^="/articles/"]:not([href="/articles/"])',
+  );
   const articleHrefs = await articleLinks.evaluateAll((links) =>
     links.map((link) => link.getAttribute("href")),
   );
@@ -232,60 +243,64 @@ test("home is a de-duplicated issue front page", async ({ page, request }) => {
   const publishedArticleHrefs = rss("item > link")
     .map((_, link) => new URL(rss(link).text()).pathname)
     .get();
-  const curatedArticleCount = Object.values(homepageSectionSizes).reduce(
-    (total, sectionSize) => total + sectionSize,
-    0,
-  );
+  const expectedCuratedHrefs = Object.values(homepageCuration)
+    .flat()
+    .map((slug) => `/articles/${slug}/`);
 
-  expect(publishedArticleHrefs.length).toBeGreaterThanOrEqual(
-    curatedArticleCount,
-  );
+  expect(expectedCuratedHrefs).toHaveLength(9);
+  expect(new Set(expectedCuratedHrefs).size).toBe(9);
+  expect(publishedArticleHrefs).toHaveLength(15);
   expect(new Set(publishedArticleHrefs).size).toBe(
     publishedArticleHrefs.length,
   );
-  const expectedMoreGuidesCount = Math.min(
-    homepageMoreGuidesLimit,
-    publishedArticleHrefs.length - curatedArticleCount,
-  );
-  expect(articleHrefs).toHaveLength(
-    curatedArticleCount + expectedMoreGuidesCount,
-  );
+  expect(articleHrefs).toHaveLength(9);
   expect(new Set(articleHrefs).size).toBe(articleHrefs.length);
+  expect(articleHrefs).toEqual(expectedCuratedHrefs);
   expect(
-    articleHrefs.every((href) => publishedArticleHrefs.includes(href ?? "")),
+    expectedCuratedHrefs.every((href) => publishedArticleHrefs.includes(href)),
   ).toBe(true);
 
-  const currentIssue = page.getByRole("region", { name: "Current issue" });
-  const latestBriefing = page.getByRole("region", {
-    name: "Latest briefing",
+  const featuredGuidance = page.getByRole("region", {
+    name: "Featured guidance",
   });
-  const startHere = page.getByRole("region", { name: "Start here" });
-  const moreGuides = page.getByRole("region", {
-    name: "More guides",
+  const latestGuides = page.getByRole("region", {
+    name: "Latest guides",
+  });
+  const practicalFoundations = page.getByRole("region", {
+    name: "Practical foundations",
   });
 
-  await expect(currentIssue).toBeVisible();
+  await expect(featuredGuidance).toBeVisible();
   await expect(
-    currentIssue.locator(".front-page__lead .article-card--lead"),
+    featuredGuidance.locator(".front-page__lead .article-card--lead"),
   ).toHaveCount(homepageSectionSizes.lead);
   await expect(
-    currentIssue.locator(".front-page__support .article-card--feature"),
+    featuredGuidance.locator(".front-page__support .article-card--feature"),
   ).toHaveCount(homepageSectionSizes.features);
-  await expect(latestBriefing).toBeVisible();
-  await expect(latestBriefing.locator(".article-card--list")).toHaveCount(
+  await expect(latestGuides).toBeVisible();
+  await expect(latestGuides.locator(".article-card--list")).toHaveCount(
     homepageSectionSizes.briefing,
   );
-  await expect(startHere).toBeVisible();
-  await expect(startHere.locator(".article-card--list")).toHaveCount(
+  await expect(practicalFoundations).toBeVisible();
+  await expect(practicalFoundations.locator(".article-card--list")).toHaveCount(
     homepageSectionSizes.startHere,
   );
-  await expect(moreGuides).toBeVisible();
-  await expect(moreGuides.locator(".article-card--list")).toHaveCount(
-    expectedMoreGuidesCount,
-  );
   await expect(
-    moreGuides.getByRole("link", { name: "View all guides" }),
-  ).toHaveAttribute("href", "/sitemap/");
+    page.getByRole("link", { name: "View all guides" }),
+  ).toHaveAttribute("href", "/articles/");
+  await expect(page.locator(".more-guides")).toHaveCount(0);
+
+  const structuralText = await page
+    .locator(
+      "main h1, main h2, main h3, main .eyebrow, main .section-heading__eyebrow",
+    )
+    .allTextContents();
+  expect(structuralText.join(" ")).not.toMatch(
+    /current issue|complete issue|\bedition\b|more guides/i,
+  );
+  expect(await page.locator("main").innerText()).not.toMatch(
+    /most popular|most read|trending/i,
+  );
 
   const topicRows = page.locator(".topic-directory--compact li");
   await expect(topicRows).toHaveCount(categories.length);
@@ -329,7 +344,7 @@ test("home is a de-duplicated issue front page", async ({ page, request }) => {
   }
 
   await expect(
-    startHere.getByRole("link", {
+    practicalFoundations.getByRole("link", {
       name: "How to back up business files with the 3-2-1 method",
     }),
   ).toHaveAttribute(
@@ -337,12 +352,28 @@ test("home is a de-duplicated issue front page", async ({ page, request }) => {
     "/articles/back-up-business-files-with-the-3-2-1-method/",
   );
 
-  const evidence = page.locator("header.home-opening + .publication-evidence");
+  const toolkit = page.getByRole("region", {
+    name: "Featured Toolkit resource",
+  });
+  await expect(toolkit).toContainText("Automation candidate screen");
+  await expect(
+    toolkit.getByRole("link", {
+      name: "Read the automation-candidate guide",
+    }),
+  ).toHaveAttribute(
+    "href",
+    "/articles/how-to-identify-business-tasks-for-automation/",
+  );
+  await expect(
+    toolkit.getByRole("link", { name: "Download automation screen CSV" }),
+  ).toHaveAttribute("href", "/toolkit/automation-candidate-screen.csv");
+
+  const evidence = page.locator(".how-we-work");
   await expect(evidence).toHaveCount(1);
-  await expect(evidence).toContainText(/source-led guidance/i);
-  await expect(evidence).toContainText(/corrections/i);
-  await expect(evidence).toContainText(/commercial status/i);
-  await expect(evidence).toContainText(/publication-name byline/i);
+  await expect(evidence).toContainText(/practical business problem/i);
+  await expect(evidence).toContainText(/primary or official sources/i);
+  await expect(evidence).toContainText(/limitations/i);
+  await expect(evidence).toContainText(/material corrections/i);
   await expect(
     evidence.getByRole("link", { name: "Editorial standards" }),
   ).toHaveAttribute("href", "/editorial-standards/");
@@ -361,13 +392,116 @@ test("home is a de-duplicated issue front page", async ({ page, request }) => {
   );
   await expect(evidence).toHaveAttribute(
     "aria-labelledby",
-    "publication-evidence-heading",
+    "how-we-work-heading",
   );
   await expect(
     page.getByRole("region", {
-      name: "Publication evidence",
+      name: "How we work",
     }),
   ).toBeVisible();
+});
+
+test("all-guides archive groups every published guide once in category order", async ({
+  page,
+}) => {
+  const articleRecords = (await readArticleRecords()) as ArticleSourceRecord[];
+  const publishedArticles = articleRecords
+    .filter(({ data }) => data.status === "published")
+    .sort(
+      (left, right) =>
+        right.data.datePublished.localeCompare(left.data.datePublished) ||
+        left.data.title.localeCompare(right.data.title, "en"),
+    );
+  expect(publishedArticles).toHaveLength(15);
+
+  const response = await page.goto("/articles/");
+  expect(response?.status()).toBe(200);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "All guides" }),
+  ).toBeVisible();
+
+  const groups = page.locator(".guide-archive__category");
+  await expect(groups).toHaveCount(categories.length);
+  expect(
+    await groups.evaluateAll((items) =>
+      items.map((item) => item.getAttribute("data-category")),
+    ),
+  ).toEqual(categories.map(({ slug }) => slug));
+
+  const allHrefs = await page
+    .locator('.guide-archive a[href^="/articles/"]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  expect(allHrefs).toHaveLength(15);
+  expect(new Set(allHrefs).size).toBe(15);
+
+  for (const category of categories) {
+    const group = page.locator(
+      `.guide-archive__category[data-category="${category.slug}"]`,
+    );
+    const expected = publishedArticles.filter(
+      ({ data }) => data.category === category.slug,
+    );
+    const expectedHrefs = expected.map(({ data }) => `/articles/${data.slug}/`);
+    expect(expectedHrefs).toHaveLength(3);
+    await expect(
+      group.getByRole("heading", { name: category.name, exact: true }),
+    ).toBeVisible();
+    expect(
+      await group
+        .locator('a[href^="/articles/"]')
+        .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
+    ).toEqual(expectedHrefs);
+    const cards = group.locator(".article-card");
+    await expect(cards).toHaveCount(3);
+    for (let index = 0; index < 3; index += 1) {
+      await expect(
+        cards
+          .nth(index)
+          .locator(`time[datetime="${expected[index]!.data.datePublished}"]`),
+      ).toHaveCount(1);
+      await expect(cards.nth(index).locator(".story-meta")).toContainText(
+        /Guide|Framework|Checklist|Comparison/,
+      );
+      await expect(
+        cards.nth(index).locator(".article-card__summary"),
+      ).toBeVisible();
+      await expect(
+        cards.nth(index).locator(".article-card__summary"),
+      ).toHaveText(expected[index]!.data.summary);
+    }
+  }
+});
+
+test("Guides navigation targets the all-guides archive with a correct active state", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/articles/");
+
+  const utilityLinks = page.locator(".site-header__utility a");
+  expect(await utilityLinks.allTextContents()).toEqual([
+    "Guides",
+    "Toolkit",
+    "About",
+  ]);
+  await expect(
+    page.locator('.site-header__utility a[href="/articles/"]'),
+  ).toHaveAttribute("aria-current", "page");
+  await expect(page.locator('footer a[href="/articles/"]')).toHaveText(
+    "Guides",
+  );
+
+  await page.goto("/");
+  for (const link of await page
+    .getByRole("link", { name: /^(?:Guides|View all guides)$/ })
+    .all()) {
+    await expect(link).toHaveAttribute("href", "/articles/");
+  }
+
+  await page.goto("/sitemap/");
+  await expect(
+    page.getByRole("link", { name: "All guides", exact: true }),
+  ).toHaveAttribute("href", "/articles/");
 });
 
 test("desktop masthead exposes every topic and marks the current route", async ({
@@ -465,7 +599,7 @@ test("a substantively revised article exposes its distinct modification date", a
   await expect(page.getByText(/reviewed august 22, 2026/i)).toBeVisible();
 });
 
-test("AI category has a lead, supporting features, complete membership, and story metadata", async ({
+test("a three-guide category uses the compact branch with complete membership and no lead card", async ({
   page,
 }) => {
   const articleRecords = (await readArticleRecords()) as ArticleSourceRecord[];
@@ -474,8 +608,13 @@ test("AI category has a lead, supporting features, complete membership, and stor
       ({ data }) =>
         data.status === "published" && data.category === "ai-automation",
     )
-    .map(({ data }) => `/articles/${data.slug}/`)
-    .sort();
+    .sort(
+      (left, right) =>
+        Number(right.data.featured) - Number(left.data.featured) ||
+        right.data.datePublished.localeCompare(left.data.datePublished) ||
+        left.data.title.localeCompare(right.data.title, "en"),
+    )
+    .map(({ data }) => `/articles/${data.slug}/`);
 
   await page.goto("/categories/ai-automation/");
 
@@ -495,28 +634,31 @@ test("AI category has a lead, supporting features, complete membership, and stor
       categoryAccent,
     ),
   ).toBe(true);
-  await expect(page.locator(".article-card--lead")).toHaveCount(1);
-  await expect(page.locator(".article-card--feature")).toHaveCount(2);
+  await expect(page.locator(".category-page")).toHaveAttribute(
+    "data-layout",
+    "compact",
+  );
+  await expect(hero.locator(".category-hero__lead")).toHaveCount(0);
+  await expect(page.locator(".article-card--lead")).toHaveCount(0);
+  await expect(page.locator(".article-card--feature")).toHaveCount(0);
+  await expect(
+    page.locator(".category-compact .article-card--compact"),
+  ).toHaveCount(3);
 
   const articleHrefs = await page
     .locator('main a[href^="/articles/"]')
     .evaluateAll((links) =>
-      Array.from(
-        new Set(
-          links
-            .map((link) => link.getAttribute("href"))
-            .filter((href): href is string => href !== null),
-        ),
-      ).sort(),
+      links
+        .map((link) => link.getAttribute("href"))
+        .filter((href): href is string => href !== null),
     );
   expect(articleHrefs).toEqual(expectedArticleHrefs);
+  expect(new Set(articleHrefs).size).toBe(articleHrefs.length);
   for (const launchHref of launchAiArticleHrefs) {
     expect(articleHrefs).toContain(launchHref);
   }
 
-  const storyCards = page.locator(
-    ".article-card--lead, .article-card--feature, .article-card--list",
-  );
+  const storyCards = page.locator(".category-compact .article-card--compact");
   await expect(storyCards).toHaveCount(expectedArticleHrefs.length);
   for (let index = 0; index < expectedArticleHrefs.length; index += 1) {
     const storyMeta = storyCards
@@ -916,7 +1058,9 @@ test("every public HTML route has one H1 and unique core metadata", async ({
       route,
     ).toHaveAttribute(
       "content",
-      route.startsWith("/articles/") ? "article" : "website",
+      route.startsWith("/articles/") && route !== "/articles/"
+        ? "article"
+        : "website",
     );
     await expect(
       page.locator('meta[property="og:title"]'),
@@ -958,7 +1102,7 @@ test("every public HTML route has one H1 and unique core metadata", async ({
       0,
     );
 
-    if (route.startsWith("/articles/")) {
+    if (route.startsWith("/articles/") && route !== "/articles/") {
       await expect(
         page.locator('meta[property="article:published_time"]'),
         route,

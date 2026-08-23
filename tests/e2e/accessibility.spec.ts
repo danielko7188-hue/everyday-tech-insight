@@ -289,12 +289,19 @@ function longestDuration(value: string): number {
   );
 }
 
-for (const route of ["/", categoryPath, articlePath, "/toolkit/"]) {
+for (const route of [
+  "/",
+  "/articles/",
+  categoryPath,
+  articlePath,
+  "/toolkit/",
+]) {
   test(`${route} has no moderate, serious, or critical axe violations`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 1200 });
-    await page.goto(route);
+    const response = await page.goto(route);
+    expect(response?.status(), route).toBe(200);
 
     const results = await new AxeBuilder({ page }).withTags(wcagTags).analyze();
     const blockingViolations = results.violations.filter(({ impact }) =>
@@ -379,15 +386,16 @@ test("390px native menu opens from the keyboard and exposes every topic", async 
     aboutLinkBox?.height ?? 0,
     "About mobile touch target",
   ).toBeGreaterThanOrEqual(44);
-  const standardsLink = menu.getByRole("link", {
-    name: "Editorial standards",
+  const guidesLink = menu.getByRole("link", {
+    name: "Guides",
     exact: true,
   });
-  await expect(standardsLink).toBeVisible();
-  const standardsLinkBox = await standardsLink.boundingBox();
+  await expect(guidesLink).toBeVisible();
+  await expect(guidesLink).toHaveAttribute("href", "/articles/");
+  const guidesLinkBox = await guidesLink.boundingBox();
   expect(
-    standardsLinkBox?.height ?? 0,
-    "Editorial standards mobile touch target",
+    guidesLinkBox?.height ?? 0,
+    "Guides mobile touch target",
   ).toBeGreaterThanOrEqual(44);
   const toolkitLink = menu.getByRole("link", {
     name: "Toolkit",

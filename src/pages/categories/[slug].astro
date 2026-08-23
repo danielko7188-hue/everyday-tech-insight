@@ -56,11 +56,7 @@ interface Props {
 }
 
 const { category, articles } = Astro.props;
-const {
-  lead: leadArticle,
-  features: featureArticles,
-  remainder: remainingArticles,
-} = partitionCategoryEdition(articles);
+const categoryEdition = partitionCategoryEdition(articles);
 const path = `/categories/${category.slug}/`;
 const title = `${category.name} for small business | ${site.name}`;
 const description = category.description;
@@ -73,7 +69,11 @@ const description = category.description;
   activeCategory={category.slug}
   includeEditorialVisualSymbols
 >
-  <div class="page-shell category-page" data-guide-count={articles.length}>
+  <div
+    class="page-shell category-page"
+    data-guide-count={articles.length}
+    data-layout={categoryEdition.layout}
+  >
     <Breadcrumbs
       items={[
         { name: "Home", href: "/" },
@@ -93,18 +93,6 @@ const description = category.description;
         <p class="page-deck">{category.description}</p>
         <p>{categoryPurposes[category.slug]}</p>
       </div>
-      {
-        leadArticle && (
-          <div class="category-hero__lead">
-            <ArticleCard
-              article={leadArticle}
-              variant="lead"
-              headingLevel={2}
-              showVisual={false}
-            />
-          </div>
-        )
-      }
       <div class="category-hero__visual" data-editorial-visual>
         <EditorialVisual
           category={category.slug}
@@ -116,19 +104,63 @@ const description = category.description;
     </header>
 
     {
-      featureArticles.length > 0 ? (
+      categoryEdition.layout === "compact" ? (
+        categoryEdition.articles.length > 0 ? (
+          <section
+            class="category-compact"
+            aria-labelledby="category-compact-heading"
+          >
+            <SectionHeading
+              eyebrow="Published guidance"
+              title="Guides in this topic"
+              description={`All published ${category.name} guidance appears once in this concise directory.`}
+              id="category-compact-heading"
+            />
+            <ol class="category-compact__list">
+              {categoryEdition.articles.map((article) => (
+                <li>
+                  <ArticleCard
+                    article={article}
+                    variant="compact"
+                    headingLevel={3}
+                    showSummary
+                    showVisual={false}
+                  />
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : (
+          <section class="empty-category" aria-labelledby="scope-heading">
+            <h2 id="scope-heading">Current scope</h2>
+            <p>
+              This category is available as part of the publication taxonomy. It
+              currently has no published guide; only reviewed entries with
+              complete source support appear here.
+            </p>
+          </section>
+        )
+      ) : categoryEdition.layout === "editorial" ? (
         <section
-          class="category-stories"
-          aria-labelledby="category-stories-heading"
+          class="category-editorial"
+          aria-labelledby="category-editorial-heading"
         >
           <SectionHeading
             eyebrow="Published guidance"
-            title="Continue with these guides"
-            description={`Every published ${category.name} guide remains available in this topic directory.`}
-            id="category-stories-heading"
+            title="Featured and supporting guides"
+            description={`Every published ${category.name} guide remains available once in this topic directory.`}
+            id="category-editorial-heading"
           />
-          <ol class="category-stories__features">
-            {featureArticles.map((article) => (
+          <div class="category-editorial__lead">
+            <ArticleCard
+              article={categoryEdition.lead}
+              variant="lead"
+              headingLevel={3}
+              showVisual={false}
+            />
+          </div>
+          <ol class="category-editorial__features">
+            {categoryEdition.features.map((article) => (
               <li>
                 <ArticleCard
                   article={article}
@@ -139,37 +171,73 @@ const description = category.description;
               </li>
             ))}
           </ol>
+          {categoryEdition.remainder.length > 0 && (
+            <ol class="category-editorial__remainder">
+              {categoryEdition.remainder.map((article) => (
+                <li>
+                  <ArticleCard
+                    article={article}
+                    variant="list"
+                    headingLevel={3}
+                    showSummary
+                    showVisual={false}
+                  />
+                </li>
+              ))}
+            </ol>
+          )}
         </section>
-      ) : !leadArticle ? (
-        <section class="empty-category" aria-labelledby="scope-heading">
-          <h2 id="scope-heading">Current scope</h2>
-          <p>
-            This category is available as part of the publication taxonomy. It
-            currently has no published guide; only reviewed entries with
-            complete source support appear here.
-          </p>
-        </section>
-      ) : null
-    }
-
-    {
-      remainingArticles.length > 0 && (
-        <section class="category-more" aria-labelledby="category-more-heading">
+      ) : (
+        <section
+          class="category-archive"
+          aria-labelledby="category-archive-heading"
+        >
           <SectionHeading
-            title="More in this topic"
-            id="category-more-heading"
+            eyebrow="Complete topic archive"
+            title="Featured, recent, and earlier guides"
+            description={`All published ${category.name} guidance remains available in stable reading order.`}
+            id="category-archive-heading"
           />
-          <ol>
-            {remainingArticles.map((article) => (
+          <ol class="category-archive__featured">
+            {categoryEdition.featured.map((article) => (
               <li>
                 <ArticleCard
                   article={article}
-                  variant="list"
+                  variant="feature"
                   headingLevel={3}
+                  showVisual={false}
                 />
               </li>
             ))}
           </ol>
+          <ol class="category-archive__recent">
+            {categoryEdition.recent.map((article) => (
+              <li>
+                <ArticleCard
+                  article={article}
+                  variant="compact"
+                  headingLevel={3}
+                  showSummary
+                  showVisual={false}
+                />
+              </li>
+            ))}
+          </ol>
+          {categoryEdition.archive.length > 0 && (
+            <ol class="category-archive__remainder">
+              {categoryEdition.archive.map((article) => (
+                <li>
+                  <ArticleCard
+                    article={article}
+                    variant="list"
+                    headingLevel={3}
+                    showSummary
+                    showVisual={false}
+                  />
+                </li>
+              ))}
+            </ol>
+          )}
         </section>
       )
     }

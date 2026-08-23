@@ -402,6 +402,7 @@ describe("production route smoke", () => {
   const requiredPaths = [
     "/",
     "/categories/",
+    "/articles/",
     "/categories/ai-automation/",
     "/categories/business-software/",
     "/categories/cybersecurity-data-protection/",
