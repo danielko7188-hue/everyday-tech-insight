@@ -12,7 +12,8 @@ intendedAudience: "Small-business owners and administrators responsible for reco
 readerOutcome: "Create a scoped backup inventory, implement independent copies, run a representative restore, and document recovery gaps before an incident."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
+dateModified: "2026-08-22"
+lastReviewed: "2026-08-22"
 featured: true
 summary: "Separate live data from backup copies, protect an offsite copy from the same failure, define recovery priorities, and prove restoration with documented tests."
 sourceList:
@@ -24,6 +25,10 @@ sourceList:
     url: "https://csrc.nist.gov/pubs/sp/800/184/final"
     publisher: "National Institute of Standards and Technology"
     accessed: "2026-08-21"
+  - title: "#StopRansomware Guide"
+    url: "https://www.cisa.gov/stopransomware/ransomware-guide"
+    publisher: "Cybersecurity and Infrastructure Security Agency"
+    accessed: "2026-08-22"
 relatedArticles:
   - "roll-out-mfa-across-a-small-business"
   - "create-a-shared-file-and-folder-system"
@@ -71,11 +76,11 @@ Document which event each copy is intended to survive: accidental deletion, rans
 
 ## Protect backup access and retention
 
+CISA’s [#StopRansomware Guide](https://www.cisa.gov/stopransomware/ransomware-guide) recommends offline, encrypted backups and regular tests of their availability and integrity in a disaster-recovery scenario. For cloud backups, it discusses cloud-to-cloud or multi-cloud separation and immutable storage, while cautioning that immutability can introduce compliance or misconfiguration-cost concerns. These controls can reduce shared failure paths, but they do not prove that a specific backup is independent or recoverable.
+
 Use separate administrative credentials where supported, multifactor authentication, minimum permissions, and alerts for important changes. Limit who can delete backup sets, shorten retention, change protected storage, or add recovery destinations.
 
-Consider an offline, immutable, or otherwise deletion-resistant copy when the risk justifies it. These terms have product-specific meanings, so verify how the selected service behaves rather than relying on a label. Determine whether administrators can immediately erase protected versions and whether a compromised production account can reach the backup.
-
-Encrypt sensitive backup data in transit and at rest using supported methods, and manage keys so the business can recover them without exposing them alongside the copy. Test what happens when the usual administrator is unavailable.
+Encrypt sensitive backups in transit and at rest with supported methods. Store recovery keys separately, and test access when the usual administrator is unavailable.
 
 Set retention to cover plausible discovery delays. A corrupted file may not be noticed before a short history expires. Longer retention increases storage and privacy obligations, so choose it deliberately.
 

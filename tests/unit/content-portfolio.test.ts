@@ -283,6 +283,17 @@ describe("published content portfolio", () => {
     );
   });
 
+  it("cites the current CISA StopRansomware guidance in the backup source list and body", () => {
+    const article = articleBySlug(
+      "back-up-business-files-with-the-3-2-1-method",
+    );
+    const currentCisaGuide =
+      "https://www.cisa.gov/stopransomware/ransomware-guide";
+
+    expect(sourceUrls(article)).toContain(currentCisaGuide);
+    expect(article.body).toContain(currentCisaGuide);
+  });
+
   it("keeps contingent exit exposure outside a total unless exit occurs within the horizon", () => {
     const article = articleBySlug(
       "calculate-the-total-cost-of-business-software",
