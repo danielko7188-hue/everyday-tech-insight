@@ -74,19 +74,22 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 
 ## Current publication-maturity evidence
 
-Fresh feature-branch release run on 2026-08-23:
+Fresh clean feature-branch release run on 2026-08-23 at code commit `54c31bcafeacc3ce3ba8828a8d403f76ff1ccc48`:
 
 - `npm run qa`: pass end to end.
+- Clean install and dependency audit: 0 total vulnerabilities; 0 production vulnerabilities.
 - Formatting and ESLint: pass.
 - Astro typecheck: 76 files, 0 errors, 0 warnings, 0 hints.
-- Vitest: 11 files, 234 tests passed.
+- Vitest: 11 files, 324 tests passed.
 - Astro production build: 37 generated pages; 21 social images and one Apple touch icon generated.
 - Content QA and built-output QA: pass.
 - External HTTP(S) links: 33 pass, 0 fail, 0 unverified.
-- Playwright, axe, responsive, and visual-regression checks: 139 tests passed, including all 32 reviewed visual baselines.
-- Lighthouse desktop home: Performance 91, Accessibility 100, Best Practices 100, SEO 100; performance runs 91/88/91.
-- Lighthouse desktop AI and automation category: Performance 91, Accessibility 100, Best Practices 100, SEO 100; performance runs 87/91/91.
-- Lighthouse desktop automation-candidates article: Performance 91, Accessibility 100, Best Practices 100, SEO 100; performance runs 91/91/91.
+- Playwright, axe, responsive, and visual-regression checks on Windows: 142 tests passed, including all 32 reviewed Windows visual states and the cold-page deferred-rendering geometry contract.
+- Exact-commit Linux visual rerun: 32 of 32 reviewed states passed. The repository contains 64 platform-specific baseline PNGs with 64 unique SHA-256 hashes.
+- Lighthouse desktop home: Performance 93, Accessibility 100, Best Practices 100, SEO 100; performance runs 93/93/93.
+- Lighthouse desktop AI and automation category: Performance 93, Accessibility 100, Best Practices 100, SEO 100; performance runs 94/93/93.
+- Lighthouse desktop automation-candidates article: Performance 90, Accessibility 100, Best Practices 100, SEO 100; performance runs 91/90/90.
+- Independent final code/release review: approved with no remaining P0-P3 findings at the recorded code commit.
 - Production after-state screenshots: not captured because the publication-maturity release is not deployed.
 
 ## Historical evidence record
