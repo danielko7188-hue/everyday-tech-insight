@@ -2113,11 +2113,11 @@ strong {
   }
 
   .site-footer__intro {
-    grid-column: span 2;
+    grid-column: span 3;
   }
 
   .site-footer__groups {
-    grid-column: span 4;
+    grid-column: span 3;
   }
 }
 

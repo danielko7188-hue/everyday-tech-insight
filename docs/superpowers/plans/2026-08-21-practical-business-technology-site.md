@@ -1,5 +1,7 @@
 # Practical Business Technology Site Implementation Plan
 
+> **Historical plan:** Retained as implementation history and superseded by the publication-maturity plan. Current behavior is documented in `README.md`, `DESIGN.md`, and `docs/TECHNICAL_QA.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build, verify, publish to GitHub, and deploy a source-backed Practical Business Technology publication under the Everyday Tech Insight brand.

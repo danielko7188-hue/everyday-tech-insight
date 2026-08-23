@@ -1,6 +1,6 @@
 # Technical QA
 
-Date recorded: 2026-08-22
+Date recorded: 2026-08-23
 
 ## Release command
 
@@ -14,7 +14,7 @@ npm run qa
 
 On a fresh Linux CI/workstation that needs browser system packages, replace the browser step with `npm run setup:browsers:linux`. Both commands install Chromium for the exact Playwright version in `package-lock.json`; neither belongs in the Vercel production build.
 
-The release command runs formatting, lint, Astro type checks, unit tests, a production build, content checks, built-output checks, external-source verification, Playwright/axe checks, and Lighthouse in that order. Playwright always starts a new built preview and never reuses an existing server.
+The release command runs formatting, lint, Astro type checks, unit tests, a production build, content checks, built-output checks, external-source verification, Playwright/axe and visual-regression checks, and Lighthouse in that order. Playwright always starts a new built preview and never reuses an existing server.
 
 ## Blocking contracts
 
@@ -43,6 +43,8 @@ The release command runs formatting, lint, Astro type checks, unit tests, a prod
 - Sitemap and RSS documents must be strictly well-formed XML and retain their required single roots, direct containers, and one direct location/link/guid per entry; matching URL text in a truncated, mismatched, or malformed document does not pass.
 - XML sitemap URLs equal the indexable route set exactly. The RSS channel is the configured home URL, and every item link/guid pair equals the published article route set exactly.
 - Category pages and the HTML sitemap contain their exact required memberships.
+- The homepage contains exactly nine distinct curated guide destinations; `/articles/` contains all fifteen published guides exactly once, grouped under the five configured topics.
+- Four Toolkit detail routes and their CSVs remain discoverable from public navigation/sitemap surfaces and preserve the exact typed record contracts.
 
 ### External HTTP(S) destinations
 
@@ -61,9 +63,35 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 - Thresholds: Performance at least 90; Accessibility, Best Practices, and SEO at least 95.
 - Stale Lighthouse output is cleared at startup. Raw reports and a status/form-factor-labeled `summary.json` are first written to a pending directory and then replace ignored `.lighthouseci/` atomically, so an interrupted run cannot leave an apparently current success summary. The runner owns the Launcher instance before readiness polling, applies bounded startup polling, and uses one idempotent cleanup path for normal completion, launch failure, `SIGINT`, and `SIGTERM`. Signal protection stays installed through browser/server/profile cleanup and report publication or discard.
 
-## Evidence record
+### Visual release evidence
 
-Fresh feature-branch release run on 2026-08-22:
+- The serial `visual-chromium` project owns only `visual-regression.spec.ts`; the regular Chromium project excludes it.
+- It compares 32 reviewed baselines: nine full-page routes at 390, 768, and 1440 CSS pixels, two keyboard-open menu viewport states, and three keyboard-focused skip-link viewport states.
+- Captures use a fixed 900px viewport height, DPR 1, light mode, `en-US`, `America/Los_Angeles`, reduced motion, both local faces loaded, one animation frame, disabled animation, hidden caret, and CSS-scale screenshots.
+- Snapshot paths include the test file, snapshot argument, Playwright project, and platform. The documented tolerance is `maxDiffPixelRatio: 0.001`; it is not a license to accept an unexplained visual change.
+- Console errors, page errors, failed requests, and cross-origin requests fail the visual run. The intentional missing route permits only its expected primary 404 resource message.
+- `npm run capture:production -- --origin https://production.example` is a separate after-deployment step. It accepts only an explicit canonical HTTPS origin and writes the exact original eight-route × three-width × two-mode inventory (48 PNGs) to `artifacts/site-audit/after/production/`. It must not be run against an old deployment.
+
+## Current publication-maturity evidence
+
+Fresh feature-branch release run on 2026-08-23:
+
+- `npm run qa`: pass end to end.
+- Formatting and ESLint: pass.
+- Astro typecheck: 76 files, 0 errors, 0 warnings, 0 hints.
+- Vitest: 11 files, 234 tests passed.
+- Astro production build: 37 generated pages; 21 social images and one Apple touch icon generated.
+- Content QA and built-output QA: pass.
+- External HTTP(S) links: 33 pass, 0 fail, 0 unverified.
+- Playwright, axe, responsive, and visual-regression checks: 139 tests passed, including all 32 reviewed visual baselines.
+- Lighthouse desktop home: Performance 91, Accessibility 100, Best Practices 100, SEO 100; performance runs 91/88/91.
+- Lighthouse desktop AI and automation category: Performance 91, Accessibility 100, Best Practices 100, SEO 100; performance runs 87/91/91.
+- Lighthouse desktop automation-candidates article: Performance 91, Accessibility 100, Best Practices 100, SEO 100; performance runs 91/91/91.
+- Production after-state screenshots: not captured because the publication-maturity release is not deployed.
+
+## Historical evidence record
+
+The following pre-publication-maturity feature-branch run was recorded on 2026-08-22. It is retained as historical evidence and is not a claim about the current tree or a new deployment:
 
 - `npm run qa`: pass end to end after the ignored local `.gstack/` QA-output directory was added to ESLint’s explicit ignore boundary.
 - Formatting: pass.
@@ -82,4 +110,4 @@ Fresh feature-branch release run on 2026-08-22:
 - Lighthouse desktop AI and automation category: Performance 95, Accessibility 100, Best Practices 100, SEO 100; performance runs 95/95/95.
 - Lighthouse desktop automation-candidates article: Performance 92, Accessibility 100, Best Practices 100, SEO 100; performance runs 92/92/92.
 
-Do not infer a pass for one stage from another stage's result. The merged `main` commit requires a fresh complete QA run, and the Vercel production deployment requires separate HTTP, metadata, download, browser-console, and visual verification.
+Do not infer a pass for one stage from another stage's result. The current branch requires a fresh complete QA run, and the Vercel production deployment requires separate HTTP, metadata, download, browser-console, and visual verification.

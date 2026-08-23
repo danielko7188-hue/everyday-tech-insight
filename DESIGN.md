@@ -19,7 +19,7 @@ The design balances approximately 80% timeless editorial character with 20% mode
 - Body, user-interface, and metadata family: **Source Sans 3 Variable**.
 - Installed self-hosted packages: `@fontsource-variable/newsreader@5.3.0` and `@fontsource-variable/source-sans-3@5.3.0`.
 - The installed package metadata and bundled license files were inspected on 2026-08-22; both declare the **SIL Open Font License 1.1 (OFL-1.1)**. Retain those package license files in dependency distributions.
-- Only the required upright variable CSS should be imported. Use `font-display: swap` and keep suitable system fallbacks.
+- Only the required upright variable CSS should be imported. Use `font-display: optional` and keep suitable system fallbacks.
 - Article body text should be 18–19px responsively, with generous leading and a 65–75 character measure.
 - Headlines use optical sizing and restrained negative tracking. Metadata must remain at least 14px with strong contrast.
 
@@ -82,7 +82,7 @@ The layout must preserve one H1, logical landmarks and source order, visible foc
 
 ## Editorial artwork
 
-All publication artwork is deterministic local inline SVG. It is decorative and must use `aria-hidden="true"` because adjacent text supplies the story meaning. It uses design tokens, explicit aspect ratios, no remote requests, and no suggestion that a photograph, product test, or firsthand demonstration occurred.
+All publication artwork is deterministic local inline SVG using design tokens, explicit aspect ratios, and no remote requests. Each of the fifteen articles has a stable, unique visual key and an informative composition with a nonempty text alternative, `role="img"`, unique title/description IDs, and an optional visible caption. Unknown informative keys fail instead of silently falling back. Category-level fallback art remains decorative with `aria-hidden="true"`. Neither form suggests that a photograph, product test, measured result, or firsthand demonstration occurred.
 
 The five category grammars are genuinely distinct:
 
@@ -92,7 +92,7 @@ The five category grammars are genuinely distinct:
 4. **Digital Operations & Productivity:** routed work streams, handoff points, and process lanes.
 5. **Technology Decisions & Strategy:** decision matrices, axes, and directional markers.
 
-The article slug selects a stable numeric variant so placement and rhythm change without randomness or client JavaScript.
+The article metadata selects one of thirteen supported visual families and a stable story-specific symbol. Decorative category art may use a slug-derived numeric variant so placement and rhythm change without randomness or client JavaScript.
 
 ## Core compositions
 
@@ -113,20 +113,19 @@ The article slug selects a stable numeric variant so placement and rhythm change
 
 ### Homepage and categories
 
-- The homepage leads with one dominant illustrated story and two typographic secondary stories, followed by a three-item numbered briefing strip.
-- A Start Here module uses selected existing practical guides. On the initial fifteen-article edition, each real article appears once in the homepage story allocation rather than being repeated across modules.
+- The homepage leads with one dominant illustrated story and two typographic secondary stories, followed by a three-item guide list and three-item practical-foundations list.
+- The homepage exposes exactly nine distinct, explicitly curated guides. `/articles/` is the complete archive and groups all fifteen published guides once across the five topics.
 - Each of the five topic rows provides a direct category path and a concise editorial cue without repeating the same article cards.
-- A compact More Guides feed owns the remaining article allocation and must scale beyond the initial fifteen articles without reintroducing duplicates.
 - The homepage and each category opening use at most one editorial illustration. Additional hierarchy comes from typography, numbering, rules, and whitespace.
-- The transparency module may describe sourcing, corrections, guide production, and the publication-name byline only within the verified factual boundary.
-- Category pages place their practical selection guidance before the story list, then use one illustrated lead and a complete typographic listing. Every real category article remains linked exactly once, including future additions.
+- The lower “How we work” module may describe sourcing, corrections, guide production, and the publication-name byline only within the verified factual boundary.
+- Category pages select from membership-driven compositions: compact for fewer than six guides, editorial for six through eleven, and featured/recent/archive for twelve or more. Every real category article remains linked exactly once in stable order.
 
 ### Article pages
 
-- Headers contain real category/content-type labels, headline, deck, publication-name byline, genuine dates, computed reading time, and restrained category artwork. The artwork is suppressed on narrow mobile screens so the evidence and article body begin sooner.
+- Headers contain real category/content-type labels, headline, deck, publication-name byline, genuine dates, computed reading time, and a story-specific informative visual. The visual remains available at mobile widths and must not cause horizontal overflow.
 - The Business Technology Fit module retains its four factual decision fields.
 - Article evidence exposes only measured facts: cited-source count, genuine publication and review dates, and links to standards and corrections. At tablet width it uses a balanced two-by-two grid, expanding to one desktop row only when there is enough space.
-- The Business Technology Fit module and table of contents are generated from real content: sticky on desktop and native collapsible on mobile.
+- The Business Technology Fit module and a single table-of-contents content structure are generated from real content. CSS changes its placement responsively without duplicating its heading/link structure in the document.
 - Markdown tables sit inside named, keyboard-focusable horizontal regions and retain a 16px minimum text size on narrow screens.
 - Body links remain visibly underlined, and sources, corrections, truthful byline boundaries, and explicit related-article relationships remain prominent.
 - Do not add fictional Person, Organization, or Article entities.
@@ -136,6 +135,12 @@ The article slug selects a stable numeric variant so placement and rhythm change
 - Trust and legal pages share an editorial page shell and measured reading width without changing their factual copy.
 - Footer groups are Publication, Topics, Standards & Transparency, and Legal & Feeds.
 - Do not invent social profiles or add an unimplemented newsletter form.
+
+### Toolkit
+
+- The Toolkit landing page exposes exactly four typed resources with outcome, detail, related-guide, and direct CSV actions.
+- Each detail route explains purpose, audience, when to use, when not to use, field definitions, limitation, data notice, related guide, and download without claiming an observed result.
+- Stacked semantic field cards are the primary mobile guide. A wide-only table may supplement them, but the primary 390px experience must not require horizontal scrolling.
 
 ## Advertising boundary
 
@@ -151,7 +156,8 @@ If a future reviewed configuration explicitly enables the component, it may rend
 - Preserve static generation, canonical URLs, factual metadata, RSS, sitemap, robots directives, BreadcrumbList data, one H1, semantic lists and tables, the skip link, and underlined body links.
 - Use visible high-contrast focus treatment and color combinations that meet WCAG AA for their actual text size and use.
 - Preserve practical keyboard access, 200% zoom usability, reduced-motion handling, and logical mobile source order.
+- Social previews are deterministic local 1200×630 PNGs: one default, five category images, and fifteen story-specific article images. Builds use only the validated `PUBLIC_SITE_URL` HTTPS origin and ignore preview-host environment variables.
 
 ## Change control and verification
 
-Any visual-system change must preserve the no-tracking, no-ad-output, no-invented-identity, no-remote-asset, and static-rendering boundaries. Validate formatting, lint, Astro type checks, unit tests, production build, content/SEO/link checks, Playwright/axe, required viewport behavior, and Lighthouse before a release claim. Local validation does not imply Blogger publication, AdSense readiness, or Google approval.
+Any visual-system change must preserve the no-tracking, no-ad-output, no-invented-identity, no-remote-asset, and static-rendering boundaries. Validate formatting, lint, Astro type checks, unit tests, production build, content/SEO/link checks, Playwright/axe, required viewport behavior, and Lighthouse before a release claim. The deterministic visual project additionally compares 32 reviewed screenshots at 390, 768, and 1440 CSS pixels with DPR 1, fixed 900px height, reduced motion, loaded local fonts, and a documented 0.1% pixel-ratio tolerance. Local validation does not imply deployment, Blogger publication, AdSense readiness, or Google approval.

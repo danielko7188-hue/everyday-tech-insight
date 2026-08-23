@@ -10,6 +10,16 @@ export default defineConfig({
   reporter: process.env.CI
     ? [["list"], ["html", { open: "never" }]]
     : [["list"]],
+  snapshotPathTemplate:
+    "{testDir}/__screenshots__/{testFilePath}/{arg}-{projectName}-{platform}{ext}",
+  expect: {
+    toHaveScreenshot: {
+      animations: "disabled",
+      caret: "hide",
+      maxDiffPixelRatio: 0.001,
+      scale: "css",
+    },
+  },
   use: {
     baseURL,
     trace: "on-first-retry",
@@ -24,7 +34,22 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
+      testIgnore: /visual-regression\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "visual-chromium",
+      fullyParallel: false,
+      testMatch: /visual-regression\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        colorScheme: "light",
+        contextOptions: { reducedMotion: "reduce" },
+        deviceScaleFactor: 1,
+        locale: "en-US",
+        timezoneId: "America/Los_Angeles",
+        viewport: { height: 900, width: 1440 },
+      },
     },
   ],
 });
