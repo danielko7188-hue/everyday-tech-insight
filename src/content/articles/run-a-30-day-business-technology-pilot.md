@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Use week 1 to baseline and configure, week 2 for normal cases, week 3 for exceptions and failure, and week 4 for export and the decision."
+visual:
+  type: "timeline"
+  key: "thirty-day-pilot-timeline"
+  alt: "A four-stage timeline for a 30-day pilot covering baseline, normal cases, exceptions, export, and decision."
+  caption: "Move from week 1 configuration through week 4 reconciliation without allowing the pilot to become production by default."
+  decorative: false
 sourceList:
   - title: "Software Acquisition Guide for Government Enterprise Consumers"
     url: "https://www.cisa.gov/sites/default/files/2024-07/PDM24050%20Software%20Acquisition%20Guide%20for%20Government%20Enterprise%20ConsumersV2_508c.pdf"

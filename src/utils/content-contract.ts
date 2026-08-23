@@ -10,6 +10,38 @@ export const CONTENT_TYPES = [
   "framework",
   "comparison",
 ] as const;
+export const EDITORIAL_VISUAL_TYPES = [
+  "workflow",
+  "decision-tree",
+  "comparison",
+  "cost-stack",
+  "security-boundary",
+  "backup-topology",
+  "process-lane",
+  "risk-matrix",
+  "checklist",
+  "timeline",
+  "data-flow",
+  "governance",
+  "information-architecture",
+] as const;
+export const EDITORIAL_VISUAL_KEYS = [
+  "automation-candidate-screen",
+  "ai-quality-scorecard",
+  "ai-use-governance",
+  "saas-evidence-checklist",
+  "work-object-comparison",
+  "saas-exit-data-flow",
+  "mfa-rollout-boundary",
+  "phishing-response-workflow",
+  "three-two-one-topology",
+  "shared-file-architecture",
+  "workflow-exception-lane",
+  "access-onboarding-checklist",
+  "technology-risk-matrix",
+  "software-cost-stack",
+  "thirty-day-pilot-timeline",
+] as const;
 export const VERIFICATION_STATUSES = [
   "unverified",
   "source-checked",
@@ -114,6 +146,16 @@ const canonicalOverrideSchema = httpsUrlSchema.refine(
 
 const slugSchema = z.string().trim().min(1).max(120).regex(SLUG_PATTERN);
 
+export const articleVisualSchema = z
+  .object({
+    type: z.enum(EDITORIAL_VISUAL_TYPES),
+    key: z.enum(EDITORIAL_VISUAL_KEYS),
+    alt: requiredText(10, 240),
+    caption: requiredText(10, 300).optional(),
+    decorative: z.literal(false),
+  })
+  .strict();
+
 export const sourceSchema = z
   .object({
     title: requiredText(3, 200),
@@ -174,6 +216,7 @@ export const articleFrontmatterSchema = z
     lastReviewed: publicationEraDateSchema,
     featured: z.boolean().default(false),
     summary: requiredText(40, 500),
+    visual: articleVisualSchema,
     sourceList: z.array(sourceSchema),
     relatedArticles: z.array(slugSchema).default([]),
     heroImage: z
@@ -265,3 +308,4 @@ export const articleFrontmatterSchema = z
 
 export type ArticleFrontmatter = z.infer<typeof articleFrontmatterSchema>;
 export type ArticleSource = z.infer<typeof sourceSchema>;
+export type ArticleVisual = z.infer<typeof articleVisualSchema>;

@@ -96,6 +96,13 @@ interface ArticleSourceRecord {
     datePublished: string;
     summary: string;
     featured: boolean;
+    visual: {
+      type: string;
+      key: string;
+      alt: string;
+      caption?: string;
+      decorative: false;
+    };
   };
 }
 
@@ -539,6 +546,16 @@ test("category directory visuals resolve their local symbol definitions", async 
   for (const reference of symbolReferences) {
     await expect(page.locator(`symbol${reference}`)).toHaveCount(1);
   }
+
+  const categoryVisuals = page.locator(".category-directory__visual svg");
+  await expect(categoryVisuals).toHaveCount(categories.length);
+  for (const visual of await categoryVisuals.all()) {
+    await expect(visual).toHaveAttribute("aria-hidden", "true");
+    await expect(visual).not.toHaveAttribute("role", "img");
+  }
+  await expect(
+    page.locator(".category-directory__visual [data-visual-key]"),
+  ).toHaveCount(0);
 });
 
 test("category and published article routes expose useful editorial content", async ({
@@ -715,6 +732,33 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
     "preserveAspectRatio",
     "xMidYMid slice",
   );
+  const informativeVisual = hero.locator(
+    'figure[data-visual-key="automation-candidate-screen"][data-visual-type="decision-tree"]',
+  );
+  await expect(informativeVisual).toBeVisible();
+  const visualSvg = informativeVisual.getByRole("img", {
+    name: "A task funnel that rejects unstable or high-risk work before a bounded pilot.",
+  });
+  await expect(visualSvg).toHaveAttribute(
+    "aria-labelledby",
+    "editorial-visual-automation-candidate-screen-title editorial-visual-automation-candidate-screen-description",
+  );
+  await expect(
+    informativeVisual.locator(
+      "#editorial-visual-automation-candidate-screen-title",
+    ),
+  ).toHaveText(/task funnel/i);
+  await expect(
+    informativeVisual.locator(
+      "#editorial-visual-automation-candidate-screen-description",
+    ),
+  ).not.toBeEmpty();
+  await expect(
+    informativeVisual.locator('use[href="#automation-candidate-screen"]'),
+  ).toHaveCount(1);
+  await expect(informativeVisual.locator("figcaption")).toHaveText(
+    "Screen repeatability, exceptions, consequences, review, and fallback before piloting.",
+  );
 
   const storyMeta = hero.getByRole("list", { name: "Story details" });
   await expect(storyMeta).toContainText("Framework");
@@ -752,6 +796,64 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
     "href",
     "/articles/document-a-repetitive-workflow-before-automating/",
   );
+});
+
+test("every published guide renders its assigned informative visual and local symbol", async ({
+  page,
+}) => {
+  const articleRecords = (await readArticleRecords()) as ArticleSourceRecord[];
+  const publishedArticles = articleRecords.filter(
+    ({ data }) => data.status === "published",
+  );
+  const keys = new Set<string>();
+
+  expect(publishedArticles).toHaveLength(15);
+
+  for (const { data } of publishedArticles) {
+    const response = await page.goto(`/articles/${data.slug}/`);
+    expect(response?.status(), data.slug).toBe(200);
+
+    const visual = page.locator(
+      `figure[data-visual-key="${data.visual.key}"][data-visual-type="${data.visual.type}"]`,
+    );
+    await expect(visual, data.slug).toHaveCount(1);
+    await expect(visual, data.slug).toBeVisible();
+
+    const titleId = `editorial-visual-${data.visual.key}-title`;
+    const descriptionId = `editorial-visual-${data.visual.key}-description`;
+    const svg = visual.getByRole("img", { name: data.visual.alt });
+    await expect(svg, data.slug).toHaveAttribute(
+      "aria-labelledby",
+      `${titleId} ${descriptionId}`,
+    );
+    await expect(visual.locator(`#${titleId}`), data.slug).toHaveCount(1);
+    await expect(visual.locator(`#${titleId}`), data.slug).not.toBeEmpty();
+    await expect(visual.locator(`#${descriptionId}`), data.slug).toHaveCount(1);
+    await expect(
+      visual.locator(`#${descriptionId}`),
+      data.slug,
+    ).not.toBeEmpty();
+    await expect(
+      visual.locator(`use[href="#${data.visual.key}"]`),
+      data.slug,
+    ).toHaveCount(1);
+    await expect(
+      page.locator(`symbol#${data.visual.key}`),
+      data.slug,
+    ).toHaveCount(1);
+
+    if (data.visual.caption) {
+      await expect(visual.locator("figcaption"), data.slug).toHaveText(
+        data.visual.caption,
+      );
+    } else {
+      await expect(visual.locator("figcaption"), data.slug).toHaveCount(0);
+    }
+
+    keys.add(data.visual.key);
+  }
+
+  expect(keys.size).toBe(15);
 });
 
 test("article surfaces its evidence boundary near the headline", async ({

@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Write risks as event-to-consequence statements, support ratings with evidence, name an accountable owner, choose a response, and review movement instead of accumulating rows."
+visual:
+  type: "risk-matrix"
+  key: "technology-risk-matrix"
+  alt: "A likelihood-and-impact risk matrix connected to evidence, an accountable owner, treatment, and review."
+  caption: "Use ranges and evidence to prioritize action without presenting color or position as false precision."
+  decorative: false
 sourceList:
   - title: "Integrating Cybersecurity and Enterprise Risk Management"
     url: "https://csrc.nist.gov/pubs/ir/8286/r1/final"

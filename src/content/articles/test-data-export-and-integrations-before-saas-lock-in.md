@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Inventory the records and connections that matter, export a representative sample, prove it can be interpreted, and document the time, omissions, and owner of an exit."
+visual:
+  type: "data-flow"
+  key: "saas-exit-data-flow"
+  alt: "A data-flow diagram tracing SaaS records, files, and integrations through export, interpretation, and exit."
+  caption: "Follow each critical record and connection beyond the product to expose missing formats, dependencies, and ownership."
+  decorative: false
 sourceList:
   - title: "Cloud Computing Synopsis and Recommendations"
     url: "https://csrc.nist.gov/pubs/sp/800/146/final"

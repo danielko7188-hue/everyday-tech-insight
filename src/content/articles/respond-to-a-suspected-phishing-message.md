@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Do not use the message to verify itself, report it through a known channel, and treat clicks, credentials, payments, or malware as escalating incident conditions."
+visual:
+  type: "workflow"
+  key: "phishing-response-workflow"
+  alt: "A branching response workflow from a suspected message to reporting, containment, and proportionate escalation."
+  caption: "Verify through a known channel and escalate based on clicks, credentials, payments, malware, or disclosed data."
+  decorative: false
 sourceList:
   - title: "Cybersecurity for Small Business"
     url: "https://www.ftc.gov/business-guidance/small-businesses/cybersecurity"

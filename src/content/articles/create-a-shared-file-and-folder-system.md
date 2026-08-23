@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Organize around durable business functions, keep names meaningful and consistent, separate active from archived work, and make one owner accountable for upkeep."
+visual:
+  type: "information-architecture"
+  key: "shared-file-architecture"
+  alt: "A shallow information architecture organizing shared files by durable business function, active work, and archive."
+  caption: "Use consistent names, role-based permissions, controlled migration, and an accountable maintenance owner."
+  decorative: false
 sourceList:
   - title: "File and Folder Naming Conventions"
     url: "https://www.archives.gov/records-mgmt/bulletins/2015/2015-04-appendix-b.html"

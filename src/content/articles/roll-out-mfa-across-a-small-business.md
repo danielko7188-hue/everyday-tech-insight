@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: true
 summary: "Inventory accounts, protect administrators and recovery paths first, prefer phishing-resistant methods, stage enrollment, and verify enforcement with evidence."
+visual:
+  type: "security-boundary"
+  key: "mfa-rollout-boundary"
+  alt: "A security-boundary diagram prioritizing administrators, recovery paths, and staged user MFA enrollment."
+  caption: "Protect the control plane first, pair enrollment with recovery, and verify enforcement in controlled waves."
+  decorative: false
 sourceList:
   - title: "Require Multifactor Authentication"
     url: "https://www.cisa.gov/audiences/small-and-medium-businesses/secure-your-business/require-multifactor-authentication"

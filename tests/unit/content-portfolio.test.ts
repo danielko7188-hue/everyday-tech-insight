@@ -34,6 +34,77 @@ interface ArticleRecord {
   frontmatter: string;
 }
 
+interface VisualMetadata {
+  type: string;
+  key: string;
+  alt: string;
+  caption?: string;
+  decorative: boolean;
+}
+
+const expectedArticleVisuals = {
+  "how-to-identify-business-tasks-for-automation": {
+    type: "decision-tree",
+    key: "automation-candidate-screen",
+  },
+  "evaluate-ai-output-quality-in-a-small-team-pilot": {
+    type: "comparison",
+    key: "ai-quality-scorecard",
+  },
+  "write-a-practical-ai-acceptable-use-policy": {
+    type: "governance",
+    key: "ai-use-governance",
+  },
+  "evaluate-saas-with-a-practical-checklist": {
+    type: "checklist",
+    key: "saas-evidence-checklist",
+  },
+  "crm-vs-project-management-software": {
+    type: "comparison",
+    key: "work-object-comparison",
+  },
+  "test-data-export-and-integrations-before-saas-lock-in": {
+    type: "data-flow",
+    key: "saas-exit-data-flow",
+  },
+  "roll-out-mfa-across-a-small-business": {
+    type: "security-boundary",
+    key: "mfa-rollout-boundary",
+  },
+  "respond-to-a-suspected-phishing-message": {
+    type: "workflow",
+    key: "phishing-response-workflow",
+  },
+  "back-up-business-files-with-the-3-2-1-method": {
+    type: "backup-topology",
+    key: "three-two-one-topology",
+  },
+  "create-a-shared-file-and-folder-system": {
+    type: "information-architecture",
+    key: "shared-file-architecture",
+  },
+  "document-a-repetitive-workflow-before-automating": {
+    type: "process-lane",
+    key: "workflow-exception-lane",
+  },
+  "onboard-employees-and-contractors-to-business-technology": {
+    type: "checklist",
+    key: "access-onboarding-checklist",
+  },
+  "create-a-simple-technology-risk-register": {
+    type: "risk-matrix",
+    key: "technology-risk-matrix",
+  },
+  "calculate-the-total-cost-of-business-software": {
+    type: "cost-stack",
+    key: "software-cost-stack",
+  },
+  "run-a-30-day-business-technology-pilot": {
+    type: "timeline",
+    key: "thirty-day-pilot-timeline",
+  },
+} as const;
+
 function articleRecords(): ArticleRecord[] {
   return readdirSync(articlesDirectory)
     .filter((fileName) => fileName.endsWith(".md"))
@@ -83,6 +154,37 @@ function optionalScalar(
   );
   const value = article.frontmatter.match(expression)?.[1];
   return value ? (JSON.parse(value) as string) : undefined;
+}
+
+function visualMetadata(article: ArticleRecord): VisualMetadata {
+  const block = article.frontmatter.match(
+    /^visual:\s*\r?\n((?: {2}.+(?:\r?\n|$))+)/m,
+  )?.[1];
+
+  if (!block) throw new Error(`${article.fileName} is missing visual.`);
+
+  const requiredString = (field: string): string => {
+    const value = block.match(
+      new RegExp(`^ {2}${field}:\\s*("(?:[^"\\\\]|\\\\.)*")\\s*$`, "m"),
+    )?.[1];
+    if (!value)
+      throw new Error(`${article.fileName} visual is missing ${field}.`);
+    return JSON.parse(value) as string;
+  };
+  const caption = block.match(/^ {2}caption:\s*("(?:[^"\\]|\\.)*")\s*$/m)?.[1];
+  const decorative = block.match(/^ {2}decorative:\s*(true|false)\s*$/m)?.[1];
+
+  if (!decorative) {
+    throw new Error(`${article.fileName} visual is missing decorative.`);
+  }
+
+  return {
+    type: requiredString("type"),
+    key: requiredString("key"),
+    alt: requiredString("alt"),
+    caption: caption ? (JSON.parse(caption) as string) : undefined,
+    decorative: decorative === "true",
+  };
 }
 
 function sourceUrls(article: ArticleRecord): string[] {
@@ -143,6 +245,31 @@ describe("published content portfolio", () => {
 
     for (const article of articles) {
       expect(scalar(article, "slug")).toBe(basename(article.fileName, ".md"));
+    }
+  });
+
+  it("assigns every launch article its exact stable informative visual", () => {
+    const articles = articleRecords();
+    const visuals = articles.map((article) => ({
+      slug: scalar(article, "slug"),
+      visual: visualMetadata(article),
+    }));
+
+    expect(visuals).toHaveLength(15);
+    expect(new Set(visuals.map(({ visual }) => visual.key)).size).toBe(15);
+    expect(
+      new Set(visuals.map(({ visual }) => visual.type)).size,
+    ).toBeGreaterThanOrEqual(12);
+
+    for (const { slug, visual } of visuals) {
+      expect(visual.decorative, slug).toBe(false);
+      expect(visual.alt.trim().length, slug).toBeGreaterThan(0);
+      if (visual.caption !== undefined) {
+        expect(visual.caption.trim().length, slug).toBeGreaterThan(0);
+      }
+      expect({ type: visual.type, key: visual.key }, slug).toEqual(
+        expectedArticleVisuals[slug as keyof typeof expectedArticleVisuals],
+      );
     }
   });
 

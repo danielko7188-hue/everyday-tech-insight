@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Observe the real process, map information and decisions, count exceptions and rework, validate the map with participants, and automate only a stable boundary."
+visual:
+  type: "process-lane"
+  key: "workflow-exception-lane"
+  alt: "A three-lane process map showing information handoffs, a decision, an exception, and a rework loop."
+  caption: "Map the current state with participants before choosing a stable automation boundary."
+  decorative: false
 sourceList:
   - title: "Lean and Environment Toolkit: Appendix A"
     url: "https://www.epa.gov/sustainability/lean-environment-toolkit-appendix"

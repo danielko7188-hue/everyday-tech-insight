@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: true
 summary: "Start with a task inventory, score repeatability and risk, reject poor candidates early, and pilot one bounded workflow with a human-owned fallback."
+visual:
+  type: "decision-tree"
+  key: "automation-candidate-screen"
+  alt: "A task funnel that rejects unstable or high-risk work before a bounded pilot."
+  caption: "Screen repeatability, exceptions, consequences, review, and fallback before piloting."
+  decorative: false
 sourceList:
   - title: "AI Risk Management Framework Core"
     url: "https://airc.nist.gov/airmf-resources/airmf/5-sec-core/"

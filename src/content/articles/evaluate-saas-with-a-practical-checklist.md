@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Turn business needs into test scenarios, treat security and exit requirements as gates, verify the purchased plan, and record evidence instead of relying on a demo."
+visual:
+  type: "checklist"
+  key: "saas-evidence-checklist"
+  alt: "A six-gate checklist for evaluating SaaS evidence from business outcome through data exit."
+  caption: "Record evidence for outcome, access, data, workflow, integrations, operating cost, and exit before deciding."
+  decorative: false
 sourceList:
   - title: "Choosing Secure and Verifiable Technologies"
     url: "https://www.cisa.gov/resources-tools/resources/choosing-secure-and-verifiable-technologies"

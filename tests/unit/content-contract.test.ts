@@ -32,6 +32,14 @@ const validPublishedArticle = {
   featured: true,
   summary:
     "Assess the business problem, control requirements, and rollout evidence before automating.",
+  visual: {
+    type: "decision-tree",
+    key: "automation-candidate-screen",
+    alt: "A task funnel that rejects unstable or high-risk work before a bounded pilot.",
+    caption:
+      "Screen repeatability, exceptions, consequences, review, and fallback before piloting.",
+    decorative: false,
+  },
   sourceList: [
     {
       title: "Artificial Intelligence Risk Management Framework",
@@ -57,10 +65,90 @@ const validPublishedArticle = {
 } as const;
 
 describe("article frontmatter contract", () => {
+  it("exports the controlled editorial visual families", async () => {
+    const contract = await import("../../src/utils/content-contract");
+
+    expect(contract).toHaveProperty("EDITORIAL_VISUAL_TYPES");
+    if (!("EDITORIAL_VISUAL_TYPES" in contract)) return;
+
+    expect(contract.EDITORIAL_VISUAL_TYPES).toEqual([
+      "workflow",
+      "decision-tree",
+      "comparison",
+      "cost-stack",
+      "security-boundary",
+      "backup-topology",
+      "process-lane",
+      "risk-matrix",
+      "checklist",
+      "timeline",
+      "data-flow",
+      "governance",
+      "information-architecture",
+    ]);
+  });
+
+  it("exports the controlled story-specific visual keys", async () => {
+    const contract = await import("../../src/utils/content-contract");
+
+    expect(contract).toHaveProperty("EDITORIAL_VISUAL_KEYS");
+    if (!("EDITORIAL_VISUAL_KEYS" in contract)) return;
+
+    expect(contract.EDITORIAL_VISUAL_KEYS).toEqual([
+      "automation-candidate-screen",
+      "ai-quality-scorecard",
+      "ai-use-governance",
+      "saas-evidence-checklist",
+      "work-object-comparison",
+      "saas-exit-data-flow",
+      "mfa-rollout-boundary",
+      "phishing-response-workflow",
+      "three-two-one-topology",
+      "shared-file-architecture",
+      "workflow-exception-lane",
+      "access-onboarding-checklist",
+      "technology-risk-matrix",
+      "software-cost-stack",
+      "thirty-day-pilot-timeline",
+    ]);
+  });
+
   it("accepts every supported field for a valid published article", () => {
     const result = articleFrontmatterSchema.safeParse(validPublishedArticle);
 
     expect(result.success).toBe(true);
+  });
+
+  it("requires an informative non-decorative visual with stable metadata", () => {
+    const missingVisual = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      visual: undefined,
+    });
+    const withoutCaption = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      visual: {
+        ...validPublishedArticle.visual,
+        caption: undefined,
+      },
+    });
+
+    expect(missingVisual.success).toBe(false);
+    expect(withoutCaption.success).toBe(true);
+  });
+
+  it.each([
+    ["unknown family", { type: "illustration" }],
+    ["unknown story key", { key: "unknown-story-visual" }],
+    ["empty key", { key: "" }],
+    ["empty alternative", { alt: "" }],
+    ["decorative informative visual", { decorative: true }],
+  ])("rejects an editorial visual with %s", (_name, mutation) => {
+    const result = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      visual: { ...validPublishedArticle.visual, ...mutation },
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it("allows canonical overrides only on the configured site origin", () => {

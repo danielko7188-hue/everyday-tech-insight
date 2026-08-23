@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Define approved tools and data first, classify use cases by consequence, require review before external action, and give staff a clear incident route."
+visual:
+  type: "governance"
+  key: "ai-use-governance"
+  alt: "A governance map separating allowed, restricted, and prohibited AI uses around approved tools and data."
+  caption: "Set tool and data boundaries, match review to consequence, and provide a clear reporting route."
+  decorative: false
 sourceList:
   - title: "NIST AI RMF Playbook: Govern"
     url: "https://airc.nist.gov/airmf-resources/playbook/govern/"

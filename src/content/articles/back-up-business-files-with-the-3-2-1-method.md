@@ -16,6 +16,12 @@ dateModified: "2026-08-22"
 lastReviewed: "2026-08-22"
 featured: true
 summary: "Separate live data from backup copies, protect an offsite copy from the same failure, define recovery priorities, and prove restoration with documented tests."
+visual:
+  type: "backup-topology"
+  key: "three-two-one-topology"
+  alt: "A 3-2-1 backup topology separating live data, independent copies, a second media type, and one offsite copy."
+  caption: "Distinguish literal two-media 3-2-1 from other resilience adaptations and include a representative restore."
+  decorative: false
 sourceList:
   - title: "Data Backup Options"
     url: "https://www.cisa.gov/sites/default/files/publications/data_backup_options.pdf"

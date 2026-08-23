@@ -449,7 +449,7 @@ for (const categorySlug of categorySlugs) {
   });
 }
 
-test("mobile article keeps one compact fit summary before the reading body", async ({
+test("mobile article keeps its informative visual and one compact fit summary before the reading body", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -458,7 +458,13 @@ test("mobile article keeps one compact fit summary before the reading body", asy
     await document.fonts.ready;
   });
 
-  await expect(page.locator(".article-hero__visual")).toBeHidden();
+  const visual = page.locator(".article-hero__visual");
+  await expect(visual).toBeVisible();
+  await expect(
+    visual.locator(
+      'figure[data-visual-key="automation-candidate-screen"] svg[role="img"]',
+    ),
+  ).toBeVisible();
   const fit = page.locator("section.fit-summary");
   await expect(fit).toBeVisible();
   await expect(page.locator(".fit-summary")).toHaveCount(1);

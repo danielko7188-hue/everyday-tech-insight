@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: true
 summary: "Choose a horizon, model normal and stress scenarios, include loaded labor, and show contingent exit exposure separately unless exit occurs within the horizon."
+visual:
+  type: "cost-stack"
+  key: "software-cost-stack"
+  alt: "A software cost stack separating licenses, implementation, labor, operations, and change from contingent exit exposure."
+  caption: "Compare a defined time horizon and keep contingent exit exposure outside the total unless exit occurs within it."
+  decorative: false
 sourceList:
   - title: "Estimate Burden"
     url: "https://digital.gov/guides/pra/estimate-burden"

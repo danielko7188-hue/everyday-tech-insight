@@ -1,5 +1,9 @@
 ---
 import { categoryAccents, type CategorySlug } from "../data/categories";
+import {
+  EDITORIAL_VISUAL_KEYS,
+  type ArticleVisual,
+} from "../utils/content-contract";
 import { visualVariantForSlug } from "../utils/presentation";
 
 type VisualRatio = "wide" | "landscape" | "square";
@@ -8,6 +12,7 @@ type VisualFit = "cover" | "contain";
 interface Props {
   category: CategorySlug;
   slug: string;
+  visual?: ArticleVisual;
   ratio?: VisualRatio;
   fit?: VisualFit;
   sizeClass?: string;
@@ -17,11 +22,21 @@ interface Props {
 const {
   category,
   slug,
+  visual,
   ratio = "landscape",
   fit = "cover",
   sizeClass,
   class: className,
 } = Astro.props;
+
+if (
+  visual &&
+  !EDITORIAL_VISUAL_KEYS.includes(
+    visual.key as (typeof EDITORIAL_VISUAL_KEYS)[number],
+  )
+) {
+  throw new Error(`Unknown informative editorial visual key: ${visual.key}`);
+}
 
 const aspectRatios: Record<VisualRatio, string> = {
   wide: "16 / 9",
@@ -37,6 +52,10 @@ const accent = categoryAccents[category];
 const visualStyle = `--editorial-accent: ${accent}; --editorial-ratio: ${aspectRatios[ratio]};`;
 const preserveAspectRatio =
   fit === "contain" ? "xMidYMid meet" : "xMidYMid slice";
+const titleId = visual ? `editorial-visual-${visual.key}-title` : undefined;
+const descriptionId = visual
+  ? `editorial-visual-${visual.key}-description`
+  : undefined;
 const motifTransform: Record<CategorySlug, string> = {
   "ai-automation": `translate(${horizontalShift} ${verticalShift})`,
   "business-software": `translate(${horizontalShift} ${verticalShift}) rotate(${rotation} 360 240)`,
@@ -46,27 +65,67 @@ const motifTransform: Record<CategorySlug, string> = {
 };
 ---
 
-<svg
-  class:list={[
-    "editorial-visual",
-    `editorial-visual--${ratio}`,
-    sizeClass,
-    className,
-  ]}
-  style={visualStyle}
-  viewBox="0 0 720 480"
-  preserveAspectRatio={preserveAspectRatio}
-  aria-hidden="true"
-  focusable="false"
-  data-category={category}
-  data-variant={variant}
->
-  <rect class="editorial-visual__paper" width="720" height="480"></rect>
-  <path class="editorial-visual__rule" d="M48 48H672M48 432H672"></path>
-  <g transform={motifTransform[category]}>
-    <use href={`#${category}`}></use>
-  </g>
-</svg>
+{
+  visual ? (
+    <figure
+      class="editorial-visual-figure"
+      data-visual-key={visual.key}
+      data-visual-type={visual.type}
+    >
+      <svg
+        class:list={[
+          "editorial-visual",
+          `editorial-visual--${ratio}`,
+          sizeClass,
+          className,
+        ]}
+        style={visualStyle}
+        viewBox="0 0 720 480"
+        preserveAspectRatio={preserveAspectRatio}
+        role="img"
+        aria-labelledby={`${titleId} ${descriptionId}`}
+        focusable="false"
+        data-category={category}
+        data-variant={variant}
+        data-visual-key={visual.key}
+        data-visual-type={visual.type}
+      >
+        <title id={titleId}>{visual.alt}</title>
+        <desc id={descriptionId}>{visual.caption ?? visual.alt}</desc>
+        <rect class="editorial-visual__paper" width="720" height="480" />
+        <path class="editorial-visual__rule" d="M48 48H672M48 432H672" />
+        <use href={`#${visual.key}`} />
+      </svg>
+      {visual.caption && (
+        <figcaption class="editorial-visual__caption">
+          {visual.caption}
+        </figcaption>
+      )}
+    </figure>
+  ) : (
+    <svg
+      class:list={[
+        "editorial-visual",
+        `editorial-visual--${ratio}`,
+        sizeClass,
+        className,
+      ]}
+      style={visualStyle}
+      viewBox="0 0 720 480"
+      preserveAspectRatio={preserveAspectRatio}
+      aria-hidden="true"
+      focusable="false"
+      data-category={category}
+      data-variant={variant}
+    >
+      <rect class="editorial-visual__paper" width="720" height="480" />
+      <path class="editorial-visual__rule" d="M48 48H672M48 432H672" />
+      <g transform={motifTransform[category]}>
+        <use href={`#${category}`} />
+      </g>
+    </svg>
+  )
+}
 
 <style>
   .editorial-visual {
@@ -76,6 +135,20 @@ const motifTransform: Record<CategorySlug, string> = {
     overflow: hidden;
     color: var(--editorial-accent);
     background: var(--color-paper, #fffdf8);
+  }
+
+  .editorial-visual-figure {
+    min-inline-size: 0;
+    margin: 0;
+  }
+
+  .editorial-visual__caption {
+    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+    border-block-start: 1px solid var(--color-rule, #c9c5ba);
+    color: var(--color-muted, #55544f);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
   }
 
   .editorial-visual__paper {

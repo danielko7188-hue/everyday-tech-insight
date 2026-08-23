@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Start from the person’s role and start date, approve minimum access, issue individual accounts, verify controls and training, and schedule an access review."
+visual:
+  type: "checklist"
+  key: "access-onboarding-checklist"
+  alt: "An access onboarding checklist moving from an approved role request through identity, device, access, training, and review."
+  caption: "Grant minimum approved access, verify first-day readiness, and preserve the record needed for later offboarding."
+  decorative: false
 sourceList:
   - title: "Start with Security: A Guide for Business"
     url: "https://www.ftc.gov/business-guidance/resources/start-security-guide-business"

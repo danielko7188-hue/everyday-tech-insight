@@ -312,6 +312,27 @@ for (const route of [
   });
 }
 
+test("story visuals are named while category fallback art remains decorative", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(articlePath);
+
+  const storyVisual = page.getByRole("img", {
+    name: "A task funnel that rejects unstable or high-risk work before a bounded pilot.",
+  });
+  await expect(storyVisual).toBeVisible();
+  await expect(storyVisual).not.toHaveAttribute("aria-hidden", "true");
+
+  await page.goto(categoryPath);
+  const fallbackVisual = page.locator(".category-hero__visual svg");
+  await expect(fallbackVisual).toBeVisible();
+  await expect(fallbackVisual).toHaveAttribute("aria-hidden", "true");
+  await expect(page.locator('.category-hero__visual [role="img"]')).toHaveCount(
+    0,
+  );
+});
+
 test("desktop navigation landmarks have unique accessible names", async ({
   page,
 }) => {

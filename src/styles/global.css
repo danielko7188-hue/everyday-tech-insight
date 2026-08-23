@@ -1026,7 +1026,7 @@ strong {
 }
 
 .article-hero__visual {
-  display: none;
+  display: block;
   align-self: start;
   border-block-start: var(--space-1) solid var(--category-accent);
   background: var(--color-paper);

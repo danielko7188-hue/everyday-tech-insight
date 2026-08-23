@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Choose a CRM when the durable record is the customer relationship, a project tool when the durable record is coordinated delivery, and define the handoff if both are needed."
+visual:
+  type: "comparison"
+  key: "work-object-comparison"
+  alt: "Two work-object lifecycles comparing customer relationships with coordinated project delivery and their handoff."
+  caption: "Choose the system category from the durable record, then define the handoff if both systems are needed."
+  decorative: false
 sourceList:
   - title: "What Is CRM?"
     url: "https://www.salesforce.com/crm/what-is-crm/"

@@ -15,6 +15,12 @@ datePublished: "2026-08-21"
 lastReviewed: "2026-08-21"
 featured: false
 summary: "Define the task and failure costs, freeze representative cases, score outputs with a task-specific rubric, and include human correction time in the decision."
+visual:
+  type: "comparison"
+  key: "ai-quality-scorecard"
+  alt: "A side-by-side scorecard comparing a baseline with AI-assisted output across defined review criteria."
+  caption: "Compare representative cases, harmful errors, correction effort, and the documented stop rule."
+  decorative: false
 sourceList:
   - title: "NIST AI RMF Playbook: Measure"
     url: "https://airc.nist.gov/airmf-resources/playbook/measure/"
