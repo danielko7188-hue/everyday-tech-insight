@@ -198,8 +198,20 @@ function validBuiltFixture() {
         .join("");
     }
     if (route === "/articles/") {
-      body += articleRoutes
-        .map((href) => `<a href="${href}">${href}</a>`)
+      body += categorySlugs
+        .map(
+          (
+            category,
+          ) => `<section class="guide-archive__category" data-category="${category}">
+          ${articles
+            .filter(({ data }) => data.category === category)
+            .map(
+              ({ data }) =>
+                `<a href="/articles/${data.slug}/">${data.title}</a>`,
+            )
+            .join("")}
+        </section>`,
+        )
         .join("");
     }
     const category = categorySlugs.find(
@@ -487,6 +499,73 @@ describe("built-output QA rules", () => {
     }).map(({ code }) => code);
 
     expect(codes).toContain("article-archive-membership");
+  });
+
+  it("rejects duplicate category guide occurrences even when the membership set remains complete", () => {
+    const fixture = validBuiltFixture();
+    const categoryFile = "categories/ai-automation/index.html";
+    const duplicate = `<a href="/articles/ai-automation-guide-1/">Practical technology decision guide number 1</a>`;
+    fixture.files.set(
+      categoryFile,
+      fixture.files
+        .get(categoryFile)!
+        .replace(duplicate, duplicate + duplicate),
+    );
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).map(({ code }) => code);
+
+    expect(codes).toEqual(["category-membership"]);
+  });
+
+  it("rejects duplicate guide occurrences within an archive category", () => {
+    const fixture = validBuiltFixture();
+    const archiveFile = "articles/index.html";
+    const duplicate = `<a href="/articles/ai-automation-guide-1/">Practical technology decision guide number 1</a>`;
+    fixture.files.set(
+      archiveFile,
+      fixture.files.get(archiveFile)!.replace(duplicate, duplicate + duplicate),
+    );
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).map(({ code }) => code);
+
+    expect(codes).toEqual([
+      "article-archive-membership",
+      "article-archive-category-membership",
+    ]);
+  });
+
+  it("rejects guides moved between archive categories while global membership remains complete", () => {
+    const fixture = validBuiltFixture();
+    const archiveFile = "articles/index.html";
+    const first = `<a href="/articles/ai-automation-guide-1/">Practical technology decision guide number 1</a>`;
+    const second = `<a href="/articles/business-software-guide-1/">Practical technology decision guide number 4</a>`;
+    fixture.files.set(
+      archiveFile,
+      fixture.files
+        .get(archiveFile)!
+        .replace(first, "ARCHIVE-CATEGORY-SWAP")
+        .replace(second, first)
+        .replace("ARCHIVE-CATEGORY-SWAP", second),
+    );
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).map(({ code }) => code);
+
+    expect(codes).toEqual(["article-archive-category-membership"]);
   });
 
   it("rejects duplicate article fit, TOC, heading-link, and ID structures", () => {

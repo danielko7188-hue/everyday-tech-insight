@@ -80,6 +80,33 @@ function membershipMessage(actual, expected) {
   return `missing [${missing.join(", ") || "none"}]; extra [${extra.join(", ") || "none"}].`;
 }
 
+function sameOrderedMembers(actual, expected) {
+  return (
+    actual.length === expected.length &&
+    actual.every((value, index) => value === expected[index])
+  );
+}
+
+function orderedMembershipMessage(actual, expected) {
+  return `expected ordered [${expected.join(", ") || "none"}]; found [${actual.join(", ") || "none"}].`;
+}
+
+function compareCategoryArticles(left, right) {
+  return (
+    Number(Boolean(right.data.featured)) -
+      Number(Boolean(left.data.featured)) ||
+    right.data.datePublished.localeCompare(left.data.datePublished) ||
+    left.data.title.localeCompare(right.data.title, "en")
+  );
+}
+
+function compareArchiveArticles(left, right) {
+  return (
+    right.data.datePublished.localeCompare(left.data.datePublished) ||
+    left.data.title.localeCompare(right.data.title, "en")
+  );
+}
+
 function structuredDataTypes(value, result = []) {
   if (Array.isArray(value)) {
     for (const item of value) structuredDataTypes(item, result);
@@ -1166,25 +1193,24 @@ export function validateBuiltOutput({
     const route = `/categories/${categorySlug}/`;
     const $ = parsedPages.get(route);
     if (!$) continue;
-    const actual = new Set(
-      $("main a[href]")
-        .map((_index, element) =>
-          internalTarget($(element).attr("href"), siteUrl),
-        )
-        .get()
-        .filter((target) => target?.startsWith("/articles/")),
-    );
-    const expected = new Set(
-      publishedArticles
-        .filter(({ data }) => data.category === categorySlug)
-        .map(({ data }) => `/articles/${data.slug}/`),
-    );
-    if (!sameSet(actual, expected)) {
+    const actual = $("main a[href]")
+      .map((_index, element) =>
+        internalTarget($(element).attr("href"), siteUrl),
+      )
+      .get()
+      .filter(
+        (target) => target?.startsWith("/articles/") && target !== "/articles/",
+      );
+    const expected = publishedArticles
+      .filter(({ data }) => data.category === categorySlug)
+      .sort(compareCategoryArticles)
+      .map(({ data }) => `/articles/${data.slug}/`);
+    if (!sameOrderedMembers(actual, expected)) {
       issues.push(
         finding(
           "category-membership",
           route,
-          membershipMessage(actual, expected),
+          orderedMembershipMessage(actual, expected),
         ),
       );
     }
@@ -1210,6 +1236,58 @@ export function validateBuiltOutput({
           "article-archive-membership",
           "/articles/",
           membershipMessage(actualArchiveRoutes, expectedArticleRoutes),
+        ),
+      );
+    }
+
+    const archiveSections = articleArchive(
+      "main section.guide-archive__category[data-category]",
+    )
+      .map((_index, element) => {
+        const section = articleArchive(element);
+        return {
+          category: section.attr("data-category") ?? "",
+          routes: section
+            .find("a[href]")
+            .map((_linkIndex, link) =>
+              internalTarget(articleArchive(link).attr("href"), siteUrl),
+            )
+            .get()
+            .filter(
+              (target) =>
+                target?.startsWith("/articles/") && target !== "/articles/",
+            ),
+        };
+      })
+      .get();
+    const actualSectionOrder = archiveSections.map(({ category }) => category);
+    const mismatchedCategories = [];
+
+    if (!sameOrderedMembers(actualSectionOrder, categorySlugs)) {
+      mismatchedCategories.push("section order");
+    }
+    for (const categorySlug of categorySlugs) {
+      const matchingSections = archiveSections.filter(
+        ({ category }) => category === categorySlug,
+      );
+      const expected = publishedArticles
+        .filter(({ data }) => data.category === categorySlug)
+        .sort(compareArchiveArticles)
+        .map(({ data }) => `/articles/${data.slug}/`);
+      if (
+        matchingSections.length !== 1 ||
+        !sameOrderedMembers(matchingSections[0]?.routes ?? [], expected)
+      ) {
+        mismatchedCategories.push(categorySlug);
+      }
+    }
+
+    if (mismatchedCategories.length > 0) {
+      issues.push(
+        finding(
+          "article-archive-category-membership",
+          "/articles/",
+          `archive grouping or ordered membership differs for ${mismatchedCategories.join(", ")}.`,
         ),
       );
     }
