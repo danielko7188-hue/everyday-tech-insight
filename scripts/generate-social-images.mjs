@@ -64,6 +64,20 @@ const categoryRecords = [
   },
 ];
 
+const canonicalSlugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function assertCanonicalSlug(value, kind) {
+  if (typeof value !== "string" || !canonicalSlugPattern.test(value)) {
+    throw new Error(
+      `Expected a canonical ${kind} slug using lowercase letters, numbers, and single hyphens; received ${JSON.stringify(value)}.`,
+    );
+  }
+}
+
+for (const category of categoryRecords) {
+  assertCanonicalSlug(category.slug, "category");
+}
+
 const categoryBySlug = new Map(
   categoryRecords.map((category) => [category.slug, category]),
 );
@@ -99,6 +113,7 @@ function loadPublishedArticleRecords() {
       ) {
         throw new Error(`Invalid social metadata for article ${String(slug)}.`);
       }
+      assertCanonicalSlug(slug, "article");
       return {
         accent: categoryRecord.accent,
         alt: `Social preview for “${title}” in ${categoryRecord.name}.`,
@@ -298,16 +313,43 @@ function safeOutputTargets(outputRoot) {
   return { resolvedAppleIconPath, resolvedSocialDir };
 }
 
+function resolveDirectChild(parentDirectory, fileName) {
+  if (
+    typeof fileName !== "string" ||
+    fileName.includes("/") ||
+    fileName.includes("\\")
+  ) {
+    throw new Error(
+      `The social image output key must resolve to a direct child of the social directory: ${String(fileName)}`,
+    );
+  }
+  const resolvedParent = path.resolve(parentDirectory);
+  const resolvedCandidate = path.resolve(resolvedParent, fileName);
+  if (
+    path.dirname(resolvedCandidate) !== resolvedParent ||
+    path.basename(resolvedCandidate) !== fileName
+  ) {
+    throw new Error(
+      `The social image output key must resolve to a direct child of the social directory: ${String(fileName)}`,
+    );
+  }
+  return resolvedCandidate;
+}
+
 export async function generateSocialImages({
   outputRoot = defaultOutputRoot,
 } = {}) {
   const { resolvedAppleIconPath, resolvedSocialDir } =
     safeOutputTargets(outputRoot);
+  const outputRecords = SOCIAL_IMAGE_RECORDS.map((record) => ({
+    outputPath: resolveDirectChild(resolvedSocialDir, record.fileName),
+    record,
+  }));
   mkdirSync(resolvedSocialDir, { recursive: true });
   mkdirSync(path.dirname(resolvedAppleIconPath), { recursive: true });
 
   const expectedNames = new Set(
-    SOCIAL_IMAGE_RECORDS.map(({ fileName }) => fileName),
+    outputRecords.map(({ outputPath }) => path.basename(outputPath)),
   );
   for (const entry of readdirSync(resolvedSocialDir, { withFileTypes: true })) {
     if (entry.isFile() && !expectedNames.has(entry.name)) {
@@ -315,8 +357,7 @@ export async function generateSocialImages({
     }
   }
 
-  for (const record of SOCIAL_IMAGE_RECORDS) {
-    const outputPath = path.join(resolvedSocialDir, record.fileName);
+  for (const { outputPath, record } of outputRecords) {
     assertNoSymbolicLinkInPath(outputPath);
     await writePng(
       renderSocialSvg(record),
@@ -330,9 +371,7 @@ export async function generateSocialImages({
 
   return {
     appleIconPath: resolvedAppleIconPath,
-    socialImagePaths: SOCIAL_IMAGE_RECORDS.map(({ fileName }) =>
-      path.join(resolvedSocialDir, fileName),
-    ),
+    socialImagePaths: outputRecords.map(({ outputPath }) => outputPath),
   };
 }
 

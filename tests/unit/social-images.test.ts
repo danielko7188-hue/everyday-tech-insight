@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import {
+  copyFileSync,
   existsSync,
   mkdtempSync,
   mkdirSync,
@@ -11,6 +12,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, parse } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";
@@ -65,6 +67,54 @@ afterEach(() => {
 
 function sha256(path: string): string {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+
+async function importGeneratorWithFixture({
+  articleCategory = "ai-automation",
+  articleSlug,
+  generatorSourceTransform = (source) => source,
+}: {
+  articleCategory?: string;
+  articleSlug: string;
+  generatorSourceTransform?: (source: string) => string;
+}): Promise<unknown> {
+  const fixtureRoot = mkdtempSync(join(process.cwd(), ".eti-social-fixture-"));
+  temporaryRoots.push(fixtureRoot);
+  const fixtureScript = join(
+    fixtureRoot,
+    "scripts",
+    "generate-social-images.mjs",
+  );
+  const fixtureArticles = join(fixtureRoot, "src", "content", "articles");
+  const fixtureFonts = join(fixtureRoot, "public", "fonts");
+  mkdirSync(join(fixtureRoot, "scripts"), { recursive: true });
+  mkdirSync(fixtureArticles, { recursive: true });
+  mkdirSync(fixtureFonts, { recursive: true });
+
+  const productionScript = join(
+    process.cwd(),
+    "scripts",
+    "generate-social-images.mjs",
+  );
+  writeFileSync(
+    fixtureScript,
+    generatorSourceTransform(readFileSync(productionScript, "utf8")),
+  );
+  copyFileSync(
+    join(
+      process.cwd(),
+      "public",
+      "fonts",
+      "source-sans-3-variable-english.woff2",
+    ),
+    join(fixtureFonts, "source-sans-3-variable-english.woff2"),
+  );
+  writeFileSync(
+    join(fixtureArticles, "fixture.md"),
+    `---\nstatus: published\ncategory: ${articleCategory}\nslug: ${articleSlug}\ntitle: Fixture article\nvisual:\n  key: fixture-visual\n---\nFixture.\n`,
+  );
+
+  return import(pathToFileURL(fixtureScript).href);
 }
 
 describe("social image portfolio", () => {
@@ -204,6 +254,42 @@ describe("social image portfolio", () => {
     expect(existsSync(join(ownedRoot, "apple-touch-icon.png"))).toBe(true);
     expect(existsSync(join(unrelatedRoot, "social"))).toBe(false);
     expect(existsSync(join(unrelatedRoot, "apple-touch-icon.png"))).toBe(false);
+  });
+
+  it("rejects a non-canonical article slug before deriving an output key", async () => {
+    await expect(
+      importGeneratorWithFixture({ articleSlug: "../../../escaped" }),
+    ).rejects.toThrow(/canonical article slug/i);
+  });
+
+  it("rejects a non-canonical category slug before deriving an output key", async () => {
+    await expect(
+      importGeneratorWithFixture({
+        articleCategory: "../ai-automation",
+        articleSlug: "fixture-article",
+        generatorSourceTransform: (source) =>
+          source.replace('slug: "ai-automation"', 'slug: "../ai-automation"'),
+      }),
+    ).rejects.toThrow(/canonical category slug/i);
+  });
+
+  it("rejects a social output key unless it resolves to a direct child", async () => {
+    const root = mkdtempSync(join(tmpdir(), "eti-social-images-"));
+    temporaryRoots.push(root);
+    const article = SOCIAL_IMAGE_RECORDS.find(({ kind }) => kind === "article");
+    expect(article).toBeDefined();
+    const originalFileName = article!.fileName;
+    article!.fileName = "article-../../../escaped.png";
+
+    try {
+      await expect(generateSocialImages({ outputRoot: root })).rejects.toThrow(
+        /direct child/i,
+      );
+    } finally {
+      article!.fileName = originalFileName;
+    }
+
+    expect(existsSync(join(root, "escaped.png"))).toBe(false);
   });
 
   it.each(["root", "social", "apple"] as const)(
