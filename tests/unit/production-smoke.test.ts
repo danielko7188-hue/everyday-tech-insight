@@ -147,9 +147,24 @@ describe("inspectHtml", () => {
       html: () => htmlFixture({ extra: "<h1>Second page title</h1>" }),
     },
     {
+      name: "zero H1 elements",
+      code: "h1-count",
+      html: () =>
+        htmlFixture().replace('<h1 id="page-title">Fixture page</h1>', ""),
+    },
+    {
       name: "empty title",
       code: "title",
       html: () => htmlFixture({ title: " " }),
+    },
+    {
+      name: "absent title",
+      code: "title",
+      html: () =>
+        htmlFixture().replace(
+          "<title>Fixture page | Everyday Tech Insight</title>",
+          "",
+        ),
     },
     {
       name: "empty description",
@@ -157,25 +172,29 @@ describe("inspectHtml", () => {
       html: () => htmlFixture({ description: " " }),
     },
     {
+      name: "absent description",
+      code: "description",
+      html: () =>
+        htmlFixture().replace(
+          '<meta name="description" content="A distinct fixture description for production smoke validation.">',
+          "",
+        ),
+    },
+    {
       name: "off-origin canonical",
       code: "canonical-origin",
       html: () => htmlFixture({ canonical: "https://wrong.example/fixture/" }),
     },
     {
-      name: "minified Current issue legacy shell adjacent to the next word",
-      code: "legacy-shell",
-      html: () =>
-        minifiedHtmlFixture({
-          extra: "<p>Current issue</p><p>Next guide</p>",
-        }),
+      name: "same-origin wrong-path canonical",
+      code: "canonical-origin",
+      html: () => htmlFixture({ canonical: `${fixtureOrigin}/privacy/` }),
+      route: "/about/",
     },
     {
-      name: "minified Complete issue legacy shell adjacent to the next word",
-      code: "legacy-shell",
-      html: () =>
-        minifiedHtmlFixture({
-          extra: "<p>Complete issue</p><p>Next guide</p>",
-        }),
+      name: "same-path canonical with unexpected search",
+      code: "canonical-origin",
+      html: () => htmlFixture({ canonical: `${fixtureOrigin}/fixture/?ref=1` }),
     },
     {
       name: "duplicate fit summary",
@@ -207,7 +226,7 @@ describe("inspectHtml", () => {
       code: "duplicate-id",
       html: () => htmlFixture({ extra: '<div id="page-title"></div>' }),
     },
-  ])("rejects $name", async ({ code, html }) => {
+  ])("rejects $name", async ({ code, html, route = "/fixture/" }) => {
     const productionSmoke = await import("../../scripts/check-production.mjs");
 
     expect(productionSmoke).toHaveProperty("inspectHtml");
@@ -215,11 +234,60 @@ describe("inspectHtml", () => {
 
     const result = productionSmoke.inspectHtml(html(), {
       origin: fixtureOrigin,
-      route: "/fixture/",
+      route,
     });
     expect(
       result.issues.map((issue: { code: string }) => issue.code),
     ).toContain(code);
+  });
+
+  it.each([
+    {
+      name: "Current issue",
+      extra:
+        '<section aria-labelledby="front-page-heading"><h2 id="front-page-heading" class="visually-hidden">Current issue</h2><p>Next guide</p></section>',
+    },
+    {
+      name: "Complete issue",
+      extra:
+        '<div class="section-heading"><p class="section-heading__eyebrow">Complete issue</p><h2>Every guide</h2></div>',
+    },
+  ])(
+    "rejects the minified homepage $name shell signature adjacent to following text",
+    async ({ extra }) => {
+      const productionSmoke =
+        await import("../../scripts/check-production.mjs");
+
+      const result = productionSmoke.inspectHtml(
+        minifiedHtmlFixture({
+          canonical: `${fixtureOrigin}/`,
+          extra,
+        }),
+        { origin: fixtureOrigin, route: "/" },
+      );
+
+      expect(
+        result.issues.map((issue: { code: string }) => issue.code),
+      ).toContain("legacy-shell");
+    },
+  );
+
+  it("allows legacy-shell words in ordinary article prose", async () => {
+    const productionSmoke = await import("../../scripts/check-production.mjs");
+    const route = "/articles/ordinary-prose/";
+
+    const result = productionSmoke.inspectHtml(
+      minifiedHtmlFixture({
+        canonical: `${fixtureOrigin}${route}`,
+        extra:
+          "<p>The Current issue is discussed here, and the Complete issue is linked for context.</p>",
+      }),
+      { origin: fixtureOrigin, route },
+    );
+
+    expect(
+      result.issues.map((issue: { code: string }) => issue.code),
+    ).not.toContain("legacy-shell");
   });
 });
 
@@ -255,6 +323,7 @@ describe("production route smoke", () => {
     const productionSmoke = await import("../../scripts/check-production.mjs");
     expect(productionSmoke).toHaveProperty("PRODUCTION_ROUTES");
     expect(productionSmoke).toHaveProperty("runProductionCheck");
+    expect(productionSmoke).toHaveProperty("formatProductionReport");
     return productionSmoke;
   }
 
@@ -263,6 +332,7 @@ describe("production route smoke", () => {
       path: string;
       expectedStatus: number;
       kind: "html" | "text";
+      canonicalPath?: string;
     }>,
     overrides: Record<
       string,
@@ -298,7 +368,15 @@ describe("production route smoke", () => {
       }
 
       const route = routes.find(({ path }) => path === url.pathname);
-      if (!route) return new Response("missing fixture", { status: 404 });
+      if (!route) {
+        if (Object.hasOwn(overrides, url.pathname)) {
+          return new Response(override.body ?? "asset fixture", {
+            status: override.status ?? 200,
+            headers: override.headers,
+          });
+        }
+        return new Response("missing fixture", { status: 404 });
+      }
 
       const status = override.status ?? route.expectedStatus;
       if (status >= 300 && status < 400) {
@@ -308,12 +386,19 @@ describe("production route smoke", () => {
         });
       }
       if (route.kind === "text") {
+        const contentType =
+          route.path === "/rss.xml"
+            ? "application/rss+xml; charset=utf-8"
+            : "text/plain; charset=utf-8";
         return new Response(
           override.body ??
             (route.path === "/rss.xml"
               ? '<?xml version="1.0"?><rss></rss>'
               : "User-agent: *\nAllow: /\n"),
-          { status, headers: override.headers },
+          {
+            status,
+            headers: { "content-type": contentType, ...override.headers },
+          },
         );
       }
 
@@ -325,9 +410,7 @@ describe("production route smoke", () => {
             description:
               override.description ??
               `Production smoke description for the unique route ${route.path}`,
-            canonical: `${fixtureOrigin}${
-              route.expectedStatus === 404 ? "/404.html" : route.path
-            }`,
+            canonical: `${fixtureOrigin}${route.canonicalPath ?? route.path}`,
           }),
         {
           status,
@@ -349,9 +432,11 @@ describe("production route smoke", () => {
       path: string;
       expectedStatus: number;
       kind: "html" | "text";
+      canonicalPath?: string;
     }>;
     expect(routes.map(({ path }) => path)).toEqual(requiredPaths);
     expect(routes.at(-1)).toMatchObject({
+      canonicalPath: "/404.html",
       expectedStatus: 404,
       kind: "html",
     });
@@ -366,11 +451,23 @@ describe("production route smoke", () => {
       checkedAssets: 1,
       checkedRoutes: requiredPaths.length,
       issues: [],
+      routeResults: requiredPaths.map((path) => ({ path, status: "PASS" })),
     });
     expect(fetchImpl).toHaveBeenCalledTimes(requiredPaths.length + 1);
     for (const [, options] of fetchImpl.mock.calls) {
       expect(options).toMatchObject({ redirect: "manual" });
     }
+
+    const output = productionSmoke.formatProductionReport(
+      fixtureOrigin,
+      result,
+    );
+    const lines = output.split("\n");
+    expect(lines.slice(0, requiredPaths.length)).toEqual(
+      requiredPaths.map((path) => `PASS ${path}`),
+    );
+    expect(lines).toHaveLength(requiredPaths.length + 1);
+    expect(lines.at(-1)).toMatch(/^Production smoke: PASS /);
   });
 
   it.each([
@@ -387,6 +484,30 @@ describe("production route smoke", () => {
           status: 308,
           headers: { location: "https://host.example/about" },
         },
+      },
+    },
+    {
+      name: "non-HTML content for an HTML route",
+      code: "content-type",
+      overrides: {
+        "/about/": { headers: { "content-type": "text/plain" } },
+      },
+    },
+    {
+      name: "200 HTML response for RSS",
+      code: "content-type",
+      overrides: {
+        "/rss.xml": {
+          body: "<!doctype html><title>Fallback</title>",
+          headers: { "content-type": "text/html; charset=utf-8" },
+        },
+      },
+    },
+    {
+      name: "non-text response for robots",
+      code: "content-type",
+      overrides: {
+        "/robots.txt": { headers: { "content-type": "application/json" } },
       },
     },
     {
@@ -415,6 +536,7 @@ describe("production route smoke", () => {
       path: string;
       expectedStatus: number;
       kind: "html" | "text";
+      canonicalPath?: string;
     }>;
     const result = await productionSmoke.runProductionCheck({
       origin: fixtureOrigin,
@@ -424,6 +546,64 @@ describe("production route smoke", () => {
     expect(
       result.issues.map((issue: { code: string }) => issue.code),
     ).toContain(code);
+  });
+
+  it("rejects a 200 HTML fallback for a root-relative PNG asset", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
+      path: string;
+      expectedStatus: number;
+      kind: "html" | "text";
+      canonicalPath?: string;
+    }>;
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      fetchImpl: makeFetch(routes, {
+        "/about/": {
+          body: htmlFixture({
+            title: "About fixture | Everyday Tech Insight",
+            description: "A unique about fixture with a missing PNG asset.",
+            canonical: `${fixtureOrigin}/about/`,
+            extra: '<img src="/missing.png" alt="">',
+          }),
+        },
+        "/missing.png": {
+          body: "<!doctype html><title>Fallback</title>",
+          headers: { "content-type": "text/html; charset=utf-8" },
+          status: 200,
+        },
+      }),
+    });
+
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: "asset-content-type",
+        route: "/missing.png",
+      }),
+    );
+  });
+
+  it("formats route failures separately from passing routes and the summary", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
+      path: string;
+      expectedStatus: number;
+      kind: "html" | "text";
+      canonicalPath?: string;
+    }>;
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      fetchImpl: makeFetch(routes, { "/about/": { status: 503 } }),
+    });
+
+    const lines = productionSmoke
+      .formatProductionReport(fixtureOrigin, result)
+      .split("\n");
+    expect(lines).toContain("PASS /");
+    expect(lines).toContain("FAIL /about/");
+    expect(lines).toContainEqual(
+      expect.stringMatching(/^Production smoke: FAIL /),
+    );
   });
 
   it("reports duplicate nonempty titles and descriptions across HTML routes", async () => {
@@ -437,6 +617,7 @@ describe("production route smoke", () => {
       path: string;
       expectedStatus: number;
       kind: "html" | "text";
+      canonicalPath?: string;
     }>;
     const duplicateMetadata = {
       title: "Duplicated title | Everyday Tech Insight",

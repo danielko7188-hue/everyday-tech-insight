@@ -78,6 +78,7 @@ export const PRODUCTION_ROUTES = Object.freeze([
     path: "/production-smoke-route-that-must-not-exist/",
     expectedStatus: 404,
     kind: "html",
+    canonicalPath: "/404.html",
   },
 ]);
 
@@ -171,8 +172,33 @@ function normalizedBodyText($) {
   return normalizedText(body.text());
 }
 
-export function inspectHtml(html, { origin, route = "[HTML page]" } = {}) {
+function hasLegacyHomepageShell($, route) {
+  if (route !== "/") return false;
+
+  const structuralText = [
+    "main h1",
+    "main h2",
+    "main h3",
+    "main h4",
+    "main h5",
+    "main h6",
+    "main .eyebrow",
+    "main .section-heading__eyebrow",
+  ]
+    .flatMap((selector) => $(selector).toArray())
+    .map((element) => normalizedText($(element).text()).toLowerCase());
+
+  return structuralText.some(
+    (text) => text === "current issue" || text === "complete issue",
+  );
+}
+
+export function inspectHtml(
+  html,
+  { origin, route = "[HTML page]", canonicalPath = route } = {},
+) {
   const expectedOrigin = normalizeOrigin(origin);
+  const expectedCanonical = new URL(canonicalPath, `${expectedOrigin}/`);
   const $ = load(html);
   const issues = [];
 
@@ -245,7 +271,10 @@ export function inspectHtml(html, { origin, route = "[HTML page]" } = {}) {
           canonicalUrl.protocol === "https:") &&
         !canonicalUrl.username &&
         !canonicalUrl.password &&
-        canonicalUrl.origin === expectedOrigin;
+        canonicalUrl.origin === expectedOrigin &&
+        canonicalUrl.pathname === expectedCanonical.pathname &&
+        canonicalUrl.search === expectedCanonical.search &&
+        canonicalUrl.hash === "";
     } catch {
       canonicalMatches = false;
     }
@@ -255,13 +284,13 @@ export function inspectHtml(html, { origin, route = "[HTML page]" } = {}) {
       finding(
         "canonical-origin",
         route,
-        `expected one canonical URL on ${expectedOrigin}.`,
+        `expected one canonical URL matching ${expectedCanonical.href}.`,
       ),
     );
   }
 
   const bodyText = normalizedBodyText($);
-  if (/\b(?:Current issue|Complete issue)\b/i.test(bodyText)) {
+  if (hasLegacyHomepageShell($, route)) {
     issues.push(
       finding(
         "legacy-shell",
@@ -365,6 +394,22 @@ function requestOptions() {
   };
 }
 
+function responseMediaType(response) {
+  return (response.headers.get("content-type") ?? "")
+    .split(";", 1)[0]
+    .trim()
+    .toLowerCase();
+}
+
+function expectedRouteMediaTypes(route) {
+  if (route.kind === "html") return ["text/html", "application/xhtml+xml"];
+  if (route.path === "/rss.xml") {
+    return ["application/rss+xml", "application/xml", "text/xml"];
+  }
+  if (route.path === "/robots.txt") return ["text/plain"];
+  return [];
+}
+
 export async function runProductionCheck({
   origin,
   fetchImpl = fetch,
@@ -411,6 +456,21 @@ export async function runProductionCheck({
       );
       continue;
     }
+
+    const mediaType = responseMediaType(response);
+    const expectedMediaTypes = expectedRouteMediaTypes(route);
+    if (!expectedMediaTypes.includes(mediaType)) {
+      issues.push(
+        finding(
+          "content-type",
+          route.path,
+          `expected ${expectedMediaTypes.join(" or ")}; received ${
+            mediaType || "no Content-Type"
+          }.`,
+        ),
+      );
+      continue;
+    }
     if (route.kind !== "html") continue;
 
     let html;
@@ -429,6 +489,7 @@ export async function runProductionCheck({
       continue;
     }
     const inspection = inspectHtml(html, {
+      canonicalPath: route.canonicalPath ?? route.path,
       origin: normalizedOrigin,
       route: route.path,
     });
@@ -493,13 +554,37 @@ export async function runProductionCheck({
           `expected a successful response; received ${response.status}.`,
         ),
       );
+    } else if (
+      ["text/html", "application/xhtml+xml"].includes(
+        responseMediaType(response),
+      )
+    ) {
+      issues.push(
+        finding(
+          "asset-content-type",
+          asset,
+          `expected a non-HTML asset response; received ${responseMediaType(
+            response,
+          )}.`,
+        ),
+      );
     }
   }
+
+  const routePaths = new Set(routes.map((route) => route.path));
+  const failedRoutes = new Set(
+    issues.map((issue) => issue.route).filter((route) => routePaths.has(route)),
+  );
+  const routeResults = routes.map((route) => ({
+    path: route.path,
+    status: failedRoutes.has(route.path) ? "FAIL" : "PASS",
+  }));
 
   return {
     checkedAssets: assets.size,
     checkedRoutes: routes.length,
     issues,
+    routeResults,
   };
 }
 
@@ -535,22 +620,32 @@ export function resolveProductionOrigin(args = [], env = process.env) {
   return normalizeOrigin(value);
 }
 
-function printResult(origin, result) {
+export function formatProductionReport(origin, result) {
+  const lines = result.routeResults.map(
+    ({ path: route, status }) => `${status} ${route}`,
+  );
   if (result.issues.length === 0) {
-    console.log(
+    lines.push(
       `Production smoke: PASS (${result.checkedRoutes} routes, ${result.checkedAssets} root-relative assets at ${origin})`,
     );
-    return;
+    return lines.join("\n");
   }
 
-  console.error(
+  lines.push(
     `Production smoke: FAIL (${result.issues.length} finding${
       result.issues.length === 1 ? "" : "s"
     })`,
   );
   for (const issue of result.issues) {
-    console.error(`- [${issue.code}] ${issue.route}: ${issue.message}`);
+    lines.push(`- [${issue.code}] ${issue.route}: ${issue.message}`);
   }
+  return lines.join("\n");
+}
+
+function printResult(origin, result) {
+  const output = formatProductionReport(origin, result);
+  if (result.issues.length === 0) console.log(output);
+  else console.error(output);
 }
 
 async function main() {

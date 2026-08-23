@@ -26,11 +26,14 @@ captures.
 | `contact`             | `/contact/`                                                    |
 | `404`                 | an intentional nonexistent route returning the custom 404 page |
 
-Filenames follow `<width>-<alias>-<above-fold|full>.png`. The live and local
-HTML responses and referenced assets were byte-identical for this audited
-baseline. The two screenshot sets are retained separately as capture evidence;
-that HTML/asset parity statement is not a claim that every PNG pair has the
-same bytes.
+Filenames follow `<width>-<alias>-<above-fold|full>.png`. At capture time, the
+audit recorded 46/46 compared live/local HTML and referenced-asset files as
+byte-identical for this baseline. That is a contemporaneous observation, not a
+claim derived from the PNGs. This directory retains the 96 screenshots, but it
+does not retain the 46 compared file pairs or a hash manifest; therefore the
+payload-parity result cannot be independently reproduced from this directory.
+The separately retained screenshot sets are visual capture evidence and are
+not claimed to be byte-identical to one another.
 
 ## Baseline observations
 
