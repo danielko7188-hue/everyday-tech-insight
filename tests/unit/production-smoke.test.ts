@@ -487,6 +487,93 @@ describe("inspectHtml", () => {
       result.issues.map((issue: { code: string }) => issue.code),
     ).not.toContain("legacy-shell");
   });
+
+  it("rejects executable analytics code without treating nearby prose as the signal", async () => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const result = productionSmoke.inspectHtml(
+      htmlFixture({
+        extra: `
+          <p>This article explains why analytics and tracking claims need evidence.</p>
+          <script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({ event: "page_view" });</script>
+        `,
+      }),
+      { origin: fixtureOrigin, route: "/fixture/" },
+    );
+    const codes = result.issues.map((issue: { code: string }) => issue.code);
+
+    expect(codes).toEqual(
+      expect.arrayContaining(["executable-script", "tracking-signature"]),
+    );
+  });
+
+  it("rejects an external advertising script as executable, off-origin, and tracking-related", async () => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const result = productionSmoke.inspectHtml(
+      htmlFixture({
+        extra:
+          '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456"></script>',
+      }),
+      { origin: fixtureOrigin, route: "/fixture/" },
+    );
+    const codes = result.issues.map((issue: { code: string }) => issue.code);
+
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        "executable-script",
+        "external-resource-url",
+        "tracking-signature",
+      ]),
+    );
+  });
+
+  it("rejects a generic external resource URL even when it has no tracking signature", async () => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const result = productionSmoke.inspectHtml(
+      htmlFixture({
+        extra: '<img src="https://static.example/illustration.png" alt="">',
+      }),
+      { origin: fixtureOrigin, route: "/fixture/" },
+    );
+    const codes = result.issues.map((issue: { code: string }) => issue.code);
+
+    expect(codes).toContain("external-resource-url");
+    expect(codes).not.toContain("tracking-signature");
+  });
+
+  it("allows JSON-LD and advertising, analytics, and tracking words in ordinary prose", async () => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const result = productionSmoke.inspectHtml(
+      htmlFixture({
+        extra: `
+          <p>Advertising, analytics, and tracking are discussed as publication policy.</p>
+          <script type="application/ld+json">{"@context":"https://schema.org","description":"No advertising analytics or tracking code is enabled."}</script>
+          <a href="https://support.google.com/analytics/">Read an external source</a>
+        `,
+      }),
+      { origin: fixtureOrigin, route: "/fixture/" },
+    );
+    const codes = result.issues.map((issue: { code: string }) => issue.code);
+
+    for (const code of [
+      "executable-script",
+      "external-resource-url",
+      "tracking-signature",
+    ]) {
+      expect(codes).not.toContain(code);
+    }
+  });
 });
 
 describe("production route smoke", () => {
@@ -504,7 +591,21 @@ describe("production route smoke", () => {
     "/articles/back-up-business-files-with-the-3-2-1-method/",
     "/articles/create-a-shared-file-and-folder-system/",
     "/articles/calculate-the-total-cost-of-business-software/",
+    "/articles/create-a-simple-technology-risk-register/",
+    "/articles/crm-vs-project-management-software/",
+    "/articles/document-a-repetitive-workflow-before-automating/",
+    "/articles/evaluate-ai-output-quality-in-a-small-team-pilot/",
+    "/articles/onboard-employees-and-contractors-to-business-technology/",
+    "/articles/respond-to-a-suspected-phishing-message/",
+    "/articles/roll-out-mfa-across-a-small-business/",
+    "/articles/run-a-30-day-business-technology-pilot/",
+    "/articles/test-data-export-and-integrations-before-saas-lock-in/",
+    "/articles/write-a-practical-ai-acceptable-use-policy/",
     "/toolkit/",
+    "/toolkit/automation-candidate-screen/",
+    "/toolkit/saas-evaluation-evidence-sheet/",
+    "/toolkit/technology-risk-register/",
+    "/toolkit/backup-restore-test-log/",
     "/about/",
     "/publisher/",
     "/editorial-standards/",
@@ -643,12 +744,12 @@ describe("production route smoke", () => {
     });
 
     expect(result).toMatchObject({
-      checkedAssets: 14,
+      checkedAssets: 24,
       checkedRoutes: requiredPaths.length,
       issues: [],
       routeResults: requiredPaths.map((path) => ({ path, status: "PASS" })),
     });
-    expect(fetchImpl).toHaveBeenCalledTimes(requiredPaths.length + 14);
+    expect(fetchImpl).toHaveBeenCalledTimes(requiredPaths.length + 24);
     for (const [, options] of fetchImpl.mock.calls) {
       expect(options).toMatchObject({ redirect: "manual" });
     }
@@ -674,6 +775,20 @@ describe("production route smoke", () => {
       name: "unexpected route status",
       code: "status",
       overrides: { "/about/": { status: 503 } },
+    },
+    {
+      name: "missing published article detail",
+      code: "status",
+      overrides: {
+        "/articles/respond-to-a-suspected-phishing-message/": { status: 404 },
+      },
+    },
+    {
+      name: "missing Toolkit detail",
+      code: "status",
+      overrides: {
+        "/toolkit/technology-risk-register/": { status: 404 },
+      },
     },
     {
       name: "redirect response",

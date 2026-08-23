@@ -2,6 +2,31 @@ import { load } from "cheerio";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
+  "/articles/how-to-identify-business-tasks-for-automation/",
+  "/articles/evaluate-saas-with-a-practical-checklist/",
+  "/articles/back-up-business-files-with-the-3-2-1-method/",
+  "/articles/create-a-shared-file-and-folder-system/",
+  "/articles/calculate-the-total-cost-of-business-software/",
+  "/articles/create-a-simple-technology-risk-register/",
+  "/articles/crm-vs-project-management-software/",
+  "/articles/document-a-repetitive-workflow-before-automating/",
+  "/articles/evaluate-ai-output-quality-in-a-small-team-pilot/",
+  "/articles/onboard-employees-and-contractors-to-business-technology/",
+  "/articles/respond-to-a-suspected-phishing-message/",
+  "/articles/roll-out-mfa-across-a-small-business/",
+  "/articles/run-a-30-day-business-technology-pilot/",
+  "/articles/test-data-export-and-integrations-before-saas-lock-in/",
+  "/articles/write-a-practical-ai-acceptable-use-policy/",
+]);
+
+export const TOOLKIT_DETAIL_PATHS = Object.freeze([
+  "/toolkit/automation-candidate-screen/",
+  "/toolkit/saas-evaluation-evidence-sheet/",
+  "/toolkit/technology-risk-register/",
+  "/toolkit/backup-restore-test-log/",
+]);
+
 export const PRODUCTION_ROUTES = Object.freeze([
   { path: "/", expectedStatus: 200, kind: "html" },
   { path: "/categories/", expectedStatus: 200, kind: "html" },
@@ -31,32 +56,17 @@ export const PRODUCTION_ROUTES = Object.freeze([
     expectedStatus: 200,
     kind: "html",
   },
-  {
-    path: "/articles/how-to-identify-business-tasks-for-automation/",
+  ...PUBLISHED_ARTICLE_PATHS.map((articlePath) => ({
+    path: articlePath,
     expectedStatus: 200,
     kind: "html",
-  },
-  {
-    path: "/articles/evaluate-saas-with-a-practical-checklist/",
-    expectedStatus: 200,
-    kind: "html",
-  },
-  {
-    path: "/articles/back-up-business-files-with-the-3-2-1-method/",
-    expectedStatus: 200,
-    kind: "html",
-  },
-  {
-    path: "/articles/create-a-shared-file-and-folder-system/",
-    expectedStatus: 200,
-    kind: "html",
-  },
-  {
-    path: "/articles/calculate-the-total-cost-of-business-software/",
-    expectedStatus: 200,
-    kind: "html",
-  },
+  })),
   { path: "/toolkit/", expectedStatus: 200, kind: "html" },
+  ...TOOLKIT_DETAIL_PATHS.map((toolkitPath) => ({
+    path: toolkitPath,
+    expectedStatus: 200,
+    kind: "html",
+  })),
   { path: "/about/", expectedStatus: 200, kind: "html" },
   { path: "/publisher/", expectedStatus: 200, kind: "html" },
   {
@@ -316,6 +326,226 @@ function hasLegacyHomepageShell($, route) {
   );
 }
 
+const RESOURCE_URL_LOCATIONS = Object.freeze([
+  ["link[href]", "href"],
+  ["script[src]", "src"],
+  ["img[src]", "src"],
+  ["source[src]", "src"],
+  ["video[src]", "src"],
+  ["video[poster]", "poster"],
+  ["audio[src]", "src"],
+  ["track[src]", "src"],
+  ["iframe[src]", "src"],
+  ["embed[src]", "src"],
+  ["object[data]", "data"],
+  ['input[type="image"][src]', "src"],
+  ["image[href]", "href"],
+  ["use[href]", "href"],
+  ["a[download][href]", "href"],
+]);
+
+const TRACKING_SIGNATURES = Object.freeze([
+  {
+    label: "Google advertising",
+    pattern:
+      /(?:pagead2\.googlesyndication\.com|securepubads\.g\.doubleclick\.net|adsbygoogle|ca-pub-\d{6,})/i,
+  },
+  {
+    label: "Google Analytics or Tag Manager",
+    pattern:
+      /(?:google-analytics\.com|googletagmanager\.com|(?:^|[^\w])gtag\s*\(|\bdataLayer\s*(?:=|\.push\s*\())/i,
+  },
+  {
+    label: "Meta Pixel",
+    pattern:
+      /(?:connect\.facebook\.net\/[^\s"']*fbevents\.js|(?:^|[^\w])fbq\s*\()/i,
+  },
+  {
+    label: "Plausible Analytics",
+    pattern: /(?:plausible\.io\/js\/script[^\s"']*\.js)/i,
+  },
+  {
+    label: "Cloudflare Web Analytics",
+    pattern:
+      /(?:static\.cloudflareinsights\.com\/beacon(?:\.min)?\.js|__cfBeacon)/i,
+  },
+  {
+    label: "Microsoft Clarity",
+    pattern: /(?:clarity\.ms\/(?:tag|collect)|(?:^|[^\w])clarity\s*\()/i,
+  },
+  {
+    label: "Hotjar",
+    pattern: /(?:static\.hotjar\.com|_hjSettings)/i,
+  },
+  {
+    label: "Segment",
+    pattern: /(?:cdn\.segment\.com\/analytics\.js|analytics\.load\s*\()/i,
+  },
+  {
+    label: "Matomo",
+    pattern: /(?:matomo\.js|_paq\.push\s*\()/i,
+  },
+  {
+    label: "Mixpanel",
+    pattern: /(?:cdn\.mxpnl\.com|mixpanel\.init\s*\()/i,
+  },
+  {
+    label: "PostHog",
+    pattern: /(?:(?:app|us\.i)\.posthog\.com|posthog\.init\s*\()/i,
+  },
+  {
+    label: "Fathom Analytics",
+    pattern: /(?:cdn\.usefathom\.com\/script\.js)/i,
+  },
+]);
+
+function normalizedScriptType($, element) {
+  return ($(element).attr("type") ?? "").split(";", 1)[0].trim().toLowerCase();
+}
+
+function isExecutableScriptType(type) {
+  if (!type || type === "module") return true;
+  return (
+    /^(?:application|text)\/(?:x-)?(?:java|ecma)script(?:\d(?:\.\d)?)?$/.test(
+      type,
+    ) ||
+    type === "text/jscript" ||
+    type === "text/livescript"
+  );
+}
+
+function srcsetCandidates(value) {
+  const normalized = value.trim();
+  if (!normalized) return [];
+  if (normalized.toLowerCase().startsWith("data:")) return [normalized];
+  return normalized
+    .split(",")
+    .map((candidate) => candidate.trim().split(/\s+/, 1)[0])
+    .filter(Boolean);
+}
+
+function collectResourceUrlAttributes($) {
+  const entries = new Map();
+
+  function add(element, attribute, value) {
+    const normalized = value?.trim();
+    if (!normalized) return;
+    const tag = $(element).prop("tagName")?.toLowerCase() ?? "element";
+    const key = `${tag}\0${attribute}\0${normalized}`;
+    entries.set(key, { attribute, tag, value: normalized });
+  }
+
+  for (const [selector, attribute] of RESOURCE_URL_LOCATIONS) {
+    $(selector).each((_index, element) => {
+      add(element, attribute, $(element).attr(attribute));
+    });
+  }
+
+  $("img[srcset], source[srcset]").each((_index, element) => {
+    for (const candidate of srcsetCandidates($(element).attr("srcset") ?? "")) {
+      add(element, "srcset", candidate);
+    }
+  });
+
+  return [...entries.values()];
+}
+
+function isExternalOrUnsafeResourceUrl(value, expectedOrigin, route) {
+  if (value.startsWith("#")) return false;
+
+  let url;
+  try {
+    const base = new URL(route, `${expectedOrigin}/`);
+    url = new URL(value, base);
+  } catch {
+    return true;
+  }
+
+  if (url.protocol === "data:") return false;
+  if (url.protocol === "blob:") return url.origin !== expectedOrigin;
+  if (url.protocol !== "http:" && url.protocol !== "https:") return true;
+  return url.origin !== expectedOrigin;
+}
+
+function inspectPrivacyBoundary($, { origin, route }) {
+  const issues = [];
+  const signatureInputs = [];
+  const executableContexts = [];
+  const resourceEntries = collectResourceUrlAttributes($);
+
+  $("script").each((_index, element) => {
+    const type = normalizedScriptType($, element);
+    if (!isExecutableScriptType(type)) return;
+
+    executableContexts.push(
+      type ? `script[type=${type}]` : "script without a type",
+    );
+    signatureInputs.push($(element).attr("src") ?? "", $(element).html() ?? "");
+  });
+
+  $("*").each((_index, element) => {
+    for (const [name, value] of Object.entries(element.attribs ?? {})) {
+      if (/^on[a-z]+$/i.test(name) || /^\s*javascript:/i.test(value)) {
+        executableContexts.push(
+          `${$(element).prop("tagName").toLowerCase()}[${name}]`,
+        );
+        signatureInputs.push(value);
+      }
+      if (
+        /^(?:class|id|data-ad-(?:client|slot|format)|data-analytics-id)$/i.test(
+          name,
+        )
+      ) {
+        signatureInputs.push(`${name}=${value}`);
+      }
+    }
+  });
+
+  signatureInputs.push(...resourceEntries.map(({ value }) => value));
+
+  if (executableContexts.length > 0) {
+    issues.push(
+      finding(
+        "executable-script",
+        route,
+        `executable client-side code is not allowed; found ${[
+          ...new Set(executableContexts),
+        ].join(", ")}. Only inert JSON-LD script data is expected.`,
+      ),
+    );
+  }
+
+  const externalResources = resourceEntries.filter(({ value }) =>
+    isExternalOrUnsafeResourceUrl(value, origin, route),
+  );
+  if (externalResources.length > 0) {
+    issues.push(
+      finding(
+        "external-resource-url",
+        route,
+        `resource URL attributes must stay same-origin; found ${externalResources
+          .map(({ attribute, tag, value }) => `${tag}[${attribute}]=${value}`)
+          .join(", ")}.`,
+      ),
+    );
+  }
+
+  const signatureMatches = TRACKING_SIGNATURES.filter(({ pattern }) =>
+    signatureInputs.some((value) => pattern.test(value)),
+  ).map(({ label }) => label);
+  if (signatureMatches.length > 0) {
+    issues.push(
+      finding(
+        "tracking-signature",
+        route,
+        `advertising, analytics, or tracking signature detected: ${signatureMatches.join(", ")}.`,
+      ),
+    );
+  }
+
+  return issues;
+}
+
 export function expectedSocialImagePath(route) {
   if (typeof route !== "string") return "/social/default.png";
   const categorySlug = /^\/categories\/([^/]+)\/$/.exec(route)?.[1];
@@ -333,6 +563,7 @@ export function inspectHtml(
   const expectedCanonical = new URL(canonicalPath, `${expectedOrigin}/`);
   const $ = load(html);
   const issues = [];
+  issues.push(...inspectPrivacyBoundary($, { origin: expectedOrigin, route }));
 
   const masthead = $(`header a[aria-label="Everyday Tech Insight home"]`);
   if (masthead.length !== 1) {
