@@ -1,6 +1,6 @@
 # Technical QA
 
-Date recorded: 2026-08-21
+Date recorded: 2026-08-22
 
 ## Release command
 
@@ -56,29 +56,30 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 
 ### Browser and performance
 
-- Playwright verifies representative routes, real 404 behavior, metadata, RSS/robots, mobile overflow, keyboard focus, reduced-motion support, and axe serious/critical results.
+- Playwright verifies representative routes, the Toolkit and its exact header-only CSV downloads, real 404 behavior, metadata, RSS/robots, mobile overflow, keyboard focus, reduced-motion support, unique navigation landmarks, and axe moderate/serious/critical WCAG results.
 - Lighthouse runs in desktop form factor against the home page, AI and automation category, and a representative automation article using the Playwright-installed Chromium.
 - Thresholds: Performance at least 90; Accessibility, Best Practices, and SEO at least 95.
 - Stale Lighthouse output is cleared at startup. Raw reports and a status/form-factor-labeled `summary.json` are first written to a pending directory and then replace ignored `.lighthouseci/` atomically, so an interrupted run cannot leave an apparently current success summary. The runner owns the Launcher instance before readiness polling, applies bounded startup polling, and uses one idempotent cleanup path for normal completion, launch failure, `SIGINT`, and `SIGTERM`. Signal protection stays installed through browser/server/profile cleanup and report publication or discard.
 
 ## Evidence record
 
-Fresh local remediation run on 2026-08-21:
+Fresh feature-branch release run on 2026-08-22:
 
-- `npm run setup:browsers`: pass; the repository-pinned Playwright Chromium was available to both Playwright and Lighthouse.
-- `npm run qa`: pass end to end.
+- `npm run qa`: pass end to end after the ignored local `.gstack/` QA-output directory was added to ESLint’s explicit ignore boundary.
 - Formatting: pass.
 - ESLint: pass.
-- Astro typecheck: 44 files, 0 errors, 0 warnings, 0 hints.
-- Vitest: 4 files, 83 tests passed.
-- Astro production build: 31 generated pages.
+- Astro typecheck: 63 files, 0 errors, 0 warnings, 0 hints.
+- Vitest: 8 files, 121 tests passed.
+- Astro production build: 32 generated pages.
 - Content QA: pass.
 - Built-output QA: pass.
-- External HTTP(S) links: 32 pass, 0 fail, 0 unverified.
-- Playwright and axe: 16 tests passed.
-- Lighthouse lifecycle acceptance: one cold run plus three consecutive standalone repeats exited 0; each cleanup inspection found no new Lighthouse browser/node process, profile directory, or `.lighthouseci.pending/` directory. The exact stale and diagnostic profiles were removed after confirming that no process referenced them. The complete `npm run qa` run also exited with no Lighthouse process/profile/pending leak.
-- Lighthouse desktop home: Performance 98, Accessibility 100, Best Practices 100, SEO 100.
-- Lighthouse desktop AI and automation category: Performance 99, Accessibility 100, Best Practices 100, SEO 100.
-- Lighthouse desktop automation-candidates article: Performance 97, Accessibility 100, Best Practices 100, SEO 100.
+- External HTTP(S) links: 33 pass, 0 fail, 0 unverified.
+- Playwright and axe: 79 tests passed, including the Toolkit, exact CSV/MIME contracts, 600px table overflow guidance, positive modified-date metadata, dynamic category membership, capped home-page allocation, unique desktop landmarks, and moderate-impact WCAG checks.
+- Dependency audit: 0 production vulnerabilities and 0 total vulnerabilities in the current lockfile audit.
+- Independent content/code re-review: pass with no remaining Critical, Important, or Minor findings in the reviewed scope.
+- Independent responsive visual/accessibility re-review: pass at 390, 600, and 1440 pixels with no remaining actionable findings in the reviewed scope.
+- Lighthouse desktop home: Performance 94, Accessibility 100, Best Practices 100, SEO 100; performance runs 93/94/94.
+- Lighthouse desktop AI and automation category: Performance 95, Accessibility 100, Best Practices 100, SEO 100; performance runs 95/95/95.
+- Lighthouse desktop automation-candidates article: Performance 92, Accessibility 100, Best Practices 100, SEO 100; performance runs 92/92/92.
 
-Do not infer a pass for one stage from another stage's result. A live production deployment needs a separate HTTP and metadata verification after Vercel finishes.
+Do not infer a pass for one stage from another stage's result. The merged `main` commit requires a fresh complete QA run, and the Vercel production deployment requires separate HTTP, metadata, download, browser-console, and visual verification.

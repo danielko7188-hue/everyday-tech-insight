@@ -3,6 +3,8 @@
 **Status:** Unchecked human gate
 
 **Prepared:** 2026-08-21
+
+**Last expanded:** 2026-08-22
 **Effect:** Do not describe this site as ready for an AdSense application until every applicable item is completed with genuine evidence.
 
 No human owner, lawyer, accountant, security specialist, accessibility specialist, or subject-matter expert is claimed to have reviewed the initial portfolio. Automated checks and source review do not replace that gate.
@@ -48,6 +50,14 @@ No human owner, lawyer, accountant, security specialist, accessibility specialis
 - [ ] Every limitation, legal boundary, and specialist-escalation statement is appropriate.
 - [ ] The content is original editorial synthesis and does not copy excessive source language.
 - [ ] Related-reading links are genuinely useful and resolve to published articles.
+
+## Toolkit worksheets
+
+- [ ] The automation candidate, SaaS evaluation, technology risk, and backup restore-test field sets are useful and appropriately bounded.
+- [ ] Each CSV opens correctly in the owner’s intended spreadsheet application and retains its complete header row.
+- [ ] The worksheets remain blank templates and are not presented as completed assessments, measured results, legal advice, or security certification.
+- [ ] Completed worksheets contain no passwords, tokens, recovery-key material, authentication secrets, or unnecessary raw confidential data and are protected under appropriate access, retention, and disposal rules.
+- [ ] The linked guide for each worksheet is the correct published article.
 
 ## Images, rights, and attribution
 

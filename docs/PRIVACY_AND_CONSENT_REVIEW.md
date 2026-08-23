@@ -1,8 +1,8 @@
 # Privacy and Consent Review
 
-**Review date:** 2026-08-21
+**Review date:** 2026-08-22
 
-**Scope:** Source code and planned Vercel-hosted static output
+**Scope:** Source code and locally built release candidate, informed by inspection of the currently live Vercel-hosted baseline
 
 **Legal review:** Not performed
 **Consent-management platform:** Not configured
@@ -26,7 +26,7 @@ The public privacy page accurately states this narrow code boundary. It does not
 
 ## Platform processing disclosed
 
-The planned production host is Vercel. Its current Privacy Notice states that service operation can involve request, IP-derived location, device, usage, log, diagnostic, performance, and related service data. The public privacy page links to Vercel’s notice and distinguishes platform practices from scripts authored by this site.
+The production host is Vercel. Its current Privacy Notice states that service operation can involve request, IP-derived location, device, usage, log, diagnostic, performance, and related service data. The public privacy page links to Vercel’s notice and distinguishes platform practices from scripts authored by this site.
 
 Contact and correction routes lead to a public GitHub Issues page. The public site warns visitors that issue content and account identity may be public and tells them not to post private, credential, payment, account, or security-sensitive information. The privacy page links to GitHub’s General Privacy Statement.
 

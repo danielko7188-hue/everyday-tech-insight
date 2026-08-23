@@ -1,6 +1,8 @@
 # Policy and Technical Source Log
 
-**Access date:** 2026-08-21
+**Initial source snapshot:** 2026-08-21
+
+**AdSense readiness refresh:** 2026-08-22
 
 **Scope:** Important publication, content, privacy, monetization, and technical decisions for the initial static site
 **Source standard:** Official government, standards, platform, or first-party vendor sources
@@ -8,6 +10,21 @@
 Article frontmatter is the public per-article source record. Across the 15 articles it contains 29 distinct source URLs. A direct HTTP GET/redirect reachability check on 2026-08-21 returned `200` for all 29. Reachability does not prove that a source will remain available or that a specific product meets the guidance. Relevant official text was reviewed and translated into original editorial frameworks; no source is represented as prescribing the publication’s exact checklist or score.
 
 The nine framework and search references below also returned HTTP `200` in a direct GET/redirect check on 2026-08-21. They document implementation choices; they do not certify this site, guarantee search indexing or presentation, or replace inspection of the deployed output.
+
+## AdSense readiness refresh
+
+The official Google pages below were reviewed again on 2026-08-22. Google publishes qualitative content, ownership, policy, privacy, consent, and site-verification requirements; the reviewed pages do not publish a universal minimum article count, word count, traffic level, or site age that guarantees approval.
+
+| Official source title                                                                      | Publisher                 | Source URL                                                                      | Decision for this release                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------ | ------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What to do when your site is not ready to show ads                                         | Google AdSense Help       | https://support.google.com/adsense/answer/12176698?hl=en                        | Keep the site reachable, navigable, and content-led. Do not request review until the real account can verify the selected hostname and complete Google’s site checks.                                       |
+| Eligibility requirements for AdSense                                                       | Google AdSense Help       | https://support.google.com/adsense/answer/9724?hl=en                            | Approval still depends on original content, policy compliance, an eligible adult account holder, and access to the site source. Those account and owner facts are not established by this repository.       |
+| Google-served ads on screens without publisher-content                                     | Google Publisher Policies | https://support.google.com/publisherpolicies/answer/11112688?hl=en              | Keep content as the focal point and plan no ads for the 404 or utility-only screens. The new Toolkit contains substantive first-party instructions and blank working records rather than an ad destination. |
+| Creating helpful, reliable, people-first content                                           | Google Search Central     | https://developers.google.com/search/docs/fundamentals/creating-helpful-content | Preserve original decision frameworks, source boundaries, useful outcomes, and honest authorship. Do not pad word count, manufacture experience, or change dates without substantive review.                |
+| Add a new site to your AdSense sites list                                                  | Google AdSense Help       | https://support.google.com/adsense/answer/12169212?hl=en                        | Add only the final hostname through the real account, then use one genuine Google-provided verification method. No placeholder publisher identifier belongs in source.                                      |
+| Required content                                                                           | Google AdSense Help       | https://support.google.com/adsense/answer/1348695?hl=en                         | The current no-ad privacy notice is accurate now, but it must be revised to disclose Google and other active ad vendors before ads are enabled.                                                             |
+| Google consent management requirements for serving ads in the EEA, the UK, and Switzerland | Google AdSense Help       | https://support.google.com/adsense/answer/13554116?hl=en                        | Determine actual visitor regions and configure an appropriate Google-certified CMP where required before serving relevant personalized ads. A cosmetic banner is not a substitute.                          |
+| Ensure your ads.txt files can be crawled                                                   | Google AdSense Help       | https://support.google.com/adsense/answer/7679060?hl=en                         | Continue returning no fabricated record. Add a root `ads.txt` only when the real account supplies the exact publisher entry, then verify a 200 response and crawl access.                                   |
 
 ## Publication and platform decisions
 

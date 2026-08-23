@@ -2,7 +2,7 @@
 
 Date: August 22, 2026
 
-Status: Local candidate verified; GitHub push and Vercel deployment not yet performed
+Status: Historical pre-deploy evidence; superseded by `ADSENSE_READINESS_AUDIT_2026-08-22.md`
 
 ## Outcome
 
@@ -56,7 +56,7 @@ The latest completed local QA run passed:
 
 The final independent screenshot re-review returned PASS with no High or Medium findings at the corrected 1920px homepage and 768px article states.
 
-These are local pre-deploy results. They do not establish that GitHub or Vercel has received this revision.
+These measurements remain a local pre-deploy comparison for that revision. Current GitHub, Vercel, and QA status must be established by the later release record rather than inferred from this historical report.
 
 ## Unchanged boundaries
 

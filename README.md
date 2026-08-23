@@ -2,7 +2,7 @@
 
 Everyday Tech Insight is a static, source-backed publication for small-business decision makers choosing, using, securing, and governing everyday technology.
 
-The site is built with Astro and contains five categories, fifteen practical guides, trust pages, an HTML sitemap, XML sitemaps, and RSS. Primary content renders as HTML without client-side JavaScript.
+The site is built with Astro and contains five categories, fifteen practical guides, four downloadable decision worksheets, trust pages, an HTML sitemap, XML sitemaps, and RSS. Primary content renders as HTML without client-side JavaScript.
 
 ## Current publication boundary
 
@@ -58,6 +58,7 @@ npm run lighthouse
 ## Repository map
 
 - `src/content/articles/`: article source files and source records.
+- `public/toolkit/`: blank first-party CSV worksheets linked from the Toolkit page.
 - `src/pages/`: generated public route templates.
 - `src/layouts/` and `src/components/`: shared publication shell.
 - `src/data/`: publication and category configuration.
