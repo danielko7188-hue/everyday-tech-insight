@@ -437,7 +437,7 @@ test("category and published article routes expose useful editorial content", as
   await expect(page.getByText(/published august 21, 2026/i)).toBeVisible();
   await expect(page.getByText(/reviewed august 21, 2026/i)).toBeVisible();
   await expect(
-    page.getByRole("heading", { level: 2, name: "Business technology fit" }),
+    page.getByRole("heading", { level: 2, name: "At a glance" }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { level: 2, name: "Sources" }),
@@ -585,7 +585,7 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
   await expect(
     article.getByRole("heading", {
       level: 2,
-      name: "Business technology fit",
+      name: "At a glance",
     }),
   ).toBeVisible();
   await expect(article.getByRole("region", { name: "Sources" })).toBeVisible();
@@ -639,7 +639,26 @@ test("article surfaces its evidence boundary near the headline", async ({
   expect(evidenceBox!.y).toBeLessThanOrEqual(heroBox!.y + heroBox!.height + 1);
 });
 
-test("article table of contents links only to real body heading IDs", async ({
+test("article emits one semantic fit summary in the raw DOM", async ({
+  page,
+}) => {
+  await page.goto(`/articles/${articleSlug}/`);
+
+  const article = page.locator("article.article-page");
+  const fitSummary = article.locator("section.fit-summary");
+  await expect(fitSummary).toHaveCount(1);
+  await expect(
+    article.locator(".fit-summary--desktop, .fit-summary--mobile"),
+  ).toHaveCount(0);
+  await expect(fitSummary).toHaveAttribute("aria-labelledby", "fit-heading");
+  await expect(fitSummary.locator("#fit-heading")).toHaveText("At a glance");
+  await expect(fitSummary.locator("dl")).toHaveCount(1);
+  await expect(fitSummary.locator("dt")).toHaveCount(4);
+  await expect(fitSummary.locator("dd")).toHaveCount(4);
+  await expect(page.getByText("At a glance", { exact: true })).toHaveCount(1);
+});
+
+test("article emits one table of contents with one link per body heading ID", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -648,7 +667,12 @@ test("article table of contents links only to real body heading IDs", async ({
   const tableOfContents = page.getByRole("navigation", {
     name: "On this page",
   });
+  await expect(tableOfContents).toHaveCount(1);
   await expect(tableOfContents).toBeVisible();
+  await expect(
+    page.locator(".table-of-contents__desktop, .table-of-contents__mobile"),
+  ).toHaveCount(0);
+  await expect(page.getByText("On this page", { exact: true })).toHaveCount(1);
 
   const headingHrefs = await tableOfContents
     .locator('a[href^="#"]')
@@ -663,8 +687,14 @@ test("article table of contents links only to real body heading IDs", async ({
   const bodyHeadingIds = await page
     .locator(".article-body :is(h2, h3, h4, h5, h6)[id]")
     .evaluateAll((headings) => headings.map((heading) => heading.id));
+  expect(
+    headingHrefs.map((href) => decodeURIComponent(href.slice(1))).sort(),
+  ).toEqual([...bodyHeadingIds].sort());
   for (const href of headingHrefs) {
     expect(bodyHeadingIds).toContain(decodeURIComponent(href.slice(1)));
+    await expect(
+      page.locator(`[id="${decodeURIComponent(href.slice(1))}"]`),
+    ).toHaveCount(1);
   }
 });
 
@@ -717,6 +747,19 @@ test("trust pages are reachable and state the public evidence boundary", async (
     await expect(
       page.getByRole("heading", { level: 1, name: trustPage.heading }),
     ).toBeVisible();
+    const shell = page.locator("main .trust-page");
+    await expect(shell, trustPage.path).toHaveCount(1);
+    await expect(
+      shell.locator(":scope > .trust-page__intro"),
+      trustPage.path,
+    ).toHaveCount(1);
+    const related = shell.getByRole("navigation", {
+      name: "Related publication pages",
+    });
+    await expect(related, trustPage.path).toHaveCount(1);
+    await expect(related.locator("a"), trustPage.path).toHaveCount(
+      trustPages.length,
+    );
   }
 
   await page.goto("/publisher/");
@@ -785,6 +828,17 @@ test("every public HTML route has one H1 and unique core metadata", async ({
     const response = await page.goto(route);
     expect(response?.status(), route).toBe(200);
     await expect(page.locator("h1"), route).toHaveCount(1);
+    const duplicateIds = await page.locator("[id]").evaluateAll((elements) => {
+      const counts = new Map<string, number>();
+      for (const element of elements) {
+        counts.set(element.id, (counts.get(element.id) ?? 0) + 1);
+      }
+      return [...counts]
+        .filter(([, count]) => count > 1)
+        .map(([id]) => id)
+        .sort();
+    });
+    expect(duplicateIds, `${route} duplicate IDs`).toEqual([]);
 
     const title = await page.title();
     const description =
@@ -936,6 +990,15 @@ test("unknown paths return the custom 404 response", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: /return home/i }),
   ).toHaveAttribute("href", "/");
+  const shell = page.locator("main .trust-page");
+  await expect(shell).toHaveCount(1);
+  await expect(shell.locator(":scope > .trust-page__intro")).toHaveCount(1);
+  await expect(
+    shell.getByRole("navigation", { name: "Related publication pages" }),
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole("navigation", { name: "Breadcrumb" }),
+  ).toHaveCount(0);
 });
 
 test("RSS includes exact published article destinations and robots stays public", async ({

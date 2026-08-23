@@ -422,7 +422,9 @@ for (const categorySlug of categorySlugs) {
   });
 }
 
-test("mobile article reaches the reading body quickly", async ({ page }) => {
+test("mobile article keeps one compact fit summary before the reading body", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
   await page.evaluate(async () => {
@@ -430,16 +432,19 @@ test("mobile article reaches the reading body quickly", async ({ page }) => {
   });
 
   await expect(page.locator(".article-hero__visual")).toBeHidden();
-  const fit = page.locator("details.fit-summary--mobile");
+  const fit = page.locator("section.fit-summary");
   await expect(fit).toBeVisible();
-  await expect(fit).not.toHaveAttribute("open", "");
+  await expect(page.locator(".fit-summary")).toHaveCount(1);
+  await expect(
+    page.locator(".fit-summary--desktop, .fit-summary--mobile"),
+  ).toHaveCount(0);
 
   const firstParagraph = await page
     .locator(".article-body > p")
     .first()
     .boundingBox();
   expect(firstParagraph).not.toBeNull();
-  expect(firstParagraph!.y).toBeLessThanOrEqual(1_477);
+  expect(firstParagraph!.y).toBeLessThanOrEqual(844 * 2.5);
 });
 
 test("mobile article breadcrumb hides only its current page and orphaned separator", async ({

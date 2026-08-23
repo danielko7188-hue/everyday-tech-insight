@@ -1,0 +1,65 @@
+---
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import {
+  relatedTrustPages,
+  type TrustPageDefinition,
+  type TrustPageKey,
+} from "../data/trust-pages";
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  page: TrustPageDefinition;
+  currentKey?: TrustPageKey;
+}
+
+const { page, currentKey } = Astro.props;
+---
+
+<BaseLayout
+  title={page.title}
+  description={page.description}
+  path={page.path}
+  robots={page.robots}
+>
+  <div class="page-shell">
+    {
+      page.breadcrumbLabel && (
+        <Breadcrumbs
+          items={[
+            { name: "Home", href: "/" },
+            { name: page.breadcrumbLabel, href: page.path },
+          ]}
+        />
+      )
+    }
+    <article class="trust-content trust-page">
+      <header class="trust-page__intro">
+        <p class="eyebrow">{page.eyebrow}</p>
+        <h1>{page.heading}</h1>
+        <p class="page-deck">{page.deck}</p>
+      </header>
+
+      <slot />
+
+      <nav class="trust-page__related" aria-label="Related publication pages">
+        <p class="eyebrow" aria-hidden="true">Publication information</p>
+        <ul>
+          {
+            relatedTrustPages.map((relatedPage) => (
+              <li>
+                <a
+                  href={relatedPage.path}
+                  aria-current={
+                    relatedPage.key === currentKey ? "page" : undefined
+                  }
+                >
+                  {relatedPage.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </article>
+  </div>
+</BaseLayout>

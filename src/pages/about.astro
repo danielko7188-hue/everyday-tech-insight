@@ -1,47 +1,28 @@
 ---
-import Breadcrumbs from "../components/Breadcrumbs.astro";
-import { site } from "../data/site";
-import BaseLayout from "../layouts/BaseLayout.astro";
+import { trustPages } from "../data/trust-pages";
+import TrustPageLayout from "../layouts/TrustPageLayout.astro";
 
-const title = `About the publication | ${site.name}`;
-const description =
-  "Learn how Everyday Tech Insight connects small-business problems with practical, source-backed technology decisions and reader outcomes.";
+const page = trustPages.about;
 ---
 
-<BaseLayout title={title} description={description} path="/about/">
-  <div class="page-shell">
-    <Breadcrumbs
-      items={[
-        { name: "Home", href: "/" },
-        { name: "About", href: "/about/" },
-      ]}
-    />
-    <article class="trust-content">
-      <p class="eyebrow">Publication purpose</p>
-      <h1>About Everyday Tech Insight</h1>
-      <p class="page-deck">
-        Everyday Tech Insight publishes practical guidance at the intersection
-        of business needs and everyday technology decisions.
-      </p>
-      <h2>Who it is for</h2>
-      <p>
-        The intended audience is small-business decision makers who select,
-        manage, secure, or govern technology without a large specialist team.
-      </p>
-      <h2>What each guide should deliver</h2>
-      <p>
-        Published articles identify a concrete business problem, keep technology
-        central to the decision, define the intended reader, state a useful
-        outcome, and provide traceable sources. Product promotion and
-        unsupported certainty are outside that scope.
-      </p>
-      <h2>What this page does not establish</h2>
-      <p>
-        The publication name does not establish a person, company, team,
-        professional credential, physical location, or record of hands-on
-        product testing. The separate <a href="/publisher/">publisher page</a> states
-        the current identity boundary.
-      </p>
-    </article>
-  </div>
-</BaseLayout>
+<TrustPageLayout page={page} currentKey="about">
+  <h2>Who it is for</h2>
+  <p>
+    The intended audience is small-business decision makers who select, manage,
+    secure, or govern technology without a large specialist team.
+  </p>
+  <h2>What each guide should deliver</h2>
+  <p>
+    Published articles identify a concrete business problem, keep technology
+    central to the decision, define the intended reader, state a useful outcome,
+    and provide traceable sources. Product promotion and unsupported certainty
+    are outside that scope.
+  </p>
+  <h2>Publication identity and scope</h2>
+  <p>
+    The publication name does not establish a person, company, team,
+    professional credential, physical location, or record of hands-on product
+    testing. The separate <a href="/publisher/">publisher page</a> states the current
+    identity boundary.
+  </p>
+</TrustPageLayout>

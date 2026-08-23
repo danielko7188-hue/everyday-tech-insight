@@ -1,50 +1,24 @@
 ---
-import Breadcrumbs from "../components/Breadcrumbs.astro";
-import { site } from "../data/site";
-import BaseLayout from "../layouts/BaseLayout.astro";
+import { trustPages } from "../data/trust-pages";
+import TrustPageLayout from "../layouts/TrustPageLayout.astro";
 
-const title = `Advertising and compensation disclosure | ${site.name}`;
-const description =
-  "The current advertising, affiliate, sponsorship, compensation, and AdSense status of the Everyday Tech Insight static publication.";
+const page = trustPages.advertisingDisclosure;
 ---
 
-<BaseLayout
-  title={title}
-  description={description}
-  path="/advertising-disclosure/"
->
-  <div class="page-shell">
-    <Breadcrumbs
-      items={[
-        { name: "Home", href: "/" },
-        {
-          name: "Advertising disclosure",
-          href: "/advertising-disclosure/",
-        },
-      ]}
-    />
-    <article class="trust-content">
-      <p class="eyebrow">Current commercial status</p>
-      <h1>Advertising disclosure</h1>
-      <p class="page-deck">
-        Everyday Tech Insight does not currently run advertising on this static
-        site.
-      </p>
-      <p>
-        No affiliate links, paid placements, sponsored articles, product
-        samples, or other sponsored compensation are active in the published
-        content. No AdSense code or publisher identifier is included.
-      </p>
-      <p>
-        A link to a source is included for evidence and reader access; it is not
-        presented as an endorsement. If commercial relationships are introduced,
-        the relevant content and this disclosure must be updated before those
-        relationships become active.
-      </p>
-      <p class="notice">
-        Google alone decides whether a site is approved for AdSense. This site
-        has not requested or received approval through this build.
-      </p>
-    </article>
-  </div>
-</BaseLayout>
+<TrustPageLayout page={page} currentKey="advertisingDisclosure">
+  <p>
+    No affiliate links, paid placements, sponsored articles, product samples, or
+    other sponsored compensation are active in the published content. No AdSense
+    code or publisher identifier is included.
+  </p>
+  <p>
+    A link to a source is included for evidence and reader access; it is not
+    presented as an endorsement. If commercial relationships are introduced, the
+    relevant content and this disclosure must be updated before those
+    relationships become active.
+  </p>
+  <p class="notice">
+    Google alone decides whether a site is approved for AdSense. This site has
+    not requested or received approval through this build.
+  </p>
+</TrustPageLayout>

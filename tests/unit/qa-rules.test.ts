@@ -34,6 +34,15 @@ const categorySlugs = [
   "digital-operations",
   "technology-strategy",
 ] as const;
+const trustRoutePaths = [
+  "/about/",
+  "/publisher/",
+  "/editorial-standards/",
+  "/corrections/",
+  "/contact/",
+  "/privacy/",
+  "/advertising-disclosure/",
+] as const;
 
 describe("canonical site configuration", () => {
   it("drives both Astro and runtime metadata from one origin", () => {
@@ -126,6 +135,7 @@ function htmlDocument(options: {
   robots?: string;
   ogType?: "website" | "article";
   jsonLd?: Record<string, unknown>;
+  bodyOwnsHeading?: boolean;
 }) {
   const canonical = new URL(options.route, siteUrl).toString();
   return `<!doctype html>
@@ -144,7 +154,17 @@ ${
     ? `<script type="application/ld+json">${JSON.stringify(options.jsonLd)}</script>`
     : ""
 }
-</head><body><header><a class="site-name" href="/">Everyday Tech Insight</a></header><main><h1>${options.title}</h1>${options.body}</main></body></html>`;
+</head><body><header><a class="site-name" href="/">Everyday Tech Insight</a></header><main>${options.bodyOwnsHeading ? options.body : `<h1>${options.title}</h1>${options.body}`}</main></body></html>`;
+}
+
+function trustShell(title: string, body: string) {
+  return `<article class="trust-content trust-page">
+    <header class="trust-page__intro"><h1>${title}</h1></header>
+    ${body}
+    <nav class="trust-page__related" aria-label="Related publication pages">
+      ${trustRoutePaths.map((path) => `<a href="${path}">${path}</a>`).join("")}
+    </nav>
+  </article>`;
 }
 
 function validBuiltFixture() {
@@ -155,13 +175,7 @@ function validBuiltFixture() {
     "/",
     "/categories/",
     "/toolkit/",
-    "/about/",
-    "/publisher/",
-    "/editorial-standards/",
-    "/corrections/",
-    "/contact/",
-    "/privacy/",
-    "/advertising-disclosure/",
+    ...trustRoutePaths,
     "/sitemap/",
   ];
   const indexableRoutes = [...fixedRoutes, ...categoryRoutes, ...articleRoutes];
@@ -195,6 +209,18 @@ function validBuiltFixture() {
         )
         .join("");
     }
+    if (route.startsWith("/articles/")) {
+      body += `<section class="fit-summary" aria-labelledby="fit-heading">
+        <h2 id="fit-heading">At a glance</h2><dl><div><dt>Business problem</dt><dd>Problem</dd></div></dl>
+      </section>
+      <nav class="table-of-contents" aria-label="On this page">
+        <p>On this page</p><ol><li><a href="#decision">Decision</a></li></ol>
+      </nav>
+      <div class="article-body"><h2 id="decision">Decision</h2></div>`;
+    }
+
+    const isTrustRoute = trustRoutePaths.some((path) => path === route);
+    if (isTrustRoute) body = trustShell(title, body);
 
     const routeFile =
       route === "/" ? "index.html" : `${route.slice(1)}index.html`;
@@ -205,6 +231,7 @@ function validBuiltFixture() {
         title,
         description: `A unique and complete page description number ${index + 1} for this practical technology resource.`,
         body,
+        bodyOwnsHeading: isTrustRoute,
         ogType: route.startsWith("/articles/") ? "article" : "website",
         jsonLd:
           route === "/"
@@ -246,7 +273,11 @@ function validBuiltFixture() {
       title: "Page not found | Everyday Tech Insight",
       description:
         "The requested page was not found. Return to Everyday Tech Insight to browse practical business technology guidance.",
-      body: '<a href="/">Return home</a>',
+      body: trustShell(
+        "Page not found | Everyday Tech Insight",
+        '<a href="/">Return home</a>',
+      ),
+      bodyOwnsHeading: true,
       robots: "noindex,follow",
     }),
   );
@@ -407,6 +438,75 @@ describe("built-output QA rules", () => {
         siteUrl,
       }),
     ).toEqual([]);
+  });
+
+  it("rejects duplicate article fit, TOC, heading-link, and ID structures", () => {
+    const fixture = validBuiltFixture();
+    const articleFile = "articles/ai-automation-guide-1/index.html";
+    const article = fixture.files.get(articleFile)!;
+    fixture.files.set(
+      articleFile,
+      article.replace(
+        "</main>",
+        `<section class="fit-summary fit-summary--mobile"><h2>At a glance</h2></section>
+         <details class="table-of-contents__mobile"><summary>On this page</summary><a href="#decision">Decision</a></details>
+         <div id="decision"></div></main>`,
+      ),
+    );
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).map(({ code }) => code);
+
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        "fit-summary-count",
+        "at-a-glance-count",
+        "toc-count",
+        "toc-link-count",
+        "duplicate-id",
+      ]),
+    );
+  });
+
+  it("requires the shared trust shell on all seven trust pages and the 404", () => {
+    const fixture = validBuiltFixture();
+    fixture.files.set(
+      "about/index.html",
+      fixture.files
+        .get("about/index.html")!
+        .replace("trust-content trust-page", "trust-content"),
+    );
+    fixture.files.set(
+      "publisher/index.html",
+      fixture.files
+        .get("publisher/index.html")!
+        .replace("trust-page__intro", "legacy-intro"),
+    );
+    fixture.files.set(
+      "404.html",
+      fixture.files
+        .get("404.html")!
+        .replace("trust-page__related", "legacy-related"),
+    );
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).map(({ code }) => code);
+
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        "trust-page-shell",
+        "trust-page-intro",
+        "trust-page-related-nav",
+      ]),
+    );
   });
 
   it("rejects built descriptions over 180 characters", () => {

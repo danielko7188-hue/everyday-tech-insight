@@ -25,6 +25,16 @@ const FIXED_INDEXABLE_ROUTES = [
   "/advertising-disclosure/",
   "/sitemap/",
 ];
+const TRUST_PAGE_ROUTES = new Set([
+  "/about/",
+  "/publisher/",
+  "/editorial-standards/",
+  "/corrections/",
+  "/contact/",
+  "/privacy/",
+  "/advertising-disclosure/",
+  "/404.html",
+]);
 const PLACEHOLDER_PATTERN =
   /\b(?:todo|tbd|changeme|lorem ipsum|replace[-_ ]?me|your[-_ ]?(?:name|email|id))\b/i;
 const TRACKING_PATTERN =
@@ -352,6 +362,146 @@ function validatePage({
         `expected one H1; found ${$("h1").length}.`,
       ),
     );
+  }
+
+  const idCounts = new Map();
+  $("[id]").each((_index, element) => {
+    const id = $(element).attr("id");
+    if (!id) return;
+    idCounts.set(id, (idCounts.get(id) ?? 0) + 1);
+  });
+  const duplicateIds = [...idCounts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([id]) => id);
+  if (duplicateIds.length > 0) {
+    issues.push(
+      finding(
+        "duplicate-id",
+        fileName,
+        `IDs must be globally unique; duplicated: ${duplicateIds.join(", ")}.`,
+      ),
+    );
+  }
+
+  if (route.startsWith("/articles/")) {
+    const fitSummaries = $(".fit-summary");
+    if (fitSummaries.length !== 1) {
+      issues.push(
+        finding(
+          "fit-summary-count",
+          fileName,
+          `article must expose exactly one fit summary; found ${fitSummaries.length}.`,
+        ),
+      );
+    }
+
+    const atAGlanceHeadings = $("h1, h2, h3, h4, h5, h6").filter(
+      (_index, element) =>
+        $(element).text().replace(/\s+/g, " ").trim() === "At a glance",
+    );
+    if (atAGlanceHeadings.length !== 1) {
+      issues.push(
+        finding(
+          "at-a-glance-count",
+          fileName,
+          `article must expose exactly one At a glance heading; found ${atAGlanceHeadings.length}.`,
+        ),
+      );
+    }
+
+    const tocStructures = $(
+      'nav[aria-label="On this page"], details:has(> summary)',
+    ).filter((_index, element) => {
+      const node = $(element);
+      if (node.is("nav")) return true;
+      return (
+        node.children("summary").first().text().replace(/\s+/g, " ").trim() ===
+        "On this page"
+      );
+    });
+    if (tocStructures.length !== 1) {
+      issues.push(
+        finding(
+          "toc-count",
+          fileName,
+          `article must expose exactly one table of contents; found ${tocStructures.length}.`,
+        ),
+      );
+    }
+
+    const tocTargetCounts = new Map();
+    tocStructures.find('a[href^="#"]').each((_index, element) => {
+      const href = $(element).attr("href");
+      if (!href) return;
+      let target = href.slice(1);
+      try {
+        target = decodeURIComponent(target);
+      } catch {
+        // Keep the raw fragment so the missing-target check can report it.
+      }
+      tocTargetCounts.set(target, (tocTargetCounts.get(target) ?? 0) + 1);
+    });
+    const invalidTocTargets = [...tocTargetCounts.entries()]
+      .filter(
+        ([target, linkCount]) =>
+          linkCount !== 1 || (idCounts.get(target) ?? 0) !== 1,
+      )
+      .map(([target]) => target);
+    const bodyHeadingIds = $(
+      ".article-body h2[id], .article-body h3[id], .article-body h4[id], .article-body h5[id], .article-body h6[id]",
+    )
+      .map((_index, element) => $(element).attr("id"))
+      .get();
+    const missingTocTargets = bodyHeadingIds.filter(
+      (id) => (tocTargetCounts.get(id) ?? 0) !== 1,
+    );
+    const reportedTocTargets = [
+      ...new Set([...invalidTocTargets, ...missingTocTargets]),
+    ];
+    if (tocTargetCounts.size === 0 || reportedTocTargets.length > 0) {
+      issues.push(
+        finding(
+          "toc-link-count",
+          fileName,
+          `each article heading ID must have one TOC link and one matching ID; invalid: ${reportedTocTargets.join(", ") || "no links"}.`,
+        ),
+      );
+    }
+  }
+
+  if (TRUST_PAGE_ROUTES.has(route)) {
+    const trustPages = $(".trust-page");
+    if (trustPages.length !== 1) {
+      issues.push(
+        finding(
+          "trust-page-shell",
+          fileName,
+          `trust route must expose exactly one shared trust-page shell; found ${trustPages.length}.`,
+        ),
+      );
+    }
+    const trustIntros = trustPages.children(".trust-page__intro");
+    if (trustIntros.length !== 1) {
+      issues.push(
+        finding(
+          "trust-page-intro",
+          fileName,
+          `trust route must expose exactly one direct intro; found ${trustIntros.length}.`,
+        ),
+      );
+    }
+    const relatedNavs = trustPages.find(
+      'nav.trust-page__related[aria-label="Related publication pages"]',
+    );
+    if (relatedNavs.length !== 1) {
+      issues.push(
+        finding(
+          "trust-page-related-nav",
+          fileName,
+          `trust route must expose exactly one related publication nav; found ${relatedNavs.length}.`,
+        ),
+      );
+    }
   }
 
   const title = $("head > title").text().trim();

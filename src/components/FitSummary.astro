@@ -16,11 +16,8 @@ const fields = [
 ] as const;
 ---
 
-<section
-  class="fit-summary fit-summary--desktop"
-  aria-labelledby="fit-heading-desktop"
->
-  <h2 id="fit-heading-desktop">Business technology fit</h2>
+<section class="fit-summary" aria-labelledby="fit-heading">
+  <h2 id="fit-heading">At a glance</h2>
   <dl>
     {
       fields.map(([term, value]) => (
@@ -32,17 +29,3 @@ const fields = [
     }
   </dl>
 </section>
-
-<details class="fit-summary fit-summary--mobile">
-  <summary>Business technology fit</summary>
-  <dl>
-    {
-      fields.map(([term, value]) => (
-        <div>
-          <dt>{term}</dt>
-          <dd>{value}</dd>
-        </div>
-      ))
-    }
-  </dl>
-</details>

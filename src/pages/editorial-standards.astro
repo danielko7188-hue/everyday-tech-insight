@@ -1,100 +1,72 @@
 ---
-import Breadcrumbs from "../components/Breadcrumbs.astro";
-import { site } from "../data/site";
-import BaseLayout from "../layouts/BaseLayout.astro";
+import { trustPages } from "../data/trust-pages";
+import TrustPageLayout from "../layouts/TrustPageLayout.astro";
 
-const title = `Editorial standards and sourcing | ${site.name}`;
-const description =
-  "How Everyday Tech Insight selects topics, verifies claims, compares software, separates commercial interests, uses AI assistance, and handles corrections.";
+const page = trustPages.editorialStandards;
 ---
 
-<BaseLayout
-  title={title}
-  description={description}
-  path="/editorial-standards/"
->
-  <div class="page-shell">
-    <Breadcrumbs
-      items={[
-        { name: "Home", href: "/" },
-        {
-          name: "Editorial standards",
-          href: "/editorial-standards/",
-        },
-      ]}
-    />
-    <article class="trust-content">
-      <p class="eyebrow">How publication decisions are made</p>
-      <h1>Editorial standards</h1>
-      <p class="page-deck">
-        Every published guide must connect a real business problem to a
-        practical technology decision and stay within the evidence available.
-      </p>
-      <h2>Business technology fit</h2>
-      <p>
-        A publishable entry identifies the business problem, technology focus,
-        intended small-business reader, practical reader outcome, and traceable
-        source list. Missing any one of those elements keeps an entry out of the
-        public collection.
-      </p>
-      <h2>Sources and verification</h2>
-      <p>
-        Current official or primary sources are preferred for technical,
-        regulatory, security, and platform claims. Analysis and decision tools
-        are described as editorial synthesis when a source does not prescribe
-        the exact method. Access dates show when listed sources were checked,
-        and material current claims are rechecked before publication.
-      </p>
-      <h2>Software comparisons and testing</h2>
-      <p>
-        Software comparisons use stated criteria tied to the business problem,
-        such as implementation effort, training, integrations, data export,
-        security, privacy, accessibility, support, total cost, and migration
-        difficulty. Vendor material may establish documented capabilities, but
-        it does not decide the editorial conclusion. Affiliate commission is
-        never a comparison criterion.
-      </p>
-      <p>
-        The publication does not describe a product as personally tested, assign
-        an unsupported rating, or claim observed results unless a reproducible
-        test actually occurred and its limits are documented. The initial public
-        portfolio is source-checked, not represented as first-hand product
-        testing.
-      </p>
-      <h2>Dates, updates, and corrections</h2>
-      <p>
-        Publication and review dates reflect real editorial events, not an
-        attempt to manufacture age or freshness. A modification date is used
-        only for a substantive change; minor cleanup is not presented as a major
-        update. Material corrections are handled under the <a
-          href="/corrections/">corrections process</a
-        >.
-      </p>
-      <h2>Independence and commercial relationships</h2>
-      <p>
-        Advertising and affiliate links are currently inactive. Any future
-        sponsorship or material conflict relevant to a guide must be disclosed
-        clearly. Advertising, sponsorship, or affiliate relationships do not
-        purchase favorable conclusions. Commercial arrangements remain separate
-        from topic selection, sourcing, comparison criteria, and corrections.
-        Current details appear in the <a href="/advertising-disclosure/"
-          >advertising and affiliate disclosure</a
-        >.
-      </p>
-      <h2>AI-assisted workflow and responsibility</h2>
-      <p>
-        AI tools assisted this initial project with research organization,
-        outlining, drafting, editing, and code generation. Sources, citations,
-        claims, and generated code remain subject to verification; AI output is
-        not treated as evidence merely because it was generated.
-      </p>
-      <p>
-        That assistance does not mean every statement has received human or
-        expert review, every product was personally tested, or an unnamed
-        specialist approved the work. The owner remains responsible for final
-        editorial, privacy, legal, accessibility, and publication review before
-        a future AdSense application.
-      </p>
-    </article>
-  </div>
-</BaseLayout>
+<TrustPageLayout page={page} currentKey="editorialStandards">
+  <h2>Business technology fit</h2>
+  <p>
+    A publishable entry identifies the business problem, technology focus,
+    intended small-business reader, practical reader outcome, and traceable
+    source list. Missing any one of those elements keeps an entry out of the
+    public collection.
+  </p>
+  <h2>Sources and verification</h2>
+  <p>
+    Current official or primary sources are preferred for technical, regulatory,
+    security, and platform claims. Analysis and decision tools are described as
+    editorial synthesis when a source does not prescribe the exact method.
+    Access dates show when listed sources were checked, and material current
+    claims are rechecked before publication.
+  </p>
+  <h2>Software comparisons and testing</h2>
+  <p>
+    Software comparisons use stated criteria tied to the business problem, such
+    as implementation effort, training, integrations, data export, security,
+    privacy, accessibility, support, total cost, and migration difficulty.
+    Vendor material may establish documented capabilities, but it does not
+    decide the editorial conclusion. Affiliate commission is never a comparison
+    criterion.
+  </p>
+  <p>
+    The publication does not describe a product as personally tested, assign an
+    unsupported rating, or claim observed results unless a reproducible test
+    actually occurred and its limits are documented. The initial public
+    portfolio is source-checked, not represented as first-hand product testing.
+  </p>
+  <h2>Dates, updates, and corrections</h2>
+  <p>
+    Publication and review dates reflect real editorial events, not an attempt
+    to manufacture age or freshness. A modification date is used only for a
+    substantive change; minor cleanup is not presented as a major update.
+    Material corrections are handled under the <a href="/corrections/"
+      >corrections process</a
+    >.
+  </p>
+  <h2>Independence and commercial relationships</h2>
+  <p>
+    Advertising and affiliate links are currently inactive. Any future
+    sponsorship or material conflict relevant to a guide must be disclosed
+    clearly. Advertising, sponsorship, or affiliate relationships do not
+    purchase favorable conclusions. Commercial arrangements remain separate from
+    topic selection, sourcing, comparison criteria, and corrections. Current
+    details appear in the <a href="/advertising-disclosure/"
+      >advertising and affiliate disclosure</a
+    >.
+  </p>
+  <h2>AI-assisted workflow and responsibility</h2>
+  <p>
+    AI tools assisted this initial project with research organization,
+    outlining, drafting, editing, and code generation. Sources, citations,
+    claims, and generated code remain subject to verification; AI output is not
+    treated as evidence merely because it was generated.
+  </p>
+  <p>
+    That assistance does not mean every statement has received human or expert
+    review, every product was personally tested, or an unnamed specialist
+    approved the work. The owner remains responsible for final editorial,
+    privacy, legal, accessibility, and publication review.
+  </p>
+</TrustPageLayout>

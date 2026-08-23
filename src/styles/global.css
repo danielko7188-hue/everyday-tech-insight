@@ -991,65 +991,27 @@ strong {
 
 .fit-summary {
   margin-block: var(--space-6);
+  padding: var(--space-4);
   border-block-start: var(--space-1) solid
     var(--category-accent, var(--color-accent));
   border-block-end: 1px solid var(--color-rule);
   background: var(--color-paper);
 }
 
-.fit-summary--desktop {
-  display: none;
-  padding: var(--space-6);
-}
-
-.fit-summary--mobile summary {
-  display: flex;
-  min-block-size: 2.75rem;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-2) var(--space-4);
-  color: var(--color-ink);
-  font-weight: 750;
-  cursor: pointer;
-  list-style: none;
-}
-
-.fit-summary--mobile summary::-webkit-details-marker {
-  display: none;
-}
-
-.fit-summary--mobile summary::after {
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  margin-inline-start: var(--space-3);
-  border-inline-end: 2px solid currentColor;
-  border-block-end: 2px solid currentColor;
-  content: "";
-  transform: rotate(45deg) translateY(-2px);
-}
-
-.fit-summary--mobile[open] summary::after {
-  transform: rotate(225deg) translate(-2px, -2px);
-}
-
-.fit-summary--mobile dl {
-  padding: 0 var(--space-4) var(--space-5);
-}
-
 .fit-summary h2 {
-  margin-block-end: var(--space-5);
-  font-size: clamp(1.5rem, 1.3rem + 0.7vw, 2rem);
+  margin-block-end: var(--space-3);
+  font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
 }
 
 .fit-summary dl {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-3);
   margin: 0;
 }
 
 .fit-summary dl > div {
   min-inline-size: 0;
-  padding-block-start: var(--space-3);
+  padding-block-start: var(--space-2);
   border-block-start: 1px solid var(--color-rule);
 }
 
@@ -1064,6 +1026,7 @@ strong {
 .fit-summary dd {
   margin: var(--space-1) 0 0;
   color: var(--color-soft-ink);
+  font-size: 0.9375rem;
   line-height: 1.45;
 }
 
@@ -1084,51 +1047,24 @@ strong {
   min-inline-size: 0;
 }
 
-.article-reading-layout__content {
-  max-inline-size: var(--reading-max);
-}
-
-.table-of-contents__desktop {
-  display: none;
-}
-
-.table-of-contents__mobile {
-  margin-block-end: var(--space-8);
+.table-of-contents {
+  margin-block-end: var(--space-6);
   border-block: 1px solid var(--color-rule);
   background: var(--color-paper);
 }
 
-.table-of-contents__mobile summary {
-  display: flex;
-  min-block-size: 2.75rem;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-2) var(--space-4);
+.table-of-contents > p {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
   color: var(--color-ink);
+  font-size: 0.875rem;
   font-weight: 750;
-  cursor: pointer;
-  list-style: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.table-of-contents__mobile summary::-webkit-details-marker {
-  display: none;
-}
-
-.table-of-contents__mobile summary::after {
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  margin-inline-start: var(--space-4);
-  border-inline-end: 2px solid currentColor;
-  border-block-end: 2px solid currentColor;
-  content: "";
-  transform: rotate(45deg) translateY(-2px);
-  transition-duration: 180ms;
-  transition-property: transform;
-  transition-timing-function: ease;
-}
-
-.table-of-contents__mobile[open] summary::after {
-  transform: rotate(225deg) translate(-2px, -2px);
+.article-reading-layout__content {
+  max-inline-size: var(--reading-max);
 }
 
 .table-of-contents ol,
@@ -1138,7 +1074,7 @@ strong {
   list-style: none;
 }
 
-.table-of-contents__mobile > ol {
+.table-of-contents > ol {
   padding: 0 var(--space-4) var(--space-3);
   border-block-start: 1px solid var(--color-rule);
 }
@@ -1399,6 +1335,48 @@ strong {
   line-height: 1.65;
 }
 
+.trust-page__intro {
+  margin-block-end: var(--space-2);
+}
+
+.trust-page__related {
+  margin-block-start: var(--space-12);
+  padding-block-start: var(--space-6);
+  border-block-start: var(--space-1) solid var(--color-ink);
+}
+
+.trust-page__related > p {
+  margin-block-end: var(--space-3);
+}
+
+.trust-page__related ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trust-page__related li,
+.trust-page__related li + li {
+  margin: 0;
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.trust-page__related a {
+  display: flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  padding-block: var(--space-2);
+}
+
+.trust-page__related a[aria-current="page"] {
+  color: var(--color-ink);
+  font-weight: 750;
+  text-decoration-thickness: 0.16em;
+}
+
 .toolkit-page {
   max-inline-size: 56rem;
 }
@@ -1630,8 +1608,13 @@ strong {
   outline-color: var(--color-focus);
 }
 
+@media (min-width: 24rem) {
+  .fit-summary dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (min-width: 30rem) {
-  .fit-summary dl,
   .publication-evidence__items {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1863,14 +1846,24 @@ strong {
 
   .fit-summary {
     margin-block: var(--space-10);
+    padding: var(--space-6);
   }
 
-  .fit-summary--desktop {
-    display: block;
+  .fit-summary h2 {
+    margin-block-end: var(--space-5);
+    font-size: clamp(1.5rem, 1.3rem + 0.7vw, 2rem);
   }
 
-  .fit-summary--mobile {
-    display: none;
+  .fit-summary dl {
+    gap: var(--space-5);
+  }
+
+  .fit-summary dl > div {
+    padding-block-start: var(--space-3);
+  }
+
+  .fit-summary dd {
+    font-size: 1rem;
   }
 
   .category-stories__features {
@@ -2052,16 +2045,18 @@ strong {
     justify-self: stretch;
   }
 
-  .table-of-contents__desktop {
+  .table-of-contents {
     position: sticky;
     inset-block-start: var(--space-6);
-    display: block;
     padding-block-start: var(--space-3);
     border-block-start: var(--space-1) solid var(--color-ink);
+    border-block-end: 0;
+    background: transparent;
   }
 
-  .table-of-contents__desktop > p {
+  .table-of-contents > p {
     margin-block-end: var(--space-3);
+    padding: 0;
     color: var(--color-ink);
     font-size: 0.875rem;
     font-weight: 750;
@@ -2069,13 +2064,14 @@ strong {
     text-transform: uppercase;
   }
 
-  .table-of-contents__desktop a {
+  .table-of-contents a {
     min-block-size: 0;
     padding-block: var(--space-2);
   }
 
-  .table-of-contents__mobile {
-    display: none;
+  .table-of-contents > ol {
+    padding: 0;
+    border-block-start: 0;
   }
 
   .source-list,
@@ -2170,7 +2166,7 @@ strong {
     display: none;
   }
 
-  .table-of-contents__mobile {
+  .table-of-contents {
     margin-block-end: var(--space-6);
   }
 }

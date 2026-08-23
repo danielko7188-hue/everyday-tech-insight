@@ -441,27 +441,22 @@ test("focused editorial links retain WCAG AA text contrast", async ({
   await expectFocusedTextContrast(page, sectionLink, 120);
 });
 
-test("mobile article TOC and data table stay accessible inside the page boundary", async ({
+test("mobile article exposes one keyboard-accessible TOC and data table inside the page boundary", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(articlePath);
 
-  const tocDisclosure = page.locator("article.article-page details").filter({
-    has: page.locator("summary").filter({ hasText: /^On this page$/ }),
+  const tableOfContents = page.getByRole("navigation", {
+    name: "On this page",
   });
-  const tocSummary = tocDisclosure
-    .locator("summary")
-    .filter({ hasText: /^On this page$/ });
-  await expect(tocSummary).toBeVisible();
-  await expect(tocSummary).toHaveAccessibleName("On this page");
-  await expect(tocDisclosure).not.toHaveAttribute("open", "");
-  const tocSummaryUnfocused = await captureFocusAppearance(tocSummary);
-  await reachByTab(page, tocSummary, 40);
-  await expect(tocSummary).toBeFocused();
-  await expectVisibleFocusIndicator(tocSummary, tocSummaryUnfocused);
-  await page.keyboard.press("Enter");
-  await expect(tocDisclosure).toHaveAttribute("open", "");
+  await expect(tableOfContents).toHaveCount(1);
+  await expect(tableOfContents).toBeVisible();
+  const firstTocLink = tableOfContents.locator('a[href^="#"]').first();
+  const firstTocLinkUnfocused = await captureFocusAppearance(firstTocLink);
+  await reachByTab(page, firstTocLink, 40);
+  await expect(firstTocLink).toBeFocused();
+  await expectVisibleFocusIndicator(firstTocLink, firstTocLinkUnfocused);
   const tableRegion = page.getByRole("region", {
     name: "Scrollable data table",
   });
@@ -500,33 +495,24 @@ test("mobile article TOC and data table stay accessible inside the page boundary
   ).toEqual([]);
 });
 
-test("mobile business technology fit disclosure is keyboard accessible without an exposed duplicate", async ({
+test("mobile article exposes one semantic fit summary without a hidden duplicate", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(articlePath);
 
-  const desktopFit = page.locator("section.fit-summary--desktop");
-  const mobileFit = page.locator("details.fit-summary--mobile");
-  const summary = mobileFit.locator("summary");
-
-  await expect(desktopFit).toBeHidden();
-  await expect(mobileFit).toBeVisible();
-  await expect(mobileFit).not.toHaveAttribute("open", "");
-  await expect(summary).toBeVisible();
-  await expect(summary).toHaveAccessibleName("Business technology fit");
-  const summaryBox = await summary.boundingBox();
-  expect(summaryBox?.height ?? 0).toBeGreaterThanOrEqual(44);
-
-  const summaryUnfocused = await captureFocusAppearance(summary);
-  await reachByTab(page, summary, 40);
-  await expect(summary).toBeFocused();
-  await expectVisibleFocusIndicator(summary, summaryUnfocused);
-  await page.keyboard.press("Enter");
-  await expect(mobileFit).toHaveAttribute("open", "");
+  const fitSummary = page.locator("section.fit-summary");
+  await expect(fitSummary).toHaveCount(1);
+  await expect(fitSummary).toBeVisible();
   await expect(
-    mobileFit.getByText("Business problem", { exact: true }),
+    fitSummary.getByRole("heading", { level: 2, name: "At a glance" }),
   ).toBeVisible();
+  await expect(
+    fitSummary.getByText("Business problem", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".fit-summary--desktop, .fit-summary--mobile"),
+  ).toHaveCount(0);
 
   const accessibilityResults = await new AxeBuilder({ page })
     .withTags(wcagTags)

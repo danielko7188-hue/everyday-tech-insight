@@ -1,71 +1,52 @@
 ---
-import Breadcrumbs from "../components/Breadcrumbs.astro";
 import { site } from "../data/site";
-import BaseLayout from "../layouts/BaseLayout.astro";
+import { trustPages } from "../data/trust-pages";
+import TrustPageLayout from "../layouts/TrustPageLayout.astro";
 
 const issueUrl = site.contact.url;
-const title = `Corrections process | ${site.name}`;
-const description =
-  "How to report a factual error, broken source, or material omission to Everyday Tech Insight through the public GitHub issue tracker.";
+const page = trustPages.corrections;
 ---
 
-<BaseLayout title={title} description={description} path="/corrections/">
-  <div class="page-shell">
-    <Breadcrumbs
-      items={[
-        { name: "Home", href: "/" },
-        { name: "Corrections", href: "/corrections/" },
-      ]}
-    />
-    <article class="trust-content">
-      <p class="eyebrow">Accuracy and updates</p>
-      <h1>Corrections</h1>
-      <p class="page-deck">
-        Factual errors, broken primary sources, and material omissions should be
-        reported so the affected guide can be reviewed.
-      </p>
-      <h2>Submit a report</h2>
-      <p>
-        Open a <a href={issueUrl}>public GitHub issue</a> with the article URL, the
-        passage in question, the proposed correction, and a supporting source when
-        available.
-      </p>
-      <p>
-        No public correction email has been supplied or configured. The issue
-        tracker is the current correction-reporting channel; an email address
-        will not be invented for appearance.
-      </p>
-      <p class="notice">
-        GitHub issues are public. Do not include private, confidential,
-        financial, account, credential, or security-sensitive information.
-      </p>
-      <h2>Evaluation and response</h2>
-      <p>
-        A report should be checked against the cited and newly supplied
-        evidence. The review considers whether the issue changes a factual
-        claim, recommendation, limitation, source interpretation, or practical
-        outcome. Submitting a report does not guarantee that a requested change
-        will be accepted.
-      </p>
-      <h2>Dates and correction notes</h2>
-      <p>
-        Every article keeps its genuine first-publication date. The publication
-        does not silently backdate an article or change dates merely to make
-        content look older or newly refreshed. A modification or review date is
-        added only when the corresponding substantive work actually occurred.
-      </p>
-      <p>
-        Minor typographical, spelling, formatting, or link-label corrections may
-        not receive a formal update note or modification date when they do not
-        change meaning. A substantial factual correction should receive a
-        transparent correction note on the affected article, together with an
-        accurate modification or review date when applicable.
-      </p>
-      <p>
-        The publication will not invent a correction history. If no formal note
-        appears, that absence is not evidence that a guide has never received
-        minor cleanup.
-      </p>
-    </article>
-  </div>
-</BaseLayout>
+<TrustPageLayout page={page} currentKey="corrections">
+  <h2>Submit a report</h2>
+  <p>
+    Open a <a href={issueUrl}>public GitHub issue</a> with the article URL, the passage
+    in question, the proposed correction, and a supporting source when available.
+  </p>
+  <p>
+    No public correction email has been supplied or configured. The issue
+    tracker is the current correction-reporting channel; an email address will
+    not be invented for appearance.
+  </p>
+  <p class="notice">
+    GitHub issues are public. Do not include private, confidential, financial,
+    account, credential, or security-sensitive information.
+  </p>
+  <h2>Evaluation and response</h2>
+  <p>
+    A report should be checked against the cited and newly supplied evidence.
+    The review considers whether the issue changes a factual claim,
+    recommendation, limitation, source interpretation, or practical outcome.
+    Submitting a report does not guarantee that a requested change will be
+    accepted.
+  </p>
+  <h2>Dates and correction notes</h2>
+  <p>
+    Every article keeps its genuine first-publication date. The publication does
+    not silently backdate an article or change dates merely to make content look
+    older or newly refreshed. A modification or review date is added only when
+    the corresponding substantive work actually occurred.
+  </p>
+  <p>
+    Minor typographical, spelling, formatting, or link-label corrections may not
+    receive a formal update note or modification date when they do not change
+    meaning. A substantial factual correction should receive a transparent
+    correction note on the affected article, together with an accurate
+    modification or review date when applicable.
+  </p>
+  <p>
+    The publication will not invent a correction history. If no formal note
+    appears, that absence is not evidence that a guide has never received minor
+    cleanup.
+  </p>
+</TrustPageLayout>

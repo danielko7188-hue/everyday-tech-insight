@@ -1,30 +1,14 @@
 ---
-import { site } from "../data/site";
-import BaseLayout from "../layouts/BaseLayout.astro";
+import { trustPages } from "../data/trust-pages";
+import TrustPageLayout from "../layouts/TrustPageLayout.astro";
 
-const title = `Page not found | ${site.name}`;
-const description =
-  "The requested Everyday Tech Insight page could not be found. Return home or browse the publication's business-technology categories.";
+const page = trustPages.notFound;
 ---
 
-<BaseLayout
-  title={title}
-  description={description}
-  path="/404.html"
-  robots="noindex,follow"
->
-  <div class="page-shell">
-    <article class="trust-content">
-      <p class="eyebrow">404 error</p>
-      <h1>Page not found</h1>
-      <p class="page-deck">
-        The address may be incorrect, or the page may no longer be available.
-      </p>
-      <p>
-        <a href="/">Return home</a> or <a href="/categories/"
-          >browse all categories</a
-        >.
-      </p>
-    </article>
-  </div>
-</BaseLayout>
+<TrustPageLayout page={page}>
+  <p>
+    <a href="/">Return home</a> or <a href="/categories/"
+      >browse all categories</a
+    >.
+  </p>
+</TrustPageLayout>

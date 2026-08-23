@@ -34,46 +34,24 @@ for (const heading of items) {
 
 {
   groups.length > 0 && (
-    <div class="table-of-contents">
-      <nav class="table-of-contents__desktop" aria-label="On this page">
-        <p aria-hidden="true">On this page</p>
-        <ol>
-          {groups.map(({ heading, children }) => (
-            <li class={`table-of-contents__depth-${heading.depth}`}>
-              <a href={`#${heading.slug}`}>{heading.text}</a>
-              {children.length > 0 && (
-                <ol class="table-of-contents__sublist">
-                  {children.map((child) => (
-                    <li class="table-of-contents__depth-3">
-                      <a href={`#${child.slug}`}>{child.text}</a>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </li>
-          ))}
-        </ol>
-      </nav>
-
-      <details class="table-of-contents__mobile">
-        <summary>On this page</summary>
-        <ol>
-          {groups.map(({ heading, children }) => (
-            <li class={`table-of-contents__depth-${heading.depth}`}>
-              <a href={`#${heading.slug}`}>{heading.text}</a>
-              {children.length > 0 && (
-                <ol class="table-of-contents__sublist">
-                  {children.map((child) => (
-                    <li class="table-of-contents__depth-3">
-                      <a href={`#${child.slug}`}>{child.text}</a>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </li>
-          ))}
-        </ol>
-      </details>
-    </div>
+    <nav class="table-of-contents" aria-label="On this page">
+      <p aria-hidden="true">On this page</p>
+      <ol>
+        {groups.map(({ heading, children }) => (
+          <li class={`table-of-contents__depth-${heading.depth}`}>
+            <a href={`#${heading.slug}`}>{heading.text}</a>
+            {children.length > 0 && (
+              <ol class="table-of-contents__sublist">
+                {children.map((child) => (
+                  <li class="table-of-contents__depth-3">
+                    <a href={`#${child.slug}`}>{child.text}</a>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
   )
 }
