@@ -13,6 +13,7 @@ import {
   isUnsafeNetworkAddress,
 } from "../../scripts/check-external-links.mjs";
 import {
+  aggregateLighthouseScores,
   createLighthouseSummary,
   evaluateLighthouseCategories,
   installSignalCleanup,
@@ -1021,6 +1022,113 @@ describe("external link classification", () => {
 });
 
 describe("Lighthouse thresholds", () => {
+  it("uses the numeric median of three category scores without mutating the runs", () => {
+    const runScores = [
+      {
+        performance: 0.88,
+        accessibility: 1,
+        "best-practices": 0.98,
+        seo: 0.99,
+      },
+      {
+        performance: 0.94,
+        accessibility: 0.98,
+        "best-practices": 1,
+        seo: 0.97,
+      },
+      {
+        performance: 0.91,
+        accessibility: 0.99,
+        "best-practices": 0.99,
+        seo: 1,
+      },
+    ];
+    const original = structuredClone(runScores);
+
+    expect(aggregateLighthouseScores(runScores)).toEqual({
+      scores: {
+        performance: 0.91,
+        accessibility: 0.99,
+        "best-practices": 0.99,
+        seo: 0.99,
+      },
+      representativeRunIndex: 2,
+    });
+    expect(runScores).toEqual(original);
+  });
+
+  it("fails a category closed when any run has a null or missing score", () => {
+    const result = aggregateLighthouseScores([
+      {
+        performance: 0.91,
+        accessibility: 1,
+        "best-practices": 1,
+        seo: 1,
+      },
+      {
+        performance: 0.92,
+        accessibility: null,
+        "best-practices": 1,
+        seo: 1,
+      },
+      {
+        performance: 0.93,
+        "best-practices": 1,
+        seo: 1,
+      },
+    ]);
+
+    expect(result?.scores.accessibility).toBeNull();
+    expect(
+      evaluateLighthouseCategories(result?.scores ?? {}).map(
+        ({ category }) => category,
+      ),
+    ).toContain("accessibility");
+  });
+
+  it("records three runs and bases summary status on median failures", () => {
+    const runScores = [
+      {
+        performance: 0.85,
+        accessibility: 1,
+        "best-practices": 1,
+        seo: 1,
+      },
+      {
+        performance: 0.92,
+        accessibility: 1,
+        "best-practices": 1,
+        seo: 1,
+      },
+      {
+        performance: 0.94,
+        accessibility: 1,
+        "best-practices": 1,
+        seo: 1,
+      },
+    ];
+    const aggregation = aggregateLighthouseScores(runScores);
+    expect(aggregation).toBeDefined();
+    const scores = aggregation?.scores ?? {};
+    const failures = evaluateLighthouseCategories(scores);
+    const summary = createLighthouseSummary([
+      {
+        name: "home",
+        path: "/",
+        runScores,
+        scores,
+        failures,
+      },
+    ]);
+
+    expect(summary).toMatchObject({
+      status: "PASS",
+      formFactor: "desktop",
+      runsPerPage: 3,
+      pages: [{ runScores, scores: { performance: 0.92 }, failures: [] }],
+    });
+  });
+
   it("keeps signal handlers installed until normal cleanup and publication finish", async () => {
     const operations: string[] = [];
     let finishAction!: () => void;

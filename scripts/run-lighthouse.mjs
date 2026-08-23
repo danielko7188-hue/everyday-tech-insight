@@ -23,6 +23,8 @@ const THRESHOLDS = {
   seo: 0.95,
 };
 
+const RUNS_PER_PAGE = 3;
+
 const CONTENT_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
@@ -46,10 +48,52 @@ export function evaluateLighthouseCategories(scores) {
     }));
 }
 
+export function aggregateLighthouseScores(runScores) {
+  if (!Array.isArray(runScores) || runScores.length !== RUNS_PER_PAGE) {
+    throw new Error(
+      `Expected exactly ${RUNS_PER_PAGE} Lighthouse score sets per page.`,
+    );
+  }
+
+  const scores = Object.fromEntries(
+    Object.keys(THRESHOLDS).map((category) => {
+      const values = runScores.map((run) => run?.[category]);
+      if (
+        values.some(
+          (value) => typeof value !== "number" || !Number.isFinite(value),
+        )
+      ) {
+        return [category, null];
+      }
+
+      const sorted = [...values].sort((left, right) => left - right);
+      return [category, sorted[Math.floor(sorted.length / 2)]];
+    }),
+  );
+
+  const medianPerformance = scores.performance;
+  const representativeRunIndex =
+    typeof medianPerformance === "number"
+      ? runScores.reduce((closestIndex, run, index) => {
+          const performance = run?.performance;
+          if (typeof performance !== "number") return closestIndex;
+          const closestPerformance = runScores[closestIndex]?.performance;
+          if (typeof closestPerformance !== "number") return index;
+          return Math.abs(performance - medianPerformance) <
+            Math.abs(closestPerformance - medianPerformance)
+            ? index
+            : closestIndex;
+        }, 0)
+      : 0;
+
+  return { scores, representativeRunIndex };
+}
+
 export function createLighthouseSummary(pages) {
   return {
     status: pages.some(({ failures }) => failures.length > 0) ? "FAIL" : "PASS",
     formFactor: "desktop",
+    runsPerPage: RUNS_PER_PAGE,
     thresholds: THRESHOLDS,
     pages,
   };
@@ -427,31 +471,60 @@ async function main() {
         }
         for (const page of pages) {
           const url = `${server.origin}${page.path}`;
-          const audit = await runAudit(url, chrome.port);
-          const failures = evaluateLighthouseCategories(audit.scores);
+          const audits = [];
+          for (let runIndex = 0; runIndex < RUNS_PER_PAGE; runIndex += 1) {
+            const audit = await runAudit(url, chrome.port);
+            audits.push(audit);
+            const raw =
+              typeof audit.raw === "string"
+                ? audit.raw
+                : JSON.stringify(audit.raw);
+            await writeFile(
+              path.join(
+                pendingDirectory,
+                `${page.name}-run-${runIndex + 1}.json`,
+              ),
+              raw,
+              "utf8",
+            );
+          }
+          const runScores = audits.map(({ scores }) => scores);
+          const { scores, representativeRunIndex } =
+            aggregateLighthouseScores(runScores);
+          const failures = evaluateLighthouseCategories(scores);
           hasFailure ||= failures.length > 0;
-          const raw =
-            typeof audit.raw === "string"
-              ? audit.raw
-              : JSON.stringify(audit.raw);
+          const representativeRaw = audits[representativeRunIndex].raw;
           await writeFile(
             path.join(pendingDirectory, `${page.name}.json`),
-            raw,
+            typeof representativeRaw === "string"
+              ? representativeRaw
+              : JSON.stringify(representativeRaw),
             "utf8",
           );
           summary.push({
             name: page.name,
             path: page.path,
-            scores: audit.scores,
+            runScores,
+            scores,
             failures,
+            representativeRun: representativeRunIndex + 1,
           });
-          const printableScores = Object.entries(audit.scores)
+          const printableScores = Object.entries(scores)
             .map(
               ([category, score]) =>
-                `${category}=${Math.round((score ?? 0) * 100)}`,
+                `${category}=${typeof score === "number" ? Math.round(score * 100) : "missing"}`,
             )
             .join(", ");
-          console.log(`${page.path} (desktop): ${printableScores}`);
+          const performanceRuns = runScores
+            .map(({ performance }) =>
+              typeof performance === "number"
+                ? Math.round(performance * 100)
+                : "missing",
+            )
+            .join("/");
+          console.log(
+            `${page.path} (desktop; median of ${RUNS_PER_PAGE}; performance runs=${performanceRuns}): ${printableScores}`,
+          );
         }
         const reportSummary = createLighthouseSummary(summary);
         await writeFile(
@@ -493,7 +566,7 @@ async function main() {
     process.exitCode = 1;
   } else {
     console.log(
-      "Lighthouse: PASS (desktop) on all three representative pages.",
+      `Lighthouse: PASS (desktop; median of ${RUNS_PER_PAGE} runs) on all three representative pages.`,
     );
   }
 }
