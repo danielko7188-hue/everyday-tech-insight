@@ -196,6 +196,23 @@ test("desktop masthead exposes every topic and marks the current route", async (
   ).toHaveAttribute("aria-current", "page");
 });
 
+test("category directory visuals resolve their local symbol definitions", async ({
+  page,
+}) => {
+  await page.goto("/categories/");
+
+  const symbolReferences = await page
+    .locator(".category-directory__visual use")
+    .evaluateAll((uses) =>
+      uses.map((use) => use.getAttribute("href")).filter(Boolean),
+    );
+  expect(symbolReferences).toHaveLength(categories.length);
+
+  for (const reference of symbolReferences) {
+    await expect(page.locator(`symbol${reference}`)).toHaveCount(1);
+  }
+});
+
 test("category and published article routes expose useful editorial content", async ({
   page,
 }) => {
