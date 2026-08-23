@@ -88,6 +88,7 @@ export const PRODUCTION_ROUTES = Object.freeze([
   { path: "/sitemap-0.xml", expectedStatus: 200, kind: "text" },
   { path: "/rss.xml", expectedStatus: 200, kind: "text" },
   { path: "/robots.txt", expectedStatus: 200, kind: "text" },
+  { path: "/ads.txt", expectedStatus: 404, kind: "absent" },
   {
     path: "/production-smoke-route-that-must-not-exist/",
     expectedStatus: 404,
@@ -105,11 +106,11 @@ export function normalizeOrigin(value) {
   try {
     url = new URL(value.trim());
   } catch {
-    throw new Error("Production origin must be an absolute HTTP(S) URL.");
+    throw new Error("Production origin must be an absolute HTTPS URL.");
   }
 
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("Production origin must use HTTP or HTTPS.");
+  if (url.protocol !== "https:") {
+    throw new Error("Production origin must use HTTPS.");
   }
   if (url.username || url.password) {
     throw new Error("Production origin must not include credentials.");
@@ -509,11 +510,95 @@ function isExternalOrUnsafeResourceUrl(value, expectedOrigin, route) {
   return url.origin !== expectedOrigin;
 }
 
-function inspectPrivacyBoundary($, { origin, route }) {
+function inspectPrivacyBoundary($, { html, origin, route }) {
   const issues = [];
   const signatureInputs = [];
   const executableContexts = [];
   const resourceEntries = collectResourceUrlAttributes($);
+  const adsenseAccountMeta = $("meta[name]").filter((_index, element) => {
+    return (
+      ($(element).attr("name") ?? "").trim().toLowerCase() ===
+      "google-adsense-account"
+    );
+  });
+  if (adsenseAccountMeta.length > 0) {
+    issues.push(
+      finding(
+        "adsense-account-meta",
+        route,
+        "google-adsense-account metadata must remain absent while monetization is disabled.",
+      ),
+    );
+  }
+
+  const adIntegrationMarkers = $("*").filter((_index, element) =>
+    Object.keys(element.attribs ?? {}).some((name) => /^data-ad-/i.test(name)),
+  );
+  if (adIntegrationMarkers.length > 0) {
+    issues.push(
+      finding(
+        "ad-integration-marker",
+        route,
+        "data-ad-* integration markers must remain absent while monetization is disabled.",
+      ),
+    );
+  }
+
+  if ($("iframe, frame, embed, object").length > 0 || /<frame\b/i.test(html)) {
+    issues.push(
+      finding(
+        "embedded-content",
+        route,
+        "iframe, frame, embed, and object elements are unsupported by the publication CSP and privacy contract.",
+      ),
+    );
+  }
+  if ($("form").length > 0) {
+    issues.push(
+      finding(
+        "form",
+        route,
+        "form elements must remain absent while the publication states that it collects no form submissions.",
+      ),
+    );
+  }
+  if ($("base[href]").length > 0) {
+    issues.push(
+      finding(
+        "base-url",
+        route,
+        "base URL elements are not allowed because they can rebase publication resources.",
+      ),
+    );
+  }
+  const refreshMeta = $("meta[http-equiv]").filter((_index, element) => {
+    return (
+      ($(element).attr("http-equiv") ?? "").trim().toLowerCase() === "refresh"
+    );
+  });
+  if (refreshMeta.length > 0) {
+    issues.push(
+      finding("meta-refresh", route, "meta refresh navigation is not allowed."),
+    );
+  }
+  if ($("a[ping], area[ping]").length > 0) {
+    issues.push(
+      finding(
+        "ping-attribute",
+        route,
+        "anchor and area ping attributes are not allowed.",
+      ),
+    );
+  }
+  if ($("[attributionsrc]").length > 0) {
+    issues.push(
+      finding(
+        "attribution-source",
+        route,
+        "attributionsrc measurement requests are not allowed.",
+      ),
+    );
+  }
 
   $("script").each((_index, element) => {
     const type = normalizedScriptType($, element);
@@ -533,11 +618,7 @@ function inspectPrivacyBoundary($, { origin, route }) {
         );
         signatureInputs.push(value);
       }
-      if (
-        /^(?:class|id|data-ad-(?:client|slot|format)|data-analytics-id)$/i.test(
-          name,
-        )
-      ) {
+      if (/^(?:class|id|data-ad-.+|data-analytics-id)$/i.test(name)) {
         signatureInputs.push(`${name}=${value}`);
       }
     }
@@ -606,7 +687,13 @@ export function inspectHtml(
   const expectedCanonical = new URL(canonicalPath, `${expectedOrigin}/`);
   const $ = load(html);
   const issues = [];
-  issues.push(...inspectPrivacyBoundary($, { origin: expectedOrigin, route }));
+  issues.push(
+    ...inspectPrivacyBoundary($, {
+      html,
+      origin: expectedOrigin,
+      route,
+    }),
+  );
 
   const masthead = $(`header a[aria-label="Everyday Tech Insight home"]`);
   if (masthead.length !== 1) {
@@ -1412,6 +1499,7 @@ export async function runProductionCheck({
       );
       continue;
     }
+    if (route.kind === "absent") continue;
 
     const mediaType = responseMediaType(response);
     const expectedMediaTypes = expectedRouteMediaTypes(route);
@@ -1581,7 +1669,7 @@ export function resolveProductionOrigin(args = [], env = process.env) {
       }
       cliOrigin = args[index + 1];
       if (!cliOrigin || cliOrigin.startsWith("--")) {
-        throw new Error("--origin requires an HTTP(S) origin value.");
+        throw new Error("--origin requires an HTTPS origin value.");
       }
       index += 1;
     } else if (argument.startsWith("--origin=")) {

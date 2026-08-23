@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 type ProductionRoute = {
   path: string;
   expectedStatus: number;
-  kind: "html" | "text";
+  kind: "absent" | "html" | "text";
   canonicalPath?: string;
 };
 
@@ -139,7 +139,7 @@ function minifiedHtmlFixture(options: Parameters<typeof htmlFixture>[0] = {}) {
 }
 
 describe("normalizeOrigin", () => {
-  it("returns a stable HTTP(S) origin and rejects non-origin input", async () => {
+  it("returns a stable HTTPS origin and rejects insecure or non-origin input", async () => {
     const productionSmoke =
       await import("../../scripts/check-production.mjs").catch(() => ({}));
 
@@ -150,13 +150,11 @@ describe("normalizeOrigin", () => {
     expect(normalizeOrigin("  https://Host.Example:443/  ")).toBe(
       "https://host.example",
     );
-    expect(normalizeOrigin("http://127.0.0.1:4321/")).toBe(
-      "http://127.0.0.1:4321",
-    );
+    expect(() => normalizeOrigin("http://127.0.0.1:4321/")).toThrow(/HTTPS/i);
     expect(() => normalizeOrigin("https://host.example/path")).toThrow(
       /origin/i,
     );
-    expect(() => normalizeOrigin("ftp://host.example")).toThrow(/HTTP/i);
+    expect(() => normalizeOrigin("ftp://host.example")).toThrow(/HTTPS/i);
     expect(() => normalizeOrigin("https://user@host.example")).toThrow(
       /credentials/i,
     );
@@ -689,6 +687,120 @@ describe("inspectHtml", () => {
     );
   });
 
+  it("rejects an AdSense account connection meta without using a publisher ID fixture", async () => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const html = htmlFixture().replace(
+      "</head>",
+      '<meta name="google-adsense-account" content="[REDACTED PUBLISHER ID]"></head>',
+    );
+    const result = productionSmoke.inspectHtml(html, {
+      origin: fixtureOrigin,
+      route: "/fixture/",
+    });
+
+    expect(
+      result.issues.map((issue: { code: string }) => issue.code),
+    ).toContain("adsense-account-meta");
+  });
+
+  it.each([
+    "data-ad-client",
+    "data-ad-slot",
+    "data-ad-format",
+    "data-ad-layout",
+  ])(
+    "rejects the ad integration marker %s even with a redacted value",
+    async (attribute) => {
+      const productionSmoke = asFixtureProductionSmoke(
+        await import("../../scripts/check-production.mjs"),
+      );
+
+      const result = productionSmoke.inspectHtml(
+        htmlFixture({
+          extra: `<ins ${attribute}="[REDACTED TEST VALUE]"></ins>`,
+        }),
+        { origin: fixtureOrigin, route: "/fixture/" },
+      );
+
+      expect(
+        result.issues.map((issue: { code: string }) => issue.code),
+      ).toContain("ad-integration-marker");
+    },
+  );
+
+  it.each([
+    {
+      code: "embedded-content",
+      markup: '<iframe src="/embedded/"></iframe>',
+      name: "iframe",
+    },
+    {
+      code: "embedded-content",
+      markup: '<frame src="/embedded/">',
+      name: "frame",
+    },
+    {
+      code: "embedded-content",
+      markup: '<embed src="/embedded.pdf">',
+      name: "embed",
+    },
+    {
+      code: "embedded-content",
+      markup: '<object data="/embedded.pdf"></object>',
+      name: "object",
+    },
+    {
+      code: "form",
+      markup: '<form action="/contact/" method="post"></form>',
+      name: "form",
+    },
+    {
+      code: "base-url",
+      markup: '<base href="https://external.example/">',
+      name: "base URL",
+    },
+    {
+      code: "meta-refresh",
+      markup:
+        '<meta http-equiv="refresh" content="0;url=https://external.example/">',
+      name: "meta refresh",
+    },
+    {
+      code: "ping-attribute",
+      markup:
+        '<a href="/about/" ping="https://external.example/ping">About</a>',
+      name: "anchor ping",
+    },
+    {
+      code: "ping-attribute",
+      markup:
+        '<map name="links"><area href="/about/" ping="https://external.example/ping"></map>',
+      name: "area ping",
+    },
+    {
+      code: "attribution-source",
+      markup:
+        '<a href="/about/" attributionsrc="https://external.example/register">About</a>',
+      name: "attribution source",
+    },
+  ])("rejects the unsupported $name surface", async ({ code, markup }) => {
+    const productionSmoke = asFixtureProductionSmoke(
+      await import("../../scripts/check-production.mjs"),
+    );
+
+    const result = productionSmoke.inspectHtml(htmlFixture({ extra: markup }), {
+      origin: fixtureOrigin,
+      route: "/fixture/",
+    });
+
+    expect(
+      result.issues.map((issue: { code: string }) => issue.code),
+    ).toContain(code);
+  });
+
   it("rejects a generic external resource URL even when it has no tracking signature", async () => {
     const productionSmoke = asFixtureProductionSmoke(
       await import("../../scripts/check-production.mjs"),
@@ -844,6 +956,7 @@ describe("production route smoke", () => {
     "/sitemap-0.xml",
     "/rss.xml",
     "/robots.txt",
+    "/ads.txt",
     "/production-smoke-route-that-must-not-exist/",
   ];
   const expectedArticlePaths = requiredPaths.filter((path) =>
@@ -853,6 +966,7 @@ describe("production route smoke", () => {
     (path) =>
       !path.endsWith(".xml") &&
       path !== "/robots.txt" &&
+      path !== "/ads.txt" &&
       path !== "/production-smoke-route-that-must-not-exist/",
   );
 
@@ -986,7 +1100,7 @@ describe("production route smoke", () => {
     const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
       path: string;
       expectedStatus: number;
-      kind: "html" | "text";
+      kind: "absent" | "html" | "text";
       canonicalPath?: string;
     }>;
     expect(routes.map(({ path }) => path)).toEqual(requiredPaths);
@@ -1034,6 +1148,11 @@ describe("production route smoke", () => {
       name: "unexpected route status",
       code: "status",
       overrides: { "/about/": { status: 503 } },
+    },
+    {
+      name: "unexpected live ads.txt seller file",
+      code: "status",
+      overrides: { "/ads.txt": { status: 200 } },
     },
     {
       name: "missing published article detail",
@@ -1339,7 +1458,7 @@ describe("production route smoke", () => {
     const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
       path: string;
       expectedStatus: number;
-      kind: "html" | "text";
+      kind: "absent" | "html" | "text";
       canonicalPath?: string;
     }>;
     const result = await productionSmoke.runProductionCheck({
@@ -1357,7 +1476,7 @@ describe("production route smoke", () => {
     const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
       path: string;
       expectedStatus: number;
-      kind: "html" | "text";
+      kind: "absent" | "html" | "text";
       canonicalPath?: string;
     }>;
     const fetchImpl = makeFetch(routes, {
@@ -1395,7 +1514,7 @@ describe("production route smoke", () => {
       const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
         path: string;
         expectedStatus: number;
-        kind: "html" | "text";
+        kind: "absent" | "html" | "text";
         canonicalPath?: string;
       }>;
       const result = await productionSmoke.runProductionCheck({
@@ -1423,7 +1542,7 @@ describe("production route smoke", () => {
     const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
       path: string;
       expectedStatus: number;
-      kind: "html" | "text";
+      kind: "absent" | "html" | "text";
       canonicalPath?: string;
     }>;
     const result = await productionSmoke.runProductionCheck({
@@ -1453,12 +1572,12 @@ describe("production route smoke", () => {
     );
   });
 
-  it("accepts HTML for a same-origin iframe document reference", async () => {
+  it("rejects HTML containing a same-origin iframe document reference", async () => {
     const productionSmoke = await loadRunner();
     const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
       path: string;
       expectedStatus: number;
-      kind: "html" | "text";
+      kind: "absent" | "html" | "text";
       canonicalPath?: string;
     }>;
     const result = await productionSmoke.runProductionCheck({
@@ -1480,7 +1599,13 @@ describe("production route smoke", () => {
       }),
     });
 
-    expect(result.issues).toEqual([]);
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({ code: "embedded-content", route: "/about/" }),
+    );
+    expect(result.routeResults).toContainEqual({
+      path: "/about/",
+      status: "FAIL",
+    });
   });
 
   it("marks every owning route failed when its asset validation fails", async () => {
@@ -1488,7 +1613,7 @@ describe("production route smoke", () => {
     const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
       path: string;
       expectedStatus: number;
-      kind: "html" | "text";
+      kind: "absent" | "html" | "text";
       canonicalPath?: string;
     }>;
     const fetchImpl = makeFetch(routes, {
@@ -1540,7 +1665,7 @@ describe("production route smoke", () => {
     const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
       path: string;
       expectedStatus: number;
-      kind: "html" | "text";
+      kind: "absent" | "html" | "text";
       canonicalPath?: string;
     }>;
     const result = await productionSmoke.runProductionCheck({
@@ -1568,7 +1693,7 @@ describe("production route smoke", () => {
     const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
       path: string;
       expectedStatus: number;
-      kind: "html" | "text";
+      kind: "absent" | "html" | "text";
       canonicalPath?: string;
     }>;
     const duplicateMetadata = {
