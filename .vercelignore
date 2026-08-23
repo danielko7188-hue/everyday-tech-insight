@@ -1,0 +1,20 @@
+# Local and generated build output
+.astro/
+dist/
+.lighthouseci/
+.lighthouseci.pending/
+.gstack/
+.worktrees/
+playwright-report/
+test-results/
+coverage/
+
+# Repository-only review and evidence material
+artifacts/
+docs/
+tests/
+AGENTS.md
+DESIGN.md
+README.md
+playwright.config.ts
+vitest.config.ts

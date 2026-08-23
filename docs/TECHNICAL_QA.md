@@ -90,7 +90,7 @@ Fresh clean feature-branch release run on 2026-08-23 at code commit `54c31bcafea
 - Lighthouse desktop AI and automation category: Performance 93, Accessibility 100, Best Practices 100, SEO 100; performance runs 94/93/93.
 - Lighthouse desktop automation-candidates article: Performance 90, Accessibility 100, Best Practices 100, SEO 100; performance runs 91/90/90.
 - Independent final code/release review: approved with no remaining P0-P3 findings at the recorded code commit.
-- Production after-state screenshots: not captured because the publication-maturity release is not deployed.
+- Production after-state evidence: Vercel deployment `dpl_4h7us2N5TFFtP6xz8763ZLn7TzvK` reached `READY`; the canonical alias passed the 42-route/30-asset production smoke gate; 48 production PNGs were captured with 48 unique verified SHA-256 hashes.
 
 ## Historical evidence record
 

@@ -1,6 +1,6 @@
 # Publication maturity after-state evidence
 
-This directory is the template for evidence captured only after the publication-maturity release is deployed and separately verified. The live production site is still the older release at the time this template was added, so no `production/` screenshots have been captured or populated here.
+This directory records evidence captured from the verified publication-maturity production release. The `production/` directory contains the exact 48-image inventory produced from the canonical live origin after the release reached Vercel `READY` state and passed the independent production smoke gate.
 
 ## Capture command
 
@@ -27,11 +27,17 @@ Filenames follow `<width>-<alias>-<above-fold|full>.png`.
 
 ## Deployment record
 
-- Production origin: pending
-- Deployed commit: pending
-- Capture date and timezone: pending
-- Production smoke result: pending
-- Visual comparison/review: pending
+- Production origin: `https://everyday-tech-insight.vercel.app`
+- GitHub release commit: `f626fcf2ccc76f9f40c2c717dc2b16fa72f4ee27`
+- Vercel deployment: `dpl_4h7us2N5TFFtP6xz8763ZLn7TzvK` (`READY`, production alias confirmed)
+- Capture window: 2026-08-23 08:00:41-08:01:08, America/Los_Angeles
+- Production smoke result: pass for 42 expected routes and 30 exact root-relative assets, including crawler files, disabled-monetization boundaries, and decoded social-image dimensions
+- Screenshot inventory: 48 PNGs, 48 unique SHA-256 hashes; see `SHA256SUMS.txt`
+- Visual review: representative full-page home, article, category, Toolkit, About, Contact, Editorial standards, and 404 captures were inspected across 390, 768, and 1440-pixel evidence. No actionable clipping, overlap, missing deferred content, or broken layout was observed.
+
+## Evidence boundary
+
+The captures prove the rendered production state at the recorded origin and time. They do not prove that every browser or assistive-technology combination is defect-free, that every editorial statement has received specialist review, or that Google will approve an AdSense application. The current production origin is the verified Vercel subdomain; no unverified custom domain, private contact identity, advertising code, analytics, tracking, or consent platform was added.
 
 Local Playwright baselines under `tests/e2e/__screenshots__/` are implementation regression evidence. They are not production capture evidence and must not be copied here or used to claim deployment parity.
 
