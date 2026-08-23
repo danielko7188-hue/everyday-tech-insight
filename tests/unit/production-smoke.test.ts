@@ -37,6 +37,10 @@ function htmlFixture({
     </html>`;
 }
 
+function minifiedHtmlFixture(options: Parameters<typeof htmlFixture>[0] = {}) {
+  return htmlFixture(options).replace(/>\s+</g, "><");
+}
+
 describe("normalizeOrigin", () => {
   it("returns a stable HTTP(S) origin and rejects non-origin input", async () => {
     const productionSmoke =
@@ -158,14 +162,20 @@ describe("inspectHtml", () => {
       html: () => htmlFixture({ canonical: "https://wrong.example/fixture/" }),
     },
     {
-      name: "Current issue legacy shell",
+      name: "minified Current issue legacy shell adjacent to the next word",
       code: "legacy-shell",
-      html: () => htmlFixture({ extra: "<p>Current issue</p>" }),
+      html: () =>
+        minifiedHtmlFixture({
+          extra: "<p>Current issue</p><p>Next guide</p>",
+        }),
     },
     {
-      name: "Complete issue legacy shell",
+      name: "minified Complete issue legacy shell adjacent to the next word",
       code: "legacy-shell",
-      html: () => htmlFixture({ extra: "<p>Complete issue</p>" }),
+      html: () =>
+        minifiedHtmlFixture({
+          extra: "<p>Complete issue</p><p>Next guide</p>",
+        }),
     },
     {
       name: "duplicate fit summary",
@@ -176,15 +186,21 @@ describe("inspectHtml", () => {
         }),
     },
     {
-      name: "duplicate At a glance signature",
+      name: "two minified At a glance signatures adjacent to following text",
       code: "duplicate-at-a-glance",
-      html: () => htmlFixture({ extra: "<p>At a glance</p>" }),
+      html: () =>
+        minifiedHtmlFixture({
+          extra: "<p>At a glance</p><p>Next section</p>",
+        }),
     },
     {
-      name: "duplicate On this page navigation",
+      name: "desktop nav and mobile details copies of On this page",
       code: "duplicate-toc",
       html: () =>
-        htmlFixture({ extra: '<nav aria-label="On this page"></nav>' }),
+        minifiedHtmlFixture({
+          extra:
+            '<details><summary>On this page</summary><ol><li><a href="#section-one">Section one</a></li></ol></details>',
+        }),
     },
     {
       name: "duplicate IDs",
@@ -377,6 +393,11 @@ describe("production route smoke", () => {
       name: "broken internal asset",
       code: "asset-status",
       overrides: { "/favicon.svg": { status: 404 } },
+    },
+    {
+      name: "internal asset fetch error",
+      code: "asset-fetch-error",
+      overrides: { "/favicon.svg": { error: new Error("asset offline") } },
     },
     {
       name: "route fetch error",

@@ -163,6 +163,14 @@ function normalizedText(value) {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function normalizedBodyText($) {
+  const body = $("body").clone();
+  body.find("*").each((_index, element) => {
+    $(element).after(" ");
+  });
+  return normalizedText(body.text());
+}
+
 export function inspectHtml(html, { origin, route = "[HTML page]" } = {}) {
   const expectedOrigin = normalizeOrigin(origin);
   const $ = load(html);
@@ -252,7 +260,7 @@ export function inspectHtml(html, { origin, route = "[HTML page]" } = {}) {
     );
   }
 
-  const bodyText = normalizedText($("body").text());
+  const bodyText = normalizedBodyText($);
   if (/\b(?:Current issue|Complete issue)\b/i.test(bodyText)) {
     issues.push(
       finding(
@@ -285,13 +293,35 @@ export function inspectHtml(html, { origin, route = "[HTML page]" } = {}) {
     );
   }
 
-  const tocCount = $('nav[aria-label="On this page"]').length;
-  if (tocCount > 1) {
+  const tocStructures = $('nav[aria-label="On this page"]').toArray();
+  $("details").each((_index, element) => {
+    const summary = $(element).children("summary").first();
+    if (normalizedText(summary.text()).toLowerCase() === "on this page") {
+      tocStructures.push(element);
+    }
+  });
+  const tocLinkCounts = new Map();
+  for (const structure of tocStructures) {
+    $(structure)
+      .find('a[href^="#"]')
+      .each((_index, element) => {
+        const href = $(element).attr("href");
+        tocLinkCounts.set(href, (tocLinkCounts.get(href) ?? 0) + 1);
+      });
+  }
+  const duplicateTocLinks = [...tocLinkCounts]
+    .filter(([, count]) => count > 1)
+    .map(([href]) => href);
+  if (tocStructures.length > 1 || duplicateTocLinks.length > 0) {
     issues.push(
       finding(
         "duplicate-toc",
         route,
-        `expected at most one "On this page" navigation; found ${tocCount}.`,
+        `expected at most one "On this page" content structure; found ${tocStructures.length}${
+          duplicateTocLinks.length > 0
+            ? ` with repeated heading links ${duplicateTocLinks.join(", ")}`
+            : ""
+        }.`,
       ),
     );
   }
