@@ -119,7 +119,18 @@ desktop sticky placement; do not add client JavaScript.
 ```astro
 <section class="fit-summary" aria-labelledby="fit-heading">
   <h2 id="fit-heading">At a glance</h2>
-  <dl>{fields.map(([term, value]) => <div><dt>{term}</dt><dd>{value}</dd></div>)}</dl>
+  <dl>
+    {
+      fields.map(([term, value]) => (
+        <div>
+          <>
+            <dt>{term}</dt>
+            <dd>{value}</dd>
+          </>
+        </div>
+      ))
+    }
+  </dl>
 </section>
 ```
 

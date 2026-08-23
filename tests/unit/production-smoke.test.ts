@@ -260,68 +260,65 @@ describe("production route smoke", () => {
       }
     > = {},
   ) {
-    return vi.fn(
-      async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
-        const url = new URL(
-          typeof input === "string"
-            ? input
-            : input instanceof URL
-              ? input.href
-              : input.url,
-        );
-        const override = overrides[url.pathname] ?? {};
-        if (override.error) throw override.error;
+    return vi.fn(async (input: Parameters<typeof fetch>[0]) => {
+      const url = new URL(
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url,
+      );
+      const override = overrides[url.pathname] ?? {};
+      if (override.error) throw override.error;
 
-        if (url.pathname === "/favicon.svg") {
-          return new Response(override.body ?? "<svg></svg>", {
-            status: override.status ?? 200,
-            headers: {
-              "content-type": "image/svg+xml",
-              ...override.headers,
-            },
-          });
-        }
+      if (url.pathname === "/favicon.svg") {
+        return new Response(override.body ?? "<svg></svg>", {
+          status: override.status ?? 200,
+          headers: {
+            "content-type": "image/svg+xml",
+            ...override.headers,
+          },
+        });
+      }
 
-        const route = routes.find(({ path }) => path === url.pathname);
-        if (!route) return new Response("missing fixture", { status: 404 });
+      const route = routes.find(({ path }) => path === url.pathname);
+      if (!route) return new Response("missing fixture", { status: 404 });
 
-        const status = override.status ?? route.expectedStatus;
-        if (status >= 300 && status < 400) {
-          return new Response(null, {
-            status,
-            headers: override.headers,
-          });
-        }
-        if (route.kind === "text") {
-          return new Response(
-            override.body ??
-              (route.path === "/rss.xml"
-                ? '<?xml version="1.0"?><rss></rss>'
-                : "User-agent: *\nAllow: /\n"),
-            { status, headers: override.headers },
-          );
-        }
-
-        const routeKey = route.path.replaceAll("/", "-") || "home";
+      const status = override.status ?? route.expectedStatus;
+      if (status >= 300 && status < 400) {
+        return new Response(null, {
+          status,
+          headers: override.headers,
+        });
+      }
+      if (route.kind === "text") {
         return new Response(
           override.body ??
-            htmlFixture({
-              title:
-                override.title ?? `Page ${routeKey} | Everyday Tech Insight`,
-              description:
-                override.description ??
-                `Production smoke description for the unique route ${route.path}`,
-              canonical: `${fixtureOrigin}${
-                route.expectedStatus === 404 ? "/404.html" : route.path
-              }`,
-            }),
-          {
-            status,
-            headers: { "content-type": "text/html", ...override.headers },
-          },
+            (route.path === "/rss.xml"
+              ? '<?xml version="1.0"?><rss></rss>'
+              : "User-agent: *\nAllow: /\n"),
+          { status, headers: override.headers },
         );
-      },
-    );
+      }
+
+      const routeKey = route.path.replaceAll("/", "-") || "home";
+      return new Response(
+        override.body ??
+          htmlFixture({
+            title: override.title ?? `Page ${routeKey} | Everyday Tech Insight`,
+            description:
+              override.description ??
+              `Production smoke description for the unique route ${route.path}`,
+            canonical: `${fixtureOrigin}${
+              route.expectedStatus === 404 ? "/404.html" : route.path
+            }`,
+          }),
+        {
+          status,
+          headers: { "content-type": "text/html", ...override.headers },
+        },
+      );
+    });
   }
 
   it("checks every required route and root-relative asset without following redirects", async () => {
