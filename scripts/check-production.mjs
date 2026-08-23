@@ -412,6 +412,94 @@ export function inspectHtml(
     );
   }
 
+  const socialImageNodes = $('meta[property="og:image"]');
+  const socialImage = socialImageNodes.attr("content")?.trim() ?? "";
+  let socialImagePath;
+  let validSocialImage = socialImageNodes.length === 1;
+  if (validSocialImage) {
+    try {
+      const socialImageUrl = new URL(socialImage);
+      validSocialImage =
+        socialImageUrl.origin === expectedOrigin &&
+        socialImageUrl.pathname.startsWith("/social/") &&
+        socialImageUrl.pathname.endsWith(".png") &&
+        !socialImageUrl.search &&
+        !socialImageUrl.hash;
+      if (validSocialImage) socialImagePath = socialImageUrl.pathname;
+    } catch {
+      validSocialImage = false;
+    }
+  }
+  if (!validSocialImage) {
+    issues.push(
+      finding(
+        "social-image",
+        route,
+        `expected one absolute same-origin PNG social image at ${expectedOrigin}/social/.`,
+      ),
+    );
+  }
+
+  for (const [property, expected, code] of [
+    ["og:image:width", "1200", "social-image-width"],
+    ["og:image:height", "630", "social-image-height"],
+    ["og:image:type", "image/png", "social-image-type"],
+  ]) {
+    const nodes = $(`meta[property="${property}"]`);
+    if (nodes.length !== 1 || nodes.attr("content") !== expected) {
+      issues.push(finding(code, route, `${property} must be ${expected}.`));
+    }
+  }
+
+  const socialAltNodes = $('meta[property="og:image:alt"]');
+  const socialAlt = socialAltNodes.attr("content")?.trim() ?? "";
+  if (socialAltNodes.length !== 1 || !socialAlt) {
+    issues.push(
+      finding(
+        "social-image-alt",
+        route,
+        "expected one nonempty Open Graph image alt value.",
+      ),
+    );
+  }
+
+  const twitterCard = $('meta[name="twitter:card"]');
+  if (
+    twitterCard.length !== 1 ||
+    twitterCard.attr("content") !== "summary_large_image"
+  ) {
+    issues.push(
+      finding(
+        "twitter-card",
+        route,
+        "twitter:card must be summary_large_image.",
+      ),
+    );
+  }
+  const twitterImage = $('meta[name="twitter:image"]');
+  if (
+    twitterImage.length !== 1 ||
+    twitterImage.attr("content") !== socialImage
+  ) {
+    issues.push(
+      finding("twitter-image", route, "twitter:image must match og:image."),
+    );
+  }
+  const twitterAlt = $('meta[name="twitter:image:alt"]');
+  if (
+    twitterAlt.length !== 1 ||
+    !socialAlt ||
+    twitterAlt.attr("content") !== socialAlt
+  ) {
+    issues.push(
+      finding(
+        "twitter-image-alt",
+        route,
+        "twitter:image:alt must match the nonempty Open Graph image alt.",
+      ),
+    );
+  }
+
   const bodyText = normalizedBodyText($);
   if (hasLegacyHomepageShell($, route)) {
     issues.push(
@@ -497,8 +585,23 @@ export function inspectHtml(
     );
   }
 
+  const assets = collectInternalAssets(html);
+  if (socialImagePath) {
+    assets.push({
+      expectedType: "image",
+      reference: "meta[property=og:image]",
+      url: socialImagePath,
+    });
+    assets.sort(
+      (left, right) =>
+        left.url.localeCompare(right.url) ||
+        left.reference.localeCompare(right.reference) ||
+        left.expectedType.localeCompare(right.expectedType),
+    );
+  }
+
   return {
-    assets: collectInternalAssets(html),
+    assets,
     canonical,
     description,
     issues,

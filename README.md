@@ -35,6 +35,7 @@ Development and focused build commands:
 
 ```text
 npm run dev
+npm run generate:social
 npm run build
 npm run preview
 ```
@@ -62,7 +63,8 @@ npm run lighthouse
 - `src/pages/`: generated public route templates.
 - `src/layouts/` and `src/components/`: shared publication shell.
 - `src/data/`: publication and category configuration.
-- `site.config.mjs`: the single source of truth for the canonical origin and publication identity used by Astro, runtime pages, robots, and QA.
+- `site.config.mjs`: the validated single source of truth for the canonical origin and publication identity used by Astro, runtime pages, robots, and QA. The optional `PUBLIC_SITE_URL` build variable accepts only an HTTPS origin; preview-host variables are ignored.
+- `public/social/`: deterministic local 1200×630 previews generated for the publication, five categories, and fifteen articles.
 - `scripts/`: content, built-output, external-link, and Lighthouse QA.
 - `tests/`: unit, route, responsive, keyboard, and accessibility contracts.
 - `docs/`: editorial evidence, assumptions, review gates, deployment, and QA records.

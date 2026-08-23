@@ -15,7 +15,14 @@ This release uses GitHub first and Vercel second. Do not deploy local unpushed c
 7. Create the production deployment from the pushed `main` commit.
 8. Verify the production URL, representative routes, real 404, canonical tags, robots, sitemap index, RSS, security headers, and deployment logs.
 
-The repository currently needs no runtime environment variables. Do not create placeholder secrets. If a future feature needs one, add it in the appropriate Vercel environment, keep secret values out of Git, and redeploy because environment changes do not alter older deployments.
+The static build accepts one optional public variable: `PUBLIC_SITE_URL`. It is
+not a secret. Leave it undefined to use the verified
+`https://everyday-tech-insight.vercel.app/` fallback, or set it to the final
+HTTPS origin for a verified custom domain. Any supplied value with credentials,
+a path, query, fragment, or non-HTTPS scheme fails the build. Vercel preview
+hostname variables are deliberately ignored so previews cannot silently become
+canonicals. Copy `.env.example` only when a local canonical override is needed;
+do not create placeholder secrets.
 
 ## Vercel CLI reference
 
@@ -31,13 +38,25 @@ CLI syntax can change. Check `npx vercel@latest --help` before a live action. Th
 
 ## Canonical hostname and custom domain
 
-The single canonical source of truth is `site.config.mjs`, which currently expects `https://everyday-tech-insight.vercel.app/`. After deployment:
+The single canonical source of truth is the validated resolver in
+`site.config.mjs`. `PUBLIC_SITE_URL` overrides its verified Vercel fallback.
+Canonical, sitemap, RSS, robots, structured-data, Open Graph, and Twitter URLs
+therefore share one origin. After deployment:
 
 1. Confirm Vercel assigned that exact production hostname.
-2. If it differs, update only the `url` value in `site.config.mjs`. Astro, runtime metadata, generated `robots.txt`, link checking, and built-output QA import that value.
+2. If a verified production or custom hostname should become canonical, set
+   `PUBLIC_SITE_URL` for the Vercel Production environment only. Do not set it
+   to a preview deployment URL.
 3. Rerun `npm run qa`, commit, push, redeploy, and recheck the live metadata.
 
-For a future custom domain, add and verify the domain in Vercel, configure the required DNS records at the registrar, choose one canonical hostname, redirect alternatives, then make the same one-file canonical update and full release cycle. Do not switch canonicals before the domain resolves over HTTPS.
+For a future custom domain, add and verify the domain in Vercel, configure the required DNS records at the registrar, choose one canonical hostname, redirect alternatives, then set the production variable and complete the full release cycle. Do not switch canonicals before the domain resolves over HTTPS.
+
+`npm run build` first regenerates the fixed local social-preview portfolio: one
+default image, five category images, fifteen article images, and the Apple touch
+icon. Sharp is pinned directly, generation uses bundled inputs only, and the
+built-output gate rejects missing or extra social files. Commit the generated
+`public/social/*.png` and `public/apple-touch-icon.png` files with their source
+changes; never replace them with remote image URLs.
 
 ## Search Console
 

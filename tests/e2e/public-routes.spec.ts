@@ -1310,7 +1310,7 @@ test("every public HTML route has one H1 and unique core metadata", async ({
     await expect(
       page.locator('meta[name="twitter:card"]'),
       route,
-    ).toHaveAttribute("content", "summary");
+    ).toHaveAttribute("content", "summary_large_image");
     await expect(
       page.locator('meta[name="twitter:title"]'),
       route,
@@ -1323,9 +1323,49 @@ test("every public HTML route has one H1 and unique core metadata", async ({
       page.locator('link[rel="alternate"][type="application/rss+xml"]'),
       route,
     ).toHaveAttribute("href", absoluteSiteUrl("/rss.xml"));
-    await expect(page.locator('meta[property="og:image"]'), route).toHaveCount(
-      0,
+    const socialImagePath =
+      route.startsWith("/articles/") && route !== "/articles/"
+        ? `/social/article-${route.split("/")[2]}.png`
+        : route.startsWith("/categories/") && route !== "/categories/"
+          ? `/social/category-${route.split("/")[2]}.png`
+          : "/social/default.png";
+    const socialImageUrl = absoluteSiteUrl(socialImagePath);
+    await expect(
+      page.locator('meta[property="og:image"]'),
+      route,
+    ).toHaveAttribute("content", socialImageUrl);
+    await expect(
+      page.locator('meta[property="og:image:width"]'),
+      route,
+    ).toHaveAttribute("content", "1200");
+    await expect(
+      page.locator('meta[property="og:image:height"]'),
+      route,
+    ).toHaveAttribute("content", "630");
+    await expect(
+      page.locator('meta[property="og:image:type"]'),
+      route,
+    ).toHaveAttribute("content", "image/png");
+    await expect(
+      page.locator('meta[property="og:image:alt"]'),
+      route,
+    ).toHaveAttribute("content", /\S/);
+    await expect(
+      page.locator('meta[name="twitter:image"]'),
+      route,
+    ).toHaveAttribute("content", socialImageUrl);
+    await expect(
+      page.locator('meta[name="twitter:image:alt"]'),
+      route,
+    ).toHaveAttribute("content", /\S/);
+    await expect(page.locator('link[rel="manifest"]'), route).toHaveAttribute(
+      "href",
+      "/manifest.webmanifest",
     );
+    await expect(
+      page.locator('link[rel="apple-touch-icon"]'),
+      route,
+    ).toHaveAttribute("href", "/apple-touch-icon.png");
 
     if (route.startsWith("/articles/") && route !== "/articles/") {
       await expect(

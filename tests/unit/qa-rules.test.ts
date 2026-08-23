@@ -120,6 +120,16 @@ function validPortfolio() {
   );
 }
 
+function expectedSocialImagePath(route: string) {
+  if (route.startsWith("/articles/") && route !== "/articles/") {
+    return `/social/article-${route.split("/")[2]}.png`;
+  }
+  if (route.startsWith("/categories/") && route !== "/categories/") {
+    return `/social/category-${route.split("/")[2]}.png`;
+  }
+  return "/social/default.png";
+}
+
 function htmlDocument(options: {
   route: string;
   title: string;
@@ -131,6 +141,11 @@ function htmlDocument(options: {
   bodyOwnsHeading?: boolean;
 }) {
   const canonical = new URL(options.route, siteUrl).toString();
+  const socialImage = new URL(
+    expectedSocialImagePath(options.route),
+    siteUrl,
+  ).toString();
+  const socialImageAlt = `Social preview for ${options.title}`;
   return `<!doctype html>
 <html lang="en-US"><head>
 <title>${options.title}</title>
@@ -141,7 +156,19 @@ function htmlDocument(options: {
 <meta property="og:title" content="${options.title}">
 <meta property="og:description" content="${options.description}">
 <meta property="og:url" content="${canonical}">
+<meta property="og:image" content="${socialImage}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="${socialImageAlt}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${options.title}">
+<meta name="twitter:description" content="${options.description}">
+<meta name="twitter:image" content="${socialImage}">
+<meta name="twitter:image:alt" content="${socialImageAlt}">
 <link rel="icon" href="/favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
 ${
   options.jsonLd
     ? `<script type="application/ld+json">${JSON.stringify(options.jsonLd)}</script>`
@@ -305,6 +332,30 @@ function validBuiltFixture() {
     }),
   );
   files.set("favicon.svg", '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+  files.set("apple-touch-icon.png", "[binary resource]");
+  files.set(
+    "manifest.webmanifest",
+    JSON.stringify({
+      name: "Everyday Tech Insight",
+      short_name: "ETI",
+      start_url: "/",
+      display: "standalone",
+      icons: [
+        {
+          src: "/apple-touch-icon.png",
+          sizes: "180x180",
+          type: "image/png",
+        },
+      ],
+    }),
+  );
+  files.set("social/default.png", "[binary resource]");
+  for (const category of categorySlugs) {
+    files.set(`social/category-${category}.png`, "[binary resource]");
+  }
+  for (const { data } of articles) {
+    files.set(`social/article-${data.slug}.png`, "[binary resource]");
+  }
   files.set(
     "robots.txt",
     `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}sitemap-index.xml\n`,
@@ -461,6 +512,109 @@ describe("built-output QA rules", () => {
         siteUrl,
       }),
     ).toEqual([]);
+  });
+
+  it.each([
+    {
+      name: "missing Open Graph image",
+      code: "social-image",
+      mutate: (html: string) =>
+        html.replace(/<meta property="og:image"[^>]+>/, ""),
+    },
+    {
+      name: "wrong Open Graph width",
+      code: "social-image-width",
+      mutate: (html: string) => html.replace('content="1200"', 'content="600"'),
+    },
+    {
+      name: "wrong Open Graph MIME type",
+      code: "social-image-type",
+      mutate: (html: string) =>
+        html.replace('content="image/png"', 'content="image/jpeg"'),
+    },
+    {
+      name: "Twitter image mismatch",
+      code: "twitter-image",
+      mutate: (html: string) =>
+        html.replace(
+          /<meta name="twitter:image"[^>]+>/,
+          `<meta name="twitter:image" content="${siteUrl}social/other.png">`,
+        ),
+    },
+    {
+      name: "missing Apple icon link",
+      code: "apple-touch-icon-link",
+      mutate: (html: string) =>
+        html.replace(/<link rel="apple-touch-icon"[^>]+>/, ""),
+    },
+    {
+      name: "missing manifest link",
+      code: "manifest-link",
+      mutate: (html: string) => html.replace(/<link rel="manifest"[^>]+>/, ""),
+    },
+  ])("rejects $name", ({ code, mutate }) => {
+    const fixture = validBuiltFixture();
+    fixture.files.set(
+      "about/index.html",
+      mutate(fixture.files.get("about/index.html")!),
+    );
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).map(({ code: issueCode }) => issueCode);
+
+    expect(codes).toContain(code);
+  });
+
+  it("rejects a default social image on an article route", () => {
+    const fixture = validBuiltFixture();
+    const fileName = "articles/ai-automation-guide-1/index.html";
+    fixture.files.set(
+      fileName,
+      fixture.files
+        .get(fileName)!
+        .replaceAll(
+          `${siteUrl}social/article-ai-automation-guide-1.png`,
+          `${siteUrl}social/default.png`,
+        ),
+    );
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).map(({ code }) => code);
+
+    expect(codes).toContain("social-image-route");
+  });
+
+  it.each([
+    {
+      name: "missing social image",
+      mutate: (files: Map<string, string>) =>
+        files.delete("social/category-ai-automation.png"),
+    },
+    {
+      name: "stale extra social image",
+      mutate: (files: Map<string, string>) =>
+        files.set("social/stale-preview.png", "[binary resource]"),
+    },
+  ])("rejects a $name in the generated portfolio", ({ mutate }) => {
+    const fixture = validBuiltFixture();
+    mutate(fixture.files);
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).map(({ code }) => code);
+
+    expect(codes).toContain("social-image-set");
   });
 
   it("treats the all-guides route as a website and scopes category membership to main", () => {

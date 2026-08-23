@@ -643,6 +643,99 @@ function validatePage({
     }
   }
 
+  const expectedSocialPath =
+    route.startsWith("/articles/") && route !== "/articles/"
+      ? `/social/article-${route.split("/")[2]}.png`
+      : route.startsWith("/categories/") && route !== "/categories/"
+        ? `/social/category-${route.split("/")[2]}.png`
+        : "/social/default.png";
+  const expectedSocialImage = new URL(expectedSocialPath, siteUrl).toString();
+  const socialImage = $('meta[property="og:image"]');
+  if (socialImage.length !== 1) {
+    issues.push(
+      finding(
+        "social-image",
+        fileName,
+        "exactly one Open Graph image is required.",
+      ),
+    );
+  } else if (socialImage.attr("content") !== expectedSocialImage) {
+    issues.push(
+      finding(
+        "social-image-route",
+        fileName,
+        `Open Graph image must be ${expectedSocialImage}.`,
+      ),
+    );
+  }
+
+  for (const [property, expected, code] of [
+    ["og:image:width", "1200", "social-image-width"],
+    ["og:image:height", "630", "social-image-height"],
+    ["og:image:type", "image/png", "social-image-type"],
+  ]) {
+    const nodes = $(`meta[property="${property}"]`);
+    if (nodes.length !== 1 || nodes.attr("content") !== expected) {
+      issues.push(finding(code, fileName, `${property} must be ${expected}.`));
+    }
+  }
+
+  const socialAlt = $('meta[property="og:image:alt"]');
+  const socialAltText = socialAlt.attr("content")?.trim() ?? "";
+  if (socialAlt.length !== 1 || !socialAltText) {
+    issues.push(
+      finding(
+        "social-image-alt",
+        fileName,
+        "Open Graph image alt text must be nonempty.",
+      ),
+    );
+  }
+
+  for (const [name, expected, code] of [
+    ["twitter:card", "summary_large_image", "twitter-card"],
+    ["twitter:title", title, "twitter-title"],
+    ["twitter:description", description, "twitter-description"],
+    ["twitter:image", expectedSocialImage, "twitter-image"],
+    ["twitter:image:alt", socialAltText, "twitter-image-alt"],
+  ]) {
+    const nodes = $(`meta[name="${name}"]`);
+    if (nodes.length !== 1 || nodes.attr("content") !== expected) {
+      issues.push(
+        finding(code, fileName, `${name} must match the page metadata.`),
+      );
+    }
+  }
+
+  const appleIcon = $('link[rel="apple-touch-icon"]');
+  if (
+    appleIcon.length !== 1 ||
+    appleIcon.attr("href") !== "/apple-touch-icon.png" ||
+    appleIcon.attr("sizes") !== "180x180"
+  ) {
+    issues.push(
+      finding(
+        "apple-touch-icon-link",
+        fileName,
+        "the 180x180 local Apple touch icon link is required.",
+      ),
+    );
+  }
+
+  const manifest = $('link[rel="manifest"]');
+  if (
+    manifest.length !== 1 ||
+    manifest.attr("href") !== "/manifest.webmanifest"
+  ) {
+    issues.push(
+      finding(
+        "manifest-link",
+        fileName,
+        "the local web manifest link is required.",
+      ),
+    );
+  }
+
   issues.push(
     ...validateStructuredData({
       $,
@@ -672,7 +765,7 @@ function validatePage({
   });
 
   $(
-    "img[src], source[src], video[src], audio[src], link[rel='icon'][href], link[rel='stylesheet'][href], link[rel='preload'][href]",
+    "img[src], source[src], video[src], audio[src], link[rel='icon'][href], link[rel='apple-touch-icon'][href], link[rel='manifest'][href], link[rel='stylesheet'][href], link[rel='preload'][href]",
   ).each((_index, element) => {
     const value = $(element).attr("src") ?? $(element).attr("href");
     const target = internalTarget(value, siteUrl);
@@ -820,6 +913,25 @@ export function validateBuiltOutput({
     ...expectedCategoryRoutes,
     ...expectedArticleRoutes,
   ]);
+  const expectedSocialFiles = new Set([
+    "social/default.png",
+    ...categorySlugs.map((slug) => `social/category-${slug}.png`),
+    ...publishedArticles.map(({ data }) => `social/article-${data.slug}.png`),
+  ]);
+  const actualSocialFiles = new Set(
+    [...normalizedFiles.keys()].filter((fileName) =>
+      fileName.startsWith("social/"),
+    ),
+  );
+  if (!sameSet(actualSocialFiles, expectedSocialFiles)) {
+    issues.push(
+      finding(
+        "social-image-set",
+        "dist/social",
+        membershipMessage(actualSocialFiles, expectedSocialFiles),
+      ),
+    );
+  }
   const htmlFiles = [...normalizedFiles]
     .filter(([fileName]) => fileName.endsWith(".html"))
     .sort(([left], [right]) => left.localeCompare(right));

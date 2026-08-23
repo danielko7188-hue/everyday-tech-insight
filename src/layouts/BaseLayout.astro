@@ -18,6 +18,8 @@ interface Props {
   articleSection?: string;
   activeCategory?: CategorySlug;
   includeEditorialVisualSymbols?: boolean;
+  socialImagePath?: string;
+  socialImageAlt?: string;
   structuredData?: Record<string, unknown> | Record<string, unknown>[];
 }
 
@@ -33,12 +35,15 @@ const {
   articleSection,
   activeCategory,
   includeEditorialVisualSymbols = false,
+  socialImagePath = "/social/default.png",
+  socialImageAlt = "Everyday Tech Insight practical business technology guidance.",
   structuredData = [],
 } = Astro.props;
 
 const canonical = new URL(canonicalOverride ?? path, site.url).toString();
 const rssUrl = new URL("/rss.xml", site.url).toString();
 const ogLocale = site.locale.replaceAll("-", "_");
+const socialImageUrl = new URL(socialImagePath, site.url).toString();
 const jsonLdItems = Array.isArray(structuredData)
   ? structuredData
   : [structuredData];
@@ -54,6 +59,8 @@ const jsonLdItems = Array.isArray(structuredData)
     <meta name="robots" content={robots} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link
       rel="alternate"
       type="application/rss+xml"
@@ -80,9 +87,16 @@ const jsonLdItems = Array.isArray(structuredData)
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={site.name} />
     <meta property="og:locale" content={ogLocale} />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content={socialImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content={socialImageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImageUrl} />
+    <meta name="twitter:image:alt" content={socialImageAlt} />
     {
       ogType === "article" && articlePublishedTime && (
         <meta

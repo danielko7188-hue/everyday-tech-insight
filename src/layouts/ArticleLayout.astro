@@ -51,6 +51,8 @@ const formatDate = (date: string) =>
   articlePublishedTime={data.datePublished}
   articleModifiedTime={data.dateModified}
   articleSection={category.name}
+  socialImagePath={`/social/article-${data.slug}.png`}
+  socialImageAlt={`Social preview for “${data.title}” in ${category.name}.`}
   activeCategory={category.slug}
   includeEditorialVisualSymbols
 >

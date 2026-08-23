@@ -16,16 +16,8 @@
     stroke-width="4"
   />
   <rect x="5" y="5" width="7" height="54" fill="#d84a2f" />
-  <text
-    x="35"
-    y="39"
+  <path
+    d="M22 20h25v5H28v5h16v5H28v5h19v5H22z"
     fill="#171918"
-    font-family="Georgia, serif"
-    font-size="20"
-    font-weight="700"
-    letter-spacing="1"
-    text-anchor="middle"
-  >
-    ETI
-  </text>
+  />
 </svg>

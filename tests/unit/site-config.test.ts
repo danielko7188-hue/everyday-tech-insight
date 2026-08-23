@@ -1,8 +1,15 @@
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { siteConfig, siteUrl } from "../../site.config.mjs";
+import {
+  DEFAULT_SITE_URL,
+  resolveSiteUrl,
+  siteConfig,
+  siteOrigin,
+  siteUrl,
+} from "../../site.config.mjs";
 
 const expectedCategorySlugs = [
   "ai-automation",
@@ -93,6 +100,71 @@ describe("category taxonomy", () => {
 });
 
 describe("static deployment configuration", () => {
+  it("normalizes the explicit canonical HTTPS origin with one trailing slash", () => {
+    expect(resolveSiteUrl("https://business.example")).toBe(
+      "https://business.example/",
+    );
+    expect(resolveSiteUrl("https://business.example/")).toBe(
+      "https://business.example/",
+    );
+    expect(siteOrigin).toBe(new URL(siteUrl).origin);
+  });
+
+  it("falls back only when the candidate is undefined", () => {
+    expect(resolveSiteUrl(undefined)).toBe(DEFAULT_SITE_URL);
+
+    for (const candidate of [null, "", "   "]) {
+      expect(() => resolveSiteUrl(candidate)).toThrow(/HTTPS origin/i);
+    }
+  });
+
+  it.each([
+    "http://business.example",
+    "https://user:secret@business.example",
+    "https://business.example/path",
+    "https://business.example/?preview=1",
+    "https://business.example/#preview",
+    "business.example",
+    "not a URL",
+  ])("rejects a noncanonical supplied site URL: %s", (candidate) => {
+    expect(() => resolveSiteUrl(candidate)).toThrow(/HTTPS origin/i);
+  });
+
+  it("reads only PUBLIC_SITE_URL and ignores Vercel preview variables", () => {
+    const source = readFileSync(
+      new URL("../../site.config.mjs", import.meta.url),
+      "utf8",
+    );
+
+    expect(source).toContain("process.env.PUBLIC_SITE_URL");
+    expect(source).not.toMatch(/process\.env\.(?:VERCEL|VERCEL_URL|URL)/);
+    expect(siteUrl).toBe(resolveSiteUrl(process.env.PUBLIC_SITE_URL));
+  });
+
+  it("uses PUBLIC_SITE_URL in a fresh process while ignoring poisoned preview hosts", () => {
+    const moduleUrl = new URL("../../site.config.mjs", import.meta.url).href;
+    const output = execFileSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "--eval",
+        `const config = await import(${JSON.stringify(moduleUrl)}); process.stdout.write(config.siteUrl);`,
+      ],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PUBLIC_SITE_URL: "https://canonical.example",
+          VERCEL_ENV: "preview",
+          VERCEL_PROJECT_PRODUCTION_URL: "poisoned-production.example",
+          VERCEL_URL: "poisoned-preview.example",
+        },
+      },
+    );
+
+    expect(output).toBe("https://canonical.example/");
+  });
+
   it("builds a canonical static site with trailing slashes and no adapter", async () => {
     const { default: astroConfig } = await import("../../astro.config.mjs");
 
@@ -154,6 +226,31 @@ describe("static deployment configuration", () => {
 
     expect(packageJson.engines?.node).toBe("^22.19.0 || >=24.0.0");
     expect(packageJson.devDependencies?.["@types/node"]).toBe("22.20.1");
+  });
+
+  it("pins Sharp directly and generates social images before every build", () => {
+    const packageJson = readJson("../../package.json") as {
+      scripts?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+
+    expect(packageJson.devDependencies?.sharp).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(packageJson.scripts?.["generate:social"]).toBe(
+      "node scripts/generate-social-images.mjs",
+    );
+    expect(packageJson.scripts?.build).toBe(
+      "npm run generate:social && astro build",
+    );
+  });
+
+  it("uses Vercel's trailing-slash setting without broad redirects", () => {
+    const vercelConfig = readJson("../../vercel.json") as {
+      trailingSlash?: boolean;
+      redirects?: unknown;
+    };
+
+    expect(vercelConfig.trailingSlash).toBe(true);
+    expect(vercelConfig).not.toHaveProperty("redirects");
   });
 
   it("does not allow inline executable scripts in the production CSP", () => {

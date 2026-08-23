@@ -74,6 +74,16 @@ function htmlFixture({
         <meta name="description" content="${description}">
         <link rel="canonical" href="${canonical}">
         <link rel="icon" href="/favicon.svg">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <link rel="manifest" href="/manifest.webmanifest">
+        <meta property="og:image" content="${fixtureOrigin}/social/default.png">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:type" content="image/png">
+        <meta property="og:image:alt" content="Social preview for this fixture page.">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="${fixtureOrigin}/social/default.png">
+        <meta name="twitter:image:alt" content="Social preview for this fixture page.">
       </head>
       <body>
         <header><a href="/" aria-label="Everyday Tech Insight home">ETI</a></header>
@@ -217,7 +227,22 @@ describe("inspectHtml", () => {
         {
           expectedType: "image",
           reference: "link[rel=icon]",
+          url: "/apple-touch-icon.png",
+        },
+        {
+          expectedType: "image",
+          reference: "link[rel=icon]",
           url: "/favicon.svg",
+        },
+        {
+          expectedType: "non-html",
+          reference: "link[href]",
+          url: "/manifest.webmanifest",
+        },
+        {
+          expectedType: "image",
+          reference: "meta[property=og:image]",
+          url: "/social/default.png",
         },
       ],
       canonical: `${fixtureOrigin}/fixture/`,
@@ -327,6 +352,43 @@ describe("inspectHtml", () => {
       name: "duplicate IDs",
       code: "duplicate-id",
       html: () => htmlFixture({ extra: '<div id="page-title"></div>' }),
+    },
+    {
+      name: "missing social image metadata",
+      code: "social-image",
+      html: () => htmlFixture().replace(/<meta property="og:image"[^>]+>/, ""),
+    },
+    {
+      name: "off-origin social image",
+      code: "social-image",
+      html: () =>
+        htmlFixture().replaceAll(
+          `${fixtureOrigin}/social/default.png`,
+          "https://cdn.example/social/default.png",
+        ),
+    },
+    {
+      name: "incomplete social image dimensions",
+      code: "social-image-width",
+      html: () =>
+        htmlFixture().replace(
+          '<meta property="og:image:width" content="1200">',
+          "",
+        ),
+    },
+    {
+      name: "small Twitter card",
+      code: "twitter-card",
+      html: () => htmlFixture().replace("summary_large_image", "summary"),
+    },
+    {
+      name: "mismatched Twitter image",
+      code: "twitter-image",
+      html: () =>
+        htmlFixture().replace(
+          `<meta name="twitter:image" content="${fixtureOrigin}/social/default.png">`,
+          `<meta name="twitter:image" content="${fixtureOrigin}/social/other.png">`,
+        ),
     },
   ])("rejects $name", async ({ code, html, route = "/fixture/" }) => {
     const productionSmoke = asFixtureProductionSmoke(
@@ -445,11 +507,26 @@ describe("production route smoke", () => {
       const override = overrides[url.pathname] ?? {};
       if (override.error) throw override.error;
 
-      if (url.pathname === "/favicon.svg") {
+      if (
+        url.pathname === "/favicon.svg" ||
+        url.pathname === "/apple-touch-icon.png" ||
+        url.pathname === "/social/default.png"
+      ) {
         return new Response(override.body ?? "<svg></svg>", {
           status: override.status ?? 200,
           headers: {
-            "content-type": "image/svg+xml",
+            "content-type": url.pathname.endsWith(".svg")
+              ? "image/svg+xml"
+              : "image/png",
+            ...override.headers,
+          },
+        });
+      }
+      if (url.pathname === "/manifest.webmanifest") {
+        return new Response(override.body ?? "{}", {
+          status: override.status ?? 200,
+          headers: {
+            "content-type": "application/manifest+json",
             ...override.headers,
           },
         });
@@ -536,12 +613,12 @@ describe("production route smoke", () => {
     });
 
     expect(result).toMatchObject({
-      checkedAssets: 1,
+      checkedAssets: 4,
       checkedRoutes: requiredPaths.length,
       issues: [],
       routeResults: requiredPaths.map((path) => ({ path, status: "PASS" })),
     });
-    expect(fetchImpl).toHaveBeenCalledTimes(requiredPaths.length + 1);
+    expect(fetchImpl).toHaveBeenCalledTimes(requiredPaths.length + 4);
     for (const [, options] of fetchImpl.mock.calls) {
       expect(options).toMatchObject({ redirect: "manual" });
     }
@@ -606,6 +683,11 @@ describe("production route smoke", () => {
       name: "broken internal asset",
       code: "asset-status",
       overrides: { "/favicon.svg": { status: 404 } },
+    },
+    {
+      name: "broken social image asset",
+      code: "asset-status",
+      overrides: { "/social/default.png": { status: 404 } },
     },
     {
       name: "internal asset fetch error",

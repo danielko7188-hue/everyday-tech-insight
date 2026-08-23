@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "npm run generate:social && astro build",
     "preview": "astro preview",
     "format": "prettier --plugin=prettier-plugin-astro --no-error-on-unmatched-pattern --write src tests scripts docs astro.config.mjs site.config.mjs eslint.config.js playwright.config.ts vitest.config.ts package.json tsconfig.json vercel.json README.md AGENTS.md",
     "format:check": "prettier --plugin=prettier-plugin-astro --no-error-on-unmatched-pattern --check src tests scripts docs astro.config.mjs site.config.mjs eslint.config.js playwright.config.ts vitest.config.ts package.json tsconfig.json vercel.json README.md AGENTS.md",
@@ -22,6 +22,7 @@
     "check:content": "node scripts/qa-content.mjs",
     "check:seo": "node scripts/qa-build.mjs",
     "check:production": "node scripts/check-production.mjs",
+    "generate:social": "node scripts/generate-social-images.mjs",
     "lighthouse": "node scripts/run-lighthouse.mjs",
     "qa": "npm run format:check && npm run lint && npm run typecheck && npm run test -- --run && npm run build && npm run check:content && npm run check:seo && npm run check:links && npm run test:e2e && npm run lighthouse"
   },
@@ -50,6 +51,7 @@
     "prettier": "3.9.6",
     "prettier-plugin-astro": "0.14.1",
     "saxes": "6.0.0",
+    "sharp": "0.35.3",
     "typescript": "6.0.3",
     "typescript-eslint": "8.67.0",
     "vitest": "4.1.11"
