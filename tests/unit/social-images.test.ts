@@ -1,13 +1,16 @@
 import { createHash } from "node:crypto";
 import {
+  existsSync,
   mkdtempSync,
+  mkdirSync,
   readFileSync,
   readdirSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, parse } from "node:path";
 
 import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";
@@ -132,9 +135,9 @@ describe("social image portfolio", () => {
     const socialDir = join(root, "social");
     const appleIconPath = join(root, "apple-touch-icon.png");
 
-    await generateSocialImages({ appleIconPath, socialDir });
+    await generateSocialImages({ outputRoot: root });
     writeFileSync(join(socialDir, "stale.png"), "stale");
-    await generateSocialImages({ appleIconPath, socialDir });
+    await generateSocialImages({ outputRoot: root });
 
     expect(readdirSync(socialDir).sort()).toEqual(expectedSocialNames);
 
@@ -157,7 +160,7 @@ describe("social image portfolio", () => {
       width: 180,
     });
 
-    await generateSocialImages({ appleIconPath, socialDir });
+    await generateSocialImages({ outputRoot: root });
     expect(
       new Map(
         expectedSocialNames.map((name) => [
@@ -169,21 +172,75 @@ describe("social image portfolio", () => {
     expect(sha256(appleIconPath)).toBe(firstAppleHash);
   });
 
-  it("rejects broad or incorrectly named output targets before cleanup", async () => {
+  it("rejects broad output roots before cleanup", async () => {
     const root = mkdtempSync(join(tmpdir(), "eti-social-safety-"));
     temporaryRoots.push(root);
 
     await expect(
       generateSocialImages({
-        socialDir: root,
-        appleIconPath: join(root, "apple-touch-icon.png"),
+        outputRoot: parse(root).root,
       }),
-    ).rejects.toThrow(/social directory/i);
+    ).rejects.toThrow(/output root/i);
     await expect(
       generateSocialImages({
-        socialDir: join(root, "social"),
-        appleIconPath: join(root, "social", "apple-touch-icon.png"),
+        outputRoot: process.cwd(),
       }),
-    ).rejects.toThrow(/Apple touch icon/i);
+    ).rejects.toThrow(/output root/i);
   });
+
+  it("uses one explicit owned root instead of unrelated output path overrides", async () => {
+    const ownedRoot = mkdtempSync(join(tmpdir(), "eti-social-owned-"));
+    const unrelatedRoot = mkdtempSync(join(tmpdir(), "eti-social-unrelated-"));
+    temporaryRoots.push(ownedRoot, unrelatedRoot);
+
+    const options = {
+      outputRoot: ownedRoot,
+      socialDir: join(unrelatedRoot, "social"),
+      appleIconPath: join(unrelatedRoot, "apple-touch-icon.png"),
+    } as unknown as Parameters<typeof generateSocialImages>[0];
+    await generateSocialImages(options);
+
+    expect(existsSync(join(ownedRoot, "social", "default.png"))).toBe(true);
+    expect(existsSync(join(ownedRoot, "apple-touch-icon.png"))).toBe(true);
+    expect(existsSync(join(unrelatedRoot, "social"))).toBe(false);
+    expect(existsSync(join(unrelatedRoot, "apple-touch-icon.png"))).toBe(false);
+  });
+
+  it.each(["root", "social", "apple"] as const)(
+    "rejects an existing symlinked %s output before cleanup or writes",
+    async (targetKind) => {
+      const parent = mkdtempSync(join(tmpdir(), "eti-social-symlink-"));
+      temporaryRoots.push(parent);
+      const realRoot = join(parent, "eti-social-real-root");
+      const ownedRoot =
+        targetKind === "root"
+          ? join(parent, "eti-social-owned-root")
+          : realRoot;
+      mkdirSync(realRoot);
+
+      if (targetKind === "root") {
+        symlinkSync(realRoot, ownedRoot, "junction");
+      } else {
+        const target = join(parent, `${targetKind}-target`);
+        mkdirSync(target);
+        symlinkSync(
+          target,
+          join(
+            ownedRoot,
+            targetKind === "social" ? "social" : "apple-touch-icon.png",
+          ),
+          "junction",
+        );
+      }
+
+      const options = {
+        outputRoot: ownedRoot,
+        socialDir: join(ownedRoot, "social"),
+        appleIconPath: join(ownedRoot, "apple-touch-icon.png"),
+      } as unknown as Parameters<typeof generateSocialImages>[0];
+      await expect(generateSocialImages(options)).rejects.toThrow(
+        /symbolic link/i,
+      );
+    },
+  );
 });

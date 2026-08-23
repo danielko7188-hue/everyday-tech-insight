@@ -17,7 +17,11 @@ export function resolveSiteUrl(candidate) {
     );
   }
 
+  const lexicalOrigin =
+    candidate === resolved.origin || candidate === `${resolved.origin}/`;
+
   if (
+    !lexicalOrigin ||
     resolved.protocol !== "https:" ||
     resolved.username ||
     resolved.password ||

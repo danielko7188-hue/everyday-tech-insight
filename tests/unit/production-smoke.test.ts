@@ -240,7 +240,7 @@ describe("inspectHtml", () => {
           url: "/manifest.webmanifest",
         },
         {
-          expectedType: "image",
+          expectedType: "image/png",
           reference: "meta[property=og:image]",
           url: "/social/default.png",
         },
@@ -759,6 +759,36 @@ describe("production route smoke", () => {
       }),
     );
   });
+
+  it.each(["image/jpeg", "image/svg+xml"])(
+    "rejects a production social PNG served as %s",
+    async (contentType) => {
+      const productionSmoke = await loadRunner();
+      const routes = productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<{
+        path: string;
+        expectedStatus: number;
+        kind: "html" | "text";
+        canonicalPath?: string;
+      }>;
+      const result = await productionSmoke.runProductionCheck({
+        origin: fixtureOrigin,
+        fetchImpl: makeFetch(routes, {
+          "/social/default.png": {
+            headers: { "content-type": contentType },
+            status: 200,
+          },
+        }),
+      });
+
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          code: "asset-content-type",
+          route: "/social/default.png",
+        }),
+      );
+      expect(result.routeResults).toContainEqual({ path: "/", status: "FAIL" });
+    },
+  );
 
   it("rejects JSON served with 200 status for a PNG reference", async () => {
     const productionSmoke = await loadRunner();

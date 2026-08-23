@@ -588,7 +588,7 @@ export function inspectHtml(
   const assets = collectInternalAssets(html);
   if (socialImagePath) {
     assets.push({
-      expectedType: "image",
+      expectedType: "image/png",
       reference: "meta[property=og:image]",
       url: socialImagePath,
     });

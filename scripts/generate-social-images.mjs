@@ -1,5 +1,12 @@
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, readdirSync, unlinkSync } from "node:fs";
+import {
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  unlinkSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -19,12 +26,7 @@ const articleDirectory = path.join(
   "content",
   "articles",
 );
-const defaultSocialDirectory = path.join(repositoryRoot, "public", "social");
-const defaultAppleIconPath = path.join(
-  repositoryRoot,
-  "public",
-  "apple-touch-icon.png",
-);
+const defaultOutputRoot = path.join(repositoryRoot, "public");
 const fontData = readFileSync(
   path.join(
     repositoryRoot,
@@ -228,41 +230,79 @@ async function writePng(svg, outputPath, width, height) {
     .toFile(outputPath);
 }
 
-function safeOutputTargets(socialDir, appleIconPath) {
-  const resolvedSocialDir = path.resolve(socialDir);
-  const resolvedAppleIconPath = path.resolve(appleIconPath);
-  const parentDirectory = path.dirname(resolvedSocialDir);
-  const filesystemRoot = path.parse(resolvedSocialDir).root;
+function existingPathIsSymbolicLink(candidate) {
+  try {
+    return lstatSync(candidate).isSymbolicLink();
+  } catch (error) {
+    if (error && typeof error === "object" && error.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+}
+
+function assertNoSymbolicLinkInPath(candidate) {
+  const resolved = path.resolve(candidate);
+  const parsed = path.parse(resolved);
+  let current = parsed.root;
+  const segments = resolved
+    .slice(parsed.root.length)
+    .split(path.sep)
+    .filter(Boolean);
+
+  for (const segment of segments) {
+    current = path.join(current, segment);
+    if (existingPathIsSymbolicLink(current)) {
+      throw new Error(
+        `Refusing to use a symbolic link in the social image output path: ${current}`,
+      );
+    }
+  }
+}
+
+function safeOutputTargets(outputRoot) {
+  const resolvedOutputRoot = path.resolve(outputRoot);
+  const filesystemRoot = path.parse(resolvedOutputRoot).root;
+  const resolvedTemporaryRoot = path.resolve(tmpdir());
+  const temporaryRelative = path.relative(
+    resolvedTemporaryRoot,
+    resolvedOutputRoot,
+  );
+  const isOwnedTemporaryRoot =
+    temporaryRelative !== "" &&
+    temporaryRelative !== ".." &&
+    !temporaryRelative.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(temporaryRelative) &&
+    path.basename(resolvedOutputRoot).startsWith("eti-social-");
+  const isProductionRoot = resolvedOutputRoot === defaultOutputRoot;
 
   if (
-    path.basename(resolvedSocialDir).toLowerCase() !== "social" ||
-    resolvedSocialDir === filesystemRoot ||
-    parentDirectory === filesystemRoot ||
-    resolvedSocialDir === repositoryRoot
+    resolvedOutputRoot === filesystemRoot ||
+    resolvedOutputRoot === repositoryRoot ||
+    (!isProductionRoot && !isOwnedTemporaryRoot)
   ) {
     throw new Error(
-      "The social directory must be a narrowly scoped directory named social below a non-root parent.",
+      "The social image output root must be the repository public directory or an explicit owned ETI temporary root.",
     );
   }
-  if (
-    resolvedAppleIconPath !== path.join(parentDirectory, "apple-touch-icon.png")
-  ) {
-    throw new Error(
-      "The Apple touch icon must be the apple-touch-icon.png sibling of the social directory.",
-    );
-  }
+
+  const resolvedSocialDir = path.join(resolvedOutputRoot, "social");
+  const resolvedAppleIconPath = path.join(
+    resolvedOutputRoot,
+    "apple-touch-icon.png",
+  );
+  assertNoSymbolicLinkInPath(resolvedOutputRoot);
+  assertNoSymbolicLinkInPath(resolvedSocialDir);
+  assertNoSymbolicLinkInPath(resolvedAppleIconPath);
 
   return { resolvedAppleIconPath, resolvedSocialDir };
 }
 
 export async function generateSocialImages({
-  appleIconPath = defaultAppleIconPath,
-  socialDir = defaultSocialDirectory,
+  outputRoot = defaultOutputRoot,
 } = {}) {
-  const { resolvedAppleIconPath, resolvedSocialDir } = safeOutputTargets(
-    socialDir,
-    appleIconPath,
-  );
+  const { resolvedAppleIconPath, resolvedSocialDir } =
+    safeOutputTargets(outputRoot);
   mkdirSync(resolvedSocialDir, { recursive: true });
   mkdirSync(path.dirname(resolvedAppleIconPath), { recursive: true });
 
