@@ -26,6 +26,7 @@ import {
 } from "../../scripts/run-lighthouse.mjs";
 import { siteConfig, siteUrl } from "../../site.config.mjs";
 import { site } from "../../src/data/site";
+import { relatedTrustPages } from "../../src/data/trust-pages";
 
 const categorySlugs = [
   "ai-automation",
@@ -34,15 +35,7 @@ const categorySlugs = [
   "digital-operations",
   "technology-strategy",
 ] as const;
-const trustRoutePaths = [
-  "/about/",
-  "/publisher/",
-  "/editorial-standards/",
-  "/corrections/",
-  "/contact/",
-  "/privacy/",
-  "/advertising-disclosure/",
-] as const;
+const trustRoutePaths = relatedTrustPages.map(({ path }) => path);
 
 describe("canonical site configuration", () => {
   it("drives both Astro and runtime metadata from one origin", () => {
@@ -157,12 +150,17 @@ ${
 </head><body><header><a class="site-name" href="/">Everyday Tech Insight</a></header><main>${options.bodyOwnsHeading ? options.body : `<h1>${options.title}</h1>${options.body}`}</main></body></html>`;
 }
 
-function trustShell(title: string, body: string) {
+function trustShell(title: string, body: string, currentPath?: string) {
   return `<article class="trust-content trust-page">
     <header class="trust-page__intro"><h1>${title}</h1></header>
     ${body}
     <nav class="trust-page__related" aria-label="Related publication pages">
-      ${trustRoutePaths.map((path) => `<a href="${path}">${path}</a>`).join("")}
+      ${relatedTrustPages
+        .map(
+          ({ path, label }) =>
+            `<a href="${path}"${path === currentPath ? ' aria-current="page"' : ""}>${label}</a>`,
+        )
+        .join("")}
     </nav>
   </article>`;
 }
@@ -220,7 +218,7 @@ function validBuiltFixture() {
     }
 
     const isTrustRoute = trustRoutePaths.some((path) => path === route);
-    if (isTrustRoute) body = trustShell(title, body);
+    if (isTrustRoute) body = trustShell(title, body, route);
 
     const routeFile =
       route === "/" ? "index.html" : `${route.slice(1)}index.html`;
@@ -507,6 +505,95 @@ describe("built-output QA rules", () => {
         "trust-page-related-nav",
       ]),
     );
+  });
+
+  it.each([
+    {
+      name: "a duplicate valid link replacing About",
+      fileName: "publisher/index.html",
+      code: "trust-page-related-links",
+      mutate: (html: string) =>
+        html.replace(
+          '<a href="/about/">About</a>',
+          '<a href="/publisher/">Publisher</a>',
+        ),
+    },
+    {
+      name: "a wrong link label",
+      fileName: "publisher/index.html",
+      code: "trust-page-related-links",
+      mutate: (html: string) =>
+        html.replace(
+          '<a href="/privacy/">Privacy</a>',
+          '<a href="/privacy/">Privacy policy</a>',
+        ),
+    },
+    {
+      name: "the canonical links in the wrong order",
+      fileName: "publisher/index.html",
+      code: "trust-page-related-links",
+      mutate: (html: string) =>
+        html
+          .replace('<a href="/about/">About</a>', "__ABOUT_LINK__")
+          .replace(
+            '<a href="/publisher/" aria-current="page">Publisher</a>',
+            '<a href="/about/">About</a>',
+          )
+          .replace(
+            "__ABOUT_LINK__",
+            '<a href="/publisher/" aria-current="page">Publisher</a>',
+          ),
+    },
+    {
+      name: "a missing current-page marker",
+      fileName: "publisher/index.html",
+      code: "trust-page-related-current",
+      mutate: (html: string) =>
+        html.replace(
+          '<a href="/publisher/" aria-current="page">Publisher</a>',
+          '<a href="/publisher/">Publisher</a>',
+        ),
+    },
+    {
+      name: "a current-page marker on the wrong trust link",
+      fileName: "publisher/index.html",
+      code: "trust-page-related-current",
+      mutate: (html: string) =>
+        html
+          .replace(
+            '<a href="/about/">About</a>',
+            '<a href="/about/" aria-current="page">About</a>',
+          )
+          .replace(
+            '<a href="/publisher/" aria-current="page">Publisher</a>',
+            '<a href="/publisher/">Publisher</a>',
+          ),
+    },
+    {
+      name: "a current-page marker on the 404 navigation",
+      fileName: "404.html",
+      code: "trust-page-related-current",
+      mutate: (html: string) =>
+        html.replace(
+          '<a href="/about/">About</a>',
+          '<a href="/about/" aria-current="page">About</a>',
+        ),
+    },
+  ])("rejects $name", ({ fileName, code, mutate }) => {
+    const fixture = validBuiltFixture();
+    const original = fixture.files.get(fileName)!;
+    const mutated = mutate(original);
+    expect(mutated).not.toBe(original);
+    fixture.files.set(fileName, mutated);
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).map(({ code: findingCode }) => findingCode);
+
+    expect(codes).toContain(code);
   });
 
   it("rejects built descriptions over 180 characters", () => {

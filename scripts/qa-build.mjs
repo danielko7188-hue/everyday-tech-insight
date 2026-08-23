@@ -12,27 +12,22 @@ import {
 } from "./qa-content.mjs";
 import { siteConfig, siteUrl as configuredSiteUrl } from "../site.config.mjs";
 
+const TRUST_NAVIGATION = JSON.parse(
+  await readFile(
+    new URL("../src/data/trust-navigation.json", import.meta.url),
+    "utf8",
+  ),
+);
+
 const FIXED_INDEXABLE_ROUTES = [
   "/",
   "/categories/",
   "/toolkit/",
-  "/about/",
-  "/publisher/",
-  "/editorial-standards/",
-  "/corrections/",
-  "/contact/",
-  "/privacy/",
-  "/advertising-disclosure/",
+  ...TRUST_NAVIGATION.map(({ path: routePath }) => routePath),
   "/sitemap/",
 ];
 const TRUST_PAGE_ROUTES = new Set([
-  "/about/",
-  "/publisher/",
-  "/editorial-standards/",
-  "/corrections/",
-  "/contact/",
-  "/privacy/",
-  "/advertising-disclosure/",
+  ...TRUST_NAVIGATION.map(({ path: routePath }) => routePath),
   "/404.html",
 ]);
 const PLACEHOLDER_PATTERN =
@@ -499,6 +494,50 @@ function validatePage({
           "trust-page-related-nav",
           fileName,
           `trust route must expose exactly one related publication nav; found ${relatedNavs.length}.`,
+        ),
+      );
+    }
+
+    const actualRelatedLinks = relatedNavs
+      .find("a")
+      .map((_index, element) => ({
+        href: $(element).attr("href") ?? "",
+        label: $(element).text().replace(/\s+/g, " ").trim(),
+      }))
+      .get();
+    const hasCanonicalRelatedLinks =
+      actualRelatedLinks.length === TRUST_NAVIGATION.length &&
+      TRUST_NAVIGATION.every(
+        (expectedLink, index) =>
+          actualRelatedLinks[index]?.href === expectedLink.path &&
+          actualRelatedLinks[index]?.label === expectedLink.label,
+      );
+    if (!hasCanonicalRelatedLinks) {
+      issues.push(
+        finding(
+          "trust-page-related-links",
+          fileName,
+          "related publication links must match the canonical ordered href and label list.",
+        ),
+      );
+    }
+
+    const currentNodes = relatedNavs.find("[aria-current]");
+    const expectedCurrentPath = isNotFound ? null : route;
+    const hasCorrectCurrentPage = expectedCurrentPath
+      ? currentNodes.length === 1 &&
+        currentNodes.first().is("a") &&
+        currentNodes.first().attr("aria-current") === "page" &&
+        currentNodes.first().attr("href") === expectedCurrentPath
+      : currentNodes.length === 0;
+    if (!hasCorrectCurrentPage) {
+      issues.push(
+        finding(
+          "trust-page-related-current",
+          fileName,
+          expectedCurrentPath
+            ? `related publication links must mark only ${expectedCurrentPath} as the current page.`
+            : "the 404 related publication links must not mark a current page.",
         ),
       );
     }

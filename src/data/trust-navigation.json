@@ -1,0 +1,21 @@
+[
+  { "key": "about", "path": "/about/", "label": "About" },
+  { "key": "publisher", "path": "/publisher/", "label": "Publisher" },
+  {
+    "key": "editorialStandards",
+    "path": "/editorial-standards/",
+    "label": "Editorial standards"
+  },
+  {
+    "key": "corrections",
+    "path": "/corrections/",
+    "label": "Corrections"
+  },
+  { "key": "contact", "path": "/contact/", "label": "Contact" },
+  { "key": "privacy", "path": "/privacy/", "label": "Privacy" },
+  {
+    "key": "advertisingDisclosure",
+    "path": "/advertising-disclosure/",
+    "label": "Advertising disclosure"
+  }
+]

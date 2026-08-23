@@ -1,4 +1,41 @@
 import { site } from "./site";
+import trustNavigationData from "./trust-navigation.json";
+
+export const trustPageKeys = [
+  "about",
+  "publisher",
+  "editorialStandards",
+  "corrections",
+  "contact",
+  "privacy",
+  "advertisingDisclosure",
+] as const;
+
+export type TrustPageKey = (typeof trustPageKeys)[number];
+
+interface TrustNavigationEntry {
+  key: TrustPageKey;
+  path: string;
+  label: string;
+}
+
+export const relatedTrustPages =
+  trustNavigationData as readonly TrustNavigationEntry[];
+
+const trustNavigationByKey = Object.fromEntries(
+  relatedTrustPages.map((entry) => [entry.key, entry]),
+) as Record<TrustPageKey, TrustNavigationEntry>;
+
+if (
+  relatedTrustPages.length !== trustPageKeys.length ||
+  new Set(relatedTrustPages.map(({ key }) => key)).size !==
+    trustPageKeys.length ||
+  trustPageKeys.some((key) => !trustNavigationByKey[key])
+) {
+  throw new Error(
+    "Trust navigation must define every trust page exactly once.",
+  );
+}
 
 export interface TrustPageDefinition {
   path: string;
@@ -13,71 +50,71 @@ export interface TrustPageDefinition {
 
 export const trustPages = {
   about: {
-    path: "/about/",
+    path: trustNavigationByKey.about.path,
     title: `About the publication | ${site.name}`,
     description:
       "Learn how Everyday Tech Insight connects small-business problems with practical, source-backed technology decisions and reader outcomes.",
-    breadcrumbLabel: "About",
+    breadcrumbLabel: trustNavigationByKey.about.label,
     eyebrow: "Publication purpose",
     heading: "About Everyday Tech Insight",
     deck: "Everyday Tech Insight publishes practical guidance at the intersection of business needs and everyday technology decisions.",
   },
   publisher: {
-    path: "/publisher/",
+    path: trustNavigationByKey.publisher.path,
     title: `Publisher and practical guides | ${site.name}`,
     description:
       "Learn what Everyday Tech Insight publishes for small-business decision makers, browse its published practical technology guides, and review its public identity boundary.",
-    breadcrumbLabel: "Publisher",
+    breadcrumbLabel: trustNavigationByKey.publisher.label,
     eyebrow: "Publication purpose and guides",
     heading: "Publisher",
     deck: "Everyday Tech Insight publishes practical guides for small-business decision makers navigating everyday technology decisions.",
   },
   editorialStandards: {
-    path: "/editorial-standards/",
+    path: trustNavigationByKey.editorialStandards.path,
     title: `Editorial standards and sourcing | ${site.name}`,
     description:
       "How Everyday Tech Insight selects topics, verifies claims, compares software, separates commercial interests, uses AI assistance, and handles corrections.",
-    breadcrumbLabel: "Editorial standards",
+    breadcrumbLabel: trustNavigationByKey.editorialStandards.label,
     eyebrow: "How publication decisions are made",
     heading: "Editorial standards",
     deck: "Every published guide must connect a real business problem to a practical technology decision and stay within the evidence available.",
   },
   corrections: {
-    path: "/corrections/",
+    path: trustNavigationByKey.corrections.path,
     title: `Corrections process | ${site.name}`,
     description:
       "How to report a factual error, broken source, or material omission to Everyday Tech Insight through the public GitHub issue tracker.",
-    breadcrumbLabel: "Corrections",
+    breadcrumbLabel: trustNavigationByKey.corrections.label,
     eyebrow: "Accuracy and updates",
     heading: "Corrections",
     deck: "Factual errors, broken primary sources, and material omissions should be reported so the affected guide can be reviewed.",
   },
   contact: {
-    path: "/contact/",
+    path: trustNavigationByKey.contact.path,
     title: `Contact the publication | ${site.name}`,
     description:
       "Contact Everyday Tech Insight about editorial questions or site problems through its public GitHub issue tracker without sharing private information.",
-    breadcrumbLabel: "Contact",
+    breadcrumbLabel: trustNavigationByKey.contact.label,
     eyebrow: "Public contact channel",
     heading: "Contact",
     deck: "Editorial questions, accessibility problems, and site issues can be submitted through the publication's public issue tracker.",
   },
   privacy: {
-    path: "/privacy/",
+    path: trustNavigationByKey.privacy.path,
     title: `Privacy practices for this static site | ${site.name}`,
     description:
       "A factual description of the static site's current cookies, storage, analytics, advertising, contact, hosting, and public GitHub issue practices.",
-    breadcrumbLabel: "Privacy",
+    breadcrumbLabel: trustNavigationByKey.privacy.label,
     eyebrow: "Current site behavior",
     heading: "Privacy",
     deck: "This notice describes the code and services currently used by the static Everyday Tech Insight site as reviewed on August 22, 2026.",
   },
   advertisingDisclosure: {
-    path: "/advertising-disclosure/",
+    path: trustNavigationByKey.advertisingDisclosure.path,
     title: `Advertising and compensation disclosure | ${site.name}`,
     description:
       "The current advertising, affiliate, sponsorship, compensation, and AdSense status of the Everyday Tech Insight static publication.",
-    breadcrumbLabel: "Advertising disclosure",
+    breadcrumbLabel: trustNavigationByKey.advertisingDisclosure.label,
     eyebrow: "Current commercial status",
     heading: "Advertising disclosure",
     deck: "Everyday Tech Insight does not currently run advertising on this static site.",
@@ -94,21 +131,3 @@ export const trustPages = {
     robots: "noindex,follow",
   },
 } as const satisfies Record<string, TrustPageDefinition>;
-
-export const trustPageKeys = [
-  "about",
-  "publisher",
-  "editorialStandards",
-  "corrections",
-  "contact",
-  "privacy",
-  "advertisingDisclosure",
-] as const;
-
-export type TrustPageKey = (typeof trustPageKeys)[number];
-
-export const relatedTrustPages = trustPageKeys.map((key) => ({
-  key,
-  path: trustPages[key].path,
-  label: trustPages[key].breadcrumbLabel,
-}));
