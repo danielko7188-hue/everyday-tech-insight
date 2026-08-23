@@ -225,6 +225,79 @@ for (const viewport of [
   });
 }
 
+test("wide homepage lead keeps automation on one rendered line", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto("/");
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+
+  const wordRectCount = await page
+    .locator(".front-page__lead .article-card__title a")
+    .evaluate((link) => {
+      const targetWord = "automation";
+      const walker = document.createTreeWalker(link, NodeFilter.SHOW_TEXT);
+      const textNodes: Text[] = [];
+      let combinedText = "";
+
+      while (walker.nextNode()) {
+        const textNode = walker.currentNode as Text;
+        textNodes.push(textNode);
+        combinedText += textNode.data;
+      }
+
+      const targetStart = combinedText.toLowerCase().lastIndexOf(targetWord);
+      if (targetStart < 0) return 0;
+
+      const range = document.createRange();
+      let cursor = 0;
+      let startSet = false;
+
+      for (const textNode of textNodes) {
+        const nodeEnd = cursor + textNode.length;
+        if (!startSet && targetStart < nodeEnd) {
+          range.setStart(textNode, targetStart - cursor);
+          startSet = true;
+        }
+
+        const targetEnd = targetStart + targetWord.length;
+        if (startSet && targetEnd <= nodeEnd) {
+          range.setEnd(textNode, targetEnd - cursor);
+          break;
+        }
+        cursor = nodeEnd;
+      }
+
+      return range.getClientRects().length;
+    });
+
+  expect(wordRectCount).toBe(1);
+});
+
+test("tablet article evidence keeps the reviewed date on one line", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+
+  const renderedLines = await page
+    .locator(".article-evidence li:nth-child(2)")
+    .evaluate((item) => {
+      const range = document.createRange();
+      range.selectNodeContents(item);
+      return new Set(
+        Array.from(range.getClientRects(), (rect) => Math.round(rect.top)),
+      ).size;
+    });
+
+  expect(renderedLines).toBe(1);
+});
+
 test("homepage issue label stays semantic without entering the layout", async ({
   page,
 }) => {

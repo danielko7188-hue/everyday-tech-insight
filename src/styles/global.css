@@ -643,7 +643,10 @@ strong {
 
 .article-card__title a {
   color: var(--color-ink);
+  hyphens: none;
+  overflow-wrap: normal;
   text-decoration-color: transparent;
+  word-break: normal;
 }
 
 .article-card__title a:visited {
@@ -1796,8 +1799,7 @@ strong {
   }
 
   .article-evidence ul {
-    grid-template-columns: repeat(4, minmax(0, auto));
-    justify-content: start;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .fit-summary {
@@ -1869,11 +1871,16 @@ strong {
   }
 
   .article-card--lead {
-    grid-template-columns: minmax(0, 5fr) minmax(17rem, 3fr);
+    grid-template-columns: minmax(0, 4fr) minmax(20rem, 3fr);
   }
 
   .article-card--lead .article-card__copy {
     padding: var(--space-8);
+  }
+
+  .article-evidence ul {
+    grid-template-columns: repeat(4, minmax(0, auto));
+    justify-content: start;
   }
 
   .topic-directory--compact ol {
