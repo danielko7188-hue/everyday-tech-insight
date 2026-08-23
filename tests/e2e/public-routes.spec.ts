@@ -209,6 +209,71 @@ test("home explains the publication and links all five categories", async ({
   }
 });
 
+test("editorial pages ship only the local visual symbols they render", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const homeReferences = await page
+    .locator("[data-editorial-visual] use")
+    .evaluateAll((uses) =>
+      uses.map((use) => use.getAttribute("href")).filter(Boolean),
+    );
+  expect(homeReferences).toHaveLength(1);
+  await expect(page.locator("body > svg > symbol")).toHaveCount(1);
+  await expect(page.locator(`symbol${homeReferences[0]}`)).toHaveCount(1);
+
+  await page.goto(`/articles/${articleSlug}/`);
+  const articleReference = await page
+    .locator(".article-hero__visual use")
+    .getAttribute("href");
+  expect(articleReference).toBeTruthy();
+  await expect(page.locator("body > svg > symbol")).toHaveCount(1);
+  await expect(page.locator(`symbol${articleReference}`)).toHaveCount(1);
+});
+
+test("deferred article blocks reserve stable cold-page geometry", async ({
+  page,
+}) => {
+  const cases = [
+    "/articles/create-a-simple-technology-risk-register/",
+    "/articles/write-a-practical-ai-acceptable-use-policy/",
+  ] as const;
+
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+
+    for (const path of cases) {
+      await page.goto(path);
+      const initialHeight = await page.evaluate(
+        () => document.documentElement.scrollHeight,
+      );
+      const deferredBlocks = page.locator(".article-body > :nth-child(n + 5)");
+      const fallbackSizes = await deferredBlocks.evaluateAll((elements) =>
+        elements.map(
+          (element) => getComputedStyle(element).containIntrinsicBlockSize,
+        ),
+      );
+
+      expect(fallbackSizes.length).toBeGreaterThan(0);
+      expect(fallbackSizes).not.toContain("none");
+      expect(fallbackSizes).not.toContain("auto 0px");
+
+      for (let index = 0; index < (await deferredBlocks.count()); index += 1) {
+        await deferredBlocks.nth(index).scrollIntoViewIfNeeded();
+      }
+
+      const materializedHeight = await page.evaluate(
+        () => document.documentElement.scrollHeight,
+      );
+      const relativeDelta =
+        Math.abs(initialHeight - materializedHeight) / materializedHeight;
+
+      expect(relativeDelta).toBeLessThan(0.1);
+    }
+  }
+});
+
 test("toolkit landing publishes four outcome-led cards with detail, guide, and CSV actions", async ({
   page,
   request,
@@ -670,6 +735,9 @@ test("category directory visuals resolve their local symbol definitions", async 
       uses.map((use) => use.getAttribute("href")).filter(Boolean),
     );
   expect(symbolReferences).toHaveLength(categories.length);
+  await expect(page.locator("body > svg > symbol")).toHaveCount(
+    categories.length,
+  );
 
   for (const reference of symbolReferences) {
     await expect(page.locator(`symbol${reference}`)).toHaveCount(1);
@@ -969,6 +1037,7 @@ test("every published guide renders its assigned informative visual and local sy
       page.locator(`symbol#${data.visual.key}`),
       data.slug,
     ).toHaveCount(1);
+    await expect(page.locator("body > svg > symbol"), data.slug).toHaveCount(1);
 
     if (data.visual.caption) {
       await expect(visual.locator("figcaption"), data.slug).toHaveText(

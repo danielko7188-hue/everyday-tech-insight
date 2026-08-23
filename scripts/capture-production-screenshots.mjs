@@ -538,6 +538,30 @@ async function stabilizePage(page) {
   });
 }
 
+async function materializeDeferredContent(page) {
+  await page.evaluate(async () => {
+    const deferred = Array.from(
+      globalThis.document.querySelectorAll("*"),
+    ).filter(
+      (element) =>
+        globalThis.getComputedStyle(element).contentVisibility === "auto",
+    );
+    const nextFrame = () =>
+      new Promise((resolve) => globalThis.requestAnimationFrame(resolve));
+
+    for (const element of deferred) {
+      element.scrollIntoView({ block: "center" });
+      await nextFrame();
+    }
+    globalThis.scrollTo({ left: 0, top: 0 });
+    for (const element of deferred) {
+      element.style.contentVisibility = "visible";
+    }
+    await nextFrame();
+    await nextFrame();
+  });
+}
+
 export async function captureProductionScreenshots(candidate) {
   const origin = normalizeCaptureOrigin(candidate);
   const expectedNames = buildCapturePlan(origin).map(
@@ -576,6 +600,7 @@ export async function captureProductionScreenshots(candidate) {
             path: aboveFoldPath,
             scale: "css",
           });
+          await materializeDeferredContent(page);
           const fullPagePath = path.join(
             paths.pendingDirectory,
             `${width}-${route.alias}-full.png`,

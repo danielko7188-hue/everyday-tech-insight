@@ -4,6 +4,7 @@ import Header from "../components/Header.astro";
 import EditorialVisualSymbols from "../components/EditorialVisualSymbols.astro";
 import type { CategorySlug } from "../data/categories";
 import { site } from "../data/site";
+import type { ArticleVisual } from "../utils/content-contract";
 import "../styles/global.css";
 
 interface Props {
@@ -17,7 +18,7 @@ interface Props {
   articleModifiedTime?: string;
   articleSection?: string;
   activeCategory?: CategorySlug;
-  includeEditorialVisualSymbols?: boolean;
+  editorialVisualSymbolIds?: readonly (CategorySlug | ArticleVisual["key"])[];
   socialImagePath?: string;
   socialImageAlt?: string;
   structuredData?: Record<string, unknown> | Record<string, unknown>[];
@@ -34,7 +35,7 @@ const {
   articleModifiedTime,
   articleSection,
   activeCategory,
-  includeEditorialVisualSymbols = false,
+  editorialVisualSymbolIds = [],
   socialImagePath = "/social/default.png",
   socialImageAlt = "Everyday Tech Insight practical business technology guidance.",
   structuredData = [],
@@ -126,7 +127,11 @@ const jsonLdItems = Array.isArray(structuredData)
     }
   </head>
   <body>
-    {includeEditorialVisualSymbols && <EditorialVisualSymbols />}
+    {
+      editorialVisualSymbolIds.length > 0 && (
+        <EditorialVisualSymbols symbolIds={editorialVisualSymbolIds} />
+      )
+    }
     <a class="skip-link" href="#main-content">Skip to content</a>
     <Header currentPath={path} activeCategory={activeCategory} />
     <main id="main-content" tabindex="-1">

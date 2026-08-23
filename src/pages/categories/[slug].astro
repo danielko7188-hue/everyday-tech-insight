@@ -69,7 +69,7 @@ const description = category.description;
   socialImagePath={`/social/category-${category.slug}.png`}
   socialImageAlt={`Social preview for the ${category.name} topic.`}
   activeCategory={category.slug}
-  includeEditorialVisualSymbols
+  editorialVisualSymbolIds={[category.slug]}
 >
   <div
     class="page-shell category-page"

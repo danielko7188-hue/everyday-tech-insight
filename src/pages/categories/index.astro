@@ -21,7 +21,7 @@ const description =
   title={title}
   description={description}
   path="/categories/"
-  includeEditorialVisualSymbols
+  editorialVisualSymbolIds={categories.map(({ slug }) => slug)}
 >
   <div class="page-shell category-directory-page">
     <Breadcrumbs

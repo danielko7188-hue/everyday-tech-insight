@@ -54,7 +54,7 @@ const formatDate = (date: string) =>
   socialImagePath={`/social/article-${data.slug}.png`}
   socialImageAlt={`Social preview for “${data.title}” in ${category.name}.`}
   activeCategory={category.slug}
-  includeEditorialVisualSymbols
+  editorialVisualSymbolIds={[data.visual.key]}
 >
   <div class="page-shell article-shell">
     <Breadcrumbs

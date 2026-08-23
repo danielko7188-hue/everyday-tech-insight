@@ -115,6 +115,29 @@ async function stabilizePage(page: Page): Promise<void> {
   );
 }
 
+async function materializeDeferredContent(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const deferred = Array.from(
+      document.querySelectorAll<HTMLElement>("*"),
+    ).filter(
+      (element) => getComputedStyle(element).contentVisibility === "auto",
+    );
+    const nextFrame = () =>
+      new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+    for (const element of deferred) {
+      element.scrollIntoView({ block: "center" });
+      await nextFrame();
+    }
+    window.scrollTo({ left: 0, top: 0 });
+    for (const element of deferred) {
+      element.style.contentVisibility = "visible";
+    }
+    await nextFrame();
+    await nextFrame();
+  });
+}
+
 async function visitStablePage(
   page: Page,
   path: string,
@@ -176,6 +199,7 @@ for (const route of routes) {
         await expectTabletFooterColumnsDoNotOverlap(page);
       }
 
+      await materializeDeferredContent(page);
       await expect(page).toHaveScreenshot(`${width}-${route.alias}-full.png`, {
         fullPage: true,
       });

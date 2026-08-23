@@ -492,6 +492,31 @@ strong {
   padding-block: var(--space-10);
 }
 
+.home-section,
+.home-page > .how-we-work {
+  content-visibility: auto;
+}
+
+.latest-briefing {
+  contain-intrinsic-block-size: auto 71rem;
+}
+
+.start-here {
+  contain-intrinsic-block-size: auto 53rem;
+}
+
+.topic-directory--compact {
+  contain-intrinsic-block-size: auto 54rem;
+}
+
+.featured-toolkit {
+  contain-intrinsic-block-size: auto 28.5rem;
+}
+
+.home-page > .how-we-work {
+  contain-intrinsic-block-size: auto 29.5rem;
+}
+
 .latest-briefing,
 .start-here,
 .topic-directory--compact,
@@ -1201,6 +1226,38 @@ strong {
   line-height: 1.68;
 }
 
+.article-body > :nth-child(n + 5) {
+  content-visibility: auto;
+}
+
+.article-body > p:nth-child(n + 5) {
+  contain-intrinsic-block-size: auto 10.5rem;
+}
+
+.article-body > h2:nth-child(n + 5) {
+  contain-intrinsic-block-size: auto 4rem;
+}
+
+.article-body > :is(ul, ol):nth-child(n + 5) {
+  contain-intrinsic-block-size: auto 20rem;
+}
+
+.article-body > h3:nth-child(n + 5) {
+  contain-intrinsic-block-size: auto 1.5rem;
+}
+
+.article-body > .table-scroll:nth-child(n + 5) {
+  contain-intrinsic-block-size: auto 22rem;
+}
+
+.article-body > pre:nth-child(n + 5) {
+  contain-intrinsic-block-size: auto 11rem;
+}
+
+.article-body > blockquote:nth-child(n + 5) {
+  contain-intrinsic-block-size: auto 8rem;
+}
+
 .article-body > :first-child {
   margin-block-start: 0;
 }
@@ -1901,6 +1958,54 @@ strong {
 }
 
 @media (min-width: 48rem) {
+  .article-body > p:nth-child(n + 5) {
+    contain-intrinsic-block-size: auto 6.25rem;
+  }
+
+  .article-body > h2:nth-child(n + 5) {
+    contain-intrinsic-block-size: auto 2.75rem;
+  }
+
+  .article-body > :is(ul, ol):nth-child(n + 5) {
+    contain-intrinsic-block-size: auto 17rem;
+  }
+
+  .article-body > h3:nth-child(n + 5) {
+    contain-intrinsic-block-size: auto 1.75rem;
+  }
+
+  .article-body > .table-scroll:nth-child(n + 5) {
+    contain-intrinsic-block-size: auto 27rem;
+  }
+
+  .article-body > pre:nth-child(n + 5) {
+    contain-intrinsic-block-size: auto 11rem;
+  }
+
+  .article-body > blockquote:nth-child(n + 5) {
+    contain-intrinsic-block-size: auto 6.5rem;
+  }
+
+  .latest-briefing {
+    contain-intrinsic-block-size: auto 40rem;
+  }
+
+  .start-here {
+    contain-intrinsic-block-size: auto 37rem;
+  }
+
+  .topic-directory--compact {
+    contain-intrinsic-block-size: auto 36rem;
+  }
+
+  .featured-toolkit {
+    contain-intrinsic-block-size: auto 20.5rem;
+  }
+
+  .home-page > .how-we-work {
+    contain-intrinsic-block-size: auto 19.5rem;
+  }
+
   .page-shell {
     padding-block: var(--space-12) var(--space-20);
   }
@@ -2122,6 +2227,23 @@ strong {
 }
 
 @media (min-width: 67.5rem) {
+  .latest-briefing,
+  .start-here {
+    contain-intrinsic-block-size: auto 29.5rem;
+  }
+
+  .topic-directory--compact {
+    contain-intrinsic-block-size: auto 20.5rem;
+  }
+
+  .featured-toolkit {
+    contain-intrinsic-block-size: auto 15.75rem;
+  }
+
+  .home-page > .how-we-work {
+    contain-intrinsic-block-size: auto 9.125rem;
+  }
+
   .fit-summary dl {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }

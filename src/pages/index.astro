@@ -36,6 +36,9 @@ const topicCounts = new Map(
     ).length,
   ]),
 );
+const editorialVisualSymbolIds = leadArticle
+  ? [leadArticle.data.visual.key]
+  : [];
 
 const title = `${site.name} | Practical Business Technology`;
 const description =
@@ -54,7 +57,7 @@ const websiteStructuredData = {
   title={title}
   description={description}
   path="/"
-  includeEditorialVisualSymbols
+  editorialVisualSymbolIds={editorialVisualSymbolIds}
   structuredData={websiteStructuredData}
 >
   <div class="page-shell home-page">
