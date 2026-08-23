@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { siteUrl } from "../../site.config.mjs";
+import { siteConfig, siteUrl } from "../../site.config.mjs";
 
 const articleSlug = "how-to-identify-business-tasks-for-automation";
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
@@ -579,9 +579,53 @@ test("every public HTML route has one H1 and unique core metadata", async ({
       page.locator('meta[property="og:url"]'),
       route,
     ).toHaveAttribute("content", absoluteSiteUrl(route));
+    await expect(
+      page.locator('meta[property="og:site_name"]'),
+      route,
+    ).toHaveAttribute("content", siteConfig.name);
+    await expect(
+      page.locator('meta[property="og:locale"]'),
+      route,
+    ).toHaveAttribute("content", "en_US");
+    await expect(
+      page.locator('meta[name="twitter:card"]'),
+      route,
+    ).toHaveAttribute("content", "summary");
+    await expect(
+      page.locator('meta[name="twitter:title"]'),
+      route,
+    ).toHaveAttribute("content", title);
+    await expect(
+      page.locator('meta[name="twitter:description"]'),
+      route,
+    ).toHaveAttribute("content", description);
+    await expect(
+      page.locator('link[rel="alternate"][type="application/rss+xml"]'),
+      route,
+    ).toHaveAttribute("href", absoluteSiteUrl("/rss.xml"));
     await expect(page.locator('meta[property="og:image"]'), route).toHaveCount(
       0,
     );
+
+    if (route.startsWith("/articles/")) {
+      await expect(
+        page.locator('meta[property="article:published_time"]'),
+        route,
+      ).toHaveAttribute("content", "2026-08-21");
+      await expect(
+        page.locator('meta[property="article:section"]'),
+        route,
+      ).toHaveAttribute("content", "AI & Automation");
+      await expect(
+        page.locator('meta[property="article:modified_time"]'),
+        route,
+      ).toHaveCount(0);
+    } else {
+      await expect(
+        page.locator('meta[property^="article:"]'),
+        route,
+      ).toHaveCount(0);
+    }
 
     expect(titles.has(title), `duplicate title: ${title}`).toBe(false);
     expect(

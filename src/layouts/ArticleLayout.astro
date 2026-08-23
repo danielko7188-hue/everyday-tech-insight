@@ -46,6 +46,9 @@ const formatDate = (date: string) =>
   path={articlePath}
   canonical={data.canonicalOverride}
   ogType="article"
+  articlePublishedTime={data.datePublished}
+  articleModifiedTime={data.dateModified}
+  articleSection={category.name}
   activeCategory={category.slug}
   includeEditorialVisualSymbols
 >
