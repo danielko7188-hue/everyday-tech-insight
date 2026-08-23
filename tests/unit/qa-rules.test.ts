@@ -362,20 +362,20 @@ function validBuiltFixture() {
   );
   files.set(
     "sitemap-index.xml",
-    `<?xml version="1.0"?><sitemapindex><sitemap><loc>${siteUrl}sitemap-0.xml</loc></sitemap></sitemapindex>`,
+    `<?xml version="1.0"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>${siteUrl}sitemap-0.xml</loc></sitemap></sitemapindex>`,
   );
   files.set(
     "sitemap-0.xml",
-    `<?xml version="1.0"?><urlset>${indexableRoutes
+    `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${indexableRoutes
       .map((route) => `<url><loc>${new URL(route, siteUrl)}</loc></url>`)
       .join("")}</urlset>`,
   );
   files.set(
     "rss.xml",
-    `<?xml version="1.0"?><rss><channel><link>${siteUrl}</link>${articleRoutes
+    `<?xml version="1.0"?><rss version="2.0"><channel><title>Everyday Tech Insight</title><link>${siteUrl}</link><description>Practical business technology guidance.</description>${articleRoutes
       .map(
         (route) =>
-          `<item><link>${new URL(route, siteUrl)}</link><guid>${new URL(route, siteUrl)}</guid></item>`,
+          `<item><title>${route}</title><link>${new URL(route, siteUrl)}</link><guid>${new URL(route, siteUrl)}</guid></item>`,
       )
       .join("")}</channel></rss>`,
   );
@@ -512,6 +512,105 @@ describe("built-output QA rules", () => {
         siteUrl,
       }),
     ).toEqual([]);
+  });
+
+  it("rejects duplicate required robots directives", () => {
+    const fixture = validBuiltFixture();
+    fixture.files.set(
+      "robots.txt",
+      `${fixture.files.get("robots.txt")!}User-agent: *\nAllow: /\nSitemap: ${siteUrl}sitemap-index.xml\n`,
+    );
+
+    expect(
+      validateBuiltOutput({
+        files: fixture.files,
+        articles: fixture.articles,
+        categorySlugs: [...categorySlugs],
+        siteUrl,
+      }),
+    ).toContainEqual(expect.objectContaining({ code: "robots-file" }));
+  });
+
+  it.each(["/articles/", "/*"])(
+    "rejects a nonempty robots Disallow rule for %s",
+    (disallowedPath) => {
+      const fixture = validBuiltFixture();
+      fixture.files.set(
+        "robots.txt",
+        `${fixture.files.get("robots.txt")!}Disallow: ${disallowedPath}\n`,
+      );
+
+      expect(
+        validateBuiltOutput({
+          files: fixture.files,
+          articles: fixture.articles,
+          categorySlugs: [...categorySlugs],
+          siteUrl,
+        }),
+      ).toContainEqual(expect.objectContaining({ code: "robots-file" }));
+    },
+  );
+
+  it.each([
+    ["sitemap-index.xml", "sitemapindex"],
+    ["sitemap-0.xml", "urlset"],
+  ])("requires the Sitemap 0.9 namespace on %s", (fileName, rootName) => {
+    const fixture = validBuiltFixture();
+    fixture.files.set(
+      fileName,
+      fixture.files
+        .get(fileName)!
+        .replace(
+          `<${rootName} xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
+          `<${rootName}>`,
+        ),
+    );
+
+    expect(
+      validateBuiltOutput({
+        files: fixture.files,
+        articles: fixture.articles,
+        categorySlugs: [...categorySlugs],
+        siteUrl,
+      }),
+    ).toContainEqual(expect.objectContaining({ code: "sitemap-structure" }));
+  });
+
+  it.each([
+    {
+      name: "missing RSS 2.0 version",
+      mutate: (rss: string) => rss.replace('<rss version="2.0">', "<rss>"),
+    },
+    {
+      name: "empty channel title",
+      mutate: (rss: string) =>
+        rss.replace("<title>Everyday Tech Insight</title>", "<title></title>"),
+    },
+    {
+      name: "empty channel description",
+      mutate: (rss: string) =>
+        rss.replace(
+          "<description>Practical business technology guidance.</description>",
+          "<description></description>",
+        ),
+    },
+    {
+      name: "item without a nonempty title or description",
+      mutate: (rss: string) =>
+        rss.replace(/<item><title>[^<]+<\/title>/, "<item><title></title>"),
+    },
+  ])("rejects $name", ({ mutate }) => {
+    const fixture = validBuiltFixture();
+    fixture.files.set("rss.xml", mutate(fixture.files.get("rss.xml")!));
+
+    expect(
+      validateBuiltOutput({
+        files: fixture.files,
+        articles: fixture.articles,
+        categorySlugs: [...categorySlugs],
+        siteUrl,
+      }),
+    ).toContainEqual(expect.objectContaining({ code: "feed-structure" }));
   });
 
   it.each([
@@ -1058,7 +1157,7 @@ describe("built-output QA rules", () => {
       "rss.xml",
       fixture.files
         .get("rss.xml")!
-        .replace(`<channel><link>${siteUrl}</link>`, "<channel><link>/</link>")
+        .replace(`<link>${siteUrl}</link>`, "<link>/</link>")
         .replace(
           `${siteUrl}articles/ai-automation-guide-1/`,
           "https://attacker.invalid/articles/ai-automation-guide-1/",

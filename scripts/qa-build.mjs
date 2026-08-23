@@ -1026,25 +1026,23 @@ export function validateBuiltOutput({
     issues.push(finding("robots-file", "robots.txt", "robots.txt is missing."));
   } else {
     const expectedSitemapLine = `Sitemap: ${new URL("/sitemap-index.xml", siteUrl)}`;
-    if (
-      !robots.includes("User-agent: *") ||
-      !robots.includes("Allow: /") ||
-      !robots.includes(expectedSitemapLine)
-    ) {
+    const robotsLines = robots
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"));
+    const sitemapLines = robotsLines.filter((line) => /^sitemap:/i.test(line));
+    const validRobots =
+      robotsLines.filter((line) => line === "User-agent: *").length === 1 &&
+      robotsLines.filter((line) => line === "Allow: /").length === 1 &&
+      sitemapLines.length === 1 &&
+      sitemapLines[0] === expectedSitemapLine &&
+      !robotsLines.some((line) => /^Disallow:\s*\S+/i.test(line));
+    if (!validRobots) {
       issues.push(
         finding(
           "robots-file",
           "robots.txt",
-          "robots.txt does not expose the configured sitemap.",
-        ),
-      );
-    }
-    if (/^Disallow:\s*\/$/m.test(robots)) {
-      issues.push(
-        finding(
-          "robots-file",
-          "robots.txt",
-          "robots.txt blocks the entire site.",
+          `robots.txt must contain exactly one User-agent: *, one Allow: /, one ${expectedSitemapLine}, and no nonempty Disallow rule.`,
         ),
       );
     }
@@ -1083,6 +1081,8 @@ export function validateBuiltOutput({
     const sitemapIndexEntries = sitemapIndexParsed("sitemapindex > sitemap");
     const validSitemapIndexStructure =
       hasSingleXmlRoot(sitemapIndexParsed, "sitemapindex") &&
+      sitemapIndexParsed("sitemapindex").first().attr("xmlns") ===
+        "http://www.sitemaps.org/schemas/sitemap/0.9" &&
       sitemapIndexEntries.length > 0 &&
       sitemapIndexEntries.length === sitemapIndexParsed("sitemap").length &&
       everyElement(
@@ -1097,7 +1097,7 @@ export function validateBuiltOutput({
         finding(
           "sitemap-structure",
           "sitemap-index.xml",
-          "sitemap index needs one sitemapindex root and one direct loc in every direct sitemap entry.",
+          "sitemap index needs one Sitemap 0.9 sitemapindex root and one direct loc in every direct sitemap entry.",
         ),
       );
     }
@@ -1135,6 +1135,8 @@ export function validateBuiltOutput({
     const sitemapEntries = sitemapParsed("urlset > url");
     const validSitemapStructure =
       hasSingleXmlRoot(sitemapParsed, "urlset") &&
+      sitemapParsed("urlset").first().attr("xmlns") ===
+        "http://www.sitemaps.org/schemas/sitemap/0.9" &&
       sitemapEntries.length > 0 &&
       sitemapEntries.length === sitemapParsed("url").length &&
       everyElement(
@@ -1149,7 +1151,7 @@ export function validateBuiltOutput({
         finding(
           "sitemap-structure",
           "sitemap-0.xml",
-          "sitemap needs one urlset root and one direct loc in every direct url entry.",
+          "sitemap needs one Sitemap 0.9 urlset root and one direct loc in every direct url entry.",
         ),
       );
     }
@@ -1197,17 +1199,28 @@ export function validateBuiltOutput({
     const feedItems = rssParsed("rss > channel > item");
     const validFeedStructure =
       hasSingleXmlRoot(rssParsed, "rss") &&
+      rssParsed("rss").first().attr("version") === "2.0" &&
       channels.length === 1 &&
       channels.length === rssParsed("channel").length &&
       feedItems.length === rssParsed("item").length &&
+      channels.first().children("title").length === 1 &&
+      channels.first().children("title").first().text().trim().length > 0 &&
       channels.first().children("link").length === 1 &&
-      everyElement(
-        rssParsed,
-        "rss > channel > item",
-        (item) =>
+      channels.first().children("description").length === 1 &&
+      channels.first().children("description").first().text().trim().length >
+        0 &&
+      everyElement(rssParsed, "rss > channel > item", (item) => {
+        const titles = item.children("title");
+        const descriptions = item.children("description");
+        return (
           item.children("link").length === 1 &&
-          item.children("guid").length === 1,
-      ) &&
+          item.children("guid").length === 1 &&
+          titles.length <= 1 &&
+          descriptions.length <= 1 &&
+          (titles.first().text().trim().length > 0 ||
+            descriptions.first().text().trim().length > 0)
+        );
+      }) &&
       rssParsed("rss > channel > item > link").length ===
         rssParsed("item link").length &&
       rssParsed("rss > channel > item > guid").length ===
@@ -1217,7 +1230,7 @@ export function validateBuiltOutput({
         finding(
           "feed-structure",
           "rss.xml",
-          "RSS needs one channel under one rss root, direct items under that channel, and one direct link and guid per item.",
+          "RSS 2.0 needs one channel with nonempty title, link, and description, plus one direct link and guid and a nonempty title or description per item.",
         ),
       );
     }
