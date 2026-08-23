@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { load } from "cheerio";
+
 import { siteConfig, siteUrl } from "../../site.config.mjs";
+import { homepageSectionSizes } from "../../src/data/editorial";
 
 const articleSlug = "how-to-identify-business-tasks-for-automation";
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
@@ -43,6 +46,7 @@ const trustPages = [
 const htmlRoutes = [
   "/",
   "/categories/",
+  "/toolkit/",
   ...categories.map(({ slug }) => `/categories/${slug}/`),
   `/articles/${articleSlug}/`,
   ...trustPages.map(({ path }) => path),
@@ -71,7 +75,37 @@ test("home explains the publication and links all five categories", async ({
   }
 });
 
-test("home is a de-duplicated issue front page", async ({ page }) => {
+test("toolkit publishes four practical worksheets with local CSV downloads", async ({
+  page,
+  request,
+}) => {
+  const response = await page.goto("/toolkit/");
+
+  expect(response?.status()).toBe(200);
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Business technology decision toolkit",
+    }),
+  ).toBeVisible();
+  await expect(page.locator(".toolkit-resource")).toHaveCount(4);
+
+  const downloadHrefs = await page
+    .locator(".toolkit-resource a[download]")
+    .evaluateAll((links) =>
+      links.map((link) => link.getAttribute("href")).filter(Boolean),
+    );
+  expect(downloadHrefs).toHaveLength(4);
+  expect(new Set(downloadHrefs).size).toBe(4);
+
+  for (const href of downloadHrefs) {
+    const download = await request.get(href!);
+    expect(download.status(), href!).toBe(200);
+    expect(await download.text(), href!).toContain(",");
+  }
+});
+
+test("home is a de-duplicated issue front page", async ({ page, request }) => {
   await page.goto("/");
 
   const articleLinks = page.locator('main a[href^="/articles/"]');
@@ -79,8 +113,24 @@ test("home is a de-duplicated issue front page", async ({ page }) => {
     links.map((link) => link.getAttribute("href")),
   );
 
-  expect(articleHrefs).toHaveLength(15);
-  expect(new Set(articleHrefs).size).toBe(15);
+  const rssResponse = await request.get("/rss.xml");
+  expect(rssResponse.status()).toBe(200);
+  const rss = load(await rssResponse.text(), { xmlMode: true });
+  const publishedArticleHrefs = rss("item > link")
+    .map((_, link) => new URL(rss(link).text()).pathname)
+    .get();
+  const curatedArticleCount = Object.values(homepageSectionSizes).reduce(
+    (total, sectionSize) => total + sectionSize,
+    0,
+  );
+
+  expect(publishedArticleHrefs.length).toBeGreaterThanOrEqual(
+    curatedArticleCount,
+  );
+  expect(new Set(publishedArticleHrefs).size).toBe(
+    publishedArticleHrefs.length,
+  );
+  expect([...articleHrefs].sort()).toEqual([...publishedArticleHrefs].sort());
 
   const currentIssue = page.getByRole("region", { name: "Current issue" });
   const latestBriefing = page.getByRole("region", {
@@ -94,16 +144,22 @@ test("home is a de-duplicated issue front page", async ({ page }) => {
   await expect(currentIssue).toBeVisible();
   await expect(
     currentIssue.locator(".front-page__lead .article-card--lead"),
-  ).toHaveCount(1);
+  ).toHaveCount(homepageSectionSizes.lead);
   await expect(
     currentIssue.locator(".front-page__support .article-card--feature"),
-  ).toHaveCount(2);
+  ).toHaveCount(homepageSectionSizes.features);
   await expect(latestBriefing).toBeVisible();
-  await expect(latestBriefing.locator(".article-card--list")).toHaveCount(3);
+  await expect(latestBriefing.locator(".article-card--list")).toHaveCount(
+    homepageSectionSizes.briefing,
+  );
   await expect(startHere).toBeVisible();
-  await expect(startHere.locator(".article-card--list")).toHaveCount(3);
+  await expect(startHere.locator(".article-card--list")).toHaveCount(
+    homepageSectionSizes.startHere,
+  );
   await expect(moreGuides).toBeVisible();
-  await expect(moreGuides.locator(".article-card--list")).toHaveCount(6);
+  await expect(moreGuides.locator(".article-card--list")).toHaveCount(
+    publishedArticleHrefs.length - curatedArticleCount,
+  );
 
   const topicRows = page.locator(".topic-directory--compact li");
   await expect(topicRows).toHaveCount(categories.length);
@@ -124,6 +180,16 @@ test("home is a de-duplicated issue front page", async ({ page }) => {
   ).toEqual(categories.map(({ slug }) => slug).sort());
 
   for (const category of categories) {
+    const categoryResponse = await request.get(`/categories/${category.slug}/`);
+    expect(categoryResponse.status()).toBe(200);
+    const categoryPage = load(await categoryResponse.text());
+    const categoryArticleHrefs = new Set(
+      categoryPage('main a[href^="/articles/"]')
+        .map((_, link) => categoryPage(link).attr("href"))
+        .get(),
+    );
+    expect(categoryArticleHrefs.size).toBeGreaterThan(0);
+
     const topicRow = page.locator(
       `.topic-directory--compact li[data-category="${category.slug}"]`,
     );
@@ -131,7 +197,9 @@ test("home is a de-duplicated issue front page", async ({ page }) => {
     await expect(
       topicRow.getByRole("link", { name: new RegExp(category.name, "i") }),
     ).toHaveAttribute("href", `/categories/${category.slug}/`);
-    await expect(topicRow).toContainText(/3 guides/i);
+    await expect(topicRow).toContainText(
+      new RegExp(`${categoryArticleHrefs.size} guides?`, "i"),
+    );
   }
 
   await expect(

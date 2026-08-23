@@ -154,6 +154,7 @@ function validBuiltFixture() {
   const fixedRoutes = [
     "/",
     "/categories/",
+    "/toolkit/",
     "/about/",
     "/publisher/",
     "/editorial-standards/",
@@ -437,6 +438,15 @@ describe("built-output QA rules", () => {
   it("detects missing and duplicate core metadata", () => {
     const fixture = validBuiltFixture();
     const about = fixture.files.get("about/index.html")!;
+    const duplicateTitle = about.match(/<title>([^<]+)<\/title>/)?.[1];
+    const duplicateDescription = about.match(
+      /<meta name="description" content="([^"]+)"/,
+    )?.[1];
+    if (!duplicateTitle || !duplicateDescription) {
+      throw new Error(
+        "The valid fixture must expose title and description metadata.",
+      );
+    }
     fixture.files.set(
       "about/index.html",
       about
@@ -449,8 +459,19 @@ describe("built-output QA rules", () => {
       "contact/index.html",
       fixture.files
         .get("contact/index.html")!
-        .replace("Unique page title 7", "Unique page title 6")
-        .replace("number 7", "number 6"),
+        .replace(/(<title>)[^<]+/, `$1${duplicateTitle}`)
+        .replace(
+          /(<meta name="description" content=")[^"]+/,
+          `$1${duplicateDescription}`,
+        )
+        .replace(
+          /(<meta property="og:title" content=")[^"]+/,
+          `$1${duplicateTitle}`,
+        )
+        .replace(
+          /(<meta property="og:description" content=")[^"]+/,
+          `$1${duplicateDescription}`,
+        ),
     );
 
     const codes = validateBuiltOutput({

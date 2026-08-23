@@ -1399,6 +1399,65 @@ strong {
   line-height: 1.65;
 }
 
+.toolkit-page {
+  max-inline-size: 56rem;
+}
+
+.toolkit-resource {
+  margin-block-start: var(--space-12);
+  padding-block-start: var(--space-8);
+  border-block-start: var(--space-1) solid var(--color-ink);
+}
+
+.toolkit-resource > p {
+  max-inline-size: 68ch;
+}
+
+.toolkit-resource__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  font-weight: 650;
+}
+
+.toolkit-resource__scroll-hint {
+  display: none;
+  margin-block: var(--space-3) 0;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+}
+
+.toolkit-resource .table-scroll {
+  margin-block-end: 0;
+}
+
+.toolkit-resource table {
+  min-inline-size: 44rem;
+  border-collapse: collapse;
+  background: var(--color-paper);
+}
+
+.toolkit-resource th,
+.toolkit-resource td {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-rule);
+  line-height: 1.45;
+  text-align: start;
+  vertical-align: top;
+}
+
+.toolkit-resource thead th {
+  color: var(--color-paper);
+  background: var(--color-ink);
+}
+
+.toolkit-resource tbody th {
+  inline-size: 34%;
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
 .page-shell:has(> .trust-content) > .breadcrumbs {
   max-inline-size: var(--reading-max);
   margin-inline: auto;
@@ -2054,6 +2113,10 @@ strong {
 }
 
 @media (max-width: 29.99rem) {
+  .toolkit-resource__scroll-hint {
+    display: block;
+  }
+
   h1 {
     font-size: clamp(2.25rem, 12vw, 3.25rem);
   }

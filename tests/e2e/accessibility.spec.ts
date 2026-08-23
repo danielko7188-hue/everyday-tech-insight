@@ -375,6 +375,16 @@ test("390px native menu opens from the keyboard and exposes every topic", async 
     standardsLinkBox?.height ?? 0,
     "Editorial standards mobile touch target",
   ).toBeGreaterThanOrEqual(44);
+  const toolkitLink = menu.getByRole("link", {
+    name: "Toolkit",
+    exact: true,
+  });
+  await expect(toolkitLink).toBeVisible();
+  const toolkitLinkBox = await toolkitLink.boundingBox();
+  expect(
+    toolkitLinkBox?.height ?? 0,
+    "Toolkit mobile touch target",
+  ).toBeGreaterThanOrEqual(44);
   await expect(
     menu.getByRole("link", { name: "AI & Automation", exact: true }),
   ).toHaveAttribute("aria-current", "page");

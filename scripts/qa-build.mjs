@@ -15,6 +15,7 @@ import { siteConfig, siteUrl as configuredSiteUrl } from "../site.config.mjs";
 const FIXED_INDEXABLE_ROUTES = [
   "/",
   "/categories/",
+  "/toolkit/",
   "/about/",
   "/publisher/",
   "/editorial-standards/",

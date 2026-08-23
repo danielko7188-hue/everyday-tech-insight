@@ -34,6 +34,13 @@ const categoryCurrentState = (slug: CategorySlug) => {
         </li>
         <li>
           <a
+            href="/toolkit/"
+            aria-current={isCurrentPath("/toolkit/") ? "page" : undefined}
+            >Toolkit</a
+          >
+        </li>
+        <li>
+          <a
             href="/editorial-standards/"
             aria-current={isCurrentPath("/editorial-standards/")
               ? "page"
@@ -64,6 +71,13 @@ const categoryCurrentState = (slug: CategorySlug) => {
               href="/about/"
               aria-current={isCurrentPath("/about/") ? "page" : undefined}
               >About</a
+            >
+          </li>
+          <li>
+            <a
+              href="/toolkit/"
+              aria-current={isCurrentPath("/toolkit/") ? "page" : undefined}
+              >Toolkit</a
             >
           </li>
           <li>
