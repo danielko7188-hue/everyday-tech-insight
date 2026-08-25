@@ -101,6 +101,14 @@ The post-fix candidate code commit `95ab2fde3bc3973d6f42715dea480a72145c6644` co
 
 The after-local capture completed at `2026-08-25T22:35:30.143Z` against commit `c4d2ae63637cf53f43d9971a6c55256fac681b5b` from `http://127.0.0.1:4321`. Its manifest contains 97 rows and 97 unique PNG hashes: 92 expected/actual 200 responses, 5 expected/actual 404 responses, and six passing CMS/monetization-absence assertions. Representative images at 390, 768, 1024, 1440, and 1920 pixels were inspected. This is local evidence only. The GitHub push, production deployment, and final runtime-verification run remain pending and must not be inferred from this local QA, local capture, or the 2026-08-23 release.
 
+After the fast-forward to `main`, commit `830f2c99bcf98a95946a54ce2e62e444194fae2c` repeated the complete `npm run qa` gate successfully. The structural counts remained 109 checked files, 948 passed and 3 intentionally skipped Vitest tests, 37 generated pages, 33 verified external destinations, 157 integrated Playwright tests, and 32 separate visual states. Its Lighthouse medians were 99/100 for home, 98/100 for cybersecurity category, 99/100 for automation article, and 99/100 for Toolkit on mobile/desktop respectively; Accessibility, Best Practices, and SEO remained 100 in all eight audits.
+
+The first two Git-triggered Vercel attempts did not pass and never replaced the canonical production release: deployment `dpl_FHDEDCt5quw1hbBczoV6EcWPg9gi` at commit `830f2c99bcf98a95946a54ce2e62e444194fae2c` exposed the omitted editorial YAML, and deployment `dpl_J8fmHY9ctfUfbdWeUC6agT6ijRbV` at commit `bf2235c1c1b34d799582019db121c925377746f7` exposed the remaining ignored design input. The `.vercelignore` boundary and its regression test were then corrected so all editorial prebuild inputs remain available.
+
+Commit `a921e08f1655aec184e386131573ceecb66b0721` was pushed to GitHub `main` before Vercel deployment `dpl_Cqnru4yBwkQ1pmr6S971hd85EveH` reached `READY`. Vercel v13 metadata records `source: git`, GitHub ref `main`, the exact commit SHA, production target, and the canonical `everyday-tech-insight.vercel.app` alias. The exact-commit production smoke passed 46 routes and 30 root-relative assets, including security headers, metadata parity, monetization-off behavior, 404/CMS absence contracts, and Git SHA match.
+
+The after-production capture completed at `2026-08-25T22:56:00.997Z` against that deployment. Its manifest contains 97 rows and 97 unique PNG hashes, the same 92 expected/actual 200 responses, 5 expected/actual 404 responses, and six passing CMS/monetization-absence assertions. All 97 production PNG hashes exactly match the inspected local after-state. The final evidence commit and its direct ignored runtime-verification record remain pending at this point in the evidence chain.
+
 The directly observed rollback baseline was captured on 2026-08-25 at `2026-08-25T18:41:08.633Z` from `https://everyday-tech-insight.vercel.app`:
 
 - Git SHA: `6473acaa64c64a64de6d3d1e6900cdad9a52d06c`.
@@ -109,7 +117,7 @@ The directly observed rollback baseline was captured on 2026-08-25 at `2026-08-2
 - Exact 404 assertions passed for `/ads.txt`, `/admin/`, `/.pages.yml`, the CMS draft route, and `/keystatic/`; the homepage monetization-off DOM assertion passed.
 - The focused release-evidence suite passed 29 tests across 3 files.
 
-The after-local, after-production, and final runtime-verification records will be added only by their corresponding successful runs.
+The final runtime-verification record will be added only by its corresponding successful run against the final evidence commit.
 
 ## Historical evidence record
 
@@ -150,4 +158,4 @@ The following pre-publication-maturity feature-branch run was recorded on 2026-0
 - Lighthouse desktop AI and automation category: Performance 95, Accessibility 100, Best Practices 100, SEO 100; performance runs 95/95/95.
 - Lighthouse desktop automation-candidates article: Performance 92, Accessibility 100, Best Practices 100, SEO 100; performance runs 92/92/92.
 
-Do not infer a pass for one stage from another stage's result. The current candidate has a fresh complete local QA run; the Vercel production deployment still requires separate exact-commit HTTP, metadata, download, browser-console, and visual verification.
+Do not infer a pass for one stage from another stage's result. The local QA, Git/Vercel metadata, exact-commit production smoke, and committed after-production capture are separate successful observations. Owner/editorial/CMS/AdSense gates remain separate, and the final evidence commit still requires its own direct runtime verification.

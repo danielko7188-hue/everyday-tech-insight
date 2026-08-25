@@ -15,13 +15,15 @@ The safest current implementation is monetization mode `off`: no publisher ID, a
 - The structured editorial source contains 18 owner gates and a 15-guide content-quality queue. Every current owner gate and guide-specific human release gate remains unresolved rather than being presented as complete.
 - Managed article media is validated before publication and only referenced media from published guides is emitted. This technical validation does not establish authorship, license, attribution sufficiency, or publication rights.
 - The public-repository safety model is explicit: committed source and editorial records are publicly visible, and confidential owner, account, legal, review, or rights evidence must stay outside Git.
-- The advertising disclosure and privacy language describe the disabled implementation. Candidate code commit `95ab2fde3bc3973d6f42715dea480a72145c6644` completed the fresh local `npm run qa` gate; that result is not evidence of a production deployment or owner approval.
+- The advertising disclosure and privacy language describe the disabled implementation. Candidate code commit `95ab2fde3bc3973d6f42715dea480a72145c6644` and the later `main` candidate `830f2c99bcf98a95946a54ce2e62e444194fae2c` each completed a fresh local `npm run qa` gate. These technical results do not establish owner approval or AdSense eligibility.
 
 ### Observed in production
 
 - Canonical target: `https://everyday-tech-insight.vercel.app/`.
-- The previous production deployment remains the rollback baseline until the new GitHub-first release is pushed, deployed, and directly verified.
-- No result from a local build, screenshot baseline, or source-code test is treated as proof of the new production deployment. Exact live routes, headers, assets, request behavior, canonical metadata, deployment identity, and Git SHA must be recorded after deployment.
+- GitHub-first production deployment `dpl_Cqnru4yBwkQ1pmr6S971hd85EveH` reached `READY` from `main` commit `a921e08f1655aec184e386131573ceecb66b0721`. Vercel metadata identifies the source as GitHub Git, the ref as `main`, and the canonical alias as `everyday-tech-insight.vercel.app`.
+- The exact-commit production smoke passed 46 routes and 30 root-relative assets, including security headers, canonical/structured metadata parity, RSS/sitemap behavior, 404 behavior, CMS-route absence, monetization-off output, and Git SHA match.
+- The production capture manifest records 97 unique PNG hashes, 92 expected/actual 200 responses, 5 expected/actual 404 responses, and six passing CMS/monetization-absence assertions. Every production PNG exactly matched the corresponding inspected local image.
+- The previous deployment `dpl_A4prJX9FUrtzkBcw8bGRhS3qHW75` at commit `6473acaa64c64a64de6d3d1e6900cdad9a52d06c` remains the directly recorded rollback baseline; it is no longer the canonical release.
 
 ### Owner action
 

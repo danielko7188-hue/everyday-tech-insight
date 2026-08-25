@@ -39,6 +39,15 @@ responses, and six passing CMS/monetization-absence assertions. Representative
 390, 768, 1024, 1440, and 1920 pixel images were inspected after capture. This
 is local evidence only; it does not prove the Vercel deployment.
 
+The production after-state was captured at `2026-08-25T22:56:00.997Z` from
+GitHub `main` commit `a921e08f1655aec184e386131573ceecb66b0721` on Vercel
+deployment `dpl_Cqnru4yBwkQ1pmr6S971hd85EveH`. Its 97 manifest rows contain 97
+unique PNG hashes, 92 expected/actual 200 responses, 5 expected/actual 404
+responses, and six passing CMS/monetization-absence assertions. All 97 PNG
+hashes exactly match the inspected local after-state. The ignored runtime
+directory records the later direct check of the final evidence commit without
+creating a self-referential commit loop.
+
 ## Historical inventories
 
 - `before/local/` and `before/production/` are the legacy 2026-08-22 baseline:
