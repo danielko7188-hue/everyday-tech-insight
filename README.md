@@ -94,7 +94,7 @@ Set `$fullGitSha` and `$vercelDeploymentId` from the exact pushed commit and aut
 - `src/layouts/` and `src/components/`: shared publication shell.
 - `src/data/`: publication and category configuration.
 - `site.config.mjs`: the validated single source of truth for the canonical origin and publication identity used by Astro, runtime pages, robots, and QA. The optional `PUBLIC_SITE_URL` build variable accepts only an HTTPS origin; preview-host variables are ignored.
-- `public/social/`: deterministic local 1200×630 previews generated for the publication, five categories, and fifteen articles.
+- `public/social/`: deterministic local 1200×630 previews generated for the publication, five categories, and every published article.
 - `scripts/`: content, built-output, external-link, and Lighthouse QA.
 - `tests/`: unit, route, responsive, keyboard, accessibility, and deterministic visual-regression contracts.
 - `artifacts/site-audit/`: retained before-state evidence and the deliberately separate after-state production-capture workflow.
@@ -111,7 +111,7 @@ Category pages use one neutral, complete compact list in stable public-slug orde
 3. Advance the record through draft and review only as its required fields become complete. Do not use `published` merely to obtain a preview.
 4. Before publication, complete all topic-fit fields and include at least two HTTPS source records. Human review must confirm what each source actually establishes and whether it is substantively suitable; a label alone does not make a page primary.
 5. Cite every frontmatter source URL in the article body.
-6. Put managed source media only in `src/content-assets/articles/` using a lowercase slug-prefixed raster filename. Complete alt, decorative, caption, credit, license, source, and rights fields truthfully; file validation does not prove rights.
+6. Before upload, strip and inspect camera/location metadata—including EXIF GPS, device, author, XMP, IPTC, and comments—because Pages CMS commits raw source bytes to the public repository before CI can respond. Put managed source media only in `src/content-assets/articles/` using a lowercase slug-prefixed raster filename. Complete the hero image's alt/decorative, caption, credit, license, and source fields truthfully. Body images use a validated Markdown path plus meaningful alt text; record their provenance and publication-rights decision in the guide's `mediaRights` quality record in `docs/editorial-operations.yml`. Image QA blocks detected ancillary metadata before deployment, but it cannot erase an unsafe public commit or prove rights.
 7. Use `datePublished` only for first publication. Omit `dateModified` at initial publication; add it only on a later calendar date after a substantive change. Update `lastReviewed` after a real review. Dates may advance through the current date but never be backdated before the confirmed launch.
 8. Archive withdrawn material instead of deleting it. Permanent deletion requires a separately reviewed Git operation.
 9. Run `npm run qa` and complete the human review checklist before release.

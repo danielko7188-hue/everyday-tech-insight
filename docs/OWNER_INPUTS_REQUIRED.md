@@ -111,9 +111,9 @@ Unresolved gates use `OWNER ACTION REQUIRED` or `UNKNOWN`; neither is an error i
 ## Gate 14: Protected main branch and pull-request review rules
 
 - `status`: OWNER ACTION REQUIRED
-- `reason`: Local workflow documentation cannot prove live GitHub branch protection, required checks, reviewer rules, or bypass permissions.
+- `reason`: A live GitHub API inspection on 2026-08-25 found that `main` is not protected and that the repository has no rulesets or Actions workflows; required checks, reviewer rules, and bypass controls are therefore not enforced.
 - `accepted evidence`: Owner-observed repository settings showing protected `main`, required pull requests and checks, authorized reviewers, and controlled bypass policy.
-- `public effect`: The guide describes the intended branch-and-PR workflow but does not claim GitHub enforces it.
+- `public effect`: The guide describes an intended branch-and-PR workflow, but routine CMS edits cannot rely on GitHub enforcing review or automated checks.
 - `next action`: Configure and verify the live rules before routine CMS editing, then retain dated evidence of the settings reviewed.
 
 ## Gate 15: AdSense account/site status and exact owner-provided publisher values

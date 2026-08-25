@@ -1,8 +1,11 @@
-# Publication maturity before-state evidence
+# Historical publication-maturity before-state evidence
 
-This directory records the site before the publication-maturity release. It is
-historical baseline evidence, not evidence that the new release has been
-deployed.
+This readme describes only the legacy `local/` and `production/` inventories
+captured for the 2026-08-22 publication-maturity baseline. It does not describe
+the versioned Purple Signal rollback record in
+`purple-signal-2026-08-25/`; see the parent evidence index for that current
+protocol. These legacy captures are historical baseline evidence, not evidence
+that a later release has been deployed.
 
 - Baseline commit: `dc4a4bde6e410f85b58987fcd83e3dd0c31bb6c2`
 - Capture date: `2026-08-22` (America/Los_Angeles)

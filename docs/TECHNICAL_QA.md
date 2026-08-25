@@ -14,13 +14,13 @@ npm run qa
 
 On a fresh Linux CI/workstation that needs browser system packages, replace the browser step with `npm run setup:browsers:linux`. Both commands install Chromium for the exact Playwright version in `package-lock.json`; neither belongs in the Vercel production build.
 
-The release command runs formatting, lint, Astro type checks, unit tests, a production build, content, editorial, CMS, image, CMS-lifecycle-fixture, built-output, and external-source checks, Playwright/axe, the separate visual-regression project, and Lighthouse in that order. The npm `prebuild` lifecycle also runs the deterministic content, editorial, CMS, and image checks before every production build, including Vercel builds. Playwright always starts a new built preview and never reuses an existing server.
+The release command runs formatting, lint, Astro type checks, unit tests, a production build, content, editorial, CMS, image, CMS-lifecycle-fixture, built-output, and external-source checks, Playwright/axe, the separate visual-regression project, and Lighthouse in that order. The npm `prebuild` lifecycle also runs the deterministic content, editorial, CMS, and image checks before every production build, including Vercel builds; `postbuild` runs the deterministic built-output gate before that build can succeed. Playwright always starts a new built preview and never reuses an existing server.
 
 ## Blocking contracts
 
 ### Content
 
-- At least 15 Markdown articles and at least 3 in each of the 5 categories. The launch evidence remains exactly 15 and 3 per category; later valid additions do not require weakening QA.
+- The 15 named launch records and their original three-per-category distribution remain immutable historical evidence. Current public routes derive only from records whose lifecycle status is `published`; a truthful archive/withdrawal may reduce the public count immediately, and later valid records may expand it without weakening the launch-record contract.
 - Unique slug, title, and 50-180-character description.
 - File name equals slug; complete schema and five-part business-technology fit.
 - The confirmed launch date, 2026-08-21, is the lower bound. Publication, review, modification, and source-access dates may advance truthfully through the current date in `America/Los_Angeles`.
@@ -28,7 +28,7 @@ The release command runs formatting, lint, Astro type checks, unit tests, a prod
 - Published/source-checked/indexable status, at least two unique HTTPS primary sources, and an access date for each source.
 - Every frontmatter source URL appears in the body.
 - At least 650 words, at least four H2 sections, an explicit limitation, and no unsupported first-hand claim.
-- No placeholder, advertising, analytics, tracking identifier, invalid related article, or off-origin canonical.
+- No placeholder, advertising, analytics, tracking identifier, invalid related article, or unsupported canonical override.
 
 ### Built output
 
@@ -43,7 +43,7 @@ The release command runs formatting, lint, Astro type checks, unit tests, a prod
 - Sitemap and RSS documents must be strictly well-formed XML and retain their required single roots, direct containers, and one direct location/link/guid per entry; matching URL text in a truncated, mismatched, or malformed document does not pass.
 - XML sitemap URLs equal the indexable route set exactly. The RSS channel is the configured home URL, and every item link/guid pair equals the published article route set exactly.
 - Category pages and the HTML sitemap contain their exact required memberships.
-- The homepage contains exactly nine distinct curated guide destinations; `/articles/` contains all fifteen published guides exactly once, grouped under the five configured topics.
+- The homepage curates up to nine distinct currently published guide destinations, using deterministic fallbacks when a configured guide is archived; the current launch output remains exactly nine. `/articles/` contains every published guide exactly once, grouped under the five configured topics. The 15-guide launch subset remains an exact named historical regression contract while lifecycle changes and later valid records are allowed.
 - Four Toolkit detail routes and their CSVs remain discoverable from public navigation/sitemap surfaces and preserve the exact typed record contracts.
 
 ### External HTTP(S) destinations

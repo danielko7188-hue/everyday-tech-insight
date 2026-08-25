@@ -189,6 +189,7 @@ describe("static deployment configuration", () => {
         "dev",
         "prebuild",
         "build",
+        "postbuild",
         "preview",
         "format",
         "format:check",
@@ -248,6 +249,7 @@ describe("static deployment configuration", () => {
     expect(packageJson.scripts?.build).toBe(
       "npm run generate:social && astro build",
     );
+    expect(packageJson.scripts?.postbuild).toBe("npm run check:seo");
   });
 
   it("uses Vercel's trailing-slash setting without broad redirects", () => {

@@ -1,6 +1,12 @@
-# Publication maturity after-state evidence
+# Historical publication-maturity after-state evidence
 
-This directory records evidence captured from the verified publication-maturity production release. The `production/` directory contains the exact 48-image inventory produced from the canonical live origin after the release reached Vercel `READY` state and passed the independent production smoke gate.
+This readme describes only the legacy `production/` inventory captured on
+2026-08-23. It is historical evidence for that publication-maturity release,
+not the contract or status record for the versioned Purple Signal directories.
+The `production/` directory contains the exact 48-image inventory produced from
+the canonical live origin after that release reached Vercel `READY` state and
+passed its independent production smoke gate. See the parent evidence index for
+the current 97-image protocol.
 
 ## Capture command
 
