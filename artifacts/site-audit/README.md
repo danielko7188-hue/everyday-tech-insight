@@ -23,11 +23,21 @@ The fixed release identifier is `purple-signal-2026-08-25`.
   requirements as the production phase and prevents a self-referential
   evidence-commit loop.
 
-Each after-state contains exactly 97 PNGs: 18 full-page routes at five widths,
-two keyboard-open navigation states, and five focused skip-link states. A
-successful capture atomically publishes `audit-manifest.json` with the observed
-origin, phase, Git SHA, deployment ID when applicable, status assertions, file
-sizes, and SHA-256 hashes.
+With the current published inventory, each after-state contains exactly 97
+PNGs: 18 full-page routes at five widths, two keyboard-open navigation states,
+and five focused skip-link states. If no article is published, the five
+nullable representative article routes are omitted and the valid after-state
+contains 72 PNGs rather than unsafe `/null` routes. A successful capture
+atomically publishes `audit-manifest.json` with the observed origin, phase, Git
+SHA, deployment ID when applicable, status assertions, file sizes, and SHA-256
+hashes.
+
+The local after-state was captured at `2026-08-25T22:35:30.143Z` from commit
+`c4d2ae63637cf53f43d9971a6c55256fac681b5b`. Its 97 manifest rows contain 97
+unique PNG hashes, 92 expected/actual 200 responses, 5 expected/actual 404
+responses, and six passing CMS/monetization-absence assertions. Representative
+390, 768, 1024, 1440, and 1920 pixel images were inspected after capture. This
+is local evidence only; it does not prove the Vercel deployment.
 
 ## Historical inventories
 

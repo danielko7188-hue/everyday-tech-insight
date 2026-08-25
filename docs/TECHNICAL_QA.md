@@ -99,7 +99,7 @@ The post-fix candidate code commit `95ab2fde3bc3973d6f42715dea480a72145c6644` co
 - Lighthouse, median of three runs per page/device: home 99 mobile and 100 desktop; cybersecurity category 99 mobile and 100 desktop; automation article 97 mobile and 100 desktop; Toolkit 100 mobile and desktop. Accessibility, Best Practices, and SEO were 100 in all eight audits.
 - Dependency audits: 0 production vulnerabilities and 0 total vulnerabilities.
 
-The after-local capture, GitHub push, production deployment, and final runtime-verification run remain pending at this point in the evidence chain. They must not be inferred from this local QA or the 2026-08-23 release.
+The after-local capture completed at `2026-08-25T22:35:30.143Z` against commit `c4d2ae63637cf53f43d9971a6c55256fac681b5b` from `http://127.0.0.1:4321`. Its manifest contains 97 rows and 97 unique PNG hashes: 92 expected/actual 200 responses, 5 expected/actual 404 responses, and six passing CMS/monetization-absence assertions. Representative images at 390, 768, 1024, 1440, and 1920 pixels were inspected. This is local evidence only. The GitHub push, production deployment, and final runtime-verification run remain pending and must not be inferred from this local QA, local capture, or the 2026-08-23 release.
 
 The directly observed rollback baseline was captured on 2026-08-25 at `2026-08-25T18:41:08.633Z` from `https://everyday-tech-insight.vercel.app`:
 
