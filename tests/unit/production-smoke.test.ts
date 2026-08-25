@@ -1,4 +1,12 @@
-import { readFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 import sharp from "sharp";
 import { describe, expect, it, vi } from "vitest";
@@ -1106,6 +1114,42 @@ describe("production route smoke", () => {
     return asFixtureProductionSmoke(productionSmoke);
   }
 
+  it("derives every published article route from nested source files in stable order", async () => {
+    const productionSmoke = await import("../../scripts/check-production.mjs");
+    expect(productionSmoke).toHaveProperty("derivePublishedArticlePaths");
+    if (!("derivePublishedArticlePaths" in productionSmoke)) return;
+
+    const fixtureRoot = mkdtempSync(
+      path.join(tmpdir(), "eti-production-articles-"),
+    );
+    const nestedDirectory = path.join(fixtureRoot, "nested");
+    mkdirSync(nestedDirectory);
+    writeFileSync(
+      path.join(fixtureRoot, "zeta.md"),
+      "---\nstatus: published\nslug: zeta-guide\n---\nPublished.\n",
+    );
+    writeFileSync(
+      path.join(nestedDirectory, "alpha.mdx"),
+      "---\nstatus: published\nslug: alpha-guide\n---\nPublished.\n",
+    );
+    writeFileSync(
+      path.join(fixtureRoot, "draft.md"),
+      "---\nstatus: draft\nslug: excluded-draft\n---\nDraft.\n",
+    );
+
+    try {
+      const derivePublishedArticlePaths = productionSmoke[
+        "derivePublishedArticlePaths"
+      ] as (directory: string) => Promise<readonly string[]>;
+      await expect(derivePublishedArticlePaths(fixtureRoot)).resolves.toEqual([
+        "/articles/alpha-guide/",
+        "/articles/zeta-guide/",
+      ]);
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
   function makeFetch(
     routes: ReadonlyArray<ProductionRoute>,
     overrides: Record<string, FetchOverride> = {},
@@ -1269,6 +1313,10 @@ describe("production route smoke", () => {
       kind: "absent" | "html" | "text";
       canonicalPath?: string;
     }>;
+    expect(productionSmoke.LAUNCH_ARTICLE_PATHS).toEqual(expectedArticlePaths);
+    expect(productionSmoke.PUBLISHED_ARTICLE_PATHS).toEqual(
+      expect.arrayContaining(expectedArticlePaths),
+    );
     expect(routes.map(({ path }) => path)).toEqual(requiredPaths);
     for (const path of absentPaths) {
       expect(routes.find((route) => route.path === path)).toEqual({
@@ -1326,6 +1374,50 @@ describe("production route smoke", () => {
     );
     expect(lines).toHaveLength(requiredPaths.length + 1);
     expect(lines.at(-1)).toMatch(/^Production smoke: PASS /);
+  });
+
+  it("checks an injected additional published guide across its route, sitemap, RSS, and social image", async () => {
+    const productionSmoke = await loadRunner();
+    const additionalArticlePath = "/articles/future-published-guide/";
+    const routes = productionSmoke.PRODUCTION_ROUTES.flatMap((route) =>
+      route.path === "/toolkit/"
+        ? [
+            {
+              expectedStatus: 200,
+              kind: "html" as const,
+              path: additionalArticlePath,
+            },
+            route,
+          ]
+        : [route],
+    );
+    const fetchImpl = makeFetch(routes);
+
+    const result = await productionSmoke.runProductionCheck({
+      canonicalOrigin: fixtureOrigin,
+      deploymentMetadata: deploymentMetadataFixture(),
+      expectedGitSha,
+      origin: fixtureOrigin,
+      fetchImpl,
+      routes,
+    });
+
+    expect(result.issues).toEqual([]);
+    expect(result.routeResults).toContainEqual({
+      path: additionalArticlePath,
+      status: "PASS",
+    });
+    for (const pathname of [
+      additionalArticlePath,
+      "/sitemap-0.xml",
+      "/rss.xml",
+      "/social/article-future-published-guide.png",
+    ]) {
+      expect(fetchImpl).toHaveBeenCalledWith(
+        expect.objectContaining({ pathname }),
+        expect.objectContaining({ redirect: "manual" }),
+      );
+    }
   });
 
   it("rejects a response URL that differs from the exact requested URL", async () => {

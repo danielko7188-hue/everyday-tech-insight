@@ -1,11 +1,12 @@
 import { load } from "cheerio";
 import { lstat, readFile } from "node:fs/promises";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { SaxesParser } from "saxes";
 import sharp from "sharp";
 
 import { siteConfig } from "../site.config.mjs";
+import { readArticleRecords } from "./qa-content.mjs";
 
 export const PRODUCTION_SECURITY_HEADERS = Object.freeze({
   "content-security-policy":
@@ -48,7 +49,7 @@ const MONETIZATION_BOUNDARY_CODES = new Set([
   "tracking-signature",
 ]);
 
-export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
+export const LAUNCH_ARTICLE_PATHS = Object.freeze([
   "/articles/how-to-identify-business-tasks-for-automation/",
   "/articles/evaluate-saas-with-a-practical-checklist/",
   "/articles/back-up-business-files-with-the-3-2-1-method/",
@@ -64,6 +65,54 @@ export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
   "/articles/run-a-30-day-business-technology-pilot/",
   "/articles/test-data-export-and-integrations-before-saas-lock-in/",
   "/articles/write-a-practical-ai-acceptable-use-policy/",
+]);
+
+const CANONICAL_ARTICLE_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const repositoryRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
+
+export async function derivePublishedArticlePaths(
+  articlesDirectory = path.join(repositoryRoot, "src", "content", "articles"),
+) {
+  const paths = (await readArticleRecords(articlesDirectory))
+    .filter(({ data }) => data.status === "published")
+    .map(({ data, fileName }) => {
+      if (
+        typeof data.slug !== "string" ||
+        !CANONICAL_ARTICLE_SLUG_PATTERN.test(data.slug)
+      ) {
+        throw new Error(
+          `Published article ${fileName} must have a canonical article slug.`,
+        );
+      }
+      return `/articles/${data.slug}/`;
+    })
+    .sort((left, right) => left.localeCompare(right, "en"));
+
+  if (new Set(paths).size !== paths.length) {
+    throw new Error("Published article routes must be unique.");
+  }
+  return paths;
+}
+
+const discoveredArticlePaths = await derivePublishedArticlePaths();
+const discoveredArticlePathSet = new Set(discoveredArticlePaths);
+const missingLaunchArticlePaths = LAUNCH_ARTICLE_PATHS.filter(
+  (articlePath) => !discoveredArticlePathSet.has(articlePath),
+);
+if (missingLaunchArticlePaths.length > 0) {
+  throw new Error(
+    `Published content is missing launch article routes: ${missingLaunchArticlePaths.join(", ")}.`,
+  );
+}
+const launchArticlePathSet = new Set(LAUNCH_ARTICLE_PATHS);
+export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
+  ...LAUNCH_ARTICLE_PATHS,
+  ...discoveredArticlePaths.filter(
+    (articlePath) => !launchArticlePathSet.has(articlePath),
+  ),
 ]);
 
 export const TOOLKIT_DETAIL_PATHS = Object.freeze([
@@ -1483,7 +1532,7 @@ function inspectSitemapIndex(xml, { origin, route }) {
   return issues;
 }
 
-function inspectSitemap(xml, { origin, route }) {
+function inspectSitemap(xml, { expectedIndexablePaths, origin, route }) {
   const issues = [];
   if (!isWellFormedXml(xml)) {
     issues.push(
@@ -1535,9 +1584,9 @@ function inspectSitemap(xml, { origin, route }) {
     checkedLocations.filter(({ valid }) => valid).map(({ href }) => href),
   );
   const expected = new Set(
-    PRODUCTION_ROUTES.filter(
-      ({ expectedStatus, kind }) => kind === "html" && expectedStatus === 200,
-    ).map(({ path: expectedPath }) => new URL(expectedPath, `${origin}/`).href),
+    expectedIndexablePaths.map(
+      (expectedPath) => new URL(expectedPath, `${origin}/`).href,
+    ),
   );
   if (checkedLocations.length !== expected.size || !sameSet(actual, expected)) {
     issues.push(
@@ -1551,7 +1600,7 @@ function inspectSitemap(xml, { origin, route }) {
   return issues;
 }
 
-function inspectRss(xml, { origin, route }) {
+function inspectRss(xml, { expectedPublishedArticlePaths, origin, route }) {
   const issues = [];
   if (!isWellFormedXml(xml)) {
     issues.push(
@@ -1666,7 +1715,7 @@ function inspectRss(xml, { origin, route }) {
   }
 
   const expectedLinks = new Set(
-    PUBLISHED_ARTICLE_PATHS.map(
+    expectedPublishedArticlePaths.map(
       (articlePath) => new URL(articlePath, `${origin}/`).href,
     ),
   );
@@ -1686,15 +1735,24 @@ function inspectRss(xml, { origin, route }) {
   return issues;
 }
 
-function inspectTextRoute(body, { origin, route }) {
+function inspectTextRoute(
+  body,
+  { expectedIndexablePaths, expectedPublishedArticlePaths, origin, route },
+) {
   if (route === "/robots.txt") return inspectRobots(body, { origin, route });
   if (route === "/sitemap-index.xml") {
     return inspectSitemapIndex(body, { origin, route });
   }
   if (route === "/sitemap-0.xml") {
-    return inspectSitemap(body, { origin, route });
+    return inspectSitemap(body, { expectedIndexablePaths, origin, route });
   }
-  if (route === "/rss.xml") return inspectRss(body, { origin, route });
+  if (route === "/rss.xml") {
+    return inspectRss(body, {
+      expectedPublishedArticlePaths,
+      origin,
+      route,
+    });
+  }
   return [];
 }
 
@@ -1870,6 +1928,14 @@ export async function runProductionCheck({
   const failedAssetOwners = new Set();
   const inspectedPages = [];
   let checkedSecurityResponses = 0;
+  const expectedIndexablePaths = routes
+    .filter(
+      ({ expectedStatus, kind }) => kind === "html" && expectedStatus === 200,
+    )
+    .map(({ path: routePath }) => routePath);
+  const expectedPublishedArticlePaths = expectedIndexablePaths.filter(
+    (routePath) => /^\/articles\/[^/]+\/$/.test(routePath),
+  );
 
   if (normalizedOrigin !== normalizedCanonicalOrigin) {
     issues.push(
@@ -1969,6 +2035,8 @@ export async function runProductionCheck({
     if (route.kind !== "html") {
       issues.push(
         ...inspectTextRoute(body, {
+          expectedIndexablePaths,
+          expectedPublishedArticlePaths,
           origin: normalizedOrigin,
           route: route.path,
         }),
