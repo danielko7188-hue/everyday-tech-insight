@@ -29,6 +29,15 @@ function assertUnique(values, label) {
   }
 }
 
+/**
+ * @param {{
+ *   capturedAt: string;
+ *   deploymentId?: string | null;
+ *   expectedGitSha?: string | null;
+ *   origin: string;
+ *   phase: string;
+ * }} options
+ */
 function normalizeMetadata({
   capturedAt,
   deploymentId = null,
@@ -173,6 +182,18 @@ function normalizeAssertions(assertions) {
   return normalized.sort((left, right) => left.id.localeCompare(right.id));
 }
 
+/**
+ * @param {{
+ *   assertions: any;
+ *   captureRecords: any;
+ *   capturedAt: string;
+ *   deploymentId?: string | null;
+ *   expectedGitSha?: string | null;
+ *   origin: string;
+ *   phase: string;
+ *   plan: any;
+ * }} options
+ */
 export function buildAuditManifest({
   assertions,
   captureRecords,
@@ -257,6 +278,19 @@ function statusForFile(statusByFileName, fileName) {
   return undefined;
 }
 
+/**
+ * @param {{
+ *   assertions: any;
+ *   capturedAt: string;
+ *   deploymentId?: string | null;
+ *   expectedGitSha?: string | null;
+ *   origin: string;
+ *   outputDirectory: string;
+ *   phase: string;
+ *   plan: any;
+ *   statusByFileName: any;
+ * }} options
+ */
 export async function writeAuditManifest({
   assertions,
   capturedAt,

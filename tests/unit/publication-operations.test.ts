@@ -115,8 +115,8 @@ describe("publication operations documentation", () => {
 
     expect(audit).toMatch(/18 owner gates/i);
     expect(audit).toMatch(/15(?:-guide| guide) content-quality/i);
-    expect(source.match(/^  - number: /gm)).toHaveLength(18);
-    expect(source.match(/^  - slug: /gm)).toHaveLength(15);
+    expect(source.match(/^ {2}- number: /gm)).toHaveLength(18);
+    expect(source.match(/^ {2}- slug: /gm)).toHaveLength(15);
   });
 
   it("references only release commands that exist in package.json", async () => {

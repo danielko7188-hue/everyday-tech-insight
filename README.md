@@ -57,6 +57,7 @@ npm run format:check
 npm run lint
 npm run typecheck
 npm run test -- --run
+npm run test:release-evidence
 npm run check:content
 npm run check:editorial
 npm run check:cms
@@ -74,10 +75,10 @@ The visual suite selects its committed platform-specific references automaticall
 After a reviewed release is actually deployed, capture the production evidence set with an explicit canonical HTTPS origin:
 
 ```text
-npm run capture:production -- --origin https://production.example
+npm run capture:production -- --origin https://production.example --phase after-production --expected-sha $fullGitSha --deployment-id $vercelDeploymentId
 ```
 
-That command validates the origin and captures the established eight-route audit set at 390, 768, and 1440 CSS pixels, above the fold and full page. It writes exactly 48 PNGs under `artifacts/site-audit/after/production/`. Do not run it against an old deployment or treat local visual baselines as deployment evidence.
+Set `$fullGitSha` and `$vercelDeploymentId` from the exact pushed commit and authenticated Vercel deployment metadata. The command validates the explicit HTTPS origin and release metadata, verifies protected CMS/advertising routes remain exact non-redirecting 404s, and captures 97 reviewed states: 18 page families at 390, 768, 1024, 1440, and 1920 CSS pixels plus mobile-menu and skip-link focus states. It writes the fixed versioned set and a SHA-256 manifest under `artifacts/site-audit/after/purple-signal-2026-08-25/production/`. Do not run it against an old deployment or treat local visual baselines as deployment evidence.
 
 `npm run check:links` checks article sources and every external HTTP(S) destination rendered in public HTML. It uses `PASS`, `FAIL`, and `UNVERIFIED` deliberately. Plain HTTP, a definitive 404/410, or a blocked unsafe target is `FAIL`; access controls, rate limits, server errors, timeouts, and network failures are `UNVERIFIED`. Either state blocks the full QA command until a human can establish the destination is reachable.
 
