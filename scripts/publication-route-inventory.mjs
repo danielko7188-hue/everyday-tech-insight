@@ -15,13 +15,37 @@ const repositoryRoot = path.resolve(
 
 /**
  * @typedef {{
- *   primary: string;
- *   saasEvaluation: string;
- *   securityWorkflow: string;
- *   operationsArchitecture: string;
- *   strategyCost: string;
- *   backup: string;
+ *   primary: string | null;
+ *   saasEvaluation: string | null;
+ *   securityWorkflow: string | null;
+ *   operationsArchitecture: string | null;
+ *   strategyCost: string | null;
+ *   backup: string | null;
+ *   table: string | null;
  * }} RepresentativeArticlePaths
+ */
+
+/**
+ * @typedef {{
+ *   category: string;
+ *   dateModified?: string;
+ *   datePublished: string;
+ *   path: string;
+ *   slug: string;
+ *   visual: { alt: string; caption?: string; key: string; type: string };
+ * }} RepresentativeArticleDetails
+ */
+
+/**
+ * @typedef {{
+ *   primary: RepresentativeArticleDetails | null;
+ *   saasEvaluation: RepresentativeArticleDetails | null;
+ *   securityWorkflow: RepresentativeArticleDetails | null;
+ *   operationsArchitecture: RepresentativeArticleDetails | null;
+ *   strategyCost: RepresentativeArticleDetails | null;
+ *   backup: RepresentativeArticleDetails | null;
+ *   table: RepresentativeArticleDetails | null;
+ * }} RepresentativeArticles
  */
 
 export const REPRESENTATIVE_ARTICLE_SLOTS = Object.freeze([
@@ -86,14 +110,48 @@ function managedImagePathsForArticle(article) {
   return paths;
 }
 
-function selectRepresentativeArticlePaths(publishedRecords) {
-  if (publishedRecords.length === 0) {
-    throw new Error(
-      "Representative verification requires at least one published article.",
+function hasMarkdownTable(body) {
+  const lines = String(body ?? "").split(/\r?\n/);
+  return lines.some((line, index) => {
+    const separator = lines[index + 1] ?? "";
+    return (
+      line.includes("|") &&
+      /^\s*\|?(?:\s*:?-{3,}:?\s*\|)+(?:\s*:?-{3,}:?\s*)\|?\s*$/.test(separator)
     );
+  });
+}
+
+function representativeArticleDetails(article) {
+  const { data } = article;
+  return Object.freeze({
+    category: data.category,
+    ...(typeof data.dateModified === "string"
+      ? { dateModified: data.dateModified }
+      : {}),
+    datePublished: data.datePublished,
+    path: articlePathForSlug(data.slug),
+    slug: data.slug,
+    visual: Object.freeze({ ...data.visual }),
+  });
+}
+
+function selectRepresentativeArticles(publishedRecords) {
+  if (publishedRecords.length === 0) {
+    const emptyPaths = Object.freeze({
+      backup: null,
+      operationsArchitecture: null,
+      primary: null,
+      saasEvaluation: null,
+      securityWorkflow: null,
+      strategyCost: null,
+      table: null,
+    });
+    const emptyArticles = Object.freeze({ ...emptyPaths });
+    return Object.freeze({ articles: emptyArticles, paths: emptyPaths });
   }
   const unused = new Set(publishedRecords.map(({ data }) => data.slug));
   const selected = /** @type {RepresentativeArticlePaths} */ ({});
+  const selectedArticles = /** @type {RepresentativeArticles} */ ({});
 
   for (const slot of REPRESENTATIVE_ARTICLE_SLOTS) {
     const exact = publishedRecords.find(
@@ -114,10 +172,24 @@ function selectRepresentativeArticlePaths(publishedRecords) {
       publishedRecords.find(({ data }) => unused.has(data.slug)) ??
       publishedRecords[0];
     selected[slot.key] = articlePathForSlug(fallback.data.slug);
+    selectedArticles[slot.key] = representativeArticleDetails(fallback);
     unused.delete(fallback.data.slug);
   }
 
-  return Object.freeze(selected);
+  const tableArticle = publishedRecords.find(({ body }) =>
+    hasMarkdownTable(body),
+  );
+  selected.table = tableArticle
+    ? articlePathForSlug(tableArticle.data.slug)
+    : null;
+  selectedArticles.table = tableArticle
+    ? representativeArticleDetails(tableArticle)
+    : null;
+
+  return Object.freeze({
+    articles: Object.freeze(selectedArticles),
+    paths: Object.freeze(selected),
+  });
 }
 
 export function createPublicationRouteInventory(
@@ -157,6 +229,7 @@ export function createPublicationRouteInventory(
       ...managedImagePathsForArticle(article),
     ]),
   );
+  const representativeArticles = selectRepresentativeArticles(publishedRecords);
 
   return Object.freeze({
     archivedArticlePaths: Object.freeze(
@@ -175,8 +248,8 @@ export function createPublicationRouteInventory(
     publishedArticlePaths: Object.freeze(
       publishedRecords.map(({ data }) => articlePathForSlug(data.slug)),
     ),
-    representativeArticlePaths:
-      selectRepresentativeArticlePaths(publishedRecords),
+    representativeArticlePaths: representativeArticles.paths,
+    representativeArticles: representativeArticles.articles,
   });
 }
 
@@ -202,3 +275,5 @@ export const CURRENT_PUBLICATION_ROUTE_INVENTORY =
   await derivePublicationRouteInventory();
 export const REPRESENTATIVE_ARTICLE_PATHS =
   CURRENT_PUBLICATION_ROUTE_INVENTORY.representativeArticlePaths;
+export const REPRESENTATIVE_ARTICLES =
+  CURRENT_PUBLICATION_ROUTE_INVENTORY.representativeArticles;

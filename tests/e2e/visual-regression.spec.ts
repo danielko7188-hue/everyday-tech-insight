@@ -12,11 +12,15 @@ const routes = [
     path: "/categories/cybersecurity-data-protection/",
     status: 200,
   },
-  {
-    alias: "article",
-    path: REPRESENTATIVE_ARTICLE_PATHS.backup,
-    status: 200,
-  },
+  ...(REPRESENTATIVE_ARTICLE_PATHS.backup
+    ? [
+        {
+          alias: "article",
+          path: REPRESENTATIVE_ARTICLE_PATHS.backup,
+          status: 200,
+        },
+      ]
+    : []),
   { alias: "toolkit", path: "/toolkit/", status: 200 },
   {
     alias: "toolkit-detail",

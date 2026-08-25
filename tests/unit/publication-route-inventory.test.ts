@@ -27,7 +27,7 @@ const currentRepresentativePaths = [
 ] as const;
 
 describe("current-published representative route inventory", () => {
-  it("preserves the current six representative article selections deterministically", async () => {
+  it("preserves the current representative article selections deterministically", async () => {
     const inventory = await derivePublicationRouteInventory();
 
     expect(inventory.representativeArticlePaths).toEqual({
@@ -38,6 +38,7 @@ describe("current-published representative route inventory", () => {
         "/articles/create-a-shared-file-and-folder-system/",
       strategyCost: "/articles/calculate-the-total-cost-of-business-software/",
       backup: "/articles/back-up-business-files-with-the-3-2-1-method/",
+      table: "/articles/create-a-simple-technology-risk-register/",
     });
   });
 
@@ -51,6 +52,34 @@ describe("current-published representative route inventory", () => {
         expect(source, relativePath).not.toContain(articlePath);
       }
     }
+  });
+
+  it("makes browser consumers use selected metadata and the table-specific route", () => {
+    const publicRoutes = readFileSync(
+      path.join(repositoryRoot, "tests/e2e/public-routes.spec.ts"),
+      "utf8",
+    );
+    const responsive = readFileSync(
+      path.join(repositoryRoot, "tests/e2e/responsive.spec.ts"),
+      "utf8",
+    );
+    const accessibility = readFileSync(
+      path.join(repositoryRoot, "tests/e2e/accessibility.spec.ts"),
+      "utf8",
+    );
+
+    for (const source of [publicRoutes, responsive, accessibility]) {
+      expect(source).toContain("REPRESENTATIVE_ARTICLES");
+    }
+    for (const source of [responsive, accessibility]) {
+      expect(source).toContain("REPRESENTATIVE_ARTICLE_PATHS.table");
+    }
+    expect(responsive).not.toContain(
+      'data-visual-key="automation-candidate-screen"',
+    );
+    expect(accessibility).not.toContain(
+      "A task funnel that rejects unstable or high-risk work before a bounded pilot.",
+    );
   });
 
   it("replaces an archived representative with a validated current-published route", () => {
@@ -81,5 +110,100 @@ describe("current-published representative route inventory", () => {
     expect(inventory.representativeArticlePaths.primary).toBe(
       "/articles/replacement-primary-guide/",
     );
+  });
+
+  it("derives fallback metadata and a separate table representative when the sole decision tree is archived", () => {
+    const inventory = createPublicationRouteInventory([
+      {
+        body: "Archived.",
+        data: {
+          slug: "former-decision-tree-guide",
+          status: "archived",
+          visual: { key: "former-tree", type: "decision-tree" },
+        },
+        fileName: "former-decision-tree-guide.md",
+      },
+      {
+        body: "A current article without a data table.",
+        data: {
+          category: "business-software",
+          dateModified: "2026-08-24",
+          datePublished: "2026-08-22",
+          slug: "current-fallback-guide",
+          status: "published",
+          visual: {
+            alt: "A comparison of two current software choices.",
+            key: "current-comparison",
+            type: "comparison",
+          },
+        },
+        fileName: "current-fallback-guide.md",
+      },
+      {
+        body: [
+          "A current article with a data table.",
+          "",
+          "| Check | Result |",
+          "| --- | --- |",
+          "| Restore | Pass |",
+        ].join("\n"),
+        data: {
+          category: "cybersecurity-data-protection",
+          datePublished: "2026-08-23",
+          slug: "current-table-guide",
+          status: "published",
+          visual: {
+            alt: "A current backup verification sequence.",
+            key: "current-backup",
+            type: "backup-topology",
+          },
+        },
+        fileName: "current-table-guide.md",
+      },
+    ]);
+
+    expect(inventory.representativeArticles.primary).toEqual({
+      category: "business-software",
+      dateModified: "2026-08-24",
+      datePublished: "2026-08-22",
+      path: "/articles/current-fallback-guide/",
+      slug: "current-fallback-guide",
+      visual: {
+        alt: "A comparison of two current software choices.",
+        key: "current-comparison",
+        type: "comparison",
+      },
+    });
+    expect(inventory.representativeArticlePaths.table).toBe(
+      "/articles/current-table-guide/",
+    );
+  });
+
+  it("keeps an urgent zero-published withdrawal buildable with empty representative routes", () => {
+    let inventory: ReturnType<typeof createPublicationRouteInventory>;
+
+    expect(() => {
+      inventory = createPublicationRouteInventory([
+        {
+          body: "Archived for urgent withdrawal.",
+          data: {
+            slug: "withdrawn-guide",
+            status: "archived",
+            visual: { key: "withdrawn-visual", type: "decision-tree" },
+          },
+          fileName: "withdrawn-guide.md",
+        },
+      ]);
+    }).not.toThrow();
+
+    expect(inventory!.representativeArticlePaths).toEqual({
+      backup: null,
+      operationsArchitecture: null,
+      primary: null,
+      saasEvaluation: null,
+      securityWorkflow: null,
+      strategyCost: null,
+      table: null,
+    });
   });
 });

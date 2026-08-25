@@ -2,7 +2,10 @@ import { expect, test } from "@playwright/test";
 import { load } from "cheerio";
 
 import { readArticleRecords } from "../../scripts/qa-content.mjs";
-import { REPRESENTATIVE_ARTICLE_PATHS } from "../../scripts/publication-route-inventory.mjs";
+import {
+  REPRESENTATIVE_ARTICLE_PATHS,
+  REPRESENTATIVE_ARTICLES,
+} from "../../scripts/publication-route-inventory.mjs";
 import { siteConfig, siteUrl } from "../../site.config.mjs";
 import {
   homepageCuration,
@@ -148,15 +151,19 @@ interface ArticleSourceRecord {
 
 const sourceArticleRecords =
   (await readArticleRecords()) as ArticleSourceRecord[];
-const articleSlug = REPRESENTATIVE_ARTICLE_PATHS.primary
-  .split("/")
-  .filter(Boolean)
-  .at(-1)!;
-const representativeArticle = sourceArticleRecords.find(
-  ({ data }) => data.status === "published" && data.slug === articleSlug,
-)!;
-const articleWhenToUse = representativeArticle.data.whenToUse;
-const articleTitle = representativeArticle.data.title;
+const representativeArticleMetadata = REPRESENTATIVE_ARTICLES.primary;
+const articlePath = representativeArticleMetadata?.path ?? null;
+const articleSlug = representativeArticleMetadata?.slug ?? "";
+const representativeArticle = representativeArticleMetadata
+  ? sourceArticleRecords.find(
+      ({ data }) =>
+        data.status === "published" &&
+        data.slug === representativeArticleMetadata.slug,
+    )
+  : undefined;
+const articleWhenToUse = representativeArticle?.data.whenToUse ?? "";
+const articleTitle = representativeArticle?.data.title ?? "";
+const tableArticlePath = REPRESENTATIVE_ARTICLE_PATHS.table;
 const publishedArticleSlugs = new Set(
   sourceArticleRecords
     .filter(({ data }) => data.status === "published")
@@ -190,6 +197,25 @@ const categories = [
     slug: "technology-strategy",
   },
 ] as const;
+const representativeCategory = representativeArticleMetadata
+  ? categories.find(
+      ({ slug }) => slug === representativeArticleMetadata.category,
+    )
+  : undefined;
+
+function skipWhenNoRepresentativeArticle() {
+  test.skip(
+    !representativeArticle,
+    "No current published representative article.",
+  );
+}
+
+function skipWhenNoTableArticle() {
+  test.skip(
+    !tableArticlePath,
+    "No current published representative table article.",
+  );
+}
 
 const trustPages = [
   { path: "/about/", heading: "About Everyday Tech Insight" },
@@ -211,7 +237,7 @@ const htmlRoutes = [
   "/toolkit/",
   ...toolkitRouteExpectations.map(({ id }) => `/toolkit/${id}/`),
   ...categories.map(({ slug }) => `/categories/${slug}/`),
-  `/articles/${articleSlug}/`,
+  ...(articlePath ? [articlePath] : []),
   ...trustPages.map(({ path }) => path),
   "/sitemap/",
 ] as const;
@@ -335,6 +361,7 @@ test("archive and category pages expose every guide promise once without manufac
 test("article reading and utility surfaces expose the approved practical outcomes", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.goto(`/articles/${articleSlug}/`);
   const glance = page.getByRole("region", { name: "At a glance" });
   await expect(glance).toBeVisible();
@@ -366,6 +393,7 @@ test("article reading and utility surfaces expose the approved practical outcome
 test("editorial pages ship only the local visual symbols they render", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.goto("/");
 
   const homeReferences = await page
@@ -924,11 +952,17 @@ test("category directory visuals resolve their local symbol definitions", async 
 test("category and published article routes expose useful editorial content", async ({
   page,
 }) => {
-  let response = await page.goto("/categories/ai-automation/");
+  skipWhenNoRepresentativeArticle();
+  let response = await page.goto(
+    `/categories/${representativeArticleMetadata!.category}/`,
+  );
 
   expect(response?.status()).toBe(200);
   await expect(
-    page.getByRole("heading", { level: 1, name: "AI & Automation" }),
+    page.getByRole("heading", {
+      level: 1,
+      name: representativeCategory!.name,
+    }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", {
@@ -951,7 +985,9 @@ test("category and published article routes expose useful editorial content", as
   await expect(
     page
       .locator(".article-facts")
-      .locator(`time[datetime="${representativeArticle.data.datePublished}"]`),
+      .locator(
+        `time[datetime="${representativeArticleMetadata!.datePublished}"]`,
+      ),
   ).toHaveCount(1);
   await expect(
     page.getByRole("heading", { level: 2, name: "At a glance" }),
@@ -1087,6 +1123,7 @@ test("category routes use one visual anchor and distinct guide links", async ({
 test("article exposes editorial art, semantic story metadata, and explicit related guides", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.goto(`/articles/${articleSlug}/`);
 
   const article = page.locator("article.article-page");
@@ -1096,7 +1133,7 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
     "preserveAspectRatio",
     "xMidYMid slice",
   );
-  const { visual } = representativeArticle.data;
+  const { visual } = representativeArticleMetadata!;
   const informativeVisual = hero.locator(
     `figure[data-visual-key="${visual.key}"][data-visual-type="${visual.type}"]`,
   );
@@ -1125,24 +1162,21 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
 
   const storyMeta = hero.getByRole("list", { name: "Story details" });
   await expect(storyMeta).toContainText(
-    representativeArticle.data.contentType.replace(/^./, (value) =>
+    representativeArticle!.data.contentType.replace(/^./, (value) =>
       value.toUpperCase(),
     ),
   );
   await expect(storyMeta).toContainText(/\b\d+ min read\b/);
   await expect(
     storyMeta.locator(
-      `time[datetime="${representativeArticle.data.datePublished}"]`,
+      `time[datetime="${representativeArticleMetadata!.datePublished}"]`,
     ),
   ).toHaveCount(1);
-  const representativeCategory = categories.find(
-    ({ slug }) => slug === representativeArticle.data.category,
-  )!;
   await expect(
-    storyMeta.getByRole("link", { name: representativeCategory.name }),
+    storyMeta.getByRole("link", { name: representativeCategory!.name }),
   ).toHaveAttribute(
     "href",
-    `/categories/${representativeArticle.data.category}/`,
+    `/categories/${representativeArticleMetadata!.category}/`,
   );
 
   await expect(
@@ -1165,7 +1199,7 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
       .map(({ data }) => data.slug),
   );
   const expectedRelatedSlugs =
-    representativeArticle.data.relatedArticles.filter((slug) =>
+    representativeArticle!.data.relatedArticles.filter((slug) =>
       publishedSlugs.has(slug),
     );
   await expect(relatedGuides.locator('a[href^="/articles/"]')).toHaveCount(
@@ -1238,13 +1272,14 @@ test("every published guide renders its assigned informative visual and local sy
 test("article surfaces its evidence boundary near the headline", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.goto(`/articles/${articleSlug}/`);
 
   const hero = page.locator(".article-hero");
   const evidence = page.getByRole("region", { name: "Article evidence" });
   await expect(evidence).toBeVisible();
   await expect(evidence).toContainText(
-    `${representativeArticle.data.sourceList.length} cited sources`,
+    `${representativeArticle!.data.sourceList.length} cited sources`,
   );
   await expect(evidence.getByText(/^Reviewed\b/i)).toHaveCount(0);
   await expect(evidence.locator("time")).toHaveCount(0);
@@ -1267,6 +1302,7 @@ test("article surfaces its evidence boundary near the headline", async ({
 test("article emits one semantic fit summary in the raw DOM", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.goto(`/articles/${articleSlug}/`);
 
   const article = page.locator("article.article-page");
@@ -1295,6 +1331,7 @@ test("article emits one semantic fit summary in the raw DOM", async ({
 test("article emits one table of contents with one link per body heading ID", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`/articles/${articleSlug}/`);
 
@@ -1335,6 +1372,7 @@ test("article emits one table of contents with one link per body heading ID", as
 test("publication byline links to its truthful profile and published article index", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.goto(`/articles/${articleSlug}/`);
 
   const article = page.locator("article.article-page");
@@ -1511,7 +1549,8 @@ test("trust pages are reachable and state the public evidence boundary", async (
 test("markdown tables render once inside a named keyboard region", async ({
   page,
 }) => {
-  await page.goto(`/articles/${articleSlug}/`);
+  skipWhenNoTableArticle();
+  await page.goto(tableArticlePath!);
 
   const table = page.locator("article.article-page table");
   const region = page.getByRole("region", { name: "Scrollable data table" });
@@ -1654,15 +1693,28 @@ test("every public HTML route has one H1 and unique core metadata", async ({
       await expect(
         page.locator('meta[property="article:published_time"]'),
         route,
-      ).toHaveAttribute("content", "2026-08-21");
+      ).toHaveAttribute(
+        "content",
+        representativeArticleMetadata!.datePublished,
+      );
       await expect(
         page.locator('meta[property="article:section"]'),
         route,
-      ).toHaveAttribute("content", "AI & Automation");
-      await expect(
-        page.locator('meta[property="article:modified_time"]'),
-        route,
-      ).toHaveCount(0);
+      ).toHaveAttribute("content", representativeCategory!.name);
+      if (representativeArticleMetadata!.dateModified) {
+        await expect(
+          page.locator('meta[property="article:modified_time"]'),
+          route,
+        ).toHaveAttribute(
+          "content",
+          representativeArticleMetadata!.dateModified,
+        );
+      } else {
+        await expect(
+          page.locator('meta[property="article:modified_time"]'),
+          route,
+        ).toHaveCount(0);
+      }
     } else {
       await expect(
         page.locator('meta[property^="article:"]'),
@@ -1683,6 +1735,7 @@ test("every public HTML route has one H1 and unique core metadata", async ({
 test("breadcrumbs are visible and match BreadcrumbList structured data", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.goto(`/articles/${articleSlug}/`);
 
   const breadcrumbs = page.getByRole("navigation", { name: "Breadcrumb" });
@@ -1692,13 +1745,11 @@ test("breadcrumbs are visible and match BreadcrumbList structured data", async (
   );
   await expect(
     breadcrumbs.getByRole("link", {
-      name: categories.find(
-        ({ slug }) => slug === representativeArticle.data.category,
-      )!.name,
+      name: representativeCategory!.name,
     }),
   ).toHaveAttribute(
     "href",
-    `/categories/${representativeArticle.data.category}/`,
+    `/categories/${representativeArticleMetadata!.category}/`,
   );
 
   const structuredData = await page
@@ -1758,6 +1809,7 @@ test("unknown paths return the custom 404 response", async ({ page }) => {
 test("RSS includes exact published article destinations and robots stays public", async ({
   request,
 }) => {
+  skipWhenNoRepresentativeArticle();
   const rss = await request.get("/rss.xml");
   const rssBody = await rss.text();
 
@@ -1781,7 +1833,7 @@ test("RSS includes exact published article destinations and robots stays public"
 test("rendered pages contain no advertising, analytics, or executable client scripts", async ({
   page,
 }) => {
-  for (const route of ["/", `/articles/${articleSlug}/`]) {
+  for (const route of ["/", ...(articlePath ? [articlePath] : [])]) {
     await page.goto(route);
     const html = await page.content();
 

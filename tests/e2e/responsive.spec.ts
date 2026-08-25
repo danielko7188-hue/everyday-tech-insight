@@ -1,9 +1,32 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { readArticleRecords } from "../../scripts/qa-content.mjs";
-import { REPRESENTATIVE_ARTICLE_PATHS } from "../../scripts/publication-route-inventory.mjs";
+import {
+  REPRESENTATIVE_ARTICLE_PATHS,
+  REPRESENTATIVE_ARTICLES,
+} from "../../scripts/publication-route-inventory.mjs";
+import { categories } from "../../src/data/categories";
 
 const representativeArticlePath = REPRESENTATIVE_ARTICLE_PATHS.primary;
+const representativeArticle = REPRESENTATIVE_ARTICLES.primary;
+const tableArticlePath = REPRESENTATIVE_ARTICLE_PATHS.table;
+const representativeCategory = representativeArticle
+  ? categories.find(({ slug }) => slug === representativeArticle.category)
+  : undefined;
+
+function skipWhenNoRepresentativeArticle() {
+  test.skip(
+    !representativeArticlePath,
+    "No current published representative article.",
+  );
+}
+
+function skipWhenNoTableArticle() {
+  test.skip(
+    !tableArticlePath,
+    "No current published representative table article.",
+  );
+}
 
 const representativeRoutes = [
   {
@@ -36,18 +59,22 @@ const representativeRoutes = [
       "footer.site-footer",
     ],
   },
-  {
-    name: "article",
-    path: representativeArticlePath,
-    keySelectors: [
-      "header.site-header",
-      "main",
-      ".article-page",
-      ".article-hero",
-      ".article-body",
-      "footer.site-footer",
-    ],
-  },
+  ...(representativeArticlePath
+    ? [
+        {
+          name: "article",
+          path: representativeArticlePath,
+          keySelectors: [
+            "header.site-header",
+            "main",
+            ".article-page",
+            ".article-hero",
+            ".article-body",
+            "footer.site-footer",
+          ],
+        },
+      ]
+    : []),
   {
     name: "toolkit landing",
     path: "/toolkit/",
@@ -214,26 +241,6 @@ for (const route of representativeRoutes) {
         overflow.viewport,
         `${route.path} at ${width}px`,
       );
-
-      if (route.name === "article") {
-        const table = page.locator("article.article-page table").first();
-        await expect(table).toBeVisible();
-        const tableBoundary = await table.evaluate((element) => {
-          let candidate: Element | null = element;
-          while (candidate && candidate !== document.body) {
-            const overflowX = getComputedStyle(candidate).overflowX;
-            if (overflowX === "auto" || overflowX === "scroll") {
-              const box = candidate.getBoundingClientRect();
-              return { left: box.left, right: box.right };
-            }
-            candidate = candidate.parentElement;
-          }
-          const box = element.getBoundingClientRect();
-          return { left: box.left, right: box.right };
-        });
-        expect(tableBoundary.left).toBeGreaterThanOrEqual(-1);
-        expect(tableBoundary.right).toBeLessThanOrEqual(overflow.viewport + 1);
-      }
     });
   }
 }
@@ -363,8 +370,9 @@ test("wide homepage lead keeps automation on one rendered line", async ({
 test("tablet article evidence keeps each supported label on one line", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.setViewportSize({ width: 768, height: 1024 });
-  await page.goto(representativeArticlePath);
+  await page.goto(representativeArticlePath!);
   await page.evaluate(async () => {
     await document.fonts.ready;
   });
@@ -410,6 +418,7 @@ test("publication mark keeps the full name visible on one line at every required
 test("At a glance uses one mobile column, two tablet columns, and four wide columns", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   for (const { width, columns } of [
     { width: 390, columns: 1 },
     { width: 767, columns: 1 },
@@ -417,7 +426,7 @@ test("At a glance uses one mobile column, two tablet columns, and four wide colu
     { width: 1440, columns: 4 },
   ]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto(representativeArticlePath);
+    await page.goto(representativeArticlePath!);
 
     const renderedColumns = await page
       .locator(".fit-summary dl")
@@ -546,8 +555,9 @@ for (const categorySlug of categorySlugs) {
 test("mobile article keeps its informative visual and one compact fit summary before the reading body", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(representativeArticlePath);
+  await page.goto(representativeArticlePath!);
   await page.evaluate(async () => {
     await document.fonts.ready;
   });
@@ -556,7 +566,7 @@ test("mobile article keeps its informative visual and one compact fit summary be
   await expect(visual).toBeVisible();
   await expect(
     visual.locator(
-      'figure[data-visual-key="automation-candidate-screen"] svg[role="img"]',
+      `figure[data-visual-key="${representativeArticle!.visual.key}"] svg[role="img"]`,
     ),
   ).toBeVisible();
   const fit = page.locator("section.fit-summary");
@@ -585,13 +595,14 @@ test("mobile article keeps its informative visual and one compact fit summary be
 test("mobile article breadcrumb hides only its current page and orphaned separator", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(representativeArticlePath);
+  await page.goto(representativeArticlePath!);
 
   const breadcrumbs = page.getByRole("navigation", { name: "Breadcrumb" });
   await expect(breadcrumbs.getByRole("link", { name: "Home" })).toBeVisible();
   await expect(
-    breadcrumbs.getByRole("link", { name: "AI & Automation" }),
+    breadcrumbs.getByRole("link", { name: representativeCategory!.name }),
   ).toBeVisible();
   await expect(breadcrumbs.locator('[aria-current="page"]')).toBeHidden();
   expect(
@@ -602,9 +613,10 @@ test("mobile article breadcrumb hides only its current page and orphaned separat
 });
 
 test("wide article headline wrapping is stable", async ({ page }) => {
+  skipWhenNoRepresentativeArticle();
   const countHeadlineLines = async (width: number): Promise<number> => {
     await page.setViewportSize({ width, height: 1080 });
-    await page.goto(representativeArticlePath);
+    await page.goto(representativeArticlePath!);
     await page.evaluate(async () => {
       await document.fonts.ready;
     });
@@ -785,8 +797,9 @@ test("trust pages center breadcrumbs and content in one readable frame", async (
 test("mobile tables use a readable contained horizontal region", async ({
   page,
 }) => {
+  skipWhenNoTableArticle();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(representativeArticlePath);
+  await page.goto(tableArticlePath!);
 
   const region = page.getByRole("region", { name: "Scrollable data table" });
   await expect(region).toHaveCount(1);
@@ -821,10 +834,11 @@ test("mobile tables use a readable contained horizontal region", async ({
 test("200 percent zoom equivalent reflows header, article navigation, table, and footer", async ({
   page,
 }) => {
+  skipWhenNoTableArticle();
   // A 640 CSS-pixel viewport is the reflow equivalent of a 1280px desktop
   // viewport viewed at 200% browser zoom.
   await page.setViewportSize({ width: 640, height: 900 });
-  await page.goto(representativeArticlePath);
+  await page.goto(tableArticlePath!);
   await page.evaluate(async () => {
     await document.fonts.ready;
   });

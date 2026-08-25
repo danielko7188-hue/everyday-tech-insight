@@ -1,10 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { REPRESENTATIVE_ARTICLE_PATHS } from "../../scripts/publication-route-inventory.mjs";
+import {
+  REPRESENTATIVE_ARTICLE_PATHS,
+  REPRESENTATIVE_ARTICLES,
+} from "../../scripts/publication-route-inventory.mjs";
 
 const articlePath = REPRESENTATIVE_ARTICLE_PATHS.primary;
-const categoryPath = "/categories/ai-automation/";
+const representativeArticle = REPRESENTATIVE_ARTICLES.primary;
+const tableArticlePath = REPRESENTATIVE_ARTICLE_PATHS.table;
 const toolkitDetailPath = "/toolkit/automation-candidate-screen/";
 const wcagTags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 const categories = [
@@ -23,6 +27,23 @@ const categories = [
     slug: "technology-strategy",
   },
 ] as const;
+const representativeCategory = representativeArticle
+  ? categories.find(({ slug }) => slug === representativeArticle.category)
+  : undefined;
+const categoryPath = representativeCategory
+  ? `/categories/${representativeCategory.slug}/`
+  : "/categories/ai-automation/";
+
+function skipWhenNoRepresentativeArticle() {
+  test.skip(!articlePath, "No current published representative article.");
+}
+
+function skipWhenNoTableArticle() {
+  test.skip(
+    !tableArticlePath,
+    "No current published representative table article.",
+  );
+}
 
 interface RgbaColor {
   red: number;
@@ -296,7 +317,7 @@ for (const route of [
   "/",
   "/articles/",
   categoryPath,
-  articlePath,
+  ...(articlePath ? [articlePath] : []),
   "/toolkit/",
   toolkitDetailPath,
 ]) {
@@ -319,11 +340,12 @@ for (const route of [
 test("story visuals are named while category fallback art remains decorative", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(articlePath);
+  await page.goto(articlePath!);
 
   const storyVisual = page.getByRole("img", {
-    name: "A task funnel that rejects unstable or high-risk work before a bounded pilot.",
+    name: representativeArticle!.visual.alt,
   });
   await expect(storyVisual).toBeVisible();
   await expect(storyVisual).not.toHaveAttribute("aria-hidden", "true");
@@ -433,22 +455,28 @@ test("390px native menu opens from the keyboard and exposes every topic", async 
     "Toolkit mobile touch target",
   ).toBeGreaterThanOrEqual(44);
   await expect(
-    menu.getByRole("link", { name: "AI & Automation", exact: true }),
+    menu.getByRole("link", {
+      name: representativeCategory?.name ?? "AI & Automation",
+      exact: true,
+    }),
   ).toHaveAttribute("aria-current", "page");
 });
 
 test("mobile article navigation exposes one unambiguous current location", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(articlePath);
+  await page.goto(articlePath!);
 
   const mobileList = page.locator(
     'header.site-header nav[aria-label="Mobile navigation"] ul',
   );
   await expect(mobileList.locator("[aria-current]")).toHaveCount(1);
   await expect(
-    mobileList.locator('a[href="/categories/ai-automation/"]'),
+    mobileList.locator(
+      `a[href="/categories/${representativeArticle!.category}/"]`,
+    ),
   ).toHaveAttribute("aria-current", "location");
   await expect(mobileList.locator('a[href="/articles/"]')).not.toHaveAttribute(
     "aria-current",
@@ -458,7 +486,8 @@ test("mobile article navigation exposes one unambiguous current location", async
 test("article body links are visibly underlined and keyboard focus is visible", async ({
   page,
 }) => {
-  await page.goto(articlePath);
+  skipWhenNoRepresentativeArticle();
+  await page.goto(articlePath!);
 
   const sourceLink = page
     .getByRole("region", { name: "Sources" })
@@ -616,8 +645,9 @@ test("footer navigation hover and keyboard focus use the dark-surface focus colo
 test("mobile article exposes one keyboard-accessible TOC and data table inside the page boundary", async ({
   page,
 }) => {
+  skipWhenNoTableArticle();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(articlePath);
+  await page.goto(tableArticlePath!);
 
   const tableOfContents = page.getByRole("navigation", {
     name: "On this page",
@@ -670,8 +700,9 @@ test("mobile article exposes one keyboard-accessible TOC and data table inside t
 test("mobile article exposes one semantic fit summary without a hidden duplicate", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(articlePath);
+  await page.goto(articlePath!);
 
   const fitSummary = page.locator("section.fit-summary");
   await expect(fitSummary).toHaveCount(1);
@@ -702,7 +733,11 @@ test("reduced motion removes effective motion from rendered elements and pseudos
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 1280, height: 900 });
 
-  for (const route of ["/", categoryPath, articlePath]) {
+  for (const route of [
+    "/",
+    categoryPath,
+    ...(articlePath ? [articlePath] : []),
+  ]) {
     await page.goto(route);
     await page.evaluate(async () => {
       await document.fonts.ready;
