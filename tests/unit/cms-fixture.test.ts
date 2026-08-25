@@ -76,9 +76,9 @@ describe("CMS lifecycle build fixture", () => {
       expect(path.dirname(fixture.fileName)).toBe(".");
       expect(fixture.fileName).toBe(`${fixture.slug}.md`);
       const record = parseArticleMarkdown(fixture.source, fixture.fileName);
-      expect((record.data as Record<string, unknown>).status).toBe(
-        fixture.status,
-      );
+      const data = record.data as Record<string, unknown>;
+      expect(data.status).toBe(fixture.status);
+      expect(fixture.title).toBe(data.title);
       expect(articleFrontmatterSchema.safeParse(record.data).success).toBe(
         true,
       );
@@ -155,6 +155,11 @@ describe("CMS lifecycle build fixture", () => {
       "cms-fixture-structural-review",
       "cms-fixture-complete-archived",
     ];
+    const fixtureTitles = [
+      "CMS fixture minimum editorial draft",
+      "CMS fixture structurally valid review guide",
+      "CMS fixture complete archived guide",
+    ];
     await mkdir(path.join(distDirectory, "articles"), { recursive: true });
     const categorySlugs = [
       "ai-automation",
@@ -208,7 +213,7 @@ describe("CMS lifecycle build fixture", () => {
     }
 
     await expect(
-      validateCmsBuildOutput({ projectRoot, fixtureSlugs }),
+      validateCmsBuildOutput({ projectRoot, fixtureSlugs, fixtureTitles }),
     ).resolves.toMatchObject({ publicArticleRoutes: 15 });
 
     await writeFile(
@@ -217,7 +222,17 @@ describe("CMS lifecycle build fixture", () => {
       "utf8",
     );
     await expect(
-      validateCmsBuildOutput({ projectRoot, fixtureSlugs }),
+      validateCmsBuildOutput({ projectRoot, fixtureSlugs, fixtureTitles }),
     ).rejects.toThrow(/fixture.*rss|rss.*fixture/i);
+
+    await writeFile(path.join(distDirectory, "rss.xml"), "<rss></rss>", "utf8");
+    await writeFile(
+      path.join(distDirectory, "publisher", "index.html"),
+      `<main>${fixtureTitles[1]}</main>`,
+      "utf8",
+    );
+    await expect(
+      validateCmsBuildOutput({ projectRoot, fixtureSlugs, fixtureTitles }),
+    ).rejects.toThrow(/fixture.*title.*publisher|publisher.*fixture.*title/i);
   });
 });

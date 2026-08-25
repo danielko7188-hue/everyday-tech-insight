@@ -20,6 +20,21 @@ const CATEGORY_SLUGS = [
   "digital-operations",
   "technology-strategy",
 ];
+const TEXT_PUBLIC_EXTENSIONS = new Set([
+  ".atom",
+  ".css",
+  ".csv",
+  ".html",
+  ".js",
+  ".json",
+  ".map",
+  ".mjs",
+  ".rss",
+  ".svg",
+  ".txt",
+  ".webmanifest",
+  ".xml",
+]);
 export const CMS_FIXTURE_SLUGS = [
   "cms-fixture-minimum-draft",
   "cms-fixture-structural-review",
@@ -46,13 +61,16 @@ export async function createCmsLifecycleFixtures({ articlesDirectory }) {
   }
 
   const [draftSlug, reviewSlug, archivedSlug] = CMS_FIXTURE_SLUGS;
+  const draftTitle = "CMS fixture minimum editorial draft";
+  const reviewTitle = "CMS fixture structurally valid review guide";
+  const archivedTitle = "CMS fixture complete archived guide";
   const draftSource = renderArticleDraft({
-    title: "CMS fixture minimum editorial draft",
+    title: draftTitle,
     slug: draftSlug,
   });
   const reviewData = {
     ...published.data,
-    title: "CMS fixture structurally valid review guide",
+    title: reviewTitle,
     slug: reviewSlug,
     status: "review",
     verificationStatus: "unverified",
@@ -66,7 +84,7 @@ export async function createCmsLifecycleFixtures({ articlesDirectory }) {
   ].filter((value) => typeof value === "string");
   const archivedData = {
     ...published.data,
-    title: "CMS fixture complete archived guide",
+    title: archivedTitle,
     slug: archivedSlug,
     status: "archived",
     dateArchived: precedingDates.sort().at(-1),
@@ -78,18 +96,21 @@ export async function createCmsLifecycleFixtures({ articlesDirectory }) {
     {
       fileName: `${draftSlug}.md`,
       slug: draftSlug,
+      title: draftTitle,
       status: "draft",
       source: draftSource,
     },
     {
       fileName: `${reviewSlug}.md`,
       slug: reviewSlug,
+      title: reviewTitle,
       status: "review",
       source: serializeArticle(reviewData, published.body),
     },
     {
       fileName: `${archivedSlug}.md`,
       slug: archivedSlug,
+      title: archivedTitle,
       status: "archived",
       source: serializeArticle(archivedData, published.body),
     },
@@ -194,9 +215,13 @@ async function requireFile(filePath, label) {
   }
 }
 
+/**
+ * @param {{ projectRoot: string, fixtureSlugs?: string[], fixtureTitles?: string[] }} options
+ */
 export async function validateCmsBuildOutput({
   projectRoot,
   fixtureSlugs = CMS_FIXTURE_SLUGS,
+  fixtureTitles = [],
 }) {
   const resolvedRoot = path.resolve(projectRoot);
   const distDirectory = path.join(resolvedRoot, "dist");
@@ -244,19 +269,27 @@ export async function validateCmsBuildOutput({
     ),
   );
 
+  const forbiddenFixtureValues = [
+    ...fixtureSlugs.map((value) => ({ kind: "slug", value })),
+    ...fixtureTitles.map((value) => ({ kind: "title", value })),
+  ];
   for (const { absolutePath, relativePath } of distFiles) {
-    for (const slug of fixtureSlugs) {
-      if (relativePath.includes(slug)) {
+    for (const { kind, value } of forbiddenFixtureValues) {
+      if (relativePath.includes(value)) {
         throw new Error(
-          `CMS fixture ${slug} leaked into built path ${relativePath}.`,
+          `CMS fixture ${kind} ${value} leaked into built path ${relativePath}.`,
         );
       }
     }
-    if (!/\.(?:html|xml)$/i.test(relativePath)) continue;
+    if (!TEXT_PUBLIC_EXTENSIONS.has(path.extname(relativePath).toLowerCase())) {
+      continue;
+    }
     const contents = await readFile(absolutePath, "utf8");
-    for (const slug of fixtureSlugs) {
-      if (contents.includes(slug)) {
-        throw new Error(`CMS fixture ${slug} leaked into ${relativePath}.`);
+    for (const { kind, value } of forbiddenFixtureValues) {
+      if (contents.includes(value)) {
+        throw new Error(
+          `CMS fixture ${kind} ${value} leaked into ${relativePath}.`,
+        );
       }
     }
   }
@@ -272,10 +305,10 @@ export async function validateCmsBuildOutput({
     );
   }
   for (const entry of socialEntries) {
-    for (const slug of fixtureSlugs) {
-      if (entry.name.includes(slug)) {
+    for (const { kind, value } of forbiddenFixtureValues) {
+      if (entry.name.includes(value)) {
         throw new Error(
-          `CMS fixture ${slug} leaked into social inventory ${entry.name}.`,
+          `CMS fixture ${kind} ${value} leaked into social inventory ${entry.name}.`,
         );
       }
     }
@@ -348,6 +381,7 @@ export async function runCmsLifecycleFixture({
       return validateCmsBuildOutput({
         projectRoot,
         fixtureSlugs: fixtures.map(({ slug }) => slug),
+        fixtureTitles: fixtures.map(({ title }) => title),
       });
     },
   );

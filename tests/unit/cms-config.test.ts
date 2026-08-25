@@ -287,6 +287,151 @@ describe("Pages CMS configuration", () => {
     });
   });
 
+  it("rejects unsupported hosted-success claims in any string while allowing explicit uncertainty", async () => {
+    const falseClaim = structuredClone(await validConfig());
+    field(falseClaim, "title").label =
+      "This CMS guarantees secure hosted authentication";
+
+    expect(validatePagesCmsConfig(falseClaim)).toContainEqual(
+      expect.objectContaining({
+        code: "false-hosted-claim",
+        location: "content[0].fields[0].label",
+      }),
+    );
+
+    const truthfulBoundary = structuredClone(await validConfig());
+    field(truthfulBoundary, "title").label =
+      "Hosted Pages CMS authentication is unverified and not tested by this local check";
+    expect(
+      validatePagesCmsConfig(truthfulBoundary).filter(
+        ({ code }) => code === "false-hosted-claim",
+      ),
+    ).toEqual([]);
+  });
+
+  it.each([
+    [
+      "operations.create",
+      (config: CmsConfig) => (config.content[0].operations.create = false),
+      "collection-identity",
+      "content[0]",
+    ],
+    [
+      "media name",
+      (config: CmsConfig) => (config.media[0].name = "uploads"),
+      "media-contract",
+      "media",
+    ],
+    [
+      "media label",
+      (config: CmsConfig) => (config.media[0].label = "Uploads"),
+      "media-contract",
+      "media",
+    ],
+    [
+      "media extensions",
+      (config: CmsConfig) => config.media[0].extensions.pop(),
+      "media-contract",
+      "media",
+    ],
+    [
+      "media categories",
+      (config: CmsConfig) => (config.media[0].categories = ["document"]),
+      "media-contract",
+      "media",
+    ],
+    [
+      "collection name",
+      (config: CmsConfig) => (config.content[0].name = "posts"),
+      "collection-identity",
+      "content[0]",
+    ],
+    [
+      "collection label",
+      (config: CmsConfig) => (config.content[0].label = "Articles"),
+      "collection-identity",
+      "content[0]",
+    ],
+    [
+      "collection type",
+      (config: CmsConfig) => (config.content[0].type = "file"),
+      "collection-identity",
+      "content[0]",
+    ],
+    [
+      "verificationStatus default",
+      (config: CmsConfig) =>
+        (field(config, "verificationStatus").default = "tested"),
+      "verification-default",
+      "fields.verificationStatus.default",
+    ],
+    [
+      "featured default",
+      (config: CmsConfig) => (field(config, "featured").default = true),
+      "featured-default",
+      "fields.featured.default",
+    ],
+    [
+      "relatedArticles default",
+      (config: CmsConfig) =>
+        (field(config, "relatedArticles").default = ["some-guide"]),
+      "related-default",
+      "fields.relatedArticles.default",
+    ],
+    [
+      "noindex default",
+      (config: CmsConfig) => (field(config, "noindex").default = false),
+      "noindex-default",
+      "fields.noindex.default",
+    ],
+    [
+      "category enum",
+      (config: CmsConfig) => field(config, "category").options.values.pop(),
+      "enum-options",
+      "fields.category.options.values",
+    ],
+    [
+      "contentType enum",
+      (config: CmsConfig) => field(config, "contentType").options.values.pop(),
+      "enum-options",
+      "fields.contentType.options.values",
+    ],
+    [
+      "verificationStatus enum",
+      (config: CmsConfig) =>
+        field(config, "verificationStatus").options.values.pop(),
+      "enum-options",
+      "fields.verificationStatus.options.values",
+    ],
+    [
+      "visual type enum",
+      (config: CmsConfig) =>
+        field(field(config, "visual"), "type").options.values.pop(),
+      "visual-type-options",
+      "fields.visual.type.options.values",
+    ],
+    [
+      "visual key enum",
+      (config: CmsConfig) =>
+        field(field(config, "visual"), "key").options.values.pop(),
+      "visual-key-options",
+      "fields.visual.key.options.values",
+    ],
+  ])(
+    "reports the relevant finding for %s drift",
+    async (_label, mutate, expectedCode, expectedLocation) => {
+      const config = structuredClone(await validConfig());
+      mutate(config);
+
+      expect(validatePagesCmsConfig(config)).toContainEqual(
+        expect.objectContaining({
+          code: expectedCode,
+          location: expectedLocation,
+        }),
+      );
+    },
+  );
+
   it.each([
     [
       "wrong media output",

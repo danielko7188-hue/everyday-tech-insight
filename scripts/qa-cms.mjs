@@ -276,8 +276,13 @@ const FORBIDDEN_KEY_PATTERN =
   /^(?:actions?|workflow|deploy|secret|token|password|credential|api.?key|publisher.?id|analytics.?id|verification.?code|client.?(?:id|secret))$/i;
 const TRACKING_OR_SECRET_PATTERN =
   /(?:\b(?:ca-)?pub-\d{10,}\b|\bUA-\d{4,}-\d+\b|\bG-[A-Z0-9]{6,}\b|\bGTM-[A-Z0-9]{4,}\b|-----BEGIN [A-Z ]*PRIVATE KEY-----)/i;
-const FALSE_HOSTED_CLAIM_PATTERN =
-  /\b(?:guarantee(?:s|d)?|prove[sd]?|ensure[sd]?)\b.{0,100}\b(?:private|privacy|secure|hosted|auth(?:entication)?|deploy(?:ment|ed)?)\b/i;
+const HOSTED_CMS_CONTEXT_PATTERN = /\b(?:pages\s+cms|cms|hosted)\b/i;
+const HOSTED_OPERATION_PATTERN =
+  /\b(?:auth(?:entication)?|sign[ -]?in|sav(?:e|ed|ing)|round[ -]?trip)\b/i;
+const HOSTED_SUCCESS_PATTERN =
+  /\b(?:secure|verified|tested|guaranteed|complete|guarantee(?:s|d)?|verif(?:y|ies|ied)|test(?:s|ed)?|complet(?:e|es|ed))\b/i;
+const NEGATED_HOSTED_SUCCESS_PATTERN =
+  /\b(?:unverified|untested|incomplete|unknown|not\s+(?:been\s+)?(?:secure|verified|tested|guaranteed|complete)|never\s+(?:secure|verified|tested|guaranteed|complete)|cannot\s+(?:verify|test|guarantee|complete)|can't\s+(?:verify|test|guarantee|complete)|does\s+not\s+(?:verify|test|guarantee|complete)|has\s+not\s+(?:been\s+)?(?:verified|tested|guaranteed|completed))\b/i;
 
 function finding(code, location, message) {
   return { code, location, message };
@@ -305,6 +310,18 @@ function addExactFinding(findings, code, location, actual, expected) {
   }
 }
 
+function isFalseHostedSuccessClaim(value) {
+  return value
+    .split(/(?:[.;!?\n]+|\bbut\b|\bhowever\b)/i)
+    .some(
+      (clause) =>
+        HOSTED_CMS_CONTEXT_PATTERN.test(clause) &&
+        HOSTED_OPERATION_PATTERN.test(clause) &&
+        HOSTED_SUCCESS_PATTERN.test(clause) &&
+        !NEGATED_HOSTED_SUCCESS_PATTERN.test(clause),
+    );
+}
+
 function scanForbidden(value, location, findings) {
   if (Array.isArray(value)) {
     value.forEach((item, index) =>
@@ -313,14 +330,25 @@ function scanForbidden(value, location, findings) {
     return;
   }
   if (!isRecord(value)) {
-    if (typeof value === "string" && TRACKING_OR_SECRET_PATTERN.test(value)) {
-      findings.push(
-        finding(
-          "secret-or-identifier",
-          location,
-          "CMS configuration cannot contain credentials, publisher IDs, analytics IDs, or private keys.",
-        ),
-      );
+    if (typeof value === "string") {
+      if (TRACKING_OR_SECRET_PATTERN.test(value)) {
+        findings.push(
+          finding(
+            "secret-or-identifier",
+            location,
+            "CMS configuration cannot contain credentials, publisher IDs, analytics IDs, or private keys.",
+          ),
+        );
+      }
+      if (isFalseHostedSuccessClaim(value)) {
+        findings.push(
+          finding(
+            "false-hosted-claim",
+            location,
+            "Local CMS configuration cannot claim successful hosted authentication, sign-in, saving, or round-trip verification.",
+          ),
+        );
+      }
     }
     return;
   }
@@ -335,19 +363,6 @@ function scanForbidden(value, location, findings) {
             : "forbidden-key",
           childLocation,
           "Actions, workflows, deployment controls, credentials, and private identifiers are outside this CMS contract.",
-        ),
-      );
-    }
-    if (
-      key === "description" &&
-      typeof child === "string" &&
-      FALSE_HOSTED_CLAIM_PATTERN.test(child)
-    ) {
-      findings.push(
-        finding(
-          "false-hosted-claim",
-          childLocation,
-          "Local CMS configuration cannot claim hosted authentication, privacy, security, or deployment proof.",
         ),
       );
     }
