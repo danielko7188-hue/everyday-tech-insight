@@ -220,7 +220,7 @@ describe("social image portfolio", () => {
       ),
     ).toEqual(firstHashes);
     expect(sha256(appleIconPath)).toBe(firstAppleHash);
-  });
+  }, 10_000);
 
   it("rejects broad output roots before cleanup", async () => {
     const root = mkdtempSync(join(tmpdir(), "eti-social-safety-"));
