@@ -78,7 +78,6 @@ const FIELD_ORDER = [
   "heroImageCredit",
   "heroImageSourceUrl",
   "heroImageLicense",
-  "canonicalOverride",
   "noindex",
   "body",
 ];
@@ -113,7 +112,6 @@ const FIELD_TYPES = new Map([
   ["heroImageCredit", "string"],
   ["heroImageSourceUrl", "string"],
   ["heroImageLicense", "string"],
-  ["canonicalOverride", "string"],
   ["noindex", "boolean"],
   ["body", "rich-text"],
 ]);
@@ -209,10 +207,6 @@ const FIELD_HELPERS = new Map([
   [
     "heroImageDecorative",
     "Set this only with a hero image. Decorative heroes require empty alternative text.",
-  ],
-  [
-    "canonicalOverride",
-    "Optional same-site HTTPS canonical URL. Leave empty unless a reviewed canonical exception is required.",
   ],
   [
     "noindex",
@@ -899,12 +893,6 @@ function validateFieldContract(collection, findings) {
       expectedFieldConstraintSnapshot({
         type: "string",
         options: { minlength: 2, maxlength: 120 },
-      }),
-    ],
-    [
-      "canonicalOverride",
-      expectedFieldConstraintSnapshot({
-        type: "string",
       }),
     ],
     [

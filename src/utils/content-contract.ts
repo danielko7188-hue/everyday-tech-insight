@@ -163,38 +163,10 @@ const publicationEraDateSchema = dateOnlySchema.refine(
   `Date must not precede the ${site.launchDate} publication launch.`,
 );
 
-const httpsUrlSchema = z.url().refine(
-  (value) => {
-    try {
-      return new URL(value).protocol === "https:";
-    } catch {
-      return false;
-    }
-  },
-  { message: "URL must use HTTPS." },
-);
-
 const publicEvidenceUrlSchema = z.string().refine(isPublicEvidenceUrl, {
   message:
     "URL must be a safe public HTTPS URL without credentials, secret query keys, reserved hosts, ports, or fragments.",
 });
-
-const configuredSiteOrigin = new URL(site.url).origin;
-const canonicalOverrideSchema = httpsUrlSchema.refine(
-  (value) => {
-    try {
-      const url = new URL(value);
-      return (
-        url.origin === configuredSiteOrigin && !url.username && !url.password
-      );
-    } catch {
-      return false;
-    }
-  },
-  {
-    message: "Canonical override must use the configured site origin.",
-  },
-);
 
 const slugSchema = z.string().trim().min(1).max(120).regex(SLUG_PATTERN);
 
@@ -313,7 +285,6 @@ const commonPublicationShape = {
   sourceList: z.array(sourceSchema).min(2),
   relatedArticles: z.array(slugSchema).default([]),
   ...heroShape,
-  canonicalOverride: optionalCmsValue(canonicalOverrideSchema),
 } as const;
 
 const draftArticleSchema = z
@@ -340,7 +311,6 @@ const draftArticleSchema = z
     sourceList: z.array(sourceSchema).optional(),
     relatedArticles: z.array(slugSchema).default([]),
     ...heroShape,
-    canonicalOverride: optionalCmsValue(canonicalOverrideSchema),
     noindex: z.literal(true).default(true),
   })
   .strict();
@@ -364,7 +334,6 @@ const reviewArticleSchema = z
     sourceList: z.array(sourceSchema).min(1),
     relatedArticles: z.array(slugSchema).default([]),
     ...heroShape,
-    canonicalOverride: optionalCmsValue(canonicalOverrideSchema),
     noindex: z.literal(true),
   })
   .strict();
@@ -405,7 +374,6 @@ const CMS_EMPTY_OPTIONAL_FIELDS = [
   "heroImageCredit",
   "heroImageSourceUrl",
   "heroImageLicense",
-  "canonicalOverride",
 ] as const;
 
 function normalizeCmsEmptyOptionals(input: unknown): unknown {

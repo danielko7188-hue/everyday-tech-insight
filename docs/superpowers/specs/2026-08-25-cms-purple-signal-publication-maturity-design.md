@@ -251,6 +251,7 @@ Pages CMS -> GitHub Markdown/media -> Astro validation/build -> Vercel preview/p
 - `delete: false` and `rename: false`.
 - `settings.content.merge: true` and app commit identity.
 - Empty date defaults so a CMS action does not manufacture publication or review dates.
+- No canonical override field; each public canonical URL is derived from and validated against its route.
 
 The legacy `featured` frontmatter key remains accepted by the content schema and preserved by `settings.content.merge: true`, but Pages CMS does not expose an editor control for it. Homepage placement is maintained in the reviewed `src/data/editorial.ts` curation registry, so an editable `featured` toggle would imply an effect it does not have.
 

@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 import { load as loadYaml } from "js-yaml";
 import { fromMarkdown } from "mdast-util-from-markdown";
 
-import { siteConfig, siteOrigin } from "../site.config.mjs";
+import { siteConfig } from "../site.config.mjs";
 import { visitTreeIterative } from "../src/utils/managed-image-ast.mjs";
 import { publicEvidenceUrlIssue } from "../src/utils/public-evidence-url.mjs";
 
@@ -390,7 +390,6 @@ function normalizedOptionalData(data) {
     "heroImageCredit",
     "heroImageSourceUrl",
     "heroImageLicense",
-    "canonicalOverride",
   ]) {
     if (
       typeof normalized[field] === "string" &&
@@ -1139,34 +1138,6 @@ function validateArticle(
   }
 
   validateHero(issues, fileName, data);
-
-  if (data.canonicalOverride) {
-    try {
-      const canonicalOverride = new URL(data.canonicalOverride);
-      if (
-        canonicalOverride.protocol !== "https:" ||
-        canonicalOverride.origin !== siteOrigin ||
-        canonicalOverride.username ||
-        canonicalOverride.password
-      ) {
-        issues.push(
-          finding(
-            "canonical-override",
-            fileName,
-            "canonicalOverride must stay on the site origin.",
-          ),
-        );
-      }
-    } catch {
-      issues.push(
-        finding(
-          "canonical-override",
-          fileName,
-          "canonicalOverride must be a valid HTTPS URL.",
-        ),
-      );
-    }
-  }
 
   const publicText = `${JSON.stringify(data)}\n${body}`;
   if (PLACEHOLDER_PATTERN.test(publicText)) {

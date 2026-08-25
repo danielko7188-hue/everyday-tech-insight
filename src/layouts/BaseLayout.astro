@@ -11,7 +11,6 @@ interface Props {
   title: string;
   description: string;
   path: string;
-  canonical?: string;
   robots?: "index,follow" | "noindex,follow";
   ogType?: "website" | "article";
   articlePublishedTime?: string;
@@ -28,7 +27,6 @@ const {
   title,
   description,
   path,
-  canonical: canonicalOverride,
   robots = "index,follow",
   ogType = "website",
   articlePublishedTime,
@@ -41,7 +39,7 @@ const {
   structuredData = [],
 } = Astro.props;
 
-const canonical = new URL(canonicalOverride ?? path, site.url).toString();
+const canonical = new URL(path, site.url).toString();
 const rssUrl = new URL("/rss.xml", site.url).toString();
 const ogLocale = site.locale.replaceAll("-", "_");
 const socialImageUrl = new URL(socialImagePath, site.url).toString();

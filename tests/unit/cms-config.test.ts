@@ -49,7 +49,6 @@ const expectedFieldOrder = [
   "heroImageCredit",
   "heroImageSourceUrl",
   "heroImageLicense",
-  "canonicalOverride",
   "noindex",
   "body",
 ] as const;
@@ -178,6 +177,11 @@ describe("Pages CMS configuration", () => {
       default: "unverified",
       options: { values: [...VERIFICATION_STATUSES] },
     });
+    expect(
+      collection.fields.some(
+        ({ name }: CmsConfig) => name === "canonicalOverride",
+      ),
+    ).toBe(false);
     expect(
       collection.fields.some(({ name }: CmsConfig) => name === "featured"),
     ).toBe(false);
@@ -410,13 +414,6 @@ describe("Pages CMS configuration", () => {
       "fields.heroImage",
     ],
     [
-      "canonical readonly",
-      (config: CmsConfig) =>
-        (field(config, "canonicalOverride").readonly = true),
-      "hero-seo-contract",
-      "fields.canonicalOverride",
-    ],
-    [
       "noindex hidden",
       (config: CmsConfig) => (field(config, "noindex").hidden = true),
       "hero-seo-contract",
@@ -557,13 +554,6 @@ describe("Pages CMS configuration", () => {
         (field(config, "heroImageLicense").options.minlength = 0),
       "hero-seo-contract",
       "fields.heroImageLicense",
-    ],
-    [
-      "canonical override default",
-      (config: CmsConfig) =>
-        (field(config, "canonicalOverride").default = "/articles/guide/"),
-      "hero-seo-contract",
-      "fields.canonicalOverride",
     ],
     [
       "noindex options",

@@ -7,7 +7,6 @@ import {
   articleFrontmatterSchema,
   assessBusinessTechnologyFit,
 } from "../../src/utils/content-contract";
-import { siteUrl } from "../../site.config.mjs";
 
 const validPublishedArticle = {
   title: "How to evaluate an automation workflow before rollout",
@@ -64,10 +63,6 @@ const validPublishedArticle = {
   heroImage: "/images/articles/automation-workflow.png",
   heroImageAlt: "Decision flow for evaluating a business automation workflow",
   heroImageDecorative: false,
-  canonicalOverride: new URL(
-    "articles/evaluate-automation-workflow/",
-    siteUrl,
-  ).toString(),
   noindex: false,
 } as const;
 
@@ -158,18 +153,14 @@ describe("article frontmatter contract", () => {
     expect(result.success).toBe(false);
   });
 
-  it("allows canonical overrides only on the configured site origin", () => {
-    const sameOrigin = articleFrontmatterSchema.safeParse({
+  it("rejects unsupported canonical overrides instead of accepting alternate article URLs", () => {
+    const result = articleFrontmatterSchema.safeParse({
       ...validPublishedArticle,
-      canonicalOverride: new URL("articles/same-origin/", siteUrl).toString(),
-    });
-    const offOrigin = articleFrontmatterSchema.safeParse({
-      ...validPublishedArticle,
-      canonicalOverride: "https://example.org/articles/off-origin/",
+      canonicalOverride:
+        "https://everyday-tech-insight.vercel.app/articles/alternate/",
     });
 
-    expect(sameOrigin.success).toBe(true);
-    expect(offOrigin.success).toBe(false);
+    expect(result.success).toBe(false);
   });
 
   it("limits workflow, content, and verification values to the approved vocabularies", () => {
@@ -397,7 +388,6 @@ describe("article frontmatter contract", () => {
       lastReviewed: "",
       heroImage: "",
       heroImageAlt: "",
-      canonicalOverride: "",
     });
 
     expect(result.success).toBe(true);

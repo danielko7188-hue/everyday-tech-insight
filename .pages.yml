@@ -348,10 +348,6 @@ content:
         options:
           minlength: 2
           maxlength: 120
-      - name: canonicalOverride
-        label: Canonical override
-        type: string
-        description: Optional same-site HTTPS canonical URL. Leave empty unless a reviewed canonical exception is required.
       - name: noindex
         label: Exclude from indexing
         type: boolean

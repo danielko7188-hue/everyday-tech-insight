@@ -119,7 +119,7 @@ The content portfolio test verifies:
 - explicit limitation language; and
 - no match for a defined set of unsupported first-person testing claims.
 
-Astro’s content schema separately enforces metadata length, date validity, category vocabulary, byline, source shape, status, verification status, source count, local-image pairing, same-origin canonical override, indexing status, and advertising/analytics identifier exclusions.
+Astro’s content schema separately enforces metadata length, date validity, category vocabulary, byline, source shape, status, verification status, source count, local-image pairing, indexing status, and advertising/analytics identifier exclusions. Built-output QA independently requires each route’s canonical URL and `og:url` to match that route exactly; content cannot override them.
 
 ## Business Technology Fit result
 
