@@ -217,20 +217,6 @@ function explanationSignaturesNearDuplicate(left, right) {
   );
 }
 
-function withoutLeadingFrontmatter(markdown) {
-  const normalized = markdown.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
-  const lines = normalized.split("\n");
-  const delimiter = /^(?:---|\+\+\+)[ \t]*$/.test(lines[0] ?? "")
-    ? lines[0].trim()
-    : undefined;
-  if (delimiter === undefined) return normalized;
-
-  const closingIndex = lines.findIndex(
-    (line, index) => index > 0 && line.trim() === delimiter,
-  );
-  return closingIndex === -1 ? "" : lines.slice(closingIndex + 1).join("\n");
-}
-
 const NON_PROSE_MARKDOWN_NODE_TYPES = new Set([
   "code",
   "definition",
@@ -291,7 +277,7 @@ function collectVisibleMarkdownText(root, output, hiddenHtmlStack = []) {
 }
 
 function containsRawMarkdownHtml(markdown) {
-  const tree = fromMarkdown(withoutLeadingFrontmatter(markdown));
+  const tree = fromMarkdown(markdown);
   let containsRawHtml = false;
   visitTreeIterative(tree, (node) => {
     if (node.type === "html" || node.type === "raw") {
@@ -302,7 +288,7 @@ function containsRawMarkdownHtml(markdown) {
 }
 
 function visibleMarkdownProse(markdown) {
-  const tree = fromMarkdown(withoutLeadingFrontmatter(markdown));
+  const tree = fromMarkdown(markdown);
   const visibleText = [];
   collectVisibleMarkdownText(tree, visibleText);
   return visibleText.join(" ");

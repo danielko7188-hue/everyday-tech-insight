@@ -8,6 +8,7 @@ import { join } from "node:path";
 import astroConfig from "../../astro.config.mjs";
 import { validateBuiltOutput } from "../../scripts/qa-build.mjs";
 import {
+  parseArticleMarkdown,
   readArticleRecords,
   validateContentPortfolio,
 } from "../../scripts/qa-content.mjs";
@@ -832,12 +833,6 @@ describe("content QA rules", () => {
         article.body += `\n\n![${explanation}](https://images.example.test/hidden.png)`;
       },
     ],
-    [
-      "frontmatter",
-      (article: ReturnType<typeof validArticle>, explanation: string) => {
-        article.body = `---\nqaEvidence: ${explanation}\n---\n\n${article.body}`;
-      },
-    ],
   ])(
     "does not accept explanation support found only in %s",
     (_name, injectSupport) => {
@@ -855,6 +850,24 @@ describe("content QA rules", () => {
       ).toContain("unsupported-guide-promise");
     },
   );
+
+  it("excludes parsed document frontmatter from visible prose evidence", () => {
+    const articles = validPortfolio();
+    const article = articles[0]!;
+    const explanation =
+      "Quasar metallurgy calibrates zirconium chambers while nebula cartography directs catalyst arrays.";
+    article.data.guidePromise = explanation;
+    article.body = parseArticleMarkdown(
+      `---\nqaEvidence: ${explanation}\n---\n${article.body}`,
+      article.fileName,
+    ).body;
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).toContain("unsupported-guide-promise");
+  });
 
   it("retains visible Markdown link text as explanation support", () => {
     const articles = validPortfolio();
@@ -904,11 +917,12 @@ describe("content QA rules", () => {
   });
 
   it.each(["draft", "review", "published", "archived"] as const)(
-    "rejects raw HTML in the %s lifecycle state",
+    "rejects raw HTML after a leading thematic break in the %s lifecycle state",
     (status) => {
       const articles = validPortfolio();
       articles[0]!.data.status = status;
-      articles[0]!.body += "\n\n<!-- lifecycle-independent bypass -->";
+      articles[0]!.body =
+        '---\n\n<svg><image href="https://tracker.example/pixel.png"></image></svg>\n\nSafe draft body.';
 
       expect(
         validateContentPortfolio(articles, { today: "2026-08-21" }).map(
@@ -917,6 +931,21 @@ describe("content QA rules", () => {
       ).toContain("raw-html");
     },
   );
+
+  it("retains visible prose after a leading thematic break", () => {
+    const articles = validPortfolio();
+    const article = articles[0]!;
+    const explanation =
+      "Quasar metallurgy calibrates zirconium chambers while nebula cartography directs catalyst arrays.";
+    article.data.guidePromise = explanation;
+    article.body = `---\n\n${explanation}\n\n${article.body}`;
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).not.toContain("unsupported-guide-promise");
+  });
 
   it("collects visible prose below thousands of nested nodes without overflowing", () => {
     const articles = validPortfolio();
