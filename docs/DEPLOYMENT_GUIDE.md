@@ -1,6 +1,6 @@
 # Deployment guide
 
-Date recorded: 2026-08-21
+Date reviewed: 2026-08-25
 
 ## Authorized production sequence
 
@@ -89,7 +89,7 @@ Only after those facts exist should code add the exact authorized ad integration
 - Treat the Git repository as the source-of-truth backup. Keep at least one owner-controlled clone or archive outside the deployment provider.
 - Generated `dist` and Vercel deployment output are reproducible artifacts, not the only backup.
 - Before a major content or platform change, record the current production commit and deployment URL.
-- Preferred source rollback: revert the faulty commit without rewriting shared history, rerun QA, and push the revert.
+- Preferred source rollback: run `git revert` for the faulty commit without rewriting shared history, rerun QA, push the revert, and deploy that exact pushed SHA.
 - Emergency hosting rollback: use Vercel's dashboard or current `vercel rollback` command to reassign production to an eligible earlier deployment, then reconcile Git immediately so the next push does not reintroduce the fault.
 - After any rollback, verify public routes and note that restored deployments may use older environment configuration.
 
