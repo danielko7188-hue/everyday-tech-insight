@@ -1394,10 +1394,15 @@ test("trust pages are reachable and state the public evidence boundary", async (
 
   await page.goto("/privacy/");
   await expect(
-    page.getByText(/sets no cookies or browser storage/i),
+    page.getByText(
+      /validated integration state disables both analytics and advertising/i,
+    ),
   ).toBeVisible();
   await expect(
-    page.getByText(/includes no analytics or advertising/i),
+    page.getByText(/does not load analytics or advertising services/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Vercel may process request, device, network, diagnostic/i),
   ).toBeVisible();
 
   await page.goto("/advertising-disclosure/");

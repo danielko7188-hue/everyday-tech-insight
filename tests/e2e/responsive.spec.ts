@@ -554,6 +554,14 @@ test("mobile article keeps its informative visual and one compact fit summary be
     page.locator(".fit-summary--desktop, .fit-summary--mobile"),
   ).toHaveCount(0);
 
+  const tocColumns = await page
+    .locator(".table-of-contents > ol")
+    .evaluate(
+      (element) =>
+        getComputedStyle(element).gridTemplateColumns.split(/\s+/).length,
+    );
+  expect(tocColumns).toBe(2);
+
   const firstParagraph = await page
     .locator(".article-body > p")
     .first()
