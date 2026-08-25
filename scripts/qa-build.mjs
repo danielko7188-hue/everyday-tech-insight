@@ -10,6 +10,13 @@ import {
   readArticleRecords,
   REQUIRED_CATEGORY_SLUGS,
 } from "./qa-content.mjs";
+import {
+  isMeaningfulManagedImageAlt,
+  MANAGED_ARTICLE_IMAGE_MAX_DIMENSION,
+  MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT,
+  parseManagedArticleImageUrl,
+  scanManagedImagesInMarkdown,
+} from "../src/utils/managed-article-images.mjs";
 import { siteConfig, siteUrl as configuredSiteUrl } from "../site.config.mjs";
 
 const TRUST_NAVIGATION = JSON.parse(
@@ -96,6 +103,204 @@ function sameOrderedMembers(actual, expected) {
 
 function orderedMembershipMessage(actual, expected) {
   return `expected ordered [${expected.join(", ") || "none"}]; found [${actual.join(", ") || "none"}].`;
+}
+
+function managedReferencesForArticle(article, issues) {
+  const scan = scanManagedImagesInMarkdown(article.body ?? "", {
+    articleSlug: article.data.slug,
+    fileName: article.fileName,
+  });
+  for (const issue of scan.findings) {
+    issues.push(
+      finding(
+        "managed-image-source-contract",
+        issue.location,
+        `[${issue.code}] ${issue.message}`,
+      ),
+    );
+  }
+  const references = scan.references.map((reference) => ({
+    ...reference,
+    kind: "body",
+  }));
+  if (typeof article.data.heroImage === "string") {
+    try {
+      references.unshift({
+        ...parseManagedArticleImageUrl(
+          article.data.heroImage,
+          article.data.slug,
+        ),
+        kind: "hero",
+      });
+    } catch (error) {
+      issues.push(
+        finding(
+          "managed-image-source-contract",
+          article.fileName,
+          error instanceof Error ? error.message : String(error),
+        ),
+      );
+    }
+  }
+  return references;
+}
+
+export function validateManagedArticleImageBuildOutput({ files, articles }) {
+  const normalizedFiles = new Map(
+    [...files].map(([fileName, contents]) => [
+      normalizeFileName(fileName),
+      contents,
+    ]),
+  );
+  const issues = [];
+  const expectedPublishedFiles = new Set();
+  const referencesByArticle = new Map();
+
+  for (const article of articles) {
+    const references = managedReferencesForArticle(article, issues);
+    referencesByArticle.set(article.data.slug, references);
+    if (article.data.status === "published") {
+      for (const reference of references) {
+        expectedPublishedFiles.add(reference.publicUrl.slice(1));
+      }
+    }
+  }
+
+  const actualManagedFiles = new Set(
+    [...normalizedFiles.keys()].filter((fileName) =>
+      fileName.startsWith(`${MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT.slice(1)}/`),
+    ),
+  );
+  if (!sameSet(actualManagedFiles, expectedPublishedFiles)) {
+    issues.push(
+      finding(
+        "managed-image-output-set",
+        "dist/images/articles",
+        membershipMessage(actualManagedFiles, expectedPublishedFiles),
+      ),
+    );
+  }
+
+  for (const article of articles.filter(
+    ({ data }) => data.status === "published",
+  )) {
+    const articleFile = `articles/${article.data.slug}/index.html`;
+    const html = normalizedFiles.get(articleFile);
+    if (typeof html !== "string") continue;
+    const $ = load(html);
+    const expectedReferences = referencesByArticle.get(article.data.slug) ?? [];
+    const expectedUrls = sorted(
+      expectedReferences.map(({ publicUrl }) => publicUrl),
+    );
+    const managedElements = $("img[src]").filter((_index, element) =>
+      ($(element).attr("src") ?? "").startsWith(
+        MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT,
+      ),
+    );
+    const actualUrls = sorted(
+      managedElements
+        .map((_index, element) => $(element).attr("src") ?? "")
+        .get(),
+    );
+    if (!sameOrderedMembers(actualUrls, expectedUrls)) {
+      issues.push(
+        finding(
+          "managed-image-markup-set",
+          articleFile,
+          orderedMembershipMessage(actualUrls, expectedUrls),
+        ),
+      );
+    }
+
+    managedElements.each((_index, element) => {
+      const image = $(element);
+      const publicUrl = image.attr("src") ?? "";
+      let parsed;
+      try {
+        parsed = parseManagedArticleImageUrl(publicUrl, article.data.slug);
+      } catch (error) {
+        issues.push(
+          finding(
+            "managed-image-url",
+            articleFile,
+            error instanceof Error ? error.message : String(error),
+          ),
+        );
+        return;
+      }
+
+      const width = Number(image.attr("width"));
+      const height = Number(image.attr("height"));
+      if (
+        !Number.isSafeInteger(width) ||
+        width <= 0 ||
+        width > MANAGED_ARTICLE_IMAGE_MAX_DIMENSION ||
+        !Number.isSafeInteger(height) ||
+        height <= 0 ||
+        height > MANAGED_ARTICLE_IMAGE_MAX_DIMENSION
+      ) {
+        issues.push(
+          finding(
+            "managed-image-dimensions",
+            articleFile,
+            `${publicUrl} requires positive intrinsic width and height no greater than ${MANAGED_ARTICLE_IMAGE_MAX_DIMENSION}.`,
+          ),
+        );
+      }
+      if (image.attr("decoding") !== "async") {
+        issues.push(
+          finding(
+            "managed-image-decoding",
+            articleFile,
+            `${publicUrl} must use decoding=async.`,
+          ),
+        );
+      }
+
+      const isHero = image.closest("[data-managed-hero-image]").length === 1;
+      const isBody = image.closest(".article-body").length === 1;
+      const expectedLoading = isHero ? "eager" : isBody ? "lazy" : undefined;
+      if (!expectedLoading || image.attr("loading") !== expectedLoading) {
+        issues.push(
+          finding(
+            "managed-image-loading",
+            articleFile,
+            `${publicUrl} must use ${expectedLoading ?? "a recognized hero or body"} loading semantics.`,
+          ),
+        );
+      }
+
+      const alt = image.attr("alt");
+      if (isHero) {
+        const expectedAlt = article.data.heroImageAlt;
+        const decorative = article.data.heroImageDecorative === true;
+        if (
+          alt !== expectedAlt ||
+          (decorative
+            ? alt !== "" || image.attr("aria-hidden") !== "true"
+            : !isMeaningfulManagedImageAlt(alt, parsed.filename))
+        ) {
+          issues.push(
+            finding(
+              "managed-hero-image-alt",
+              articleFile,
+              `${publicUrl} does not match the reviewed hero alternative-text tuple.`,
+            ),
+          );
+        }
+      } else if (isBody && !isMeaningfulManagedImageAlt(alt, parsed.filename)) {
+        issues.push(
+          finding(
+            "managed-body-image-alt",
+            articleFile,
+            `${publicUrl} requires meaningful body-image alternative text.`,
+          ),
+        );
+      }
+    });
+  }
+
+  return issues;
 }
 
 function compareCategoryArticles(left, right) {
@@ -895,7 +1100,10 @@ export function validateBuiltOutput({
       contents,
     ]),
   );
-  const issues = [];
+  const issues = validateManagedArticleImageBuildOutput({
+    files: normalizedFiles,
+    articles,
+  });
   const publishedArticles = articles.filter(
     ({ data }) => data.status === "published",
   );

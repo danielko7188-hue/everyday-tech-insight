@@ -999,7 +999,7 @@ export function validatePagesCmsConfig(config) {
     {
       name: "article_images",
       label: "Article images",
-      input: "public/images/articles",
+      input: "src/content-assets/articles",
       output: "/images/articles",
       extensions: RASTER_EXTENSIONS,
       categories: ["image"],

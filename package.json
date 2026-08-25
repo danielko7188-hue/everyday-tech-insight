@@ -22,6 +22,7 @@
     "check:links": "node scripts/check-external-links.mjs",
     "check:content": "node scripts/qa-content.mjs",
     "check:cms": "node scripts/qa-cms.mjs",
+    "check:images": "node scripts/qa-images.mjs",
     "check:cms-fixture": "node scripts/check-cms-fixture.mjs",
     "check:seo": "node scripts/qa-build.mjs",
     "check:production": "node scripts/check-production.mjs",

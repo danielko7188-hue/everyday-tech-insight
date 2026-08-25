@@ -1,7 +1,7 @@
 media:
   - name: article_images
     label: Article images
-    input: public/images/articles
+    input: src/content-assets/articles
     output: /images/articles
     extensions: [webp, png, jpg, jpeg]
     categories: [image]

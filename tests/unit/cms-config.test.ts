@@ -83,7 +83,7 @@ describe("Pages CMS configuration", () => {
       {
         name: "article_images",
         label: "Article images",
-        input: "public/images/articles",
+        input: "src/content-assets/articles",
         output: "/images/articles",
         extensions: ["webp", "png", "jpg", "jpeg"],
         categories: ["image"],
@@ -594,6 +594,12 @@ describe("Pages CMS configuration", () => {
     [
       "media name",
       (config: CmsConfig) => (config.media[0].name = "uploads"),
+      "media-contract",
+      "media",
+    ],
+    [
+      "media input",
+      (config: CmsConfig) => (config.media[0].input = "public/images/articles"),
       "media-contract",
       "media",
     ],

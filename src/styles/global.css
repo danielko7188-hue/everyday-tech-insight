@@ -1057,6 +1057,26 @@ strong {
   background: var(--color-paper);
 }
 
+.article-hero-image {
+  margin: 0;
+}
+
+.article-hero-image img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.article-hero-image figcaption {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-block-start: 1px solid var(--color-rule);
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
 .article-summary {
   margin-block-end: var(--space-4);
 }

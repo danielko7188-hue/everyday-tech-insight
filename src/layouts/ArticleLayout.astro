@@ -12,6 +12,7 @@ import TableOfContents from "../components/TableOfContents.astro";
 import type { CategoryRecord } from "../data/categories";
 import { site } from "../data/site";
 import { getToolkitResourceForArticle } from "../data/toolkit";
+import { resolveManagedArticleHeroImage } from "../utils/managed-article-images.mjs";
 import { formatPublicationDate } from "../utils/presentation";
 import type { PublishedArticleEntry } from "../utils/published-articles";
 import BaseLayout from "./BaseLayout.astro";
@@ -34,6 +35,9 @@ const {
 const { data } = article;
 const articlePath = `/articles/${data.slug}/`;
 const toolkitResource = getToolkitResourceForArticle(data.slug);
+const managedHeroImage = await resolveManagedArticleHeroImage(data, {
+  repositoryRoot: process.cwd(),
+});
 const title = `${data.title} | ${site.name}`;
 const formatDate = (date: string) =>
   formatPublicationDate(date, {
@@ -109,13 +113,57 @@ const formatDate = (date: string) =>
             reviewedLabel={formatDate(data.lastReviewed)}
           />
         </div>
-        <div class="article-hero__visual" data-editorial-visual>
-          <EditorialVisual
-            category={category.slug}
-            slug={data.slug}
-            visual={data.visual}
-            ratio="wide"
-          />
+        <div
+          class="article-hero__visual"
+          data-editorial-visual={managedHeroImage ? undefined : true}
+          data-managed-hero-image={managedHeroImage ? true : undefined}
+        >
+          {
+            managedHeroImage ? (
+              <figure class="article-hero-image">
+                <img
+                  src={managedHeroImage.publicUrl}
+                  alt={managedHeroImage.alt}
+                  aria-hidden={managedHeroImage.decorative ? "true" : undefined}
+                  width={managedHeroImage.width}
+                  height={managedHeroImage.height}
+                  loading="eager"
+                  decoding="async"
+                />
+                {(managedHeroImage.caption ||
+                  managedHeroImage.credit ||
+                  managedHeroImage.license) && (
+                  <figcaption>
+                    {managedHeroImage.caption && (
+                      <span>{managedHeroImage.caption}</span>
+                    )}
+                    {managedHeroImage.credit && (
+                      <span>
+                        Image credit:{" "}
+                        {managedHeroImage.sourceUrl ? (
+                          <a href={managedHeroImage.sourceUrl}>
+                            {managedHeroImage.credit}
+                          </a>
+                        ) : (
+                          managedHeroImage.credit
+                        )}
+                      </span>
+                    )}
+                    {managedHeroImage.license && (
+                      <span>License: {managedHeroImage.license}</span>
+                    )}
+                  </figcaption>
+                )}
+              </figure>
+            ) : (
+              <EditorialVisual
+                category={category.slug}
+                slug={data.slug}
+                visual={data.visual}
+                ratio="wide"
+              />
+            )
+          }
         </div>
       </header>
 
