@@ -1,7 +1,7 @@
 @font-face {
   font-family: "Newsreader Variable";
   font-style: normal;
-  font-display: optional;
+  font-display: swap;
   font-weight: 600 800;
   src: url("/fonts/newsreader-variable-english.woff2")
     format("woff2-variations");
@@ -13,7 +13,7 @@
 @font-face {
   font-family: "Source Sans 3 Variable";
   font-style: normal;
-  font-display: optional;
+  font-display: swap;
   font-weight: 200 900;
   src: url("/fonts/source-sans-3-variable-english.woff2")
     format("woff2-variations");

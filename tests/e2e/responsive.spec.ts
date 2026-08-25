@@ -556,6 +556,10 @@ test("mobile article keeps its informative visual and one compact fit summary be
   page,
 }) => {
   skipWhenNoRepresentativeArticle();
+  await page.route("**/*.woff2", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await route.continue();
+  });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(representativeArticlePath!);
   await page.evaluate(async () => {
