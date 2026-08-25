@@ -184,12 +184,9 @@ export function normalizeExpectedGitSha(value) {
   return value;
 }
 
-function deploymentGitShaCandidates(metadata) {
-  return [
-    metadata?.meta?.githubCommitSha,
-    metadata?.meta?.gitCommitSha,
-    metadata?.gitSource?.sha,
-  ].filter((value) => typeof value === "string" && value.length > 0);
+function authoritativeDeploymentGitSha(metadata) {
+  const value = metadata?.gitSource?.sha;
+  return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 export function validateDeploymentMetadata(
@@ -266,6 +263,27 @@ export function validateDeploymentMetadata(
       ),
     );
   }
+  if (
+    deploymentMetadata.source !== "git" ||
+    deploymentMetadata.gitSource?.type !== "github"
+  ) {
+    issues.push(
+      finding(
+        "deployment-source",
+        "deployment-metadata",
+        "Vercel deployment must be a GitHub-triggered Git deployment, not a local CLI upload.",
+      ),
+    );
+  }
+  if (deploymentMetadata.gitSource?.ref !== "main") {
+    issues.push(
+      finding(
+        "deployment-git-ref",
+        "deployment-metadata",
+        "Vercel production deployment must come from the main Git branch.",
+      ),
+    );
+  }
 
   const expectedHost = new URL(normalizedOrigin).hostname.toLowerCase();
   const aliases = [
@@ -307,35 +325,32 @@ export function validateDeploymentMetadata(
     );
   }
 
-  const candidates = deploymentGitShaCandidates(deploymentMetadata);
-  const uniqueCandidates = [...new Set(candidates)];
-  if (uniqueCandidates.length === 0) {
+  const reportedGitSha = authoritativeDeploymentGitSha(deploymentMetadata);
+  if (!reportedGitSha) {
     issues.push(
       finding(
         "deployment-git-sha-unavailable",
         "deployment-metadata",
-        "Vercel metadata does not expose a documented Git commit SHA field.",
+        "Vercel metadata does not expose an authoritative gitSource.sha from a Git-triggered deployment.",
       ),
     );
   } else if (
-    uniqueCandidates.length !== 1 ||
-    !GIT_SHA_PATTERN.test(uniqueCandidates[0]) ||
-    uniqueCandidates[0] !== expected
+    !GIT_SHA_PATTERN.test(reportedGitSha) ||
+    reportedGitSha !== expected
   ) {
-    summary.reportedGitSha =
-      uniqueCandidates.length === 1 && GIT_SHA_PATTERN.test(uniqueCandidates[0])
-        ? uniqueCandidates[0]
-        : null;
+    summary.reportedGitSha = GIT_SHA_PATTERN.test(reportedGitSha)
+      ? reportedGitSha
+      : null;
     issues.push(
       finding(
         "deployment-git-sha",
         "deployment-metadata",
-        "Vercel deployment Git SHA does not exactly match the expected SHA.",
+        "Vercel Git-triggered deployment SHA does not exactly match the expected SHA.",
       ),
     );
   } else {
     summary.gitShaStatus = "MATCH";
-    summary.reportedGitSha = uniqueCandidates[0];
+    summary.reportedGitSha = reportedGitSha;
   }
 
   if (issues.length === 0) summary.status = "PASS";

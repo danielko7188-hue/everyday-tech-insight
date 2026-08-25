@@ -102,7 +102,7 @@ Set `$fullGitSha` and `$vercelDeploymentId` from the exact pushed commit and aut
 
 Generated folders such as `dist/`, `.astro/`, `.vercel/`, and `.lighthouseci/` are intentionally ignored. Edit source files, never generated output.
 
-Category pages choose their composition from real membership: fewer than six guides use a compact list, six through eleven use an editorial lead/features/remainder layout, and twelve or more use featured/recent/archive groups. Article illustrations are informative, story-specific local SVGs with text alternatives; category fallbacks remain decorative. Toolkit field guidance is stacked on mobile, with no horizontally scrolling primary field table.
+Category pages use one neutral, complete compact list in stable public-slug order. No guide is promoted as featured, and every current or future category member remains linked exactly once. Article illustrations are informative, story-specific local SVGs with text alternatives; category fallbacks remain decorative. Toolkit field guidance is stacked on mobile, with no horizontally scrolling primary field table.
 
 ## Add or update an article
 

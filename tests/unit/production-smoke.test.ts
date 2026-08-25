@@ -119,9 +119,14 @@ function deploymentMetadataFixture(
 ): Record<string, unknown> {
   return {
     alias: ["host.example"],
+    gitSource: {
+      ref: "main",
+      sha: expectedGitSha,
+      type: "github",
+    },
     id: "dpl_AbCdEf1234567890",
-    meta: { githubCommitSha: expectedGitSha },
     readyState: "READY",
+    source: "git",
     target: "production",
     url: "everyday-tech-insight-unique.vercel.app",
     ...overrides,
@@ -1407,7 +1412,7 @@ describe("production route smoke", () => {
     expect(result.metadataParity).toMatchObject({ status: "FAIL" });
   });
 
-  it("validates trusted Vercel deployment identity and exact Git SHA metadata", async () => {
+  it("validates trusted Vercel deployment identity and authoritative Git SHA metadata", async () => {
     const productionSmoke = await loadRunner();
     const routes = [
       { path: "/about/", expectedStatus: 200, kind: "html" as const },
@@ -1427,13 +1432,31 @@ describe("production route smoke", () => {
     for (const [metadata, code] of [
       [
         deploymentMetadataFixture({
-          meta: { githubCommitSha: "f".repeat(40) },
+          gitSource: {
+            ref: "main",
+            sha: "f".repeat(40),
+            type: "github",
+          },
         }),
         "deployment-git-sha",
       ],
       [
-        deploymentMetadataFixture({ meta: {} }),
+        deploymentMetadataFixture({
+          gitSource: undefined,
+          meta: { githubCommitSha: expectedGitSha },
+        }),
         "deployment-git-sha-unavailable",
+      ],
+      [deploymentMetadataFixture({ source: "cli" }), "deployment-source"],
+      [
+        deploymentMetadataFixture({
+          gitSource: {
+            ref: "feature",
+            sha: expectedGitSha,
+            type: "github",
+          },
+        }),
+        "deployment-git-ref",
       ],
       [
         deploymentMetadataFixture({ readyState: "BUILDING" }),

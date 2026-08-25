@@ -1,6 +1,6 @@
 # Technical QA
 
-Date recorded: 2026-08-23
+Date recorded: 2026-08-25
 
 ## Release command
 
@@ -14,7 +14,7 @@ npm run qa
 
 On a fresh Linux CI/workstation that needs browser system packages, replace the browser step with `npm run setup:browsers:linux`. Both commands install Chromium for the exact Playwright version in `package-lock.json`; neither belongs in the Vercel production build.
 
-The release command runs formatting, lint, Astro type checks, unit tests, a production build, content checks, built-output checks, external-source verification, Playwright/axe and visual-regression checks, and Lighthouse in that order. Playwright always starts a new built preview and never reuses an existing server.
+The release command runs formatting, lint, Astro type checks, unit tests, a production build, content, editorial, CMS, image, CMS-lifecycle-fixture, built-output, and external-source checks, Playwright/axe, the separate visual-regression project, and Lighthouse in that order. The npm `prebuild` lifecycle also runs the deterministic content, editorial, CMS, and image checks before every production build, including Vercel builds. Playwright always starts a new built preview and never reuses an existing server.
 
 ## Blocking contracts
 
@@ -59,7 +59,7 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 ### Browser and performance
 
 - Playwright verifies representative routes, the Toolkit and its exact header-only CSV downloads, real 404 behavior, metadata, RSS/robots, mobile overflow, keyboard focus, reduced-motion support, unique navigation landmarks, and axe moderate/serious/critical WCAG results.
-- Lighthouse runs in desktop form factor against the home page, AI and automation category, and a representative automation article using the Playwright-installed Chromium.
+- Lighthouse audits four representative routes—the home page, cybersecurity category, automation article, and Toolkit—on mobile and desktop, using the Playwright-installed Chromium for three runs per route and device profile.
 - Thresholds: Performance at least 90; Accessibility, Best Practices, and SEO at least 95.
 - Stale Lighthouse output is cleared at startup. Raw reports and a status/form-factor-labeled `summary.json` are first written to a pending directory and then replace ignored `.lighthouseci/` atomically, so an interrupted run cannot leave an apparently current success summary. The runner owns the Launcher instance before readiness polling, applies bounded startup polling, and uses one idempotent cleanup path for normal completion, launch failure, `SIGINT`, and `SIGTERM`. Signal protection stays installed through browser/server/profile cleanup and report publication or discard.
 
@@ -70,11 +70,34 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 - Captures use a fixed 900px viewport height, DPR 1, light mode, `en-US`, `America/Los_Angeles`, reduced motion, both local faces loaded, one animation frame, disabled animation, hidden caret, and CSS-scale screenshots.
 - Snapshot paths include the test file, snapshot argument, Playwright project, and platform. The documented tolerance is `maxDiffPixelRatio: 0.001`; it is not a license to accept an unexplained visual change.
 - Console errors, page errors, failed requests, and cross-origin requests fail the visual run. The intentional missing route permits only its expected primary 404 resource message.
-- `npm run capture:production -- --origin https://production.example` is a separate after-deployment step. It accepts only an explicit canonical HTTPS origin and writes the exact original eight-route × three-width × two-mode inventory (48 PNGs) to `artifacts/site-audit/after/production/`. It must not be run against an old deployment.
+- `capture:production` requires `--origin`, `--phase`, and the exact expected 40-character Git SHA. `before`, `after-production`, and `runtime-verification` require a deployment ID and canonical HTTPS origin; `after-local` requires a canonical `http://127.0.0.1[:port]` origin and forbids a deployment ID.
+- The `before` phase captures 40 full-page PNGs: eight representative routes at 390, 768, 1024, 1440, and 1920 pixels. Every after phase captures 97 PNGs: 18 routes at all five widths, keyboard-open navigation at 390 and 768 pixels, and focused skip-link states at all five widths. Each successful run atomically publishes an `audit-manifest.json` containing provenance, route/status, viewport/state, byte count, SHA-256 digest, and monetization/CMS-absence assertions.
+- Fixed outputs are `artifacts/site-audit/before/purple-signal-2026-08-25/`, `artifacts/site-audit/after/purple-signal-2026-08-25/local/`, `artifacts/site-audit/after/purple-signal-2026-08-25/production/`, and the ignored `artifacts/site-audit/runtime-verification/purple-signal-2026-08-25-final/`.
 
-## Current publication-maturity evidence
+```text
+npm run capture:production -- --origin https://production.example --phase before --expected-sha $fullGitSha --deployment-id $vercelDeploymentId
+npm run capture:production -- --origin http://127.0.0.1:4321 --phase after-local --expected-sha $fullGitSha
+npm run capture:production -- --origin https://production.example --phase after-production --expected-sha $fullGitSha --deployment-id $vercelDeploymentId
+npm run capture:production -- --origin https://production.example --phase runtime-verification --expected-sha $fullGitSha --deployment-id $vercelDeploymentId
+```
 
-Fresh clean feature-branch release run on 2026-08-23 at code commit `54c31bcafeacc3ce3ba8828a8d403f76ff1ccc48`:
+## Current Purple Signal release evidence
+
+The current feature branch has not yet recorded its post-fix complete `npm run qa`, after-local capture, production deployment, or final runtime-verification run. Those results remain pending and must not be inferred from the 2026-08-23 release.
+
+The directly observed rollback baseline was captured on 2026-08-25 at `2026-08-25T18:41:08.633Z` from `https://everyday-tech-insight.vercel.app`:
+
+- Git SHA: `6473acaa64c64a64de6d3d1e6900cdad9a52d06c`.
+- Vercel deployment: `dpl_A4prJX9FUrtzkBcw8bGRhS3qHW75`.
+- Before-state evidence: 40 captures and 40 unique SHA-256 hashes.
+- Exact 404 assertions passed for `/ads.txt`, `/admin/`, `/.pages.yml`, the CMS draft route, and `/keystatic/`; the homepage monetization-off DOM assertion passed.
+- The focused release-evidence suite passed 29 tests across 3 files.
+
+The after-local, after-production, and final runtime-verification records will be added only by their corresponding successful runs.
+
+## Historical evidence record
+
+The following publication-maturity release was recorded on 2026-08-23 at code commit `54c31bcafeacc3ce3ba8828a8d403f76ff1ccc48`. It remains valid for that recorded tree and deployment, not for the current Purple Signal branch:
 
 - `npm run qa`: pass end to end.
 - Clean install and dependency audit: 0 total vulnerabilities; 0 production vulnerabilities.
@@ -91,8 +114,6 @@ Fresh clean feature-branch release run on 2026-08-23 at code commit `54c31bcafea
 - Lighthouse desktop automation-candidates article: Performance 90, Accessibility 100, Best Practices 100, SEO 100; performance runs 91/90/90.
 - Independent final code/release review: approved with no remaining P0-P3 findings at the recorded code commit.
 - Production after-state evidence: Vercel deployment `dpl_4h7us2N5TFFtP6xz8763ZLn7TzvK` reached `READY`; the canonical alias passed the 42-route/30-asset production smoke gate; 48 production PNGs were captured with 48 unique verified SHA-256 hashes.
-
-## Historical evidence record
 
 The following pre-publication-maturity feature-branch run was recorded on 2026-08-22. It is retained as historical evidence and is not a claim about the current tree or a new deployment:
 

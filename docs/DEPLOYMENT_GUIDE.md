@@ -9,11 +9,11 @@ This release uses GitHub first and Vercel second. Do not deploy local unpushed c
 1. Complete the human review checklist or record every unchecked gate honestly.
 2. From a clean checkout, run `npm ci`, `npm run setup:browsers`, and `npm run qa`. On a fresh Linux CI/workstation that needs Chromium libraries, use `npm run setup:browsers:linux` for the browser step.
 3. Confirm no parent Blogger files, secrets, account identifiers, or generated output are tracked.
-4. Merge the verified branch to `main` and rerun the complete QA command on `main`.
-5. Push `main` to the public GitHub repository and confirm the remote commit SHA equals local `HEAD`.
-6. Import or link that GitHub repository in Vercel with Astro as the framework, `npm run build` as the build command, and `dist` as the output directory. Do not add a browser-install or full-QA step to the Vercel production build; browser setup belongs in the verified local/CI release gate.
-7. Create the production deployment from the pushed `main` commit.
-8. Verify the production URL, representative routes, real 404, canonical tags, robots, sitemap index, RSS, security headers, and deployment logs.
+4. Confirm the GitHub repository is connected to Vercel with `main` as the production branch, Astro as the framework, `npm run build` as the build command, and `dist` as the output directory. The npm `prebuild` lifecycle fails closed on the deterministic content, editorial, CMS, and image contracts before asset generation or Astro can publish output. Do not add a browser-install or full-QA step to the Vercel production build; browser setup belongs in the verified local/CI release gate.
+5. Merge the verified branch to `main` and rerun the complete QA command on `main`.
+6. Push `main` to the public GitHub repository and confirm the remote commit SHA equals local `HEAD`.
+7. Wait for the connected Git integration to create the production deployment from that pushed commit. Do not substitute a local CLI upload, because caller-supplied metadata does not prove which Git tree produced the deployed bytes.
+8. Verify the production URL, representative routes, real 404, canonical tags, robots, sitemap index, RSS, security headers, deployment logs, and authoritative Git provenance.
 
 The static build accepts one optional public variable: `PUBLIC_SITE_URL`. It is
 not a secret. Leave it undefined to use the verified
@@ -26,19 +26,29 @@ do not create placeholder secrets.
 
 ## Vercel CLI reference
 
-Use an authenticated current Vercel CLI only after the GitHub push:
+Use an authenticated current Vercel CLI to establish the Git connection before
+the release. Push GitHub first; the connected integration creates the Vercel
+deployment second:
 
 ```text
 npx vercel@latest link --yes --project everyday-tech-insight
 npx vercel@latest git connect https://github.com/danielko7188-hue/everyday-tech-insight
 $expectedSha = (git rev-parse HEAD).Trim()
-$deploymentUrl = npx vercel@latest deploy --prod --yes --meta "githubCommitSha=$expectedSha"
-$deploymentHost = ([Uri]$deploymentUrl).Host
+git push origin main
+# Wait for the Git-triggered production deployment to claim the canonical alias.
+$deploymentHost = "everyday-tech-insight.vercel.app"
 npx vercel@latest api "/v13/deployments/$deploymentHost" --raw | Set-Content -LiteralPath .vercel\deployment-metadata.json -Encoding utf8NoBOM
 npm run check:production -- --origin https://everyday-tech-insight.vercel.app --expected-sha $expectedSha --deployment-metadata .vercel\deployment-metadata.json
 ```
 
-The explicit metadata value is taken from the already-pushed local `HEAD`; the production verifier requires Vercel's authenticated deployment API to report that same full SHA together with `READY`, production target, deployment ID, and canonical alias evidence. Current `vercel inspect --json` output does not expose the Git SHA and cannot satisfy this gate. A missing or conflicting SHA fails closed. The ignored `.vercel/deployment-metadata.json` file is runtime evidence and is not committed.
+The production verifier requires Vercel's authenticated deployment API to
+report the already-pushed full SHA in authoritative `gitSource.sha`, together
+with `READY`, production target, deployment ID, and canonical alias evidence.
+Arbitrary `--meta` values are self-attested and are not accepted as Git
+provenance. Current `vercel inspect --json` output does not expose the Git SHA
+and cannot satisfy this gate. A missing or conflicting SHA fails closed. The
+ignored `.vercel/deployment-metadata.json` file is runtime evidence and is not
+committed.
 
 CLI syntax can change. Check `npx vercel@latest --help` before a live action. The ignored `.vercel/` folder stores local project linkage and must not be committed.
 
@@ -57,12 +67,14 @@ therefore share one origin. After deployment:
 
 For a future custom domain, add and verify the domain in Vercel, configure the required DNS records at the registrar, choose one canonical hostname, redirect alternatives, then set the production variable and complete the full release cycle. Do not switch canonicals before the domain resolves over HTTPS.
 
-`npm run build` first regenerates the fixed local social-preview portfolio: one
-default image, five category images, fifteen article images, and the Apple touch
-icon. Sharp is pinned directly, generation uses bundled inputs only, and the
-built-output gate rejects missing or extra social files. Commit the generated
-`public/social/*.png` and `public/apple-touch-icon.png` files with their source
-changes; never replace them with remote image URLs.
+`npm run build` first runs the fail-closed content, editorial, CMS, and image
+source checks through npm's `prebuild` lifecycle. It then regenerates the fixed
+local social-preview portfolio: one default image, five category images,
+fifteen article images, and the Apple touch icon. Sharp is pinned directly,
+generation uses bundled inputs only, and the built-output gate rejects missing
+or extra social files. Commit the generated `public/social/*.png` and
+`public/apple-touch-icon.png` files with their source changes; never replace
+them with remote image URLs.
 
 ## Search Console
 

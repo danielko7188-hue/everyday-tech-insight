@@ -187,6 +187,7 @@ describe("static deployment configuration", () => {
     expect(Object.keys(packageJson.scripts ?? {})).toEqual(
       expect.arrayContaining([
         "dev",
+        "prebuild",
         "build",
         "preview",
         "format",
@@ -231,13 +232,16 @@ describe("static deployment configuration", () => {
     expect(packageJson.devDependencies?.["@types/node"]).toBe("22.20.1");
   });
 
-  it("pins Sharp directly and generates social images before every build", () => {
+  it("fails closed on source validation and generates social images before every build", () => {
     const packageJson = readJson("../../package.json") as {
       scripts?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };
 
     expect(packageJson.devDependencies?.sharp).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(packageJson.scripts?.prebuild).toBe(
+      "npm run check:content && npm run check:editorial && npm run check:cms && npm run check:images",
+    );
     expect(packageJson.scripts?.["generate:social"]).toBe(
       "node scripts/generate-social-images.mjs",
     );

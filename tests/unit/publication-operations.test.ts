@@ -102,6 +102,9 @@ describe("publication operations documentation", () => {
       /vercel@latest api\s+"?\/v13\/deployments\/\$deploymentHost"?\s+--raw/i,
     );
     expect(deployment).not.toMatch(/vercel@latest inspect[^\n]*--json/i);
+    expect(deployment).toMatch(/authoritative `gitSource\.sha`/i);
+    expect(deployment).toMatch(/Git-triggered production deployment/i);
+    expect(deployment).not.toMatch(/deploy[^\n]*--meta/i);
   });
 
   it("classifies current evidence without carrying an old READY claim forward", async () => {
