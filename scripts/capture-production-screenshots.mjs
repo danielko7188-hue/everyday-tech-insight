@@ -4,18 +4,27 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { chromium } from "@playwright/test";
 
-export const CAPTURE_WIDTHS = Object.freeze([390, 768, 1440]);
+import { writeAuditManifest } from "./write-audit-manifest.mjs";
+
+export const CAPTURE_PHASES = Object.freeze([
+  "before",
+  "after-local",
+  "after-production",
+]);
+export const CAPTURE_WIDTHS = Object.freeze([390, 768, 1024, 1440, 1920]);
 export const CAPTURE_HEIGHT = 900;
-export const CAPTURE_ROUTES = Object.freeze([
+export const RELEASE_EVIDENCE_ID = "purple-signal-2026-08-25";
+export const BEFORE_CAPTURE_ROUTES = Object.freeze([
   Object.freeze({ alias: "home", path: "/", status: 200 }),
+  Object.freeze({ alias: "articles", path: "/articles/", status: 200 }),
   Object.freeze({
-    alias: "category",
+    alias: "category-cybersecurity",
     path: "/categories/cybersecurity-data-protection/",
     status: 200,
   }),
   Object.freeze({
-    alias: "article",
-    path: "/articles/back-up-business-files-with-the-3-2-1-method/",
+    alias: "article-ai-automation",
+    path: "/articles/how-to-identify-business-tasks-for-automation/",
     status: 200,
   }),
   Object.freeze({ alias: "toolkit", path: "/toolkit/", status: 200 }),
@@ -25,43 +34,131 @@ export const CAPTURE_ROUTES = Object.freeze([
     path: "/editorial-standards/",
     status: 200,
   }),
-  Object.freeze({ alias: "contact", path: "/contact/", status: 200 }),
   Object.freeze({
     alias: "404",
-    path: "/publication-after-capture-route-that-does-not-exist/",
+    path: "/publication-audit-route-that-does-not-exist/",
     status: 404,
   }),
 ]);
-
-const CAPTURE_FILE_NAMES = Object.freeze(
-  CAPTURE_WIDTHS.flatMap((width) =>
-    CAPTURE_ROUTES.flatMap(({ alias }) => [
-      `${width}-${alias}-above-fold.png`,
-      `${width}-${alias}-full.png`,
-    ]),
-  ),
-);
-const captureFileNameSet = new Set(CAPTURE_FILE_NAMES);
+export const AFTER_CAPTURE_ROUTES = Object.freeze([
+  Object.freeze({ alias: "home", path: "/", status: 200 }),
+  Object.freeze({ alias: "articles", path: "/articles/", status: 200 }),
+  Object.freeze({ alias: "categories", path: "/categories/", status: 200 }),
+  Object.freeze({
+    alias: "category-cybersecurity",
+    path: "/categories/cybersecurity-data-protection/",
+    status: 200,
+  }),
+  Object.freeze({
+    alias: "article-ai-automation",
+    path: "/articles/how-to-identify-business-tasks-for-automation/",
+    status: 200,
+  }),
+  Object.freeze({
+    alias: "article-saas-evaluation",
+    path: "/articles/evaluate-saas-with-a-practical-checklist/",
+    status: 200,
+  }),
+  Object.freeze({
+    alias: "article-phishing-response",
+    path: "/articles/respond-to-a-suspected-phishing-message/",
+    status: 200,
+  }),
+  Object.freeze({
+    alias: "article-shared-files",
+    path: "/articles/create-a-shared-file-and-folder-system/",
+    status: 200,
+  }),
+  Object.freeze({
+    alias: "article-software-tco",
+    path: "/articles/calculate-the-total-cost-of-business-software/",
+    status: 200,
+  }),
+  Object.freeze({ alias: "toolkit", path: "/toolkit/", status: 200 }),
+  Object.freeze({
+    alias: "toolkit-risk-register",
+    path: "/toolkit/technology-risk-register/",
+    status: 200,
+  }),
+  Object.freeze({ alias: "about", path: "/about/", status: 200 }),
+  Object.freeze({ alias: "publisher", path: "/publisher/", status: 200 }),
+  Object.freeze({
+    alias: "editorial-standards",
+    path: "/editorial-standards/",
+    status: 200,
+  }),
+  Object.freeze({ alias: "privacy", path: "/privacy/", status: 200 }),
+  Object.freeze({
+    alias: "advertising-disclosure",
+    path: "/advertising-disclosure/",
+    status: 200,
+  }),
+  Object.freeze({ alias: "contact", path: "/contact/", status: 200 }),
+  Object.freeze({
+    alias: "404",
+    path: "/publication-audit-route-that-does-not-exist/",
+    status: 404,
+  }),
+]);
+// Backwards-compatible name for consumers that need the complete release set.
+export const CAPTURE_ROUTES = AFTER_CAPTURE_ROUTES;
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
-const fixedAuditSegments = ["artifacts", "site-audit", "after"];
+const fixedAuditSegments = ["artifacts", "site-audit"];
+const phaseOutputSegments = Object.freeze({
+  before: ["before", RELEASE_EVIDENCE_ID],
+  "after-local": ["after", RELEASE_EVIDENCE_ID, "local"],
+  "after-production": ["after", RELEASE_EVIDENCE_ID, "production"],
+});
 
-export function createCapturePaths(repositoryRootCandidate = repositoryRoot) {
+function assertCapturePhase(phase) {
+  if (!CAPTURE_PHASES.includes(phase)) {
+    throw new TypeError(
+      `Capture phase must be one of: ${CAPTURE_PHASES.join(", ")}.`,
+    );
+  }
+  return phase;
+}
+
+function captureFileNamesForPhase(phase) {
+  const routes =
+    phase === "before" ? BEFORE_CAPTURE_ROUTES : AFTER_CAPTURE_ROUTES;
+  const names = CAPTURE_WIDTHS.flatMap((width) =>
+    routes.map(({ alias }) => `${width}-${alias}-full-page.png`),
+  );
+  if (phase !== "before") {
+    names.push(
+      ...[390, 768].map((width) => `${width}-home-menu-open.png`),
+      ...CAPTURE_WIDTHS.map((width) => `${width}-home-skip-link-focus.png`),
+    );
+  }
+  return Object.freeze(names);
+}
+
+export function createCapturePaths(repositoryRootCandidate, phaseCandidate) {
+  if (
+    typeof repositoryRootCandidate !== "string" ||
+    repositoryRootCandidate.length === 0
+  ) {
+    throw new TypeError("Capture repository root must be explicit.");
+  }
+  const phase = assertCapturePhase(phaseCandidate);
   const resolvedRepositoryRoot = path.resolve(repositoryRootCandidate);
   const auditRoot = path.join(resolvedRepositoryRoot, ...fixedAuditSegments);
+  const outputDirectory = path.join(auditRoot, ...phaseOutputSegments[phase]);
   return Object.freeze({
     auditRoot,
-    backupDirectory: path.join(auditRoot, ".production-capture.backup"),
-    outputDirectory: path.join(auditRoot, "production"),
-    pendingDirectory: path.join(auditRoot, ".production-capture.pending"),
+    backupDirectory: `${outputDirectory}.backup`,
+    expectedFileNames: captureFileNamesForPhase(phase),
+    outputDirectory,
+    pendingDirectory: `${outputDirectory}.pending`,
+    phase,
     repositoryRoot: resolvedRepositoryRoot,
   });
 }
-
-const defaultCapturePaths = createCapturePaths();
 
 function normalizedPathKey(candidate) {
   const resolved = path.resolve(candidate);
@@ -105,7 +202,7 @@ function captureFileSystem(overrides = {}) {
 }
 
 function assertFixedCaptureLayout(paths) {
-  const expected = createCapturePaths(paths.repositoryRoot);
+  const expected = createCapturePaths(paths.repositoryRoot, paths.phase);
   for (const key of [
     "repositoryRoot",
     "auditRoot",
@@ -116,6 +213,12 @@ function assertFixedCaptureLayout(paths) {
     if (!pathsAreEqual(paths[key], expected[key])) {
       throw new Error(`Capture ${key} is outside the fixed audit layout.`);
     }
+  }
+  if (
+    JSON.stringify(paths.expectedFileNames) !==
+    JSON.stringify(expected.expectedFileNames)
+  ) {
+    throw new Error("Capture expected filenames differ from the fixed plan.");
   }
   if (!pathIsWithin(paths.repositoryRoot, paths.auditRoot)) {
     throw new Error("Capture audit root is outside the repository root.");
@@ -174,7 +277,7 @@ async function nearestExistingAncestor(candidate, fileSystem) {
 function isExpectedOutputPath(paths, candidate) {
   return (
     pathsAreEqual(path.dirname(candidate), paths.pendingDirectory) &&
-    captureFileNameSet.has(path.basename(candidate))
+    paths.expectedFileNames.includes(path.basename(candidate))
   );
 }
 
@@ -302,7 +405,7 @@ export async function prepareCaptureWorkspace(paths, overrides = {}) {
   }
 
   await safeRemoveCaptureDirectory(paths, paths.pendingDirectory, fileSystem);
-  await fileSystem.mkdirImpl(paths.pendingDirectory);
+  await fileSystem.mkdirImpl(paths.pendingDirectory, { recursive: true });
   await assertSafeOwnedCapturePath(paths, paths.pendingDirectory, fileSystem);
 }
 
@@ -341,40 +444,109 @@ export function normalizeCaptureOrigin(candidate) {
   return parsed.origin;
 }
 
-export function parseCaptureOrigin(arguments_) {
-  const originIndexes = arguments_.flatMap((argument, index) =>
-    argument === "--origin" ? [index] : [],
-  );
-  if (originIndexes.length !== 1) {
-    throw new TypeError("Provide exactly one --origin HTTPS origin.");
+export function normalizeExpectedGitSha(candidate) {
+  if (typeof candidate !== "string" || !/^[a-f\d]{40}$/.test(candidate)) {
+    throw new TypeError(
+      "Expected Git SHA must be a full lowercase 40-character SHA.",
+    );
   }
-  const originIndex = originIndexes[0];
-  const candidate = arguments_[originIndex + 1];
-  if (!candidate || candidate.startsWith("--")) {
-    throw new TypeError("The --origin option requires an HTTPS origin.");
-  }
-  if (arguments_.length !== 2 || originIndex !== 0) {
-    throw new TypeError("Unexpected option; only --origin is supported.");
-  }
-  return normalizeCaptureOrigin(candidate);
+  return candidate;
 }
 
-export function buildCapturePlan(candidate) {
-  const origin = normalizeCaptureOrigin(candidate);
-  return CAPTURE_WIDTHS.flatMap((width) =>
-    CAPTURE_ROUTES.flatMap((route) =>
-      ["above-fold", "full"].map((variant) => ({
-        ...route,
-        deviceScaleFactor: 1,
-        fileName: `${width}-${route.alias}-${variant}.png`,
-        fullPage: variant === "full",
-        height: CAPTURE_HEIGHT,
-        url: new URL(route.path, `${origin}/`).href,
-        variant,
-        width,
-      })),
-    ),
+export function normalizeDeploymentId(candidate) {
+  if (
+    typeof candidate !== "string" ||
+    !/^[A-Za-z0-9][A-Za-z0-9_-]{2,127}$/.test(candidate)
+  ) {
+    throw new TypeError("Deployment ID contains unsupported characters.");
+  }
+  return candidate;
+}
+
+export function parseCaptureArguments(arguments_) {
+  if (!Array.isArray(arguments_)) {
+    throw new TypeError("Capture command arguments must be an array.");
+  }
+  const supportedOptions = new Set([
+    "--origin",
+    "--phase",
+    "--expected-sha",
+    "--deployment-id",
+  ]);
+  const values = new Map();
+  for (let index = 0; index < arguments_.length; index += 2) {
+    const option = arguments_[index];
+    const value = arguments_[index + 1];
+    if (!supportedOptions.has(option)) {
+      throw new TypeError(`Unexpected capture option: ${String(option)}`);
+    }
+    if (values.has(option)) {
+      throw new TypeError(`Provide exactly one ${option} value.`);
+    }
+    if (!value || value.startsWith("--")) {
+      throw new TypeError(`${option} requires a value.`);
+    }
+    values.set(option, value);
+  }
+  if (!values.has("--origin")) {
+    throw new TypeError("Provide exactly one --origin HTTPS origin.");
+  }
+  if (!values.has("--phase")) {
+    throw new TypeError("Provide exactly one --phase value.");
+  }
+
+  return {
+    deploymentId: values.has("--deployment-id")
+      ? normalizeDeploymentId(values.get("--deployment-id"))
+      : null,
+    expectedGitSha: values.has("--expected-sha")
+      ? normalizeExpectedGitSha(values.get("--expected-sha"))
+      : null,
+    origin: normalizeCaptureOrigin(values.get("--origin")),
+    phase: assertCapturePhase(values.get("--phase")),
+  };
+}
+
+function plannedCapture(route, width, state, origin) {
+  return Object.freeze({
+    ...route,
+    deviceScaleFactor: 1,
+    fileName: `${width}-${route.alias}-${state}.png`,
+    fullPage: state === "full-page",
+    height: CAPTURE_HEIGHT,
+    state,
+    url: new URL(route.path, `${origin}/`).href,
+    width,
+  });
+}
+
+export function buildCapturePlan({
+  origin: originCandidate,
+  phase: phaseCandidate,
+}) {
+  const origin = normalizeCaptureOrigin(originCandidate);
+  const phase = assertCapturePhase(phaseCandidate);
+  const routes =
+    phase === "before" ? BEFORE_CAPTURE_ROUTES : AFTER_CAPTURE_ROUTES;
+  const plan = CAPTURE_WIDTHS.flatMap((width) =>
+    routes.map((route) => plannedCapture(route, width, "full-page", origin)),
   );
+  if (phase !== "before") {
+    const home = AFTER_CAPTURE_ROUTES[0];
+    plan.push(
+      ...[390, 768].map((width) =>
+        plannedCapture(home, width, "menu-open", origin),
+      ),
+      ...CAPTURE_WIDTHS.map((width) =>
+        plannedCapture(home, width, "skip-link-focus", origin),
+      ),
+    );
+  }
+  const fileNames = plan.map(({ fileName }) => fileName);
+  if (new Set(fileNames).size !== fileNames.length) {
+    throw new Error("Capture plan contains duplicate filenames.");
+  }
+  return Object.freeze(plan);
 }
 
 export function assertExpectedNavigation(response, { route, url }) {
@@ -562,16 +734,213 @@ async function materializeDeferredContent(page) {
   });
 }
 
-export async function captureProductionScreenshots(candidate) {
-  const origin = normalizeCaptureOrigin(candidate);
-  const expectedNames = buildCapturePlan(origin).map(
-    ({ fileName }) => fileName,
-  );
-  const paths = defaultCapturePaths;
-  await prepareCaptureWorkspace(paths);
+async function focusWithKeyboard(page, locator) {
+  for (let index = 0; index < 30; index += 1) {
+    await page.keyboard.press("Tab");
+    if (
+      await locator.evaluate(
+        (element) => element === globalThis.document.activeElement,
+      )
+    ) {
+      return;
+    }
+  }
+  throw new Error("Keyboard focus did not reach the requested capture state.");
+}
 
-  const browser = await chromium.launch({ headless: true });
+async function prepareCaptureState(page, item) {
+  if (item.state === "full-page") {
+    await materializeDeferredContent(page);
+    return;
+  }
+  if (item.state === "menu-open") {
+    const menu = page.locator(".site-header__mobile-menu").first();
+    const summary = menu.locator("summary");
+    if (!(await menu.isVisible())) {
+      throw new Error(`Mobile menu is not visible at ${item.width}px.`);
+    }
+    await focusWithKeyboard(page, summary);
+    await page.keyboard.press("Enter");
+    if ((await menu.getAttribute("open")) === null) {
+      throw new Error(`Mobile menu did not open at ${item.width}px.`);
+    }
+    return;
+  }
+  if (item.state === "skip-link-focus") {
+    const skipLink = page.getByRole("link", { name: "Skip to content" });
+    await page.keyboard.press("Tab");
+    const state = await skipLink.evaluate((element) => ({
+      focused: element === globalThis.document.activeElement,
+      visible: Boolean(
+        element.getClientRects().length &&
+        globalThis.getComputedStyle(element).visibility !== "hidden",
+      ),
+    }));
+    if (!state.focused || !state.visible) {
+      throw new Error(`Skip link is not visibly focused at ${item.width}px.`);
+    }
+    return;
+  }
+  throw new Error(`Unsupported capture state: ${item.state}`);
+}
+
+async function collectAuditAssertions(browser, origin) {
+  const context = await browser.newContext({
+    colorScheme: "light",
+    locale: "en-US",
+    reducedMotion: "reduce",
+    timezoneId: "America/Los_Angeles",
+    viewport: { height: CAPTURE_HEIGHT, width: 390 },
+  });
   try {
+    const assertions = [];
+    for (const check of [
+      {
+        id: "ads-txt-absent",
+        path: "/ads.txt",
+      },
+      {
+        id: "cms-admin-absent",
+        path: "/admin/",
+      },
+      {
+        id: "cms-config-absent",
+        path: "/.pages.yml",
+      },
+      {
+        id: "cms-draft-absent",
+        path: "/articles/cms-fixture-minimum-draft/",
+      },
+      {
+        id: "cms-keystatic-absent",
+        path: "/keystatic/",
+      },
+    ]) {
+      const expectedUrl = new URL(check.path, `${origin}/`).href;
+      const response = await context.request.get(expectedUrl, {
+        failOnStatusCode: false,
+        maxRedirects: 0,
+      });
+      const actualStatus = response.status();
+      if (response.url() !== expectedUrl || actualStatus !== 404) {
+        throw new Error(
+          `${check.path} returned ${actualStatus} at ${response.url()}; expected an exact 404 without redirects.`,
+        );
+      }
+      assertions.push({
+        actual: actualStatus,
+        evidence: "http",
+        expected: 404,
+        id: check.id,
+        passed: true,
+        route: check.path,
+      });
+    }
+
+    const page = await context.newPage();
+    const route = { path: "/", status: 200 };
+    const runtimeErrors = createRuntimeMonitor(page, origin, route);
+    const url = new URL(route.path, `${origin}/`).href;
+    const response = await page.goto(url, { waitUntil: "networkidle" });
+    assertExpectedNavigation(response, { route, url });
+    const integrationMarkers = await page.evaluate(() => {
+      const selectors = [
+        'meta[name="google-adsense-account"]',
+        "ins.adsbygoogle",
+        "[data-ad-client]",
+        "[data-ad-slot]",
+        "[data-analytics-id]",
+      ];
+      const selectorMatches = selectors.flatMap((selector) =>
+        Array.from(
+          globalThis.document.querySelectorAll(selector),
+          () => selector,
+        ),
+      );
+      const html = globalThis.document.documentElement.outerHTML;
+      const textMatches = html.match(
+        /googlesyndication|doubleclick|google-analytics|googletagmanager|adsbygoogle|(?:ca-)?pub-\d{6,}/gi,
+      );
+      return [...selectorMatches, ...(textMatches ?? [])];
+    });
+    await page.close();
+    if (runtimeErrors.length > 0) {
+      throw new Error(`/: ${runtimeErrors.join("; ")}`);
+    }
+    if (integrationMarkers.length > 0) {
+      throw new Error(
+        `Monetization-off DOM assertion found forbidden integration markers: ${integrationMarkers.join(", ")}`,
+      );
+    }
+    assertions.push({
+      actual: "absent",
+      evidence: "dom",
+      expected: "absent",
+      id: "monetization-off",
+      passed: true,
+      route: "/",
+    });
+    return assertions;
+  } finally {
+    await context.close();
+  }
+}
+
+async function capturePlanItem(context, item, origin, paths) {
+  const page = await context.newPage();
+  const runtimeErrors = createRuntimeMonitor(page, origin, item);
+  try {
+    const response = await page.goto(item.url, { waitUntil: "networkidle" });
+    assertExpectedNavigation(response, { route: item, url: item.url });
+    await stabilizePage(page);
+    await prepareCaptureState(page, item);
+    const outputPath = path.join(paths.pendingDirectory, item.fileName);
+    await assertSafeCaptureOutputPath(paths, outputPath);
+    await page.screenshot({
+      animations: "disabled",
+      caret: "hide",
+      fullPage: item.fullPage,
+      path: outputPath,
+      scale: "css",
+    });
+    if (runtimeErrors.length > 0) {
+      throw new Error(`${item.path}: ${runtimeErrors.join("; ")}`);
+    }
+    return response.status();
+  } finally {
+    await page.close();
+  }
+}
+
+export async function captureProductionScreenshots(options, overrides = {}) {
+  if (!options || typeof options !== "object") {
+    throw new TypeError("Production capture options must be explicit.");
+  }
+  const origin = normalizeCaptureOrigin(options.origin);
+  const phase = assertCapturePhase(options.phase);
+  const expectedGitSha = options.expectedGitSha
+    ? normalizeExpectedGitSha(options.expectedGitSha)
+    : null;
+  const deploymentId = options.deploymentId
+    ? normalizeDeploymentId(options.deploymentId)
+    : null;
+  const capturedAt = (overrides.nowImpl ?? (() => new Date()))().toISOString();
+  const plan = buildCapturePlan({ origin, phase });
+  const expectedNames = plan.map(({ fileName }) => fileName);
+  const paths = overrides.paths ?? createCapturePaths(repositoryRoot, phase);
+  if (paths.phase !== phase) {
+    throw new Error("Capture paths do not match the requested phase.");
+  }
+  await prepareCaptureWorkspace(paths, overrides.fileSystem);
+
+  let browser;
+  let manifest;
+  let operationError;
+  try {
+    browser = await (overrides.chromiumImpl ?? chromium).launch({
+      headless: true,
+    });
+    const statusByFileName = new Map();
     for (const width of CAPTURE_WIDTHS) {
       const context = await browser.newContext({
         colorScheme: "light",
@@ -582,41 +951,14 @@ export async function captureProductionScreenshots(candidate) {
         viewport: { height: CAPTURE_HEIGHT, width },
       });
       try {
-        for (const route of CAPTURE_ROUTES) {
-          const page = await context.newPage();
-          const runtimeErrors = createRuntimeMonitor(page, origin, route);
-          const url = new URL(route.path, `${origin}/`).href;
-          const response = await page.goto(url, { waitUntil: "networkidle" });
-          assertExpectedNavigation(response, { route, url });
-          await stabilizePage(page);
-          const aboveFoldPath = path.join(
-            paths.pendingDirectory,
-            `${width}-${route.alias}-above-fold.png`,
+        for (const item of plan.filter((capture) => capture.width === width)) {
+          const actualStatus = await capturePlanItem(
+            context,
+            item,
+            origin,
+            paths,
           );
-          await assertSafeCaptureOutputPath(paths, aboveFoldPath);
-          await page.screenshot({
-            animations: "disabled",
-            caret: "hide",
-            path: aboveFoldPath,
-            scale: "css",
-          });
-          await materializeDeferredContent(page);
-          const fullPagePath = path.join(
-            paths.pendingDirectory,
-            `${width}-${route.alias}-full.png`,
-          );
-          await assertSafeCaptureOutputPath(paths, fullPagePath);
-          await page.screenshot({
-            animations: "disabled",
-            caret: "hide",
-            fullPage: true,
-            path: fullPagePath,
-            scale: "css",
-          });
-          await page.close();
-          if (runtimeErrors.length > 0) {
-            throw new Error(`${route.path}: ${runtimeErrors.join("; ")}`);
-          }
+          statusByFileName.set(item.fileName, actualStatus);
         }
       } finally {
         await context.close();
@@ -636,34 +978,62 @@ export async function captureProductionScreenshots(candidate) {
         path.join(paths.pendingDirectory, name),
       );
     }
+    const assertions = await collectAuditAssertions(browser, origin);
+    manifest = await writeAuditManifest({
+      assertions,
+      capturedAt,
+      deploymentId,
+      expectedGitSha,
+      origin,
+      outputDirectory: paths.pendingDirectory,
+      phase,
+      plan,
+      statusByFileName,
+    });
   } catch (error) {
-    try {
-      await safeRemoveCaptureDirectory(paths, paths.pendingDirectory);
-    } catch (cleanupError) {
-      throw new AggregateError(
-        [error, cleanupError],
-        "Production capture failed and its pending output could not be removed safely.",
-        { cause: cleanupError },
-      );
-    }
-    throw error;
-  } finally {
-    await browser.close();
+    operationError = error;
   }
 
-  await publishCaptureRun(paths);
+  let browserCloseError;
+  try {
+    await browser?.close();
+  } catch (error) {
+    browserCloseError = error;
+  }
+  const errors = [operationError, browserCloseError].filter(Boolean);
+  if (errors.length > 0) {
+    try {
+      await safeRemoveCaptureDirectory(
+        paths,
+        paths.pendingDirectory,
+        overrides.fileSystem,
+      );
+    } catch (cleanupError) {
+      errors.push(cleanupError);
+    }
+    if (errors.length === 1) throw errors[0];
+    throw new AggregateError(
+      errors,
+      "Production capture failed and its owned resources did not clean up safely.",
+      { cause: errors[0] },
+    );
+  }
+
+  await publishCaptureRun(paths, overrides.fileSystem);
   return {
     count: expectedNames.length,
+    manifest,
     origin,
     outputDirectory: paths.outputDirectory,
+    phase,
   };
 }
 
 async function main() {
-  const origin = parseCaptureOrigin(process.argv.slice(2));
-  const result = await captureProductionScreenshots(origin);
+  const options = parseCaptureArguments(process.argv.slice(2));
+  const result = await captureProductionScreenshots(options);
   console.log(
-    `Production capture: PASS (${result.count} PNGs from ${result.origin} written to ${result.outputDirectory}).`,
+    `Production capture: PASS (${result.count} PNGs for ${result.phase} from ${result.origin} written to ${result.outputDirectory}).`,
   );
 }
 

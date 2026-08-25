@@ -15,6 +15,9 @@ import { isAbsolute, join, relative, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  AFTER_CAPTURE_ROUTES,
+  BEFORE_CAPTURE_ROUTES,
+  CAPTURE_PHASES,
   CAPTURE_ROUTES,
   CAPTURE_WIDTHS,
   assertExpectedNavigation,
@@ -22,7 +25,7 @@ import {
   buildCapturePlan,
   createCapturePaths,
   normalizeCaptureOrigin,
-  parseCaptureOrigin,
+  parseCaptureArguments,
   prepareCaptureWorkspace,
   publishCaptureRun,
 } from "../../scripts/capture-production-screenshots.mjs";
@@ -63,17 +66,24 @@ afterEach(() => {
 });
 
 describe("production screenshot capture contract", () => {
-  it("defines the original eight audited routes", () => {
-    expect(CAPTURE_ROUTES).toEqual([
+  it("defines five widths, the representative before routes, and exact full after routes", () => {
+    expect(CAPTURE_PHASES).toEqual([
+      "before",
+      "after-local",
+      "after-production",
+    ]);
+    expect(CAPTURE_WIDTHS).toEqual([390, 768, 1024, 1440, 1920]);
+    expect(BEFORE_CAPTURE_ROUTES).toEqual([
       { alias: "home", path: "/", status: 200 },
+      { alias: "articles", path: "/articles/", status: 200 },
       {
-        alias: "category",
+        alias: "category-cybersecurity",
         path: "/categories/cybersecurity-data-protection/",
         status: 200,
       },
       {
-        alias: "article",
-        path: "/articles/back-up-business-files-with-the-3-2-1-method/",
+        alias: "article-ai-automation",
+        path: "/articles/how-to-identify-business-tasks-for-automation/",
         status: 200,
       },
       { alias: "toolkit", path: "/toolkit/", status: 200 },
@@ -83,37 +93,77 @@ describe("production screenshot capture contract", () => {
         path: "/editorial-standards/",
         status: 200,
       },
-      { alias: "contact", path: "/contact/", status: 200 },
       {
         alias: "404",
-        path: "/publication-after-capture-route-that-does-not-exist/",
+        path: "/publication-audit-route-that-does-not-exist/",
         status: 404,
       },
     ]);
-    expect(CAPTURE_WIDTHS).toEqual([390, 768, 1440]);
+    expect(AFTER_CAPTURE_ROUTES.map(({ path }) => path)).toEqual([
+      "/",
+      "/articles/",
+      "/categories/",
+      "/categories/cybersecurity-data-protection/",
+      "/articles/how-to-identify-business-tasks-for-automation/",
+      "/articles/evaluate-saas-with-a-practical-checklist/",
+      "/articles/respond-to-a-suspected-phishing-message/",
+      "/articles/create-a-shared-file-and-folder-system/",
+      "/articles/calculate-the-total-cost-of-business-software/",
+      "/toolkit/",
+      "/toolkit/technology-risk-register/",
+      "/about/",
+      "/publisher/",
+      "/editorial-standards/",
+      "/privacy/",
+      "/advertising-disclosure/",
+      "/contact/",
+      "/publication-audit-route-that-does-not-exist/",
+    ]);
+    expect(CAPTURE_ROUTES).toBe(AFTER_CAPTURE_ROUTES);
   });
 
-  it("builds exactly 48 unique, deterministic output names", () => {
-    const plan = buildCapturePlan("https://publication.example");
-    const fileNames = plan.map(({ fileName }) => fileName);
+  it("builds a deterministic 40-image representative before inventory", () => {
+    const plan = buildCapturePlan({
+      origin: "https://publication.example",
+      phase: "before",
+    });
 
-    expect(plan).toHaveLength(48);
-    expect(new Set(fileNames).size).toBe(48);
-    expect(fileNames).toEqual([
-      ...CAPTURE_WIDTHS.flatMap((width) =>
-        CAPTURE_ROUTES.flatMap(({ alias }) => [
-          `${width}-${alias}-above-fold.png`,
-          `${width}-${alias}-full.png`,
-        ]),
-      ),
-    ]);
+    expect(plan).toHaveLength(40);
+    expect(new Set(plan.map(({ fileName }) => fileName)).size).toBe(40);
+    expect(plan.every(({ state }) => state === "full-page")).toBe(true);
+    expect(plan[0]?.fileName).toBe("390-home-full-page.png");
+    expect(plan.at(-1)?.fileName).toBe("1920-404-full-page.png");
     expect(plan.every(({ height }) => height === 900)).toBe(true);
     expect(plan.every(({ deviceScaleFactor }) => deviceScaleFactor === 1)).toBe(
       true,
     );
     expect(plan[0]?.url).toBe("https://publication.example/");
     expect(plan.at(-1)?.url).toBe(
-      "https://publication.example/publication-after-capture-route-that-does-not-exist/",
+      "https://publication.example/publication-audit-route-that-does-not-exist/",
+    );
+  });
+
+  it("builds the exact 97-image after inventory including keyboard states", () => {
+    const plan = buildCapturePlan({
+      origin: "https://publication.example",
+      phase: "after-production",
+    });
+    const fileNames = plan.map(({ fileName }) => fileName);
+
+    expect(plan).toHaveLength(97);
+    expect(new Set(fileNames).size).toBe(97);
+    expect(
+      plan
+        .filter(({ state }) => state === "menu-open")
+        .map(({ width }) => width),
+    ).toEqual([390, 768]);
+    expect(
+      plan
+        .filter(({ state }) => state === "skip-link-focus")
+        .map(({ width }) => width),
+    ).toEqual(CAPTURE_WIDTHS);
+    expect(plan.filter(({ state }) => state === "full-page")).toHaveLength(
+      AFTER_CAPTURE_ROUTES.length * CAPTURE_WIDTHS.length,
     );
   });
 
@@ -140,28 +190,92 @@ describe("production screenshot capture contract", () => {
     }
   });
 
-  it("requires exactly one --origin CLI option", () => {
+  it("requires explicit origin and phase and accepts only validated release metadata", () => {
     expect(
-      parseCaptureOrigin(["--origin", "https://publication.example/"]),
-    ).toBe("https://publication.example");
-    expect(() => parseCaptureOrigin([])).toThrow(/--origin/i);
-    expect(() => parseCaptureOrigin(["--origin"])).toThrow(/--origin/i);
+      parseCaptureArguments([
+        "--origin",
+        "https://publication.example/",
+        "--phase",
+        "after-production",
+        "--expected-sha",
+        "0123456789abcdef0123456789abcdef01234567",
+        "--deployment-id",
+        "dpl_AbCdEf1234567890",
+      ]),
+    ).toEqual({
+      deploymentId: "dpl_AbCdEf1234567890",
+      expectedGitSha: "0123456789abcdef0123456789abcdef01234567",
+      origin: "https://publication.example",
+      phase: "after-production",
+    });
+    expect(() => parseCaptureArguments([])).toThrow(/--origin/i);
     expect(() =>
-      parseCaptureOrigin([
+      parseCaptureArguments([
+        "--origin",
+        "https://publication.example",
+        "--phase",
+        "after-local",
+        "--expected-sha",
+        "main",
+      ]),
+    ).toThrow(/SHA/i);
+    expect(() =>
+      parseCaptureArguments([
         "--origin",
         "https://one.example",
         "--origin",
         "https://two.example",
+        "--phase",
+        "before",
       ]),
     ).toThrow(/exactly one/i);
     expect(() =>
-      parseCaptureOrigin([
+      parseCaptureArguments([
         "--origin",
         "https://publication.example",
+        "--phase",
+        "after-local",
         "--output",
         "elsewhere",
       ]),
     ).toThrow(/unexpected/i);
+    expect(() =>
+      parseCaptureArguments([
+        "--origin",
+        "https://publication.example",
+        "--phase",
+        "../../outside",
+      ]),
+    ).toThrow(/phase/i);
+  });
+
+  it("maps phases to fixed versioned evidence directories", () => {
+    const repositoryRoot = createTemporaryRoot("eti-capture-paths-");
+    expect(createCapturePaths(repositoryRoot, "before").outputDirectory).toBe(
+      resolve(
+        repositoryRoot,
+        "artifacts/site-audit/before/purple-signal-2026-08-25",
+      ),
+    );
+    expect(
+      createCapturePaths(repositoryRoot, "after-local").outputDirectory,
+    ).toBe(
+      resolve(
+        repositoryRoot,
+        "artifacts/site-audit/after/purple-signal-2026-08-25/local",
+      ),
+    );
+    expect(
+      createCapturePaths(repositoryRoot, "after-production").outputDirectory,
+    ).toBe(
+      resolve(
+        repositoryRoot,
+        "artifacts/site-audit/after/purple-signal-2026-08-25/production",
+      ),
+    );
+    expect(() => createCapturePaths(repositoryRoot, "../outside")).toThrow(
+      /phase/i,
+    );
   });
 
   it("exposes the capture command through the package scripts", () => {
@@ -195,15 +309,13 @@ describe("production screenshot capture contract", () => {
     );
     temporaryLinks.push(linkedAfterPath);
 
-    const paths = createCapturePaths(repositoryRoot);
+    const paths = createCapturePaths(repositoryRoot, "after-production");
     await expect(prepareCaptureWorkspace(paths)).rejects.toThrow(
       /symbolic link|junction/i,
     );
 
     expect(readFileSync(sentinelPath, "utf8")).toBe("keep");
-    expect(existsSync(join(outsideRoot, ".production-capture.pending"))).toBe(
-      false,
-    );
+    expect(existsSync(join(outsideRoot, "production.pending"))).toBe(false);
   });
 
   it("rejects a junction at a per-file output path", async () => {
@@ -211,9 +323,9 @@ describe("production screenshot capture contract", () => {
     const outsideRoot = createTemporaryRoot("eti-capture-file-outside-");
     const sentinelPath = join(outsideRoot, "keep.txt");
     writeFileSync(sentinelPath, "keep", "utf8");
-    const paths = createCapturePaths(repositoryRoot);
+    const paths = createCapturePaths(repositoryRoot, "after-production");
     await prepareCaptureWorkspace(paths);
-    const outputPath = join(paths.pendingDirectory, "390-home-above-fold.png");
+    const outputPath = join(paths.pendingDirectory, "390-home-full-page.png");
     symlinkSync(
       outsideRoot,
       outputPath,
@@ -239,8 +351,8 @@ describe("production screenshot capture contract", () => {
       const outsideRoot = createTemporaryRoot(`eti-capture-${label}-outside-`);
       const sentinelPath = join(outsideRoot, "keep.txt");
       writeFileSync(sentinelPath, "keep", "utf8");
-      const paths = createCapturePaths(repositoryRoot);
-      mkdirSync(paths.auditRoot, { recursive: true });
+      const paths = createCapturePaths(repositoryRoot, "after-production");
+      mkdirSync(resolve(paths.outputDirectory, ".."), { recursive: true });
       symlinkSync(
         outsideRoot,
         paths[pathKey],
@@ -257,7 +369,7 @@ describe("production screenshot capture contract", () => {
 
   it("restores prior production evidence when the final staged rename fails", async () => {
     const repositoryRoot = createTemporaryRoot("eti-capture-publish-");
-    const paths = createCapturePaths(repositoryRoot);
+    const paths = createCapturePaths(repositoryRoot, "after-production");
     mkdirSync(paths.pendingDirectory, { recursive: true });
     mkdirSync(paths.outputDirectory, { recursive: true });
     writeFileSync(join(paths.pendingDirectory, "new.txt"), "new", "utf8");

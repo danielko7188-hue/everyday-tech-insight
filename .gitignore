@@ -13,3 +13,8 @@ coverage/
 *.log
 .worktrees/
 .gstack/
+
+# Staged and final-SHA production evidence is local-only.
+artifacts/site-audit/**/*.pending/
+artifacts/site-audit/**/*.backup/
+artifacts/site-audit/runtime-verification/
