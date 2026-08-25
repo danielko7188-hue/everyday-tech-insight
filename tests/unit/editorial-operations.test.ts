@@ -68,6 +68,7 @@ const releasePlanPath = path.join(
   "plans",
   "2026-08-25-publication-maturity-release.md",
 );
+const vercelIgnorePath = path.join(repositoryRoot, ".vercelignore");
 
 const expectedQaCommands = [
   "npm run format:check",
@@ -897,6 +898,19 @@ describe("historical implementation plan", () => {
 });
 
 describe("current executable plans", () => {
+  it("keeps the editorial release-gate source in the Vercel build bundle", async () => {
+    const rules = (await readFile(vercelIgnorePath, "utf8"))
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"));
+    const docsContentsRule = rules.indexOf("docs/*");
+    const editorialSourceRule = rules.indexOf("!docs/editorial-operations.yml");
+
+    expect(rules).not.toContain("docs/");
+    expect(docsContentsRule).toBeGreaterThanOrEqual(0);
+    expect(editorialSourceRule).toBeGreaterThan(docsContentsRule);
+  });
+
   it("keeps the structured editorial source, generator, checker, tests, and staged paths together", async () => {
     const plan = await readFile(cmsWorkflowPlanPath, "utf8");
     const taskSeven = plan.match(/### Task 7:[\s\S]*?(?=### Task 8:)/)?.[0];

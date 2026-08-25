@@ -12,7 +12,8 @@ coverage/
 
 # Repository-only review and evidence material
 artifacts/
-docs/
+docs/*
+!docs/editorial-operations.yml
 tests/
 AGENTS.md
 DESIGN.md
