@@ -48,7 +48,7 @@ describe("article image QA command", () => {
     error.mockRestore();
   });
 
-  it("exposes the focused package script without reordering the full QA pipeline", async () => {
+  it("exposes the focused script in the integrated QA pipeline", async () => {
     const packageJson = JSON.parse(
       await readFile(path.join(repositoryRoot, "package.json"), "utf8"),
     );
@@ -56,6 +56,12 @@ describe("article image QA command", () => {
     expect(packageJson.scripts["check:images"]).toBe(
       "node scripts/qa-images.mjs",
     );
-    expect(packageJson.scripts.qa).not.toContain("check:images");
+    expect(packageJson.scripts.qa).toContain("npm run check:images");
+    expect(
+      packageJson.scripts.qa.indexOf("npm run check:content"),
+    ).toBeLessThan(packageJson.scripts.qa.indexOf("npm run check:images"));
+    expect(packageJson.scripts.qa.indexOf("npm run check:images")).toBeLessThan(
+      packageJson.scripts.qa.indexOf("npm run check:seo"),
+    );
   });
 });

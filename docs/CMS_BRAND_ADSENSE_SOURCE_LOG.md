@@ -24,7 +24,7 @@ This log distinguishes official requirements, official recommendations, design-r
 
 ### CMS decision
 
-Use hosted Pages CMS as an external authenticated editor over `src/content/articles/` and `public/images/articles/`. Add no public `/admin` or `/keystatic` surface. The owner action is documented, not claimed as complete.
+Use hosted Pages CMS as an external authenticated editor over `src/content/articles/` and private managed-media sources in `src/content-assets/articles/`. The validated build publishes only referenced media to public URLs under `/images/articles/`. Add no public `/admin` or `/keystatic` surface. Hosted authorization and a save round-trip remain owner actions, not completed claims.
 
 ## Accessibility
 

@@ -1,0 +1,149 @@
+# Owner Inputs Required
+
+This is an internal, nonpublic record. It identifies owner-controlled evidence that the repository cannot create or verify for itself. Missing values must not be copied into public placeholders, inferred from a username, or marked complete because a software check passed.
+
+The two permitted status values are `OWNER ACTION REQUIRED` and `UNKNOWN`. Neither value is an error in the ads-off static build. A public claim that depends on an unresolved gate must remain absent.
+
+## Gate 01: Legal owner or publisher identity
+
+- `status`: UNKNOWN
+- `reason`: The repository does not contain owner-approved evidence naming a legal owner, publisher, or operating entity.
+- `accepted evidence`: A private owner instruction supported by an appropriate identity or entity record, with an explicit decision about what may be disclosed publicly.
+- `public effect`: No legal-person, company, publisher-entity, copyright-owner, Person, or Organization claim may be added.
+- `next action`: The owner must supply and approve the exact identity evidence before any dependent public wording or structured data is changed.
+
+## Gate 02: Approved public publisher wording
+
+- `status`: OWNER ACTION REQUIRED
+- `reason`: A verified identity and a separate decision about the wording safe to publish are both absent.
+- `accepted evidence`: Owner-approved final wording that states the publication relationship accurately and identifies which verified facts may appear publicly.
+- `public effect`: `Everyday Tech Insight` remains only a publication-name byline and must not be described as a person, company, or legal organization.
+- `next action`: Approve public wording only after Gate 01 evidence exists; review every page and metadata consumer before release.
+
+## Gate 03: Durable public contact email or contact method
+
+- `status`: OWNER ACTION REQUIRED
+- `reason`: The site currently routes contact and corrections to the public repository issue tracker; no durable owner-verified contact address has been supplied.
+- `accepted evidence`: An owner-controlled contact method, proof that the owner can receive it, and approval to display the exact method publicly.
+- `public effect`: The existing issue-based route remains; no email address, postal address, or response-time promise may be invented.
+- `next action`: Supply and test the approved method, then update contact, privacy, publisher, correction, and structured metadata surfaces consistently.
+
+## Gate 04: Custom-domain decision and ownership proof
+
+- `status`: UNKNOWN
+- `reason`: The canonical currently uses the verified Vercel hostname; the repository contains no owner decision or proof for a custom domain.
+- `accepted evidence`: A named domain decision plus registrar or DNS control evidence and a completed HTTPS, redirect, canonical, and ownership verification check.
+- `public effect`: The Vercel canonical remains authoritative; no custom domain or ownership statement may be published.
+- `next action`: The owner must choose and prove a domain before canonical, deployment, Search Console, or advertising-site settings change.
+
+## Gate 05: Named-author identity, if any
+
+- `status`: UNKNOWN
+- `reason`: No owner-approved named person is present in the verified-author registry.
+- `accepted evidence`: A real person's explicit participation, owner confirmation of identity, consent to publication, and an approved public author identifier.
+- `public effect`: Articles continue to use the publication-name byline; no author page or Person structured data is created.
+- `next action`: Supply identity and consent evidence only if a named-author model is desired, then satisfy Gates 06 and 07 before rendering it.
+
+## Gate 06: Author role, biography, and credential evidence
+
+- `status`: UNKNOWN
+- `reason`: No named author is approved and no role, biography, or credential has owner-verified public evidence.
+- `accepted evidence`: Exact owner-approved role and biography wording plus an HTTPS evidence record for every credential that will be stated.
+- `public effect`: No expertise, employment, education, certification, or experience claim may appear in a byline, biography, or schema.
+- `next action`: Validate each field through the strict author record and publish only facts supported on the matching author page.
+
+## Gate 07: Author-photo file, alt text, credit, and rights basis
+
+- `status`: UNKNOWN
+- `reason`: No author photo or complete publication-rights tuple has been supplied.
+- `accepted evidence`: The approved image file, factual alt text, credit, source where applicable, and written rights basis that permits the intended public use.
+- `public effect`: No author portrait, placeholder avatar, credit, or rights statement is rendered.
+- `next action`: Supply the complete tuple and pass file, accessibility, and rights review before adding a photo to a verified author record.
+
+## Gate 08: Firsthand-use or testing evidence for any claim that implies it
+
+- `status`: UNKNOWN
+- `reason`: Repository content intentionally avoids claiming hands-on product testing, but no independent owner record establishes firsthand use for any future claim.
+- `accepted evidence`: A dated test plan, exact product and version or service scope, test environment, observations, limitations, artifacts, and identified reviewer.
+- `public effect`: No page may claim that the publication used, tested, benchmarked, reviewed, or experienced a product firsthand.
+- `next action`: Remove any experience-implying claim or attach the complete evidence record and obtain human review before publication.
+
+## Gate 09: Human editorial review of all 15 guides
+
+- `status`: OWNER ACTION REQUIRED
+- `reason`: Automated checks cannot prove clarity, usefulness, originality, factual nuance, or editorial acceptance; no identified human review record exists for the 15-guide launch set.
+- `accepted evidence`: A per-guide review record naming the real reviewer, review date, findings, corrections, acceptance decision, and release scope.
+- `public effect`: The quality queue remains `OWNER REVIEW REQUIRED`; automated success must not be presented as human editorial approval.
+- `next action`: Review every queue record against its article and sources, resolve findings, and record the real reviewer and date without backdating.
+
+## Gate 10: Expert review for consequential claims where needed
+
+- `status`: OWNER ACTION REQUIRED
+- `reason`: Security, privacy, legal, financial, identity, recovery, and other consequential guidance may require competence beyond general editorial review.
+- `accepted evidence`: A scoped review by a qualified person, with identity, relevant competence, date, claims reviewed, findings, limitations, and disposition.
+- `public effect`: No expert-reviewed, legally sufficient, compliant, secure, or financially definitive claim may be added without that evidence.
+- `next action`: Use the guide-specific queue risks to route consequential passages to an appropriate expert before any dependent release claim.
+
+## Gate 11: Image and worksheet rights review
+
+- `status`: OWNER ACTION REQUIRED
+- `reason`: File validation and repository history do not establish copyright ownership, license scope, attribution sufficiency, or worksheet-content rights.
+- `accepted evidence`: A per-asset inventory linking origin, creator or licensor, license or authorization, required attribution, permitted uses, and reviewer decision.
+- `public effect`: Media rights remain unresolved; no public rights-complete or original-asset claim may be made from automation alone.
+- `next action`: Review every editorial visual, uploaded image, social image input, and Toolkit worksheet before final owner acceptance.
+
+## Gate 12: Privacy and legal review for actual jurisdiction and data practices
+
+- `status`: OWNER ACTION REQUIRED
+- `reason`: The repository cannot determine the operator's jurisdiction, legal obligations, actual off-site handling, or future service configuration.
+- `accepted evidence`: Counsel or other authorized reviewer analysis tied to the actual operator, jurisdictions, data flows, vendors, retention, contact method, and release configuration.
+- `public effect`: Current pages describe the observable ads-off static state and must not be called legally complete or universally compliant.
+- `next action`: Review privacy, terms, contact, corrections, disclosures, CMS operations, and any future advertising or consent behavior against actual facts.
+
+## Gate 13: Pages CMS GitHub App authorization and repository selection
+
+- `status`: OWNER ACTION REQUIRED
+- `reason`: Pages CMS is configured and locally tested, but hosted sign-in, GitHub App authorization, repository access, and a real save round-trip are unverified.
+- `accepted evidence`: Owner-observed GitHub authorization, exact repository and branch selection, least-privilege access review, and a reversible test edit whose commit is inspected.
+- `public effect`: No hosted-CMS-ready, connected, authorized, or save-tested claim may be published.
+- `next action`: The owner must authorize the app, select the repository and content branch, perform the controlled round-trip, and revoke excess access if found.
+
+## Gate 14: Protected main branch and pull-request review rules
+
+- `status`: OWNER ACTION REQUIRED
+- `reason`: Local workflow documentation cannot prove live GitHub branch protection, required checks, reviewer rules, or bypass permissions.
+- `accepted evidence`: Owner-observed repository settings showing protected `main`, required pull requests and checks, authorized reviewers, and controlled bypass policy.
+- `public effect`: The guide describes the intended branch-and-PR workflow but does not claim GitHub enforces it.
+- `next action`: Configure and verify the live rules before routine CMS editing, then retain dated evidence of the settings reviewed.
+
+## Gate 15: AdSense account and site status plus exact publisher values
+
+- `status`: UNKNOWN
+- `reason`: No authenticated AdSense account state, site state, approved publisher identifier, or authorization to enable advertising exists in the repository.
+- `accepted evidence`: Owner-observed account and site status plus the exact platform-issued values, accompanied by explicit approval for their intended public use.
+- `public effect`: Monetization remains off with no publisher identifier, ad code, ad request, slot, blank ad gap, or approval claim.
+- `next action`: Keep advertising disabled unless the owner supplies exact values and separately authorizes the verification or live configuration.
+
+## Gate 16: Approved verification method and exact value
+
+- `status`: UNKNOWN
+- `reason`: No AdSense site-verification method or exact owner-provided value has been selected or supplied.
+- `accepted evidence`: The platform-presented verification method and exact value, copied by the owner from the authenticated account and approved for insertion.
+- `public effect`: No verification meta tag, script, file, or `ads.txt` value is emitted.
+- `next action`: Choose one supported method only after Gate 15 is evidenced, validate it through the fail-closed configuration, and verify the deployed response.
+
+## Gate 17: Authorized ads.txt line and certified CMP decision where applicable
+
+- `status`: UNKNOWN
+- `reason`: No platform-authorized `ads.txt` line has been supplied to the repository, and applicability or selection of a certified consent-management platform cannot be determined from the static repository.
+- `accepted evidence`: The exact account-issued `ads.txt` line plus a documented jurisdiction and consent assessment identifying whether a certified CMP is required and, if so, the approved configuration.
+- `public effect`: `/ads.txt` remains absent and no advertising CMP, consent banner, tracking request, or vendor claim is added.
+- `next action`: Obtain the exact values and qualified applicability decision before any live advertising mode is considered.
+
+## Gate 18: Final owner acceptance of content, disclosures, placements, and production release
+
+- `status`: OWNER ACTION REQUIRED
+- `reason`: Software verification cannot substitute for the owner's acceptance of editorial content, identity boundaries, legal disclosures, asset rights, advertising placements, and the exact production candidate.
+- `accepted evidence`: A dated acceptance naming the reviewed Git commit and deployment, resolved or accepted findings, approved public disclosures, permitted placements, and release decision.
+- `public effect`: No final owner-approved, legally accepted, editorially certified, or AdSense-ready claim may be made before this gate is evidenced.
+- `next action`: Review the complete candidate and all preceding gates, record the actual decision, then authorize only the specific live actions that decision permits.

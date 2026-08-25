@@ -15,6 +15,14 @@ The site is built with Astro and contains five categories, fifteen practical gui
 
 Google alone decides AdSense eligibility and approval.
 
+## Editorial workflow
+
+Pages CMS is configured and locally tested as a Git-backed editor through `.pages.yml`. Hosted Pages CMS sign-in, GitHub App authorization, repository selection, and a real save/commit round-trip are owner actions and remain unverified. There is no public CMS or admin route.
+
+Editorial records move through `draft -> review -> published -> archived`. Only published records enter public routes, navigation, feeds, sitemaps, related guides, or social images. Routine work happens on a non-`main` branch and reaches `main` through a reviewed pull request; Vercel previews do not make review-status articles routable.
+
+See the [Publishing Guide](docs/PUBLISHING_GUIDE.md) for the complete workflow, [Owner Inputs Required](docs/OWNER_INPUTS_REQUIRED.md) for unresolved external facts, and [Content Quality Review Queue](docs/CONTENT_QUALITY_REVIEW_QUEUE.md) for the evidence-bounded 15-guide review record.
+
 ## Requirements
 
 - Node.js `^22.19.0` or `>=24.0.0`
@@ -48,6 +56,9 @@ npm run lint
 npm run typecheck
 npm test -- --run
 npm run check:content
+npm run check:cms
+npm run check:images
+npm run check:cms-fixture
 npm run check:seo
 npm run check:links
 npm run test:e2e
@@ -70,6 +81,8 @@ That command validates the origin and captures the established eight-route audit
 ## Repository map
 
 - `src/content/articles/`: article source files and source records.
+- `src/content-assets/articles/`: private managed-media source files. The build publishes only validated, referenced files to public URLs under `/images/articles/`.
+- `.pages.yml`: Pages CMS collection, lifecycle fields, and private-source media configuration; it does not prove hosted authorization.
 - `public/toolkit/`: blank first-party CSV worksheets linked from the Toolkit page.
 - `src/data/toolkit.ts`: four typed Toolkit records, their detail-page guidance, unchanged CSV contracts, and related-guide mappings.
 - `src/pages/`: generated public route templates.
@@ -88,12 +101,14 @@ Category pages choose their composition from real membership: fewer than six gui
 
 ## Add or update an article
 
-1. Add or revise one Markdown file in `src/content/articles/`.
-2. Keep the slug and file name identical.
-3. Complete all topic-fit fields and include at least two current HTTPS primary sources.
-4. Cite every frontmatter source URL in the article body.
-5. Use `datePublished` only for first publication. Omit `dateModified` at initial publication; add it only on a later calendar date after a substantive change. Update `lastReviewed` after a real review. Dates may advance through the current date but never be backdated before the confirmed launch.
-6. Keep unfinished work out of `published` status.
-7. Run `npm run qa` and complete the human review checklist before release.
+1. Create a safe draft with `npm run new:article -- --slug a-safe-lowercase-slug --title "A factual working title"`, or create it through Pages CMS on a non-`main` branch after the owner completes hosted authorization.
+2. Keep the slug and filename identical and immutable after first publication.
+3. Advance the record through draft and review only as its required fields become complete. Do not use `published` merely to obtain a preview.
+4. Before publication, complete all topic-fit fields and include at least two HTTPS source records. Human review must confirm what each source actually establishes and whether it is substantively suitable; a label alone does not make a page primary.
+5. Cite every frontmatter source URL in the article body.
+6. Put managed source media only in `src/content-assets/articles/` using a lowercase slug-prefixed raster filename. Complete alt, decorative, caption, credit, license, source, and rights fields truthfully; file validation does not prove rights.
+7. Use `datePublished` only for first publication. Omit `dateModified` at initial publication; add it only on a later calendar date after a substantive change. Update `lastReviewed` after a real review. Dates may advance through the current date but never be backdated before the confirmed launch.
+8. Archive withdrawn material instead of deleting it. Permanent deletion requires a separately reviewed Git operation.
+9. Run `npm run qa` and complete the human review checklist before release.
 
-See [Deployment Guide](docs/DEPLOYMENT_GUIDE.md), [Technical QA](docs/TECHNICAL_QA.md), and [Assumptions](docs/ASSUMPTIONS.md) for operating details.
+See [Deployment Guide](docs/DEPLOYMENT_GUIDE.md), [Technical QA](docs/TECHNICAL_QA.md), [Publishing Guide](docs/PUBLISHING_GUIDE.md), and [Assumptions](docs/ASSUMPTIONS.md) for operating details.

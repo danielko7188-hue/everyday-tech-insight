@@ -1,0 +1,149 @@
+# Publishing Guide
+
+This guide is the operating procedure for the Astro publication. It does not apply to the separate Blogger theme.
+
+## Current Pages CMS status
+
+Pages CMS is **configured and locally tested** through the repository-root `.pages.yml`, lifecycle validators, a safe draft generator, and disposable draft/review/archived build fixtures.
+
+Hosted Pages CMS sign-in, GitHub App authorization, and repository selection are an **owner action** and have not been performed or observed in this work. Hosted authorization, save behavior, and a real commit round-trip remain **unverified**. Configuration compatibility is not evidence that an external account is connected.
+
+Pages CMS is a Git-backed editor, not a native editorial approval engine. The repository lifecycle, branch protections, pull request, automated checks, human review, and owner acceptance provide the controls; the CMS must not be described as enforcing approvals it does not enforce.
+
+## One-time owner setup
+
+1. Sign in to Pages CMS using the owner's authorized GitHub identity.
+2. Review the GitHub App permission request before authorizing it. Grant access only to the exact Everyday Tech Insight repository needed for editing.
+3. Select the exact repository, then select a dedicated non-main content branch (`main` remains the protected release branch). Do not make routine editorial saves directly to `main`.
+4. Confirm that live GitHub settings protect `main`, require a pull request and required checks, limit bypass access, and name real reviewers. Repository documentation cannot prove those hosted settings.
+5. Make one reversible test edit on the content branch. Inspect the resulting GitHub commit, author identity, changed paths, and diff; then revert or close that test cleanly.
+6. Record the observed authorization and save round-trip privately. Until that evidence exists, keep the hosted status recorded as unverified.
+
+## Create a guide
+
+Use one of these two controlled paths on a non-`main` branch:
+
+- In Pages CMS, choose the Articles collection and create a record. The CMS file-name rule derives the Markdown filename from the `slug` field.
+- Locally, run `npm run new:article -- --slug a-safe-lowercase-slug --title "A factual working title"`. The generator creates a minimum draft and refuses collisions, traversal, or a published state.
+
+A new guide begins as `draft`. The intended lifecycle is `draft -> review -> published -> archived`.
+
+- `draft`: working content may be incomplete. It remains `noindex`, unfeatured, unverified, and nonroutable.
+- `review`: the editorial structure, explanation fields, fit fields, at least one source record, and visual tuple are complete enough for review. It remains nonroutable.
+- `published`: the complete software contract, at least two cited HTTPS source records, genuine dates, and media validation permit public routing. Published status controls routing only and does not prove source suitability, media rights, expert acceptance, owner acceptance, or human review.
+- `archived`: the formerly complete record and Git history remain, but public routes, lists, feeds, sitemaps, related guides, and social images exclude it.
+
+Do not skip directly to `published` to obtain a web preview. Pages CMS Markdown preview is the article-content preview for a review record. A Vercel preview validates the public shell and integration, but a review-status article remains nonroutable there by design.
+
+## Keep slug and filename immutable
+
+Treat the slug and filename as immutable after the first publication. They form the public URL and Git history. Correct titles and content without silently renaming the slug.
+
+If a change to a published URL is unavoidable, handle it as a separately reviewed migration: establish the replacement, decide whether a close equivalent justifies a redirect, update every internal reference, run full QA, and obtain owner acceptance. A CMS rename by itself is not a migration plan.
+
+## Write safely
+
+Use Markdown headings, paragraphs, lists, links, tables, block quotes, code fences, and the existing documented components. In Pages CMS, use the rich-text editor for ordinary work. If source mode is necessary, use safe Markdown only; raw HTML is prohibited in article content. Never paste scripts, embedded trackers, iframes, event attributes, JavaScript URLs, credentials, tokens, or account identifiers.
+
+Safe Markdown is required in source mode, and raw HTML remains prohibited.
+
+Keep the promise fields distinct:
+
+- `guidePromise` says what the guide enables.
+- `deliverable` names the concrete record or decision the reader will produce.
+- `whenToUse` states the decision moment.
+
+The article body must substantively explain those promises without duplicating another guide. State limitations. Do not imply firsthand testing, credentials, ownership, legal review, or expert review without the corresponding evidence.
+
+## Add sources and related guides
+
+Every source record needs a factual title, HTTPS URL, publisher, and genuine access date. A review record can contain one source; a published guide requires at least two. Cite every frontmatter source URL in visible body prose where it supports a claim.
+
+Classify source suitability through human editorial review. A government, standards, vendor, or other page is not made primary merely by labeling it so. Check what the page actually establishes, its scope, date, publisher role, and limitations.
+
+Related guides must select existing article slugs. Keep the relationship useful and specific. Draft, review, and archived entries never become public related-guide links.
+
+## Use truthful dates
+
+- `datePublished` records the real first public publication date. Do not predate it or use it on unfinished work.
+- Omit `dateModified` at initial publication. Add it only on a later real calendar date after a substantive public change.
+- `lastReviewed` advances only after a real review.
+- `dateArchived` records the real archive action and cannot precede publication, modification, or review.
+- Source `accessed` records when that source was genuinely checked; do not copy a convenient date across records.
+
+No date may be impossible, earlier than the confirmed launch where prohibited, later than the current publication date, or advanced merely to make content look fresh.
+
+## Manage hero and body images
+
+Managed source media belongs under private source path `src/content-assets/articles`. The build validates and publishes only referenced approved files to public URLs under `/images/articles/`; there is no editable managed-media source collection inside `public/`.
+
+Use lowercase raster filenames prefixed by the article slug, for example a slug followed by a descriptive suffix and `.webp`, `.png`, `.jpg`, or `.jpeg`. Keep the source file within the validated size and dimension limits. Do not use symlinks, hidden files, traversal, duplicate bytes, executable formats, SVG uploads, or unreferenced media.
+
+Hero and body image filenames must be slug-prefixed. Alt, caption, credit, license, source, and rights fields must describe evidenced facts and remain empty when the fact is unknown rather than becoming placeholder text.
+
+Hero and body image records must stay factual and complete:
+
+- Informative media needs meaningful alt text that explains the information not already available nearby.
+- Decorative media uses empty alt text and an explicit decorative state.
+- A caption explains context when needed; it is not a place for invented provenance.
+- Credit names the real creator or source only when known and approved.
+- License identifies the actual license or permission basis only when evidenced.
+- Source URL points to the actual HTTPS source when applicable.
+- Rights evidence must establish that the intended publication use is allowed. File validation does not prove rights.
+
+For a hero, keep `heroImage`, `heroImageAlt`, `heroImageDecorative`, optional caption, credit, license, and source as one coherent tuple. Body images use the same alt, caption, credit, license, source, and rights discipline. Preview every informative image at narrow and wide widths before review.
+
+## Review on a branch and pull request
+
+1. Save editorial work only to the selected non-`main` branch.
+2. Inspect every GitHub commit and diff. A CMS-generated commit is still a real source change.
+3. Open a pull request into protected `main`.
+4. Run the local checks below and require the repository checks configured on the pull request.
+5. Use the Vercel preview for published-content shell, responsive, accessibility, route, and integration review. Remember that draft and review articles intentionally have no public preview route.
+6. Complete human source-suitability, editorial, expert-when-needed, privacy/legal, and media-rights review outside automation. Record real names and dates only after those actions occur.
+7. Merge only the reviewed changes. A passing build does not supply owner acceptance or guarantee AdSense approval.
+
+## Local checks
+
+From a clean repository checkout with the supported Node.js version:
+
+```text
+npm ci
+npm run setup:browsers
+npm run format:check
+npm run lint
+npm run typecheck
+npm test -- --run
+npm run build
+npm run check:content
+npm run check:cms
+npm run check:images
+npm run check:cms-fixture
+npm run check:seo
+npm run check:links
+npm run test:e2e
+npm run lighthouse
+```
+
+`npm run check:cms-fixture` creates protected temporary draft, review, and archived records, builds the site, proves they do not leak, and cleans them up. It does not test a hosted Pages CMS account. Run `npm run qa` as the single release gate before a production claim.
+
+## Publish to production
+
+A production release is a separate, explicitly authorized live action:
+
+1. Confirm the worktree is clean and the complete `npm run qa` gate passed for the exact candidate.
+2. Record the candidate Git SHA.
+3. Push GitHub `main` first and verify the remote `main` SHA matches locally.
+4. Deploy that pushed source to Vercel production second.
+5. Verify the canonical alias, exact deployed SHA where metadata exposes it, expected routes and assets, security headers, metadata, CMS-route absence, ads-off state, and no unexpected third-party requests.
+6. Record what was observed separately from owner-only and unknown gates.
+
+Do not call a local build, a preview deployment, or an unverified alias a production release.
+
+## Archive, delete, and recover
+
+Normal withdrawal is **archive, not delete**. Set a truthful `dateArchived`, preserve the complete Markdown record and Git history, and confirm the old public route receives the ordinary 404 unless a separately reviewed equivalent replacement justifies a redirect.
+
+Permanent deletion is allowed only through a reviewed Git operation with a documented reason, rights or privacy basis where relevant, reference cleanup, full QA, and owner acceptance. Do not use the CMS delete action as an unreviewed shortcut.
+
+For rollback, prefer `git revert` of the reviewed change, then rerun full QA, push the revert through GitHub, deploy the reverted source, and verify production. Do not rewrite shared history. Content recovery uses Git history; deployment recovery still requires a verified production release. Never modify, save, or publish the separate Blogger theme as part of this workflow.

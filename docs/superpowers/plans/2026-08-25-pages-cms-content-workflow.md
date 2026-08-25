@@ -4,7 +4,7 @@
 
 **Goal:** Add an external Pages CMS editing layer and a lifecycle-safe Git/Markdown publishing workflow that lets incomplete drafts exist without leaking into the public publication or breaking Astro.
 
-**Architecture:** Pages CMS edits `src/content/articles/*.md` and flat, slug-prefixed media under `public/images/articles/`. Astro remains static and validates every matched file with a status-aware Zod schema; repository QA enforces rules the CMS cannot express. Public consumers continue to select only `published` entries.
+**Architecture:** Pages CMS edits `src/content/articles/*.md` and flat, slug-prefixed private source media under `src/content-assets/articles/`. Astro remains static and validates every matched file with a status-aware Zod schema; repository QA enforces rules the CMS cannot express and projects only referenced media to published `/images/articles/` URLs. Public consumers continue to select only `published` entries.
 
 **Tech Stack:** Astro 7, TypeScript 6, Zod 4, Pages CMS YAML, Vitest, Node.js ESM, Sharp, Markdown/YAML frontmatter.
 
@@ -150,7 +150,7 @@ Use one media root:
 media:
   - name: article_images
     label: Article images
-    input: public/images/articles
+    input: src/content-assets/articles
     output: /images/articles
     extensions: [webp, png, jpg, jpeg]
     categories: [image]
@@ -253,7 +253,7 @@ git commit -m "feat(editorial): explain every guide outcome"
 
 **Files:**
 
-- Create: `public/images/articles/.gitkeep`
+- Create: `src/content-assets/articles/.gitkeep`
 - Create: `scripts/qa-images.mjs`
 - Create: `tests/unit/image-qa.test.ts`
 - Create: `tests/fixtures/images/valid-guide-hero.png`
@@ -286,7 +286,7 @@ Expected: PASS and `IMAGE QA PASS`.
 - [ ] **Step 5: Commit**
 
 ```text
-git add public/images/articles scripts/qa-images.mjs tests/unit/image-qa.test.ts tests/fixtures/images package.json
+git add src/content-assets/articles scripts/qa-images.mjs tests/unit/image-qa.test.ts tests/fixtures/images package.json
 git commit -m "feat(media): validate article image safety"
 ```
 

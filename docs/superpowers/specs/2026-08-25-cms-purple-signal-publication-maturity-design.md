@@ -247,7 +247,7 @@ Pages CMS -> GitHub Markdown/media -> Astro validation/build -> Vercel preview/p
 - Rich-text Markdown body.
 - Repeatable collapsible sources.
 - Slug-storing related-guide references.
-- Flat `public/images/articles/` media with slug-prefixed filenames.
+- Flat private source media in `src/content-assets/articles/` with slug-prefixed filenames; the validated build publishes referenced files to `/images/articles/` URLs only.
 - `delete: false` and `rename: false`.
 - `settings.content.merge: true` and app commit identity.
 - Empty date defaults so a CMS action does not manufacture publication or review dates.
@@ -262,13 +262,13 @@ No public CMS link, script, route, token, credential, or configuration is render
 
 ## 10. Media architecture
 
-CMS-managed raster media is stored in:
+CMS-managed raster source media is stored privately in:
 
 ```text
-public/images/articles/
+src/content-assets/articles/
 ```
 
-Allowed CMS formats: WebP and PNG, with JPEG only when necessary. SVG is not exposed to ordinary CMS upload; existing reviewed deterministic SVG illustrations remain engineering-controlled. Pages CMS safe-renames the filename supplied by the editor but cannot prepend the article slug, so the slug prefix is a documented manual naming rule enforced by repository QA.
+Allowed CMS formats: WebP and PNG, with JPEG only when necessary. SVG is not exposed to ordinary CMS upload; existing reviewed deterministic SVG illustrations remain engineering-controlled. Pages CMS safe-renames the filename supplied by the editor but cannot prepend the article slug, so the slug prefix is a documented manual naming rule enforced by repository QA. Only validated and referenced sources are projected into the published output under `/images/articles/`; the source directory itself is never a public route.
 
 Required checks:
 
