@@ -7,6 +7,7 @@ import { fromMarkdown } from "mdast-util-from-markdown";
 
 import { siteConfig, siteOrigin } from "../site.config.mjs";
 import { visitTreeIterative } from "../src/utils/managed-image-ast.mjs";
+import { publicEvidenceUrlIssue } from "../src/utils/public-evidence-url.mjs";
 
 export const REQUIRED_CATEGORY_SLUGS = [
   "ai-automation",
@@ -584,20 +585,20 @@ function validateSources(
       );
     }
 
+    const urlIssue = publicEvidenceUrlIssue(source.url);
     let parsedUrl;
-    try {
-      parsedUrl = new URL(source.url);
-    } catch {
+    if (urlIssue) {
       issues.push(
-        finding("source-url", fileName, `${label} is not a valid URL.`),
+        finding(
+          "source-url",
+          fileName,
+          `${label} must use a safe public HTTPS URL: ${urlIssue}.`,
+        ),
       );
+    } else {
+      parsedUrl = new URL(source.url);
     }
     if (parsedUrl) {
-      if (parsedUrl.protocol !== "https:") {
-        issues.push(
-          finding("source-url", fileName, `${label} must use HTTPS.`),
-        );
-      }
       if (sourceUrls.has(parsedUrl.href)) {
         issues.push(
           finding(
@@ -720,14 +721,13 @@ function validateHero(issues, fileName, data) {
     }
   }
   if (data.heroImageSourceUrl !== undefined) {
-    try {
-      if (new URL(data.heroImageSourceUrl).protocol !== "https:") throw null;
-    } catch {
+    const urlIssue = publicEvidenceUrlIssue(data.heroImageSourceUrl);
+    if (urlIssue) {
       issues.push(
         finding(
           "hero-source-url",
           fileName,
-          "heroImageSourceUrl must be a valid HTTPS URL.",
+          `heroImageSourceUrl must use a safe public HTTPS URL: ${urlIssue}.`,
         ),
       );
     }

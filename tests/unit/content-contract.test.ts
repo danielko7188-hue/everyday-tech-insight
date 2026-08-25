@@ -251,6 +251,37 @@ describe("article frontmatter contract", () => {
     expect(insecureSource.success).toBe(false);
   });
 
+  it.each([
+    "https://user:secret@www.nist.gov/record",
+    "https://www.nist.gov/record?client_secret=secret-value",
+    "https://localhost/record",
+    "https://evidence.internal/record",
+    "https://127.0.0.1/record",
+  ])("rejects the unsafe public source URL %s", (url) => {
+    const result = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      sourceList: [
+        validPublishedArticle.sourceList[0],
+        { ...validPublishedArticle.sourceList[1], url },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it.each([
+    "https://user:secret@www.nist.gov/image-record",
+    "https://www.nist.gov/image-record?X-Amz-Signature=secret-value",
+    "https://media.local/image-record",
+  ])("rejects the unsafe public hero evidence URL %s", (heroImageSourceUrl) => {
+    const result = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      heroImageSourceUrl,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("accepts the real 2026-08-21 publication date and rejects impossible or future dates", () => {
     expect(
       articleFrontmatterSchema.safeParse(validPublishedArticle).success,

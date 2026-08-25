@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { categorySlugs } from "../data/categories";
 import { site } from "../data/site";
+import { isPublicEvidenceUrl } from "./public-evidence-url.mjs";
 
 export const ARTICLE_STATUSES = [
   "draft",
@@ -173,6 +174,11 @@ const httpsUrlSchema = z.url().refine(
   { message: "URL must use HTTPS." },
 );
 
+const publicEvidenceUrlSchema = z.string().refine(isPublicEvidenceUrl, {
+  message:
+    "URL must be a safe public HTTPS URL without credentials, secret query keys, reserved hosts, ports, or fragments.",
+});
+
 const configuredSiteOrigin = new URL(site.url).origin;
 const canonicalOverrideSchema = httpsUrlSchema.refine(
   (value) => {
@@ -215,7 +221,7 @@ export const articleVisualSchema = z
 export const sourceSchema = z
   .object({
     title: requiredText(3, 200),
-    url: httpsUrlSchema,
+    url: publicEvidenceUrlSchema,
     publisher: requiredText(2, 120),
     accessed: publicationEraDateSchema,
   })
@@ -286,7 +292,7 @@ const heroShape = {
   heroImageDecorative: z.boolean().optional(),
   heroImageCaption: optionalCmsValue(requiredText(10, 300)),
   heroImageCredit: optionalCmsValue(requiredText(2, 200)),
-  heroImageSourceUrl: optionalCmsValue(httpsUrlSchema),
+  heroImageSourceUrl: optionalCmsValue(publicEvidenceUrlSchema),
   heroImageLicense: optionalCmsValue(requiredText(2, 120)),
 } as const;
 

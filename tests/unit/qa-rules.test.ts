@@ -1088,6 +1088,45 @@ describe("content QA rules", () => {
     expect(codes).not.toContain("source-host");
   });
 
+  it.each([
+    "https://user:secret@www.nist.gov/record",
+    "https://www.nist.gov/record?access_token=secret-value",
+    "https://localhost/record",
+    "https://evidence.internal/record",
+    "https://127.0.0.1/record",
+  ])("fails closed on the unsafe public source URL %s", (url) => {
+    const articles = validPortfolio();
+    const priorUrl = articles[0]!.data.sourceList[0]!.url;
+    articles[0]!.data.sourceList[0]!.url = url;
+    articles[0]!.body = articles[0]!.body.replace(priorUrl, url);
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).toContain("source-url");
+  });
+
+  it.each([
+    "https://user:secret@www.nist.gov/image-record",
+    "https://www.nist.gov/image-record?client_secret=secret-value",
+    "https://media.local/image-record",
+  ])("fails closed on the unsafe public hero evidence URL %s", (url) => {
+    const articles = validPortfolio();
+    Object.assign(articles[0]!.data, {
+      heroImage: "/images/articles/automation-purpose.png",
+      heroImageAlt: "An informative description of the intended hero image.",
+      heroImageDecorative: false,
+      heroImageSourceUrl: url,
+    });
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).toContain("hero-source-url");
+  });
+
   it("enforces explanation ranges and the exact visual key/type pairing", () => {
     const articles = validPortfolio();
     articles[0]!.data.guidePromise = "Too short";
