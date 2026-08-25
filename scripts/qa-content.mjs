@@ -3,6 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { load as loadYaml } from "js-yaml";
+import { fromMarkdown } from "mdast-util-from-markdown";
 
 import { siteConfig, siteOrigin } from "../site.config.mjs";
 
@@ -83,6 +84,8 @@ const PUBLISHED_EXPLANATION_RULES = [
   },
 ];
 const EXPLANATION_SUPPORT_RATIO = 0.25;
+// Dice catches broadly copied wording; minimum-set containment also catches a
+// short valid field copied intact with only a small amount of added noise.
 const EXPLANATION_NEAR_DUPLICATE_THRESHOLD = 0.9;
 const EXPLANATION_STOPWORDS = new Set([
   "about",
@@ -193,63 +196,99 @@ function significantTokenOverlap(left, right) {
   return (2 * intersectionSize) / (left.length + right.length);
 }
 
+function significantTokenContainment(left, right) {
+  if (left.length === 0 || right.length === 0) return 0;
+  const rightTerms = new Set(right);
+  const intersectionSize = left.filter((term) => rightTerms.has(term)).length;
+  return intersectionSize / Math.min(left.length, right.length);
+}
+
 function explanationSignaturesNearDuplicate(left, right) {
   const exactSignature =
     left.length === right.length &&
     left.every((term, index) => term === right[index]);
   return (
     exactSignature ||
-    significantTokenOverlap(left, right) >= EXPLANATION_NEAR_DUPLICATE_THRESHOLD
+    significantTokenOverlap(left, right) >=
+      EXPLANATION_NEAR_DUPLICATE_THRESHOLD ||
+    significantTokenContainment(left, right) >=
+      EXPLANATION_NEAR_DUPLICATE_THRESHOLD
   );
 }
 
-function visibleMarkdownProse(markdown) {
-  let visible = markdown
-    .replace(/\r\n?/g, "\n")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(
-      /<(script|style|template|noscript|head)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,
-      " ",
-    )
-    .replace(
-      /<([a-z][\w:-]*)\b(?=[^>]*(?:\bhidden\b|\baria-hidden\s*=\s*["']?true["']?))[^>]*>[\s\S]*?<\/\1\s*>/gi,
-      " ",
-    );
+function withoutLeadingFrontmatter(markdown) {
+  const normalized = markdown.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+  const lines = normalized.split("\n");
+  const delimiter = /^(?:---|\+\+\+)[ \t]*$/.test(lines[0] ?? "")
+    ? lines[0].trim()
+    : undefined;
+  if (delimiter === undefined) return normalized;
 
-  const proseLines = [];
-  let openFence;
-  for (const line of visible.split("\n")) {
-    const fence = line.match(/^ {0,3}(`{3,}|~{3,})/);
-    if (fence) {
-      const marker = fence[1];
-      if (openFence === undefined) {
-        openFence = { character: marker[0], length: marker.length };
-      } else if (
-        marker[0] === openFence.character &&
-        marker.length >= openFence.length
-      ) {
-        openFence = undefined;
-      }
-      continue;
-    }
-    if (openFence !== undefined) continue;
-    if (/^(?: {4}|\t)\S/.test(line)) continue;
-    if (/^ {0,3}\[[^\]]+\]:\s*\S+/.test(line)) continue;
-    proseLines.push(line);
+  const closingIndex = lines.findIndex(
+    (line, index) => index > 0 && line.trim() === delimiter,
+  );
+  return closingIndex === -1 ? "" : lines.slice(closingIndex + 1).join("\n");
+}
+
+const NON_PROSE_MARKDOWN_NODE_TYPES = new Set([
+  "code",
+  "definition",
+  "html",
+  "image",
+  "imageReference",
+  "inlineCode",
+  "toml",
+  "yaml",
+]);
+const NON_VISIBLE_HTML_ELEMENT_NAMES = new Set([
+  "head",
+  "noscript",
+  "script",
+  "style",
+  "template",
+]);
+
+function updateHiddenHtmlStack(html, stack) {
+  const closingTag = html.match(/^<\s*\/\s*([a-z][\w:-]*)/i);
+  if (closingTag) {
+    const matchingIndex = stack.lastIndexOf(closingTag[1].toLowerCase());
+    if (matchingIndex !== -1) stack.splice(matchingIndex);
+    return;
   }
 
-  visible = proseLines
-    .join("\n")
-    .replace(/(`+)([^\n]*?)\1/g, " ")
-    .replace(/!\[[^\]]*\]\([^\n)]*\)/g, " ")
-    .replace(/!\[[^\]]*\]\[[^\]]*\]/g, " ")
-    .replace(/\[([^\]]+)\]\([^\n)]*\)/g, "$1")
-    .replace(/\[([^\]]+)\]\[[^\]]*\]/g, "$1")
-    .replace(/<https?:\/\/[^>\s]+>/gi, " ")
-    .replace(/https?:\/\/[^\s<>)\]]+/gi, " ")
-    .replace(/<\/?[a-z][^>]*>/gi, " ");
+  const openingTag = html.match(/^<\s*([a-z][\w:-]*)\b([^>]*)>/i);
+  if (!openingTag || /\/\s*>$/.test(html)) return;
+  const name = openingTag[1].toLowerCase();
+  const attributes = openingTag[2];
+  if (
+    NON_VISIBLE_HTML_ELEMENT_NAMES.has(name) ||
+    /(?:^|\s)hidden(?:\s|=|$)/i.test(attributes) ||
+    /(?:^|\s)aria-hidden\s*=\s*["']?true(?:["']|\s|$)/i.test(attributes)
+  ) {
+    stack.push(name);
+  }
+}
 
-  return visible;
+function collectVisibleMarkdownText(node, output, hiddenHtmlStack = []) {
+  if (NON_PROSE_MARKDOWN_NODE_TYPES.has(node.type)) return;
+  if (node.type === "text" && hiddenHtmlStack.length === 0) {
+    output.push(node.value);
+  }
+  if (!Array.isArray(node.children)) return;
+  for (const child of node.children) {
+    if (child.type === "html") {
+      updateHiddenHtmlStack(child.value, hiddenHtmlStack);
+      continue;
+    }
+    collectVisibleMarkdownText(child, output, hiddenHtmlStack);
+  }
+}
+
+function visibleMarkdownProse(markdown) {
+  const tree = fromMarkdown(withoutLeadingFrontmatter(markdown));
+  const visibleText = [];
+  collectVisibleMarkdownText(tree, visibleText);
+  return visibleText.join(" ");
 }
 
 function validatePublishedExplanations(publishedArticles) {
@@ -279,7 +318,11 @@ function validatePublishedExplanations(publishedArticles) {
         explanationSignaturesNearDuplicate(signature, priorSignature),
       );
       if (nearDuplicate !== undefined) {
-        const overlap = significantTokenOverlap(
+        const diceOverlap = significantTokenOverlap(
+          signature,
+          nearDuplicate.signature,
+        );
+        const containmentOverlap = significantTokenContainment(
           signature,
           nearDuplicate.signature,
         );
@@ -287,7 +330,7 @@ function validatePublishedExplanations(publishedArticles) {
           finding(
             rule.duplicateCode,
             article.fileName,
-            `${rule.field} near-duplicates ${nearDuplicate.fileName} (${Math.round(overlap * 100)}% significant-token overlap; threshold ${EXPLANATION_NEAR_DUPLICATE_THRESHOLD * 100}%).`,
+            `${rule.field} near-duplicates ${nearDuplicate.fileName} (${Math.round(diceOverlap * 100)}% Dice overlap; ${Math.round(containmentOverlap * 100)}% containment; threshold ${EXPLANATION_NEAR_DUPLICATE_THRESHOLD * 100}%).`,
           ),
         );
       }

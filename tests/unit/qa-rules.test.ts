@@ -675,6 +675,33 @@ describe("content QA rules", () => {
     ).toContain("duplicate-guide-promise");
   });
 
+  it("reports contained copies for the reviewer example and minimum-length fields", () => {
+    const articles = validPortfolio();
+    const reviewerDeliverable = "Invoice approval workflow documentation.";
+    const minimumDeliverable = "Invoice process map.";
+    const minimumWhenToUse = "Use for invoice workflow rollout review.";
+    expect(minimumDeliverable).toHaveLength(20);
+    expect(minimumWhenToUse).toHaveLength(40);
+
+    articles[0]!.data.deliverable = reviewerDeliverable;
+    articles[1]!.data.deliverable = `${reviewerDeliverable} Today.`;
+    articles[2]!.data.deliverable = minimumDeliverable;
+    articles[3]!.data.deliverable = `${minimumDeliverable} Today.`;
+    articles[4]!.data.whenToUse = minimumWhenToUse;
+    articles[5]!.data.whenToUse = `${minimumWhenToUse} Today.`;
+    for (const article of articles.slice(0, 6)) {
+      article.body += `\n\n${article.data.deliverable} ${article.data.whenToUse}`;
+    }
+
+    const codes = validateContentPortfolio(articles, {
+      today: "2026-08-21",
+    }).map(({ code }) => code);
+    expect(
+      codes.filter((code) => code === "duplicate-deliverable"),
+    ).toHaveLength(2);
+    expect(codes).toContain("duplicate-when-to-use");
+  });
+
   it("excludes draft, review, and archived explanations from published uniqueness", () => {
     const articles = validPortfolio();
     const excluded = ["draft", "review", "archived"].map((status, index) => {
@@ -745,6 +772,12 @@ describe("content QA rules", () => {
       },
     ],
     [
+      "unclosed HTML comments",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body += `\n\n<!-- ${explanation}`;
+      },
+    ],
+    [
       "fenced code",
       (article: ReturnType<typeof validArticle>, explanation: string) => {
         article.body += `\n\n\`\`\`text\n${explanation}\n\`\`\``;
@@ -760,6 +793,24 @@ describe("content QA rules", () => {
       "indented code",
       (article: ReturnType<typeof validArticle>, explanation: string) => {
         article.body += `\n\n    ${explanation}`;
+      },
+    ],
+    [
+      "five-space indented code",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body += `\n\n     ${explanation}`;
+      },
+    ],
+    [
+      "blockquoted fenced code",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body += `\n\n> \`\`\`text\n> ${explanation}\n> \`\`\``;
+      },
+    ],
+    [
+      "multiline code spans",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body += `\n\n\`\`${explanation.replace(" while ", "\nwhile ")}\`\``;
       },
     ],
     [
@@ -779,6 +830,12 @@ describe("content QA rules", () => {
       "non-public image alternative text",
       (article: ReturnType<typeof validArticle>, explanation: string) => {
         article.body += `\n\n![${explanation}](https://images.example.test/hidden.png)`;
+      },
+    ],
+    [
+      "frontmatter",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body = `---\nqaEvidence: ${explanation}\n---\n\n${article.body}`;
       },
     ],
   ])(
@@ -806,6 +863,21 @@ describe("content QA rules", () => {
       "Quasar metallurgy calibrates zirconium chambers while nebula cartography directs catalyst arrays.";
     article.data.guidePromise = explanation;
     article.body += `\n\n[${explanation}](/articles/visible-reference/)`;
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).not.toContain("unsupported-guide-promise");
+  });
+
+  it("retains normal blockquote prose as explanation support", () => {
+    const articles = validPortfolio();
+    const article = articles[0]!;
+    const explanation =
+      "Quasar metallurgy calibrates zirconium chambers while nebula cartography directs catalyst arrays.";
+    article.data.guidePromise = explanation;
+    article.body += `\n\n> ${explanation}`;
 
     expect(
       validateContentPortfolio(articles, { today: "2026-08-21" }).map(
