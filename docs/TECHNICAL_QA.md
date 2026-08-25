@@ -27,8 +27,11 @@ The release command runs formatting, lint, Astro type checks, unit tests, a prod
 - Publication cannot follow review or modification; `dateModified` is absent at initial publication and valid only on a later date after a substantive change.
 - Published/source-checked/indexable status, at least two unique HTTPS primary sources, and an access date for each source.
 - Every frontmatter source URL appears in the body.
+- Public evidence and Markdown link destinations reject credentials, secret-bearing query keys, fragments or unsafe ports where prohibited, IP literals, and reserved/internal hosts before any external checker performs DNS or HTTP work. Safe relative links remain subject to built-output resolution.
+- Raw article frontmatter and Markdown reject detected private keys, assigned passwords/API keys, bearer tokens, JWTs, and private-email patterns. This deployment gate cannot erase a sensitive value already committed through a public CMS workflow.
 - At least 650 words, at least four H2 sections, an explicit limitation, and no unsupported first-hand claim.
 - No placeholder, advertising, analytics, tracking identifier, invalid related article, or unsupported canonical override.
+- Managed raster sources reject detected EXIF, IPTC, XMP, Photoshop TIFF tags, and PNG text comments before publication; editors must strip and inspect metadata before the CMS creates a public Git commit.
 
 ### Built output
 
