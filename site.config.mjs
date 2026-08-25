@@ -1,3 +1,5 @@
+import { defineMonetizationConfig } from "./src/utils/monetization.ts";
+
 export const DEFAULT_SITE_URL = "https://everyday-tech-insight.vercel.app/";
 
 export function resolveSiteUrl(candidate) {
@@ -55,7 +57,7 @@ export const siteConfig = Object.freeze({
     url: "https://github.com/danielko7188-hue/everyday-tech-insight/issues",
   }),
   integrations: Object.freeze({
-    monetization: Object.freeze({ enabled: false, provider: null }),
+    monetization: defineMonetizationConfig({ mode: "off" }),
     analytics: Object.freeze({ enabled: false, provider: null }),
     consentManagementPlatform: Object.freeze({
       enabled: false,

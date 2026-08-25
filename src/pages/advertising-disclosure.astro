@@ -1,16 +1,19 @@
 ---
 import { trustPages } from "../data/trust-pages";
+import { site } from "../data/site";
 import TrustPageLayout from "../layouts/TrustPageLayout.astro";
+import { monetizationPublicCopy } from "../utils/monetization";
 
 const page = trustPages.advertisingDisclosure;
+const monetizationCopy = monetizationPublicCopy(site.integrations.monetization);
 ---
 
 <TrustPageLayout page={page} currentKey="advertisingDisclosure">
   <p>
     No affiliate links, paid placements, sponsored articles, product samples, or
-    other sponsored compensation are active in the published content. No AdSense
-    code or publisher identifier is included.
+    other sponsored compensation are active in the published content.
   </p>
+  <p>{monetizationCopy.disclosureState}</p>
   <p>
     A link to a source is included for evidence and reader access; it is not
     presented as an endorsement. If commercial relationships are introduced, the
@@ -18,7 +21,6 @@ const page = trustPages.advertisingDisclosure;
     relationships become active.
   </p>
   <p class="notice">
-    Google alone decides whether a site is approved for AdSense. This site has
-    not requested or received approval through this build.
+    {monetizationCopy.approvalBoundary}
   </p>
 </TrustPageLayout>

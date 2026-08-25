@@ -1,35 +1,58 @@
 ---
 import { site } from "../data/site";
-
-type AdSlotSize = "leaderboard" | "rectangle" | "mobile-banner";
+import {
+  resolveAdUnit,
+  type AdPlacement,
+  type AdSurface,
+} from "../utils/monetization";
 
 interface Props {
-  size?: AdSlotSize;
+  placement: AdPlacement;
+  surface?: AdSurface;
+  articleStatus?: "draft" | "review" | "published" | "archived";
+  articleWordCount?: number;
   class?: string;
 }
 
-const { size = "leaderboard", class: className } = Astro.props;
-const dimensions: Record<AdSlotSize, { width: number; height: number }> = {
-  leaderboard: { width: 728, height: 90 },
-  rectangle: { width: 300, height: 250 },
-  "mobile-banner": { width: 320, height: 100 },
+const {
+  placement,
+  surface = "article",
+  articleStatus = "draft",
+  articleWordCount = 0,
+  class: className,
+} = Astro.props;
+const dimensions: Record<AdPlacement, { width: number; height: number }> = {
+  "article-after-intro": { width: 728, height: 90 },
+  "article-before-sources": { width: 728, height: 90 },
 };
-const { width, height } = dimensions[size];
-const enabled = Boolean(site.integrations.monetization.enabled);
+const { width, height } = dimensions[placement];
+const adUnit = resolveAdUnit(site.integrations.monetization, {
+  articleStatus,
+  articleWordCount,
+  placement,
+  surface,
+});
 const reservedDimensions = `box-sizing: border-box; display: grid; inline-size: min(100%, ${width}px); min-block-size: ${height}px; place-items: center; border: 1px solid var(--color-rule, #c9c5ba); color: var(--color-muted, #59605e); background: var(--color-paper, #fffdf8);`;
 ---
 
 {
-  enabled && (
+  adUnit && (
     <aside
       class:list={["ad-slot", className]}
-      aria-label="Advertising"
-      data-ad-size={size}
+      aria-label="Advertisement"
+      data-ad-placement={adUnit.placement}
       data-reserved-width={width}
       data-reserved-height={height}
       style={reservedDimensions}
     >
-      <span>Advertising</span>
+      <span>Advertisement</span>
+      <ins
+        class="adsbygoogle"
+        aria-label="Advertisement"
+        data-ad-client={adUnit.publisherId}
+        data-ad-slot={adUnit.slotId}
+        style={`display: block; inline-size: min(100%, ${width}px); min-block-size: ${height}px;`}
+      />
     </aside>
   )
 }

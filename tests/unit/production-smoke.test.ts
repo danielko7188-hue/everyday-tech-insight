@@ -739,6 +739,35 @@ describe("inspectHtml", () => {
   });
 
   it.each([
+    [
+      "reserved advertising gap",
+      '<aside class="ad-slot" aria-label="Advertisement" style="min-height:250px"><span>Advertisement</span></aside>',
+      "ad-integration-marker",
+    ],
+    [
+      "advertising consent platform",
+      '<div class="consent-banner" data-cmp-provider="[REDACTED OWNER SELECTION]">Consent settings</div>',
+      "consent-integration-marker",
+    ],
+  ])(
+    "rejects a live %s while the release mode is off",
+    async (_name, extra, code) => {
+      const productionSmoke = asFixtureProductionSmoke(
+        await import("../../scripts/check-production.mjs"),
+      );
+
+      const result = productionSmoke.inspectHtml(htmlFixture({ extra }), {
+        origin: fixtureOrigin,
+        route: "/fixture/",
+      });
+
+      expect(
+        result.issues.map((issue: { code: string }) => issue.code),
+      ).toContain(code);
+    },
+  );
+
+  it.each([
     "data-ad-client",
     "data-ad-slot",
     "data-ad-format",
@@ -1158,6 +1187,7 @@ describe("production route smoke", () => {
       checkedAssets: 24,
       checkedRoutes: requiredPaths.length,
       issues: [],
+      monetizationMode: "off",
       routeResults: requiredPaths.map((path) => ({ path, status: "PASS" })),
     });
     expect(fetchImpl).toHaveBeenCalledTimes(requiredPaths.length + 24);

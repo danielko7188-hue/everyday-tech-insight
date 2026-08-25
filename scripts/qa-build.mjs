@@ -19,6 +19,7 @@ import {
   parseManagedArticleImageUrl,
   scanManagedImagesInMarkdown,
 } from "../src/utils/managed-article-images.mjs";
+import { monetizationPublicCopy } from "../src/utils/monetization.ts";
 import { siteConfig, siteUrl as configuredSiteUrl } from "../site.config.mjs";
 
 const TRUST_NAVIGATION = JSON.parse(
@@ -1124,6 +1125,54 @@ function validatePage({
       ),
     );
   }
+  if (siteConfig.integrations.monetization.mode === "off") {
+    const adsenseAccountMeta = $("meta[name]").filter((_index, element) =>
+      /^google-adsense-account$/i.test(($(element).attr("name") ?? "").trim()),
+    );
+    const adMarkers = $("*").filter((_index, element) => {
+      const attributes = element.attribs ?? {};
+      const label = (attributes["aria-label"] ?? "").trim();
+      const tokens = `${attributes.class ?? ""} ${attributes.id ?? ""}`
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      return (
+        Object.keys(attributes).some((name) => /^data-ad-/i.test(name)) ||
+        tokens.some((token) => /^(?:ad-slot|adsbygoogle)$/i.test(token)) ||
+        /^(?:advertising|advertisement)$/i.test(label)
+      );
+    });
+    const consentMarkers = $("*").filter((_index, element) => {
+      const attributes = element.attribs ?? {};
+      const tokens = `${attributes.class ?? ""} ${attributes.id ?? ""}`
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      return (
+        Object.keys(attributes).some((name) =>
+          /^data-(?:cmp|consent)-/i.test(name),
+        ) ||
+        tokens.some((token) =>
+          /^(?:cmp|consent-banner|cookie-banner|privacy-messaging)$/i.test(
+            token,
+          ),
+        )
+      );
+    });
+    if (
+      adsenseAccountMeta.length > 0 ||
+      adMarkers.length > 0 ||
+      consentMarkers.length > 0
+    ) {
+      issues.push(
+        finding(
+          "monetization-off",
+          fileName,
+          "advertising metadata, placements, reserved gaps, and advertising consent tooling must remain absent in off mode.",
+        ),
+      );
+    }
+  }
 
   if (!isNotFound && !expectedIndexableRoutes.has(route)) {
     issues.push(
@@ -1202,6 +1251,15 @@ export function validateBuiltOutput({
     articles,
     managedImageAudit,
   });
+  if (siteConfig.integrations.monetization.mode !== "off") {
+    issues.push(
+      finding(
+        "monetization-mode",
+        "site.config.mjs",
+        "this release is authorized only for the fail-closed monetization off mode.",
+      ),
+    );
+  }
   const publishedArticles = articles.filter(
     ({ data }) => data.status === "published",
   );
@@ -1299,6 +1357,33 @@ export function validateBuiltOutput({
     }
   }
 
+  const monetizationCopy = monetizationPublicCopy(
+    siteConfig.integrations.monetization,
+  );
+  for (const [route, expectedStatements] of [
+    ["/privacy/", [monetizationCopy.privacyState]],
+    [
+      "/advertising-disclosure/",
+      [monetizationCopy.disclosureState, monetizationCopy.approvalBoundary],
+    ],
+  ]) {
+    const page = parsedPages.get(route);
+    const visibleText = page
+      ? page("body").text().replace(/\s+/g, " ").trim()
+      : "";
+    for (const statement of expectedStatements) {
+      if (!visibleText.includes(statement)) {
+        issues.push(
+          finding(
+            "monetization-copy",
+            route,
+            "privacy and advertising disclosure wording must match the active validated monetization mode.",
+          ),
+        );
+      }
+    }
+  }
+
   const combinedPublicOutput = [...normalizedFiles]
     .filter(([fileName]) => /\.(?:html|xml|txt)$/.test(fileName))
     .map(([, contents]) => contents)
@@ -1317,7 +1402,10 @@ export function validateBuiltOutput({
       );
     }
   }
-  if (normalizedFiles.has("ads.txt")) {
+  if (
+    siteConfig.integrations.monetization.mode === "off" &&
+    normalizedFiles.has("ads.txt")
+  ) {
     issues.push(
       finding(
         "ads-file",

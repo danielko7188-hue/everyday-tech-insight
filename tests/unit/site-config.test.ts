@@ -55,11 +55,11 @@ describe("publication identity", () => {
     );
   });
 
-  it("keeps monetization, analytics, and consent tooling disabled without IDs", async () => {
+  it("keeps monetization in exact off mode and other data integrations disabled", async () => {
     const { site } = await import("../../src/data/site");
 
     expect(site.integrations).toEqual({
-      monetization: { enabled: false, provider: null },
+      monetization: { mode: "off" },
       analytics: { enabled: false, provider: null },
       consentManagementPlatform: { enabled: false, provider: null },
     });

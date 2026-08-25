@@ -4,6 +4,8 @@ import { pathToFileURL } from "node:url";
 import { SaxesParser } from "saxes";
 import sharp from "sharp";
 
+import { siteConfig } from "../site.config.mjs";
+
 export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
   "/articles/how-to-identify-business-tasks-for-automation/",
   "/articles/evaluate-saas-with-a-practical-checklist/",
@@ -532,15 +534,50 @@ function inspectPrivacyBoundary($, { html, origin, route }) {
     );
   }
 
-  const adIntegrationMarkers = $("*").filter((_index, element) =>
-    Object.keys(element.attribs ?? {}).some((name) => /^data-ad-/i.test(name)),
-  );
+  const adIntegrationMarkers = $("*").filter((_index, element) => {
+    const attributes = element.attribs ?? {};
+    const label = (attributes["aria-label"] ?? "").trim();
+    const tokens = `${attributes.class ?? ""} ${attributes.id ?? ""}`
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    return (
+      Object.keys(attributes).some((name) => /^data-ad-/i.test(name)) ||
+      tokens.some((token) => /^(?:ad-slot|adsbygoogle)$/i.test(token)) ||
+      /^(?:advertising|advertisement)$/i.test(label)
+    );
+  });
   if (adIntegrationMarkers.length > 0) {
     issues.push(
       finding(
         "ad-integration-marker",
         route,
-        "data-ad-* integration markers must remain absent while monetization is disabled.",
+        "advertising integration markers and reserved display gaps must remain absent while monetization is off.",
+      ),
+    );
+  }
+
+  const consentIntegrationMarkers = $("*").filter((_index, element) => {
+    const attributes = element.attribs ?? {};
+    const tokens = `${attributes.class ?? ""} ${attributes.id ?? ""}`
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    return (
+      Object.keys(attributes).some((name) =>
+        /^data-(?:cmp|consent)-/i.test(name),
+      ) ||
+      tokens.some((token) =>
+        /^(?:cmp|consent-banner|cookie-banner|privacy-messaging)$/i.test(token),
+      )
+    );
+  });
+  if (consentIntegrationMarkers.length > 0) {
+    issues.push(
+      finding(
+        "consent-integration-marker",
+        route,
+        "advertising consent-platform markers must remain absent while monetization is off.",
       ),
     );
   }
@@ -1572,6 +1609,16 @@ export async function runProductionCheck({
   const failedAssetOwners = new Set();
   const inspectedPages = [];
 
+  if (siteConfig.integrations.monetization.mode !== "off") {
+    issues.push(
+      finding(
+        "monetization-mode",
+        "site.config.mjs",
+        "production verification is authorized only for monetization off mode.",
+      ),
+    );
+  }
+
   for (const route of routes) {
     const url = new URL(route.path, `${normalizedOrigin}/`);
     let response;
@@ -1785,6 +1832,7 @@ export async function runProductionCheck({
     checkedAssets: assets.size,
     checkedRoutes: routes.length,
     issues,
+    monetizationMode: siteConfig.integrations.monetization.mode,
     routeResults,
   };
 }
@@ -1827,7 +1875,7 @@ export function formatProductionReport(origin, result) {
   );
   if (result.issues.length === 0) {
     lines.push(
-      `Production smoke: PASS (${result.checkedRoutes} routes, ${result.checkedAssets} root-relative assets at ${origin})`,
+      `Production smoke: PASS (${result.checkedRoutes} routes, ${result.checkedAssets} root-relative assets, monetization ${result.monetizationMode} at ${origin})`,
     );
     return lines.join("\n");
   }

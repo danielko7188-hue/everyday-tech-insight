@@ -34,6 +34,7 @@ import {
 import { siteConfig, siteUrl } from "../../site.config.mjs";
 import { site } from "../../src/data/site";
 import { relatedTrustPages } from "../../src/data/trust-pages";
+import { monetizationPublicCopy } from "../../src/utils/monetization";
 
 const categorySlugs = [
   "ai-automation",
@@ -411,6 +412,15 @@ function validBuiltFixture() {
         <p>On this page</p><ol><li><a href="#decision">Decision</a></li></ol>
       </nav>
       <div class="article-body"><h2 id="decision">Decision</h2></div>`;
+    }
+
+    const monetizationCopy = monetizationPublicCopy(
+      siteConfig.integrations.monetization,
+    );
+    if (route === "/privacy/")
+      body += `<p>${monetizationCopy.privacyState}</p>`;
+    if (route === "/advertising-disclosure/") {
+      body += `<p>${monetizationCopy.disclosureState}</p><p>${monetizationCopy.approvalBoundary}</p>`;
     }
 
     const isTrustRoute = trustRoutePaths.some((path) => path === route);
@@ -1229,6 +1239,63 @@ describe("built-output QA rules", () => {
         siteUrl,
       }),
     ).toEqual([]);
+  });
+
+  it.each([
+    [
+      "reserved ad gap",
+      '<aside class="ad-slot" aria-label="Advertisement" style="min-height: 250px"><span>Advertisement</span></aside>',
+    ],
+    [
+      "AdSense account meta",
+      '<meta name="google-adsense-account" content="[REDACTED OWNER VALUE]">',
+    ],
+    [
+      "advertising CMP marker",
+      '<div data-cmp-provider="[REDACTED OWNER SELECTION]" class="consent-banner">Consent settings</div>',
+    ],
+  ])("rejects a public %s while monetization is off", (_name, markup) => {
+    const fixture = validBuiltFixture();
+    const home = fixture.files.get("index.html")!;
+    fixture.files.set(
+      "index.html",
+      markup.startsWith("<meta")
+        ? home.replace("</head>", `${markup}</head>`)
+        : home.replace("</main>", `${markup}</main>`),
+    );
+
+    expect(
+      validateBuiltOutput({
+        files: fixture.files,
+        articles: fixture.articles,
+        categorySlugs: [...categorySlugs],
+        siteUrl,
+      }).map(({ code }) => code),
+    ).toContain("monetization-off");
+  });
+
+  it("requires privacy and disclosure wording to match the active mode", () => {
+    const fixture = validBuiltFixture();
+    for (const fileName of [
+      "privacy/index.html",
+      "advertising-disclosure/index.html",
+    ]) {
+      fixture.files.set(
+        fileName,
+        fixture.files
+          .get(fileName)!
+          .replaceAll("No advertising", "Advertising wording drifted"),
+      );
+    }
+
+    expect(
+      validateBuiltOutput({
+        files: fixture.files,
+        articles: fixture.articles,
+        categorySlugs: [...categorySlugs],
+        siteUrl,
+      }).map(({ code }) => code),
+    ).toContain("monetization-copy");
   });
 
   it("propagates exact managed-image tuple validation through full built-output QA", () => {
