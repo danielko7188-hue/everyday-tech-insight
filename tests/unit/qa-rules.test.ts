@@ -34,6 +34,10 @@ import {
 import { siteConfig, siteUrl } from "../../site.config.mjs";
 import { site } from "../../src/data/site";
 import { relatedTrustPages } from "../../src/data/trust-pages";
+import {
+  EDITORIAL_VISUAL_KEYS,
+  EDITORIAL_VISUAL_TYPE_BY_KEY,
+} from "../../src/utils/content-contract";
 import { integrationPublicCopy } from "../../src/utils/monetization";
 
 const categorySlugs = [
@@ -212,6 +216,8 @@ function validArticle(
     `https://www.cisa.gov/example/${slug}/two`,
   ];
   const explanations = fixtureExplanations(index);
+  const visualKey =
+    EDITORIAL_VISUAL_KEYS[(index - 1) % EDITORIAL_VISUAL_KEYS.length]!;
 
   return {
     fileName: `${slug}.md`,
@@ -237,8 +243,8 @@ function validArticle(
       featured: index === 1,
       summary: `A useful summary of the decision and the practical result for guide ${index}.`,
       visual: {
-        type: "decision-tree",
-        key: "automation-candidate-screen",
+        type: EDITORIAL_VISUAL_TYPE_BY_KEY[visualKey],
+        key: visualKey,
         alt: "A bounded decision tree with evidence, review, fallback, and a stop condition.",
         decorative: false,
       },
@@ -596,15 +602,19 @@ describe("content QA rules", () => {
     ).toEqual([]);
   });
 
-  it("allows the portfolio to grow beyond the launch minimums", () => {
+  it("keeps count growth open while requiring a new unique visual registration", () => {
     const articles = [
       ...validPortfolio(),
       validArticle("ai-automation-guide-4", "ai-automation", 16),
     ];
 
-    expect(validateContentPortfolio(articles, { today: "2026-08-21" })).toEqual(
-      [],
-    );
+    const codes = validateContentPortfolio(articles, {
+      today: "2026-08-21",
+    }).map(({ code }) => code);
+
+    expect(codes).not.toContain("portfolio-count");
+    expect(codes).not.toContain("category-count");
+    expect(codes).toContain("duplicate-visual-key");
   });
 
   it("counts portfolio and category minimums from published entries only", () => {
@@ -1137,6 +1147,21 @@ describe("content QA rules", () => {
         today: "2026-08-21",
       }).map(({ code }) => code),
     ).toEqual(expect.arrayContaining(["guide-field", "visual-pair"]));
+  });
+
+  it("rejects duplicate visual keys across published guides", () => {
+    const articles = validPortfolio();
+    articles[1]!.data.visual = {
+      ...articles[1]!.data.visual,
+      key: articles[0]!.data.visual.key,
+      type: articles[0]!.data.visual.type,
+    };
+
+    expect(
+      validateContentPortfolio(articles, {
+        today: "2026-08-21",
+      }).map(({ code }) => code),
+    ).toContain("duplicate-visual-key");
   });
 
   it.each(["webp", "png", "jpg", "jpeg"])(

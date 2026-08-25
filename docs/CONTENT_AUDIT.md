@@ -101,19 +101,16 @@ Full repository lint, type checking, built-output QA, Playwright, axe, and Light
 
 The content portfolio test verifies:
 
-- exactly 15 Markdown article files;
-- exactly three articles in each approved category;
-- unique slug, title, and description values;
-- file names matching frontmatter slugs;
-- `published` status and `source-checked` verification status;
-- genuine `2026-08-21` publication and review dates;
-- no same-day `dateModified` field for an initial publication;
-- all five Business Technology Fit fields;
-- at least two distinct HTTPS sources per entry;
-- source hosts restricted to the reviewed official or first-party allowlist;
-- every listed source URL cited in the article body;
-- two distinct, non-self, resolvable related published articles per entry;
-- at least 650 whitespace-delimited Markdown body tokens and four second-level sections per entry;
+- at least 15 published guides, including the exact named 15-guide launch subset;
+- at least three published guides in each approved category;
+- valid additional `draft`, `review`, `published`, and `archived` records without applying launch-only assertions to nonlaunch files;
+- unique launch-subset slug, title, and description values, with file names matching frontmatter slugs;
+- `published` status and `source-checked` verification status for every published guide;
+- publication, review, modification, and archive dates ordered from the confirmed launch through the current publication date;
+- all five Business Technology Fit fields for every published guide;
+- at least two distinct HTTPS sources per published guide, with every listed source URL cited in the article body;
+- distinct, non-self, resolvable related published guides;
+- at least 650 whitespace-delimited Markdown body tokens and four second-level sections for every published guide;
 - explicit distinctions for literal two-media 3-2-1, contingent exit exposure, and the four pilot weeks;
 - audit totals that must equal the portfolio’s current whitespace-token calculation;
 - explicit limitation language; and

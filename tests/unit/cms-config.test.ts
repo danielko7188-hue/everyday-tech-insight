@@ -225,6 +225,12 @@ describe("Pages CMS configuration", () => {
 
     const visual = field(config, "visual");
     expect(visual.description).toMatch(/repository.*validates.*pair/i);
+    expect(field(visual, "key").description).toMatch(
+      /new guide.*registered.*symbol.*before.*published/i,
+    );
+    expect(field(config, "status").description).toMatch(
+      /published.*quality record.*editorial-operations\.yml/i,
+    );
     expect(visual.fields.map(({ name }: CmsConfig) => name)).toEqual([
       "type",
       "key",

@@ -75,41 +75,55 @@ const repositoryRoot = path.resolve(
 
 export async function derivePublishedArticlePaths(
   articlesDirectory = path.join(repositoryRoot, "src", "content", "articles"),
+  { requiredHistoricalPaths = [] } = {},
 ) {
-  const paths = (await readArticleRecords(articlesDirectory))
-    .filter(({ data }) => data.status === "published")
-    .map(({ data, fileName }) => {
+  const articleRecords = (await readArticleRecords(articlesDirectory)).map(
+    ({ data, fileName }) => {
       if (
         typeof data.slug !== "string" ||
         !CANONICAL_ARTICLE_SLUG_PATTERN.test(data.slug)
       ) {
         throw new Error(
-          `Published article ${fileName} must have a canonical article slug.`,
+          `Article ${fileName} must have a canonical article slug.`,
         );
       }
-      return `/articles/${data.slug}/`;
-    })
+      return { path: `/articles/${data.slug}/`, status: data.status };
+    },
+  );
+  const historicalPaths = articleRecords.map(
+    ({ path: articlePath }) => articlePath,
+  );
+  if (new Set(historicalPaths).size !== historicalPaths.length) {
+    throw new Error("Article source-history routes must be unique.");
+  }
+  const historicalPathSet = new Set(historicalPaths);
+  const missingHistoricalPaths = requiredHistoricalPaths.filter(
+    (articlePath) => !historicalPathSet.has(articlePath),
+  );
+  if (missingHistoricalPaths.length > 0) {
+    throw new Error(
+      `Article source is missing historical article routes: ${missingHistoricalPaths.join(", ")}.`,
+    );
+  }
+
+  const paths = articleRecords
+    .filter(({ status }) => status === "published")
+    .map(({ path: articlePath }) => articlePath)
     .sort((left, right) => left.localeCompare(right, "en"));
 
-  if (new Set(paths).size !== paths.length) {
-    throw new Error("Published article routes must be unique.");
-  }
   return paths;
 }
 
-const discoveredArticlePaths = await derivePublishedArticlePaths();
-const discoveredArticlePathSet = new Set(discoveredArticlePaths);
-const missingLaunchArticlePaths = LAUNCH_ARTICLE_PATHS.filter(
-  (articlePath) => !discoveredArticlePathSet.has(articlePath),
+const discoveredArticlePaths = await derivePublishedArticlePaths(
+  path.join(repositoryRoot, "src", "content", "articles"),
+  { requiredHistoricalPaths: LAUNCH_ARTICLE_PATHS },
 );
-if (missingLaunchArticlePaths.length > 0) {
-  throw new Error(
-    `Published content is missing launch article routes: ${missingLaunchArticlePaths.join(", ")}.`,
-  );
-}
+const discoveredArticlePathSet = new Set(discoveredArticlePaths);
 const launchArticlePathSet = new Set(LAUNCH_ARTICLE_PATHS);
 export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
-  ...LAUNCH_ARTICLE_PATHS,
+  ...LAUNCH_ARTICLE_PATHS.filter((articlePath) =>
+    discoveredArticlePathSet.has(articlePath),
+  ),
   ...discoveredArticlePaths.filter(
     (articlePath) => !launchArticlePathSet.has(articlePath),
   ),

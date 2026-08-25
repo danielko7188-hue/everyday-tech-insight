@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { readArticleRecords } from "../../scripts/qa-content.mjs";
+
 const representativeRoutes = [
   {
     name: "home",
@@ -499,9 +501,14 @@ test("compact story metadata stays inside its card at tablet width", async ({
 });
 
 for (const categorySlug of categorySlugs) {
-  test(`${categorySlug} compact directory balances three guides without a forced lead`, async ({
+  test(`${categorySlug} compact directory balances every published guide without a forced lead`, async ({
     page,
   }) => {
+    const publishedGuideCount = (await readArticleRecords()).filter(
+      ({ data }) =>
+        data.status === "published" && data.category === categorySlug,
+    ).length;
+
     for (const viewport of [
       { width: 390, height: 844 },
       { width: 768, height: 1024 },
@@ -515,7 +522,7 @@ for (const categorySlug of categorySlugs) {
 
       await expect(page.locator(".category-hero__lead")).toHaveCount(0);
       const cards = page.locator(".category-compact .article-card--compact");
-      await expect(cards).toHaveCount(3);
+      await expect(cards).toHaveCount(publishedGuideCount);
       const boxes = await cards.evaluateAll((elements) =>
         elements.map((element) => {
           const box = element.getBoundingClientRect();

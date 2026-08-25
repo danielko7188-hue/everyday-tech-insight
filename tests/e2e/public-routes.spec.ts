@@ -18,6 +18,23 @@ const launchAiArticleHrefs = [
   "/articles/how-to-identify-business-tasks-for-automation/",
   "/articles/write-a-practical-ai-acceptable-use-policy/",
 ] as const;
+const launchArticleSlugs = [
+  "back-up-business-files-with-the-3-2-1-method",
+  "calculate-the-total-cost-of-business-software",
+  "create-a-shared-file-and-folder-system",
+  "create-a-simple-technology-risk-register",
+  "crm-vs-project-management-software",
+  "document-a-repetitive-workflow-before-automating",
+  "evaluate-ai-output-quality-in-a-small-team-pilot",
+  "evaluate-saas-with-a-practical-checklist",
+  "how-to-identify-business-tasks-for-automation",
+  "onboard-employees-and-contractors-to-business-technology",
+  "respond-to-a-suspected-phishing-message",
+  "roll-out-mfa-across-a-small-business",
+  "run-a-30-day-business-technology-pilot",
+  "test-data-export-and-integrations-before-saas-lock-in",
+  "write-a-practical-ai-acceptable-use-policy",
+] as const;
 
 const toolkitCsvHeaders = {
   "/toolkit/automation-candidate-screen.csv": [
@@ -267,32 +284,40 @@ test("Purple Signal home uses one lead, two supports, nine guide destinations, a
 test("archive and category pages expose every guide promise once without manufactured ranking", async ({
   page,
 }) => {
+  const articleRecords = (await readArticleRecords()) as ArticleSourceRecord[];
+  const publishedArticles = articleRecords.filter(
+    ({ data }) => data.status === "published",
+  );
+  const aiArticles = publishedArticles.filter(
+    ({ data }) => data.category === "ai-automation",
+  );
+
   await page.goto("/articles/");
   await expect(
     page.getByRole("navigation", { name: "Jump to a topic" }),
   ).toBeVisible();
   await expect(page.locator(".guide-archive__list .article-card")).toHaveCount(
-    15,
+    publishedArticles.length,
   );
   await expect(
     page.locator(".guide-archive__list .article-card__promise"),
-  ).toHaveCount(15);
+  ).toHaveCount(publishedArticles.length);
   const archiveHrefs = await page
     .locator('.guide-archive__list a[href^="/articles/"]')
     .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
-  expect(new Set(archiveHrefs).size).toBe(15);
+  expect(new Set(archiveHrefs).size).toBe(publishedArticles.length);
 
   await page.goto("/categories/ai-automation/");
   await expect(page.locator('[data-layout="compact"]')).toHaveAttribute(
     "data-guide-count",
-    "3",
+    String(aiArticles.length),
   );
   await expect(
     page.locator(".category-compact__list .article-card--compact"),
-  ).toHaveCount(3);
+  ).toHaveCount(aiArticles.length);
   await expect(
     page.locator(".category-compact__list .article-card__promise"),
-  ).toHaveCount(3);
+  ).toHaveCount(aiArticles.length);
   await expect(
     page.locator(".category-editorial__lead, .category-archive__featured"),
   ).toHaveCount(0);
@@ -566,13 +591,18 @@ test("home publishes only the approved nine-guide curation", async ({
   const publishedArticleHrefs = rss("item > link")
     .map((_, link) => new URL(rss(link).text()).pathname)
     .get();
+  const expectedPublishedHrefs = (await readArticleRecords())
+    .filter(({ data }) => data.status === "published")
+    .map(({ data }) => `/articles/${String(data.slug)}/`);
   const expectedCuratedHrefs = Object.values(homepageCuration)
     .flat()
     .map((slug) => `/articles/${slug}/`);
 
   expect(expectedCuratedHrefs).toHaveLength(9);
   expect(new Set(expectedCuratedHrefs).size).toBe(9);
-  expect(publishedArticleHrefs).toHaveLength(15);
+  expect([...publishedArticleHrefs].sort()).toEqual(
+    [...expectedPublishedHrefs].sort(),
+  );
   expect(new Set(publishedArticleHrefs).size).toBe(
     publishedArticleHrefs.length,
   );
@@ -735,7 +765,14 @@ test("all-guides archive groups every published guide once in category order", a
         right.data.datePublished.localeCompare(left.data.datePublished) ||
         left.data.title.localeCompare(right.data.title, "en"),
     );
-  expect(publishedArticles).toHaveLength(15);
+  expect(publishedArticles.length).toBeGreaterThanOrEqual(
+    launchArticleSlugs.length,
+  );
+  expect(
+    launchArticleSlugs.every((slug) =>
+      publishedArticles.some(({ data }) => data.slug === slug),
+    ),
+  ).toBe(true);
 
   const response = await page.goto("/articles/");
   expect(response?.status()).toBe(200);
@@ -754,8 +791,8 @@ test("all-guides archive groups every published guide once in category order", a
   const allHrefs = await page
     .locator('.guide-archive a[href^="/articles/"]')
     .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
-  expect(allHrefs).toHaveLength(15);
-  expect(new Set(allHrefs).size).toBe(15);
+  expect(allHrefs).toHaveLength(publishedArticles.length);
+  expect(new Set(allHrefs).size).toBe(publishedArticles.length);
 
   for (const category of categories) {
     const group = page.locator(
@@ -765,7 +802,7 @@ test("all-guides archive groups every published guide once in category order", a
       ({ data }) => data.category === category.slug,
     );
     const expectedHrefs = expected.map(({ data }) => `/articles/${data.slug}/`);
-    expect(expectedHrefs).toHaveLength(3);
+    expect(expectedHrefs.length).toBeGreaterThanOrEqual(3);
     await expect(
       group.getByRole("heading", { name: category.name, exact: true }),
     ).toBeVisible();
@@ -775,8 +812,8 @@ test("all-guides archive groups every published guide once in category order", a
         .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
     ).toEqual(expectedHrefs);
     const cards = group.locator(".article-card");
-    await expect(cards).toHaveCount(3);
-    for (let index = 0; index < 3; index += 1) {
+    await expect(cards).toHaveCount(expected.length);
+    for (let index = 0; index < expected.length; index += 1) {
       await expect(
         cards
           .nth(index)
@@ -935,7 +972,7 @@ test("a substantively revised article exposes its distinct modification date", a
   await expect(page.getByText(/reviewed august 22, 2026/i)).toBeVisible();
 });
 
-test("a three-guide category uses the compact branch with complete membership and no lead card", async ({
+test("the AI category uses the compact branch with complete published membership and no lead card", async ({
   page,
 }) => {
   const articleRecords = (await readArticleRecords()) as ArticleSourceRecord[];
@@ -973,7 +1010,7 @@ test("a three-guide category uses the compact branch with complete membership an
   await expect(page.locator(".article-card--feature")).toHaveCount(0);
   await expect(
     page.locator(".category-compact .article-card--compact"),
-  ).toHaveCount(3);
+  ).toHaveCount(expectedArticleHrefs.length);
 
   const articleHrefs = await page
     .locator('main a[href^="/articles/"]')
@@ -1122,7 +1159,9 @@ test("every published guide renders its assigned informative visual and local sy
   );
   const keys = new Set<string>();
 
-  expect(publishedArticles).toHaveLength(15);
+  expect(publishedArticles.length).toBeGreaterThanOrEqual(
+    launchArticleSlugs.length,
+  );
 
   for (const { data } of publishedArticles) {
     const response = await page.goto(`/articles/${data.slug}/`);
@@ -1169,7 +1208,7 @@ test("every published guide renders its assigned informative visual and local sy
     keys.add(data.visual.key);
   }
 
-  expect(keys.size).toBe(15);
+  expect(keys.size).toBe(publishedArticles.length);
 });
 
 test("article surfaces its evidence boundary near the headline", async ({

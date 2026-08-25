@@ -41,6 +41,8 @@ Pages CMS does not expose a `featured` control. The stored frontmatter key remai
 - `published`: the complete software contract, at least two cited HTTPS source records, genuine dates, and media validation permit public routing. Published status controls routing only and does not prove source suitability, media rights, expert acceptance, owner acceptance, or human review.
 - `archived`: the formerly complete record and Git history remain, but public routes, lists, feeds, sitemaps, related guides, and social images exclude it.
 
+Before changing a new guide to `published`, add its matching quality record to `docs/editorial-operations.yml`, regenerate the derived editorial documents, and pass `npm run check:editorial`. The production build fails closed when a published slug has no quality record. A new guide also needs a new visual key registered in the content contract and `.pages.yml`, with its matching accessible SVG symbol implemented in `src/components/EditorialVisualSymbols.astro`; a CMS selection alone cannot create that symbol.
+
 Do not skip directly to `published` to obtain a web preview. Pages CMS Markdown preview is the article-content preview for a review record. A Vercel preview validates the public shell and integration, but a review-status article remains nonroutable there by design.
 
 ## Keep slug and filename immutable
@@ -95,19 +97,19 @@ Managed source media belongs under repository-tracked, non-deployed source path 
 
 Use lowercase raster filenames prefixed by the article slug, for example a slug followed by a descriptive suffix and `.webp`, `.png`, `.jpg`, or `.jpeg`. Keep the source file within the validated size and dimension limits. Do not use symlinks, hidden files, traversal, duplicate bytes, executable formats, SVG uploads, or unreferenced media.
 
-Hero and body image filenames must be slug-prefixed. Alt, caption, credit, license, source, and rights fields must describe evidenced facts and remain empty when the fact is unknown rather than becoming placeholder text.
-
-Hero and body image records must stay factual and complete:
+Hero and body image filenames must be slug-prefixed. Hero image records must stay factual and complete:
 
 - Informative media needs meaningful alt text that explains the information not already available nearby.
-- Decorative media uses empty alt text and an explicit decorative state.
+- A decorative hero uses empty alt text and an explicit decorative state.
 - A caption explains context when needed; it is not a place for invented provenance.
 - Credit names the real creator or source only when known and approved.
 - License identifies the actual license or permission basis only when evidenced.
 - Source URL points to the actual HTTPS source when applicable.
 - Rights evidence must establish that the intended publication use is allowed. File validation does not prove rights.
 
-For a hero, keep `heroImage`, `heroImageAlt`, `heroImageDecorative`, optional caption, credit, license, and source as one coherent tuple. Body images use the same alt, caption, credit, license, source, and rights discipline. Preview every informative image at narrow and wide widths before review.
+For a hero, keep `heroImage`, `heroImageAlt`, `heroImageDecorative`, optional caption, credit, license, and source as one coherent tuple.
+
+A body image is represented only by a Markdown image path and meaningful alt text, for example `![Decision workflow showing approval and review steps](/images/articles/example-guide-decision-flow.webp)`. Pages CMS does not provide body-image caption, credit, license, source, or rights fields. Do not imply that those fields exist: record the body image's actual provenance and publication-rights decision in the guide's `mediaRights` quality record in `docs/editorial-operations.yml`, with confidential evidence kept outside Git and only a nonsecret reference committed. If reader-facing context is needed, write accurate adjacent prose; it is not structured provenance metadata. Preview every informative image at narrow and wide widths before review.
 
 ## Review on a branch and pull request
 

@@ -1236,6 +1236,23 @@ export function validateContentPortfolio(
     }
   }
 
+  const visualKeyOwners = new Map();
+  for (const article of publishedArticles) {
+    const visualKey = article.data.visual?.key;
+    if (typeof visualKey !== "string") continue;
+    if (visualKeyOwners.has(visualKey)) {
+      issues.push(
+        finding(
+          "duplicate-visual-key",
+          article.fileName,
+          `visual key ${visualKey} duplicates ${visualKeyOwners.get(visualKey)}.`,
+        ),
+      );
+    } else {
+      visualKeyOwners.set(visualKey, article.fileName);
+    }
+  }
+
   issues.push(...validatePublishedExplanations(publishedArticles));
 
   const publishedSlugs = new Set(

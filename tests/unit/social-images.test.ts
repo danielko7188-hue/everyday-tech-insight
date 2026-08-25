@@ -51,11 +51,10 @@ const expectedArticleSlugs = [
   "write-a-practical-ai-acceptable-use-policy",
 ];
 
-const expectedSocialNames = [
-  "default.png",
-  ...expectedCategorySlugs.map((slug) => `category-${slug}.png`),
-  ...expectedArticleSlugs.map((slug) => `article-${slug}.png`),
-].sort((left, right) => left.localeCompare(right));
+const currentSocialNames = SOCIAL_IMAGE_RECORDS.map(({ fileName }) => fileName);
+const expectedSocialNames = [...currentSocialNames].sort((left, right) =>
+  left.localeCompare(right),
+);
 
 const temporaryRoots: string[] = [];
 
@@ -72,10 +71,12 @@ function sha256(path: string): string {
 async function importGeneratorWithFixture({
   articleCategory = "ai-automation",
   articleSlug,
+  additionalPublishedArticleSlugs = [],
   generatorSourceTransform = (source) => source,
 }: {
   articleCategory?: string;
   articleSlug: string;
+  additionalPublishedArticleSlugs?: string[];
   generatorSourceTransform?: (source: string) => string;
 }): Promise<unknown> {
   const fixtureRoot = mkdtempSync(join(process.cwd(), ".eti-social-fixture-"));
@@ -109,15 +110,33 @@ async function importGeneratorWithFixture({
     ),
     join(fixtureFonts, "source-sans-3-variable-english.woff2"),
   );
-  writeFileSync(
-    join(fixtureArticles, "fixture.md"),
-    `---\nstatus: published\ncategory: ${articleCategory}\nslug: ${articleSlug}\ntitle: Fixture article\nvisual:\n  key: fixture-visual\n---\nFixture.\n`,
-  );
+  [articleSlug, ...additionalPublishedArticleSlugs].forEach((slug, index) => {
+    writeFileSync(
+      join(fixtureArticles, `fixture-${index}.md`),
+      `---\nstatus: published\ncategory: ${articleCategory}\nslug: ${slug}\ntitle: Fixture article ${index + 1}\nvisual:\n  key: fixture-visual-${index + 1}\n---\nFixture.\n`,
+    );
+  });
 
   return import(pathToFileURL(fixtureScript).href);
 }
 
 describe("social image portfolio", () => {
+  it("derives social records for an additional published guide", async () => {
+    const fixtureModule = (await importGeneratorWithFixture({
+      articleSlug: "fixture-launch-guide",
+      additionalPublishedArticleSlugs: ["fixture-future-published-guide"],
+    })) as { SOCIAL_IMAGE_RECORDS: Array<{ fileName: string; kind: string }> };
+
+    expect(
+      fixtureModule.SOCIAL_IMAGE_RECORDS.filter(
+        ({ kind }) => kind === "article",
+      ).map(({ fileName }) => fileName),
+    ).toEqual([
+      "article-fixture-future-published-guide.png",
+      "article-fixture-launch-guide.png",
+    ]);
+  });
+
   it("renders the Purple Signal identity without the retired publication palette", () => {
     const svg = renderSocialSvg(SOCIAL_IMAGE_RECORDS[0]!);
 
@@ -129,19 +148,32 @@ describe("social image portfolio", () => {
     }
   });
 
-  it("defines the fixed sorted default, five-category, and 15-article portfolio", () => {
-    expect(SOCIAL_IMAGE_RECORDS).toHaveLength(21);
+  it("defines a sorted default, five-category, and complete published-article portfolio", () => {
+    expect(SOCIAL_IMAGE_RECORDS.length).toBeGreaterThanOrEqual(21);
     expect(SOCIAL_IMAGE_RECORDS.map(({ fileName }) => fileName)).toEqual(
       expectedSocialNames,
     );
+    expect(expectedSocialNames).toEqual(
+      expect.arrayContaining([
+        "default.png",
+        ...expectedCategorySlugs.map((slug) => `category-${slug}.png`),
+      ]),
+    );
     expect(
       new Set(SOCIAL_IMAGE_RECORDS.map(({ fileName }) => fileName)).size,
-    ).toBe(21);
+    ).toBe(SOCIAL_IMAGE_RECORDS.length);
 
     const articleRecords = SOCIAL_IMAGE_RECORDS.filter(
       ({ kind }) => kind === "article",
     );
-    expect(articleRecords).toHaveLength(15);
+    expect(articleRecords.length).toBeGreaterThanOrEqual(15);
+    expect(
+      expectedArticleSlugs.every((slug) =>
+        articleRecords.some(
+          ({ fileName }) => fileName === `article-${slug}.png`,
+        ),
+      ),
+    ).toBe(true);
     for (const record of articleRecords) {
       expect(record.title.trim()).not.toBe("");
       expect(record.categoryName.trim()).not.toBe("");

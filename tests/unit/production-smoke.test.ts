@@ -1136,15 +1136,28 @@ describe("production route smoke", () => {
       path.join(fixtureRoot, "draft.md"),
       "---\nstatus: draft\nslug: excluded-draft\n---\nDraft.\n",
     );
+    writeFileSync(
+      path.join(fixtureRoot, "historical.md"),
+      "---\nstatus: archived\nslug: historical-launch-guide\n---\nArchived.\n",
+    );
 
     try {
       const derivePublishedArticlePaths = productionSmoke[
         "derivePublishedArticlePaths"
-      ] as (directory: string) => Promise<readonly string[]>;
-      await expect(derivePublishedArticlePaths(fixtureRoot)).resolves.toEqual([
-        "/articles/alpha-guide/",
-        "/articles/zeta-guide/",
-      ]);
+      ] as (
+        directory: string,
+        options?: { requiredHistoricalPaths?: readonly string[] },
+      ) => Promise<readonly string[]>;
+      await expect(
+        derivePublishedArticlePaths(fixtureRoot, {
+          requiredHistoricalPaths: ["/articles/historical-launch-guide/"],
+        }),
+      ).resolves.toEqual(["/articles/alpha-guide/", "/articles/zeta-guide/"]);
+      await expect(
+        derivePublishedArticlePaths(fixtureRoot, {
+          requiredHistoricalPaths: ["/articles/missing-launch-guide/"],
+        }),
+      ).rejects.toThrow(/missing historical article routes/i);
     } finally {
       rmSync(fixtureRoot, { force: true, recursive: true });
     }
@@ -1379,7 +1392,9 @@ describe("production route smoke", () => {
   it("checks an injected additional published guide across its route, sitemap, RSS, and social image", async () => {
     const productionSmoke = await loadRunner();
     const additionalArticlePath = "/articles/future-published-guide/";
-    const routes = productionSmoke.PRODUCTION_ROUTES.flatMap((route) =>
+    const baseRoutes =
+      productionSmoke.PRODUCTION_ROUTES as ReadonlyArray<ProductionRoute>;
+    const routes = baseRoutes.flatMap<ProductionRoute>((route) =>
       route.path === "/toolkit/"
         ? [
             {

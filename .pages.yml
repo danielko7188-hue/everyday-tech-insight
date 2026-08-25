@@ -95,6 +95,7 @@ content:
         type: select
         required: true
         default: draft
+        description: Before selecting published, add this slug's matching quality record to docs/editorial-operations.yml and satisfy the documented release gate.
         options:
           values: [draft, review, published, archived]
       - name: contentType
@@ -222,6 +223,7 @@ content:
             label: Visual key
             type: select
             required: true
+            description: A new guide needs a new registered key and matching accessible SVG symbol before it may be published; this selector cannot create either one.
             options:
               values:
                 - automation-candidate-screen

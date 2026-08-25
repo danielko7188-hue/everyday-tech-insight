@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 
+import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -10,7 +11,11 @@ import {
 } from "../../scripts/qa-content.mjs";
 import { siteConfig } from "../../site.config.mjs";
 import { categorySlugs } from "../../src/data/categories";
-import { BUSINESS_TECHNOLOGY_FIT_FIELDS } from "../../src/utils/content-contract";
+import {
+  articleFrontmatterSchema,
+  BUSINESS_TECHNOLOGY_FIT_FIELDS,
+} from "../../src/utils/content-contract";
+import type { ArticleFrontmatter } from "../../src/utils/content-contract";
 
 const articlesDirectory = join(process.cwd(), "src", "content", "articles");
 const contentAuditPath = join(process.cwd(), "docs", "CONTENT_AUDIT.md");
@@ -31,12 +36,17 @@ const launchArticleSlugs = [
   "test-data-export-and-integrations-before-saas-lock-in",
   "write-a-practical-ai-acceptable-use-policy",
 ] as const;
+const launchArticleSlugSet = new Set<string>(launchArticleSlugs);
 
 interface ArticleRecord {
   body: string;
+  data: ArticleFrontmatter;
   fileName: string;
   frontmatter: string;
 }
+type PublishedArticleRecord = ArticleRecord & {
+  data: Extract<ArticleFrontmatter, { status: "published" }>;
+};
 
 interface VisualMetadata {
   type: string;
@@ -334,18 +344,70 @@ function articleRecords(): ArticleRecord[] {
         throw new Error(`${fileName} has no valid frontmatter block.`);
       }
 
-      return { fileName, frontmatter: match[1], body: match[2] };
+      return {
+        fileName,
+        frontmatter: match[1],
+        body: match[2],
+        data: articleFrontmatterSchema.parse(loadYaml(match[1])),
+      };
     });
 }
 
 function articleBySlug(slug: string): ArticleRecord {
   const article = articleRecords().find(
-    (candidate) => scalar(candidate, "slug") === slug,
+    (candidate) => candidate.data.slug === slug,
   );
 
   if (!article) throw new Error(`Missing article: ${slug}`);
 
   return article;
+}
+
+function launchPublishedArticleRecords(
+  records: ArticleRecord[] = articleRecords(),
+): PublishedArticleRecord[] {
+  return publishedArticleRecords(records).filter((article) =>
+    launchArticleSlugSet.has(article.data.slug),
+  );
+}
+
+function publishedArticleRecords(
+  records: ArticleRecord[] = articleRecords(),
+): PublishedArticleRecord[] {
+  return records.filter(
+    (article): article is PublishedArticleRecord =>
+      article.data.status === "published",
+  );
+}
+
+function lifecycleFixtureRecord(
+  seed: ArticleRecord,
+  slug: string,
+  status: "draft" | "review" | "published" | "archived",
+): ArticleRecord {
+  let frontmatter = seed.frontmatter
+    .replace(/^title:.+$/m, `title: "Lifecycle fixture ${status} article"`)
+    .replace(/^slug:.+$/m, `slug: ${slug}`)
+    .replace(/^status:.+$/m, `status: ${status}`)
+    .replace(
+      /^noindex:.+$/m,
+      `noindex: ${status === "published" ? "false" : "true"}`,
+    );
+
+  if (status === "archived") {
+    frontmatter = `${frontmatter}\ndateArchived: "2026-08-25"`;
+  }
+
+  const parsed = articleFrontmatterSchema.safeParse(loadYaml(frontmatter));
+  expect(parsed.success, `${slug} must be schema-valid`).toBe(true);
+  if (!parsed.success) throw parsed.error;
+
+  return {
+    body: seed.body,
+    data: parsed.data,
+    fileName: `${slug}.md`,
+    frontmatter,
+  };
 }
 
 function scalar(article: ArticleRecord, field: string): string {
@@ -359,18 +421,6 @@ function scalar(article: ArticleRecord, field: string): string {
   if (!value) throw new Error(`${article.fileName} is missing ${field}.`);
 
   return JSON.parse(value) as string;
-}
-
-function optionalScalar(
-  article: ArticleRecord,
-  field: string,
-): string | undefined {
-  const expression = new RegExp(
-    `^${field}:\\s*("(?:[^"\\\\]|\\\\.)*")\\s*$`,
-    "m",
-  );
-  const value = article.frontmatter.match(expression)?.[1];
-  return value ? (JSON.parse(value) as string) : undefined;
 }
 
 function visualMetadata(article: ArticleRecord): VisualMetadata {
@@ -410,30 +460,33 @@ function sourceUrls(article: ArticleRecord): string[] {
   ].flatMap((match) => (match[1] ? [match[1]] : []));
 }
 
-function sequenceValues(article: ArticleRecord, field: string): string[] {
-  const start = article.frontmatter.search(new RegExp(`^${field}:`, "m"));
-  if (start < 0) throw new Error(`${article.fileName} is missing ${field}.`);
-
-  const followingLines = article.frontmatter
-    .slice(start)
-    .split(/\r?\n/)
-    .slice(1);
-  const values: string[] = [];
-
-  for (const line of followingLines) {
-    const match = line.match(/^\s+-\s+"([^"]+)"\s*$/);
-    if (!match?.[1]) break;
-    values.push(match[1]);
-  }
-
-  return values;
-}
-
 function whitespaceTokenCount(value: string): number {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
 
 describe("published content portfolio", () => {
+  it("keeps the fifteen launch contracts scoped when valid lifecycle records are added", () => {
+    const seed = articleBySlug(launchArticleSlugs[0]);
+    const extras = (["draft", "review", "archived", "published"] as const).map(
+      (status) =>
+        lifecycleFixtureRecord(seed, `future-${status}-article`, status),
+    );
+    const expandedPortfolio = [...articleRecords(), ...extras];
+
+    expect(extras.map((article) => article.data.status)).toEqual([
+      "draft",
+      "review",
+      "archived",
+      "published",
+    ]);
+    expect(
+      launchPublishedArticleRecords(expandedPortfolio).map(
+        (article) => article.data.slug,
+      ),
+    ).toEqual([...launchArticleSlugs]);
+    expect(publishedArticleRecords(expandedPortfolio)).toHaveLength(16);
+  });
+
   it("centralizes four complete Toolkit records with stable article and CSV contracts", async () => {
     const toolkitModule = await import("../../src/data/toolkit").catch(
       () => null,
@@ -499,12 +552,11 @@ describe("published content portfolio", () => {
   });
 
   it("contains at least fifteen Markdown articles and three in every category", () => {
-    const articles = articleRecords();
+    const articles = publishedArticleRecords();
     const categoryCounts = Object.fromEntries(
       categorySlugs.map((category) => [
         category,
-        articles.filter((article) => scalar(article, "category") === category)
-          .length,
+        articles.filter((article) => article.data.category === category).length,
       ]),
     );
 
@@ -514,8 +566,8 @@ describe("published content portfolio", () => {
     }
   });
 
-  it("uses distinct slugs, titles, and descriptions that match their files", () => {
-    const articles = articleRecords();
+  it("keeps the launch slugs, titles, and descriptions distinct and matched to their files", () => {
+    const articles = launchPublishedArticleRecords();
 
     for (const field of ["slug", "title", "description"] as const) {
       const values = articles.map((article) => scalar(article, field));
@@ -530,7 +582,7 @@ describe("published content portfolio", () => {
   });
 
   it("assigns every launch article its exact stable informative visual", () => {
-    const articles = articleRecords();
+    const articles = launchPublishedArticleRecords();
     const visuals = articles.map((article) => ({
       slug: scalar(article, "slug"),
       visual: visualMetadata(article),
@@ -555,7 +607,7 @@ describe("published content portfolio", () => {
   });
 
   it("provides the exact approved explanation metadata for all fifteen guides", () => {
-    const articles = articleRecords();
+    const articles = launchPublishedArticleRecords();
 
     expect(articles).toHaveLength(15);
     expect(Object.keys(expectedGuideExplanations)).toHaveLength(15);
@@ -599,14 +651,14 @@ describe("published content portfolio", () => {
 
   it("keeps publication evidence ordered from launch through the current date", () => {
     const today = todayInPublicationTimeZone();
-    for (const article of articleRecords()) {
-      expect(scalar(article, "status"), article.fileName).toBe("published");
-      expect(scalar(article, "verificationStatus"), article.fileName).toBe(
+    for (const article of publishedArticleRecords()) {
+      expect(article.data.status, article.fileName).toBe("published");
+      expect(article.data.verificationStatus, article.fileName).toBe(
         "source-checked",
       );
-      const published = scalar(article, "datePublished");
-      const reviewed = scalar(article, "lastReviewed");
-      const modified = optionalScalar(article, "dateModified");
+      const published = article.data.datePublished;
+      const reviewed = article.data.lastReviewed;
+      const modified = article.data.dateModified;
       expect(
         published.localeCompare(siteConfig.launchDate),
         article.fileName,
@@ -637,24 +689,24 @@ describe("published content portfolio", () => {
   });
 
   it("completes the five-part business-technology fit for every article", () => {
-    for (const article of articleRecords()) {
+    for (const article of publishedArticleRecords()) {
       for (const field of BUSINESS_TECHNOLOGY_FIT_FIELDS.slice(0, 4)) {
         expect(
-          scalar(article, field).length,
+          article.data[field].length,
           `${article.fileName}: ${field}`,
         ).toBeGreaterThanOrEqual(20);
       }
 
       expect(
-        sourceUrls(article).length,
+        article.data.sourceList.length,
         `${article.fileName}: sourceList`,
       ).toBeGreaterThanOrEqual(2);
     }
   });
 
   it("uses unique traceable HTTPS source records cited in each body", () => {
-    for (const article of articleRecords()) {
-      const urls = sourceUrls(article);
+    for (const article of publishedArticleRecords()) {
+      const urls = article.data.sourceList.map(({ url }) => url);
 
       expect(
         new Set(urls).size,
@@ -675,14 +727,14 @@ describe("published content portfolio", () => {
   });
 
   it("links related guides only to distinct published articles", () => {
-    const articles = articleRecords();
+    const articles = publishedArticleRecords();
     const publishedSlugs = new Set(
-      articles.map((article) => scalar(article, "slug")),
+      articles.map((article) => article.data.slug),
     );
 
     for (const article of articles) {
-      const slug = scalar(article, "slug");
-      const related = sequenceValues(article, "relatedArticles");
+      const slug = article.data.slug;
+      const related = article.data.relatedArticles;
 
       expect(
         new Set(related).size,
@@ -699,7 +751,7 @@ describe("published content portfolio", () => {
   });
 
   it("provides substantive, structured guidance with an explicit limitation", () => {
-    for (const article of articleRecords()) {
+    for (const article of publishedArticleRecords()) {
       expect(
         whitespaceTokenCount(article.body),
         article.fileName,
