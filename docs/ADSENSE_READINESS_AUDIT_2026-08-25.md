@@ -15,7 +15,7 @@ The safest current implementation is monetization mode `off`: no publisher ID, a
 - The structured editorial source contains 18 owner gates and a 15-guide content-quality queue. Every current owner gate and guide-specific human release gate remains unresolved rather than being presented as complete.
 - Managed article media is validated before publication and only referenced media from published guides is emitted. This technical validation does not establish authorship, license, attribution sufficiency, or publication rights.
 - The public-repository safety model is explicit: committed source and editorial records are publicly visible, and confidential owner, account, legal, review, or rights evidence must stay outside Git.
-- The advertising disclosure and privacy language describe the disabled implementation. The final release candidate still requires a fresh complete `npm run qa` result before deployment.
+- The advertising disclosure and privacy language describe the disabled implementation. Candidate code commit `95ab2fde3bc3973d6f42715dea480a72145c6644` completed the fresh local `npm run qa` gate; that result is not evidence of a production deployment or owner approval.
 
 ### Observed in production
 

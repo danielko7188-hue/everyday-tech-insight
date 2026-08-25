@@ -62,7 +62,7 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 ### Browser and performance
 
 - Playwright verifies representative routes, the Toolkit and its exact header-only CSV downloads, real 404 behavior, metadata, RSS/robots, mobile overflow, keyboard focus, reduced-motion support, unique navigation landmarks, and axe moderate/serious/critical WCAG results.
-- Lighthouse audits four representative routes—the home page, cybersecurity category, automation article, and Toolkit—on mobile and desktop, using the Playwright-installed Chromium for three runs per route and device profile.
+- Lighthouse audits the home page, cybersecurity category, Toolkit, and—when one exists—the representative automation article on mobile and desktop, using the Playwright-installed Chromium for three runs per route and device profile. The current inventory therefore produces eight audits across four pages; a valid zero-published inventory produces six across three pages.
 - Thresholds: Performance at least 90; Accessibility, Best Practices, and SEO at least 95.
 - Stale Lighthouse output is cleared at startup. Raw reports and a status/form-factor-labeled `summary.json` are first written to a pending directory and then replace ignored `.lighthouseci/` atomically, so an interrupted run cannot leave an apparently current success summary. The runner owns the Launcher instance before readiness polling, applies bounded startup polling, and uses one idempotent cleanup path for normal completion, launch failure, `SIGINT`, and `SIGTERM`. Signal protection stays installed through browser/server/profile cleanup and report publication or discard.
 
@@ -74,7 +74,7 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 - Snapshot paths include the test file, snapshot argument, Playwright project, and platform. The documented tolerance is `maxDiffPixelRatio: 0.001`; it is not a license to accept an unexplained visual change.
 - Console errors, page errors, failed requests, and cross-origin requests fail the visual run. The intentional missing route permits only its expected primary 404 resource message.
 - `capture:production` requires `--origin`, `--phase`, and the exact expected 40-character Git SHA. `before`, `after-production`, and `runtime-verification` require a deployment ID and canonical HTTPS origin; `after-local` requires a canonical `http://127.0.0.1[:port]` origin and forbids a deployment ID.
-- The `before` phase captures 40 full-page PNGs: eight representative routes at 390, 768, 1024, 1440, and 1920 pixels. Every after phase captures 97 PNGs: 18 routes at all five widths, keyboard-open navigation at 390 and 768 pixels, and focused skip-link states at all five widths. Each successful run atomically publishes an `audit-manifest.json` containing provenance, route/status, viewport/state, byte count, SHA-256 digest, and monetization/CMS-absence assertions.
+- With the current published inventory, the `before` phase captures 40 full-page PNGs: eight representative routes at 390, 768, 1024, 1440, and 1920 pixels. Each after phase captures 97 PNGs: 18 routes at all five widths, keyboard-open navigation at 390 and 768 pixels, and focused skip-link states at all five widths. If no article is published, nullable representative article routes are omitted rather than converted to `/null`; the valid inventories are then 35 before-state and 72 after-state PNGs. Each successful run atomically publishes an `audit-manifest.json` containing provenance, route/status, viewport/state, byte count, SHA-256 digest, and monetization/CMS-absence assertions.
 - Fixed outputs are `artifacts/site-audit/before/purple-signal-2026-08-25/`, `artifacts/site-audit/after/purple-signal-2026-08-25/local/`, `artifacts/site-audit/after/purple-signal-2026-08-25/production/`, and the ignored `artifacts/site-audit/runtime-verification/purple-signal-2026-08-25-final/`.
 
 ```text
@@ -86,7 +86,20 @@ npm run capture:production -- --origin https://production.example --phase runtim
 
 ## Current Purple Signal release evidence
 
-The current feature branch has not yet recorded its post-fix complete `npm run qa`, after-local capture, production deployment, or final runtime-verification run. Those results remain pending and must not be inferred from the 2026-08-23 release.
+The post-fix candidate code commit `95ab2fde3bc3973d6f42715dea480a72145c6644` completed a fresh local `npm run qa` on 2026-08-25:
+
+- Formatting and ESLint: pass.
+- Astro typecheck: 109 files, 0 errors, 0 warnings, 0 hints.
+- Vitest: 30 files; 948 tests passed and 3 intentionally skipped (951 total).
+- Astro production build: 37 generated pages; 21 social images and one Apple touch icon generated.
+- Content, editorial, CMS, managed-image, CMS lifecycle fixture, and built-output gates: pass. The lifecycle fixture confirmed 15 public article routes and excluded 3 nonpublic fixtures.
+- External HTTP(S) destinations: 33 pass, 0 fail, 0 unverified.
+- Playwright, axe, responsive, and integrated visual checks: 157 passed. The separate serial visual-regression run passed all 32 reviewed Windows states.
+- The slow-first-visit font regression failed 6 of 6 controlled repetitions before the `font-display` correction and passed 30 of 30 after it. The release QA retained one delayed-font assertion without relaxing the mobile geometry threshold.
+- Lighthouse, median of three runs per page/device: home 99 mobile and 100 desktop; cybersecurity category 99 mobile and 100 desktop; automation article 97 mobile and 100 desktop; Toolkit 100 mobile and desktop. Accessibility, Best Practices, and SEO were 100 in all eight audits.
+- Dependency audits: 0 production vulnerabilities and 0 total vulnerabilities.
+
+The after-local capture, GitHub push, production deployment, and final runtime-verification run remain pending at this point in the evidence chain. They must not be inferred from this local QA or the 2026-08-23 release.
 
 The directly observed rollback baseline was captured on 2026-08-25 at `2026-08-25T18:41:08.633Z` from `https://everyday-tech-insight.vercel.app`:
 
@@ -137,4 +150,4 @@ The following pre-publication-maturity feature-branch run was recorded on 2026-0
 - Lighthouse desktop AI and automation category: Performance 95, Accessibility 100, Best Practices 100, SEO 100; performance runs 95/95/95.
 - Lighthouse desktop automation-candidates article: Performance 92, Accessibility 100, Best Practices 100, SEO 100; performance runs 92/92/92.
 
-Do not infer a pass for one stage from another stage's result. The current branch requires a fresh complete QA run, and the Vercel production deployment requires separate HTTP, metadata, download, browser-console, and visual verification.
+Do not infer a pass for one stage from another stage's result. The current candidate has a fresh complete local QA run; the Vercel production deployment still requires separate exact-commit HTTP, metadata, download, browser-console, and visual verification.
