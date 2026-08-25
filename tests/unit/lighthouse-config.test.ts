@@ -70,6 +70,12 @@ describe("Lighthouse production QA matrix", () => {
     expect(mobile.screenEmulation.mobile).toBe(true);
     expect(desktop.formFactor).toBe("desktop");
     expect(desktop.screenEmulation.mobile).toBe(false);
+    expect(desktop.throttling).toMatchObject({
+      cpuSlowdownMultiplier: 1,
+      rttMs: 40,
+      throughputKbps: 10_240,
+    });
+    expect(desktop.emulatedUserAgent).toContain("Macintosh");
     expect(mobile.screenEmulation.width).toBeLessThan(
       desktop.screenEmulation.width,
     );

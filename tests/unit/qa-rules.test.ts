@@ -2985,6 +2985,30 @@ describe("Lighthouse thresholds", () => {
     expect(operations).toEqual(["launcher", "force:SIGKILL"]);
   });
 
+  it("accepts launcher shutdown when the owned PID is gone before Node emits exit", async () => {
+    const operations: string[] = [];
+    const child = Object.assign(new EventEmitter(), {
+      exitCode: null as number | null,
+      pid: 9244,
+      signalCode: null as string | null,
+      kill: (signal: string) => {
+        operations.push(`force:${signal}`);
+        return true;
+      },
+    });
+    const chrome = {
+      process: child,
+      kill: () => operations.push("launcher"),
+    };
+
+    await stopChrome(chrome, {
+      processExistsImpl: () => false,
+      timeoutMs: 1,
+    });
+
+    expect(operations).toEqual(["launcher"]);
+  });
+
   it("clears stale reports and publishes the replacement directory atomically", async () => {
     const operations: string[] = [];
     const outputDirectory = "C:\\reports\\lighthouse";

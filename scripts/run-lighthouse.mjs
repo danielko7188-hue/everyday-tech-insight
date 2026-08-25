@@ -14,7 +14,7 @@ import { pathToFileURL } from "node:url";
 
 import { chromium } from "@playwright/test";
 import * as chromeLauncher from "chrome-launcher";
-import lighthouse from "lighthouse";
+import lighthouse, { desktopConfig } from "lighthouse";
 
 import { REPRESENTATIVE_ARTICLE_PATHS } from "./publication-route-inventory.mjs";
 
@@ -57,7 +57,8 @@ export const LIGHTHOUSE_DEVICES = Object.freeze([
   Object.freeze({
     name: "desktop",
     formFactor: "desktop",
-    preset: "desktop",
+    emulatedUserAgent: desktopConfig.settings.emulatedUserAgent,
+    throttling: Object.freeze({ ...desktopConfig.settings.throttling }),
     screenEmulation: Object.freeze({
       mobile: false,
       width: 1440,
@@ -80,9 +81,12 @@ export function lighthouseFlagsForDevice(deviceName) {
     throw new TypeError(`Unsupported Lighthouse device: ${String(deviceName)}`);
   }
   return {
-    ...(device.preset ? { preset: device.preset } : {}),
+    ...(device.emulatedUserAgent
+      ? { emulatedUserAgent: device.emulatedUserAgent }
+      : {}),
     formFactor: device.formFactor,
     screenEmulation: { ...device.screenEmulation },
+    ...(device.throttling ? { throttling: { ...device.throttling } } : {}),
   };
 }
 
@@ -282,7 +286,20 @@ export function waitForProcessExit(childProcess, timeoutMs) {
 
 export async function stopChrome(
   chrome,
-  { timeoutMs = 10_000, waitForExitImpl = waitForProcessExit } = {},
+  {
+    timeoutMs = 10_000,
+    waitForExitImpl = waitForProcessExit,
+    processExistsImpl = (pid) => {
+      try {
+        process.kill(pid, 0);
+        return true;
+      } catch (error) {
+        if (error?.code === "ESRCH") return false;
+        if (error?.code === "EPERM") return true;
+        throw error;
+      }
+    },
+  } = {},
 ) {
   if (!chrome) return;
   const childProcess = chrome.process ?? chrome.chromeProcess;
@@ -295,14 +312,25 @@ export async function stopChrome(
   const gracefulExit = waitForExitImpl(childProcess, timeoutMs);
   chrome.kill();
   if (await gracefulExit) return;
+  if (
+    Number.isInteger(childProcess.pid) &&
+    !processExistsImpl(childProcess.pid)
+  ) {
+    return;
+  }
 
   const forcedExit = waitForExitImpl(childProcess, timeoutMs);
   childProcess.kill("SIGKILL");
-  if (!(await forcedExit)) {
-    throw new Error(
-      `Chromium process ${childProcess.pid ?? "unknown"} did not exit after launcher and SIGKILL shutdown attempts.`,
-    );
+  if (await forcedExit) return;
+  if (
+    Number.isInteger(childProcess.pid) &&
+    !processExistsImpl(childProcess.pid)
+  ) {
+    return;
   }
+  throw new Error(
+    `Chromium process ${childProcess.pid ?? "unknown"} did not exit after launcher and SIGKILL shutdown attempts.`,
+  );
 }
 
 export async function launchChromeSafely(
