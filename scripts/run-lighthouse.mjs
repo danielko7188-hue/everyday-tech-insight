@@ -237,6 +237,7 @@ export function createLighthouseSummary(
         : "PASS",
     auditCount: pages.length,
     deviceTypes: LIGHTHOUSE_DEVICES.map(({ name }) => name),
+    pageCount: new Set(pages.map(({ name }) => name)).size,
     runsPerPageDevice: RUNS_PER_PAGE_DEVICE,
     thresholds: THRESHOLDS,
     missingAudits,
@@ -534,6 +535,7 @@ async function main() {
 
   const summary = [];
   let hasFailure = false;
+  let reportSummary;
   let resourceCleanupPromise;
   let pendingCleanupPromise;
 
@@ -710,7 +712,7 @@ async function main() {
             `${page.path} (${device.name}; median of ${RUNS_PER_PAGE}; performance runs=${performanceRuns}): ${printableScores}`,
           );
         }
-        const reportSummary = createLighthouseSummary(summary);
+        reportSummary = createLighthouseSummary(summary);
         hasFailure ||= reportSummary.status !== "PASS";
         await writeFile(
           path.join(pendingDirectory, "summary.json"),
@@ -750,8 +752,9 @@ async function main() {
     );
     process.exitCode = 1;
   } else {
+    const pageCount = reportSummary?.pageCount ?? 0;
     console.log(
-      `Lighthouse: PASS (mobile and desktop; median of ${RUNS_PER_PAGE} runs) on all four representative pages.`,
+      `Lighthouse: PASS (mobile and desktop; median of ${RUNS_PER_PAGE} runs) on all ${pageCount} representative ${pageCount === 1 ? "page" : "pages"}.`,
     );
   }
 }

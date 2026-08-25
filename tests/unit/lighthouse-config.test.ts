@@ -156,6 +156,7 @@ describe("Lighthouse production QA matrix", () => {
       auditCount: 8,
       deviceTypes: ["mobile", "desktop"],
       missingAudits: [],
+      pageCount: 4,
       runsPerPageDevice: 3,
     });
   });
@@ -178,6 +179,7 @@ describe("Lighthouse production QA matrix", () => {
       status: "PASS",
       auditCount: 6,
       missingAudits: [],
+      pageCount: 3,
       unexpectedAudits: [],
     });
   });
