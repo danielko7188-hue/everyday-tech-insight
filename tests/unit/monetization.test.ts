@@ -380,6 +380,50 @@ describe("future placement and public-copy safety", () => {
     ).toBeNull();
   });
 
+  it.each([
+    {
+      mode: "meta verification",
+      verification: {
+        method: "meta" as const,
+        ownerAuthorized: true as const,
+        value: publisherId,
+      },
+    },
+    {
+      mode: "ads.txt verification",
+      verification: {
+        line: adsTxtLine,
+        method: "ads-txt" as const,
+        ownerAuthorized: true as const,
+        reviewed: true as const,
+      },
+    },
+  ])("never resolves an ad unit in $mode", async ({ verification }) => {
+    const monetization = await loadMonetization();
+
+    expect(monetization).toHaveProperty("resolveAdUnit");
+    if (
+      !monetization.defineMonetizationConfig ||
+      !monetization.resolveAdUnit
+    )
+      return;
+
+    const config = monetization.defineMonetizationConfig({
+      mode: "verification",
+      provider: "google-adsense",
+      verification,
+    });
+
+    expect(
+      monetization.resolveAdUnit(config, {
+        articleStatus: "published",
+        articleWordCount: 2_000,
+        placement: "article-after-intro",
+        surface: "article",
+      }),
+    ).toBeNull();
+  });
+
   it("derives factual public copy from the validated mode", async () => {
     const monetization = await loadMonetization();
 
@@ -408,5 +452,50 @@ describe("future placement and public-copy safety", () => {
         monetization.defineMonetizationConfig({ mode: "off" }),
       ),
     ).toBeNull();
+  });
+
+  it("derives exact verification and live public copy from validated state", async () => {
+    const monetization = await loadMonetization();
+
+    expect(monetization).toHaveProperty("monetizationPublicCopy");
+    if (
+      !monetization.defineMonetizationConfig ||
+      !monetization.monetizationPublicCopy
+    )
+      return;
+
+    const verificationCopy = monetization.monetizationPublicCopy(
+      monetization.defineMonetizationConfig({
+        mode: "verification",
+        provider: "google-adsense",
+        verification: {
+          method: "meta",
+          ownerAuthorized: true,
+          value: publisherId,
+        },
+      }),
+    );
+    const liveCopy = monetization.monetizationPublicCopy(
+      monetization.defineMonetizationConfig(liveConfig()),
+    );
+
+    expect(verificationCopy).toEqual({
+      approvalBoundary:
+        "Google alone decides whether a site is approved for AdSense; this configuration makes no approval claim.",
+      disclosureState:
+        "An owner-authorized AdSense site-verification marker is present. No advertising script or display unit is active, and verification does not mean approval.",
+      mode: "verification",
+      privacyState:
+        "The configured AdSense site-verification marker does not itself serve advertising or add advertising cookies or browser storage.",
+    });
+    expect(liveCopy).toEqual({
+      approvalBoundary:
+        "Google alone decides whether a site is approved for AdSense; this configuration makes no approval claim.",
+      disclosureState:
+        "Owner-authorized Google AdSense display advertising is configured only for eligible published guides and labeled placements.",
+      mode: "live",
+      privacyState:
+        "Google AdSense advertising and the recorded consent decision are active; advertising may process device, request, storage, consent, and usage data according to the configured integration and applicable policies.",
+    });
   });
 });

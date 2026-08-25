@@ -2,9 +2,9 @@
 
 ## Status and scope
 
-This document records the approved **Signal & Structure** editorial system for the Astro publication. It governs the static site only. It does not authorize changes to the separate Blogger theme, live publishing, analytics, advertising, consent tooling, or AdSense configuration.
+This document records the approved **Purple Signal / A Balanced Signal** editorial system for the Astro publication. It governs the static site only. It does not authorize changes to the separate Blogger theme, live publishing, analytics, advertising, consent tooling, or AdSense configuration.
 
-The design balances approximately 80% timeless editorial character with 20% modern technology energy. It must preserve the publication's factual content, routes, metadata, accessibility, privacy boundaries, and static rendering.
+The design balances approximately 70% disciplined editorial character with 30% modern technology energy. A deep-purple publication frame, violet-to-magenta signal details, serif headlines, and evidence-led copy distinguish the publication without manufacturing authority. The system must preserve factual content, routes, metadata, accessibility, privacy boundaries, and static rendering.
 
 ## Publication identity
 
@@ -27,36 +27,43 @@ The exact font packages above are installed dependencies in this phase, and the 
 
 ## Color tokens
 
-| Role                     | Exact value |
-| ------------------------ | ----------- |
-| Ink                      | `#171918`   |
-| Soft ink                 | `#3f4544`   |
-| Canvas                   | `#f2efe7`   |
-| Paper                    | `#fffdf8`   |
-| Rule                     | `#c9c5ba`   |
-| Muted                    | `#59605e`   |
-| Publication accent       | `#d84a2f`   |
-| Accent interaction state | `#8f2f20`   |
-| Focus                    | `#f2b134`   |
+| Role                       | Exact value |
+| -------------------------- | ----------- |
+| Night publication frame    | `#0d0618`   |
+| Deep navigation surface    | `#17102a`   |
+| Raised dark surface        | `#24143d`   |
+| Ink                        | `#171221`   |
+| Paper                      | `#faf8ff`   |
+| Mist                       | `#f4f0ff`   |
+| White                      | `#ffffff`   |
+| Violet signal              | `#7c3aed`   |
+| Violet interaction state   | `#5b21b6`   |
+| Lavender                   | `#c4b5fd`   |
+| Magenta signal             | `#d946ef`   |
+| Light rule                 | `#ddd6fe`   |
+| Dark rule                  | `#3a2e51`   |
+| Light-surface muted text   | `#5b5566`   |
+| Dark-surface muted text    | `#c9c3d8`   |
+| Focus on dark surfaces     | `#fde047`   |
+| Focus on light surfaces    | `#5b21b6`   |
 
 Category accents are limited to small labels, rules, focus-safe decorative details, and editorial artwork:
 
 | Category                          | Exact value |
 | --------------------------------- | ----------- |
-| AI & Automation                   | `#0f746c`   |
-| Business Software & SaaS          | `#315f98`   |
-| Cybersecurity & Data Protection   | `#a83d3a`   |
-| Digital Operations & Productivity | `#397143`   |
-| Technology Decisions & Strategy   | `#9a5b13`   |
+| AI & Automation                   | `#6d28d9`   |
+| Business Software & SaaS          | `#4338ca`   |
+| Cybersecurity & Data Protection   | `#a21caf`   |
+| Digital Operations & Productivity | `#5b21b6`   |
+| Technology Decisions & Strategy   | `#be185d`   |
 
-Do not use full-page category backgrounds, rainbow card systems, gradients, or color alone to communicate meaning.
+The violet-to-magenta gradient is reserved for small publication-signal details. Category color is never the only carrier of meaning.
 
 ## Spacing, geometry, and hierarchy
 
 - Base spacing unit: **4px**.
 - Editorial spacing scale: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, and 96px.
-- Major editorial modules use square geometry.
-- Small controls and bounded callouts may use 2–6px radii.
+- Major modules use restrained 8–16px radii where the boundary improves scanning.
 - Giant rounded cards and ornamental shadows are prohibited.
 - Create hierarchy with rules, alignment, whitespace, typography, and restrained background shifts.
 
@@ -68,7 +75,7 @@ Do not use full-page category backgrounds, rainbow card systems, gradients, or c
 - Tablet: 6-column grid.
 - Mobile: one logical source order, with the lead story first.
 - Content-driven breakpoints are centered around 480px, 768px, and 1080px.
-- Required QA widths are 360, 390, 768, 1024, 1280, 1440, and 1920px.
+- Required QA widths are 320, 360, 390, 768, 1024, 1280, 1440, and 1920px.
 
 The layout must preserve one H1, logical landmarks and source order, visible focus, usable zoom, and no ordinary-content horizontal overflow.
 
@@ -98,7 +105,7 @@ The article metadata selects one of thirteen supported visual families and a sta
 
 ### Masthead
 
-- Desktop uses a publication identity/utility row followed by the five topic links.
+- Desktop uses a deep-purple publication identity/utility row followed by five topic links on a distinct dark surface.
 - Mobile uses native `details` and `summary` semantics.
 - Active routes use `aria-current` plus a visible accent rule.
 - No search control appears until a real static search destination exists and is tested.
@@ -113,17 +120,18 @@ The article metadata selects one of thirteen supported visual families and a sta
 
 ### Homepage and categories
 
-- The homepage leads with one dominant illustrated story and two typographic secondary stories, followed by a three-item guide list and three-item practical-foundations list.
+- The homepage opens full-bleed in the night palette with the promise **Make technology decisions you can explain.** A 5/7 desktop composition pairs that promise with one dominant illustrated guide and two typographic support guides.
+- Three latest guides, three practical foundations, and the opening curation expose exactly nine distinct guide destinations.
 - The homepage exposes exactly nine distinct, explicitly curated guides. `/articles/` is the complete archive and groups all fifteen published guides once across the five topics.
-- Each of the five topic rows provides a direct category path and a concise editorial cue without repeating the same article cards.
-- The homepage and each category opening use at most one editorial illustration. Additional hierarchy comes from typography, numbering, rules, and whitespace.
+- Each of the five topic cards provides a direct category path, guide count, concise editorial cue, and decorative category motif without repeating article links.
+- The all-guides archive uses one static topic jump and fifteen promise-led rows. Each guide destination appears once.
 - The lower “How we work” module may describe sourcing, corrections, guide production, and the publication-name byline only within the verified factual boundary.
-- Category pages select from membership-driven compositions: compact for fewer than six guides, editorial for six through eleven, and featured/recent/archive for twelve or more. Every real category article remains linked exactly once in stable order.
+- Category pages use one neutral, complete compact list with no manufactured featured hierarchy. Every published category guide remains linked exactly once in stable order.
 
 ### Article pages
 
 - Headers contain real category/content-type labels, headline, deck, publication-name byline, genuine dates, computed reading time, and a story-specific informative visual. The visual remains available at mobile widths and must not cause horizontal overflow.
-- The Business Technology Fit module retains its four factual decision fields.
+- The at-a-glance module presents four factual fields: Business problem, Technology focus, Intended reader, and What you will produce.
 - Article evidence exposes only measured facts: cited-source count, genuine publication and review dates, and links to standards and corrections. At tablet width it uses a balanced two-by-two grid, expanding to one desktop row only when there is enough space.
 - The Business Technology Fit module and a single table-of-contents content structure are generated from real content. CSS changes its placement responsively without duplicating its heading/link structure in the document.
 - Markdown tables sit inside named, keyboard-focusable horizontal regions and retain a 16px minimum text size on narrow screens.
@@ -138,15 +146,18 @@ The article metadata selects one of thirteen supported visual families and a sta
 
 ### Toolkit
 
+- The Toolkit opening is a restrained dark panel inside the publication frame so it remains balanced at wide viewports.
 - The Toolkit landing page exposes exactly four typed resources with outcome, detail, related-guide, and direct CSV actions.
 - Each detail route explains purpose, audience, when to use, when not to use, field definitions, limitation, data notice, related guide, and download without claiming an observed result.
 - Stacked semantic field cards are the primary mobile guide. A wide-only table may supplement them, but the primary 390px experience must not require horizontal scrolling.
 
 ## Advertising boundary
 
-`site.integrations.monetization.enabled` is currently `false`. In this state the reusable ad-slot component renders no element, text, script, publisher identifier, empty box, or layout gap.
+`site.integrations.monetization.mode` is currently `off`. In this state the reusable ad-slot component renders no element, text, script, publisher identifier, empty box, or layout gap.
 
-If a future reviewed configuration explicitly enables the component, it may render only a reserved-dimension region labeled **Advertising**. Network code, ad requests, identifiers, analytics, and consent behavior require separate implementation and privacy/policy testing.
+`verification` is a separate owner-authorized state. It may emit exactly one validated AdSense site-verification artifact (`meta` or `ads.txt`) and never emits an advertising script, display unit, or reserved gap.
+
+`live` is accepted only after the complete owner evidence tuple passes validation: the provider and publisher ID, AdSense site status, owner authorization, reviewed disclosure, matching authorized `ads.txt` record, a recorded consent/CMP decision, and unique allowlisted placements. Eligible units are limited to published guides of at least 800 words at `article-after-intro` or `article-before-sources`; every rendered region has reserved dimensions and the visible label **Advertisement**. The current release remains `off` and renders none.
 
 ## Asset, performance, and accessibility rules
 
