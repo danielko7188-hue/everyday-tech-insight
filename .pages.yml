@@ -1,0 +1,387 @@
+media:
+  - name: article_images
+    label: Article images
+    input: public/images/articles
+    output: /images/articles
+    extensions: [webp, png, jpg, jpeg]
+    categories: [image]
+    rename: safe
+
+content:
+  - name: articles
+    label: Guides
+    type: collection
+    path: src/content/articles
+    format: yaml-frontmatter
+    subfolders: false
+    filename:
+      template: "{fields.slug}.md"
+      field: false
+    operations:
+      create: true
+      rename: false
+      delete: false
+    view:
+      primary: title
+      fields:
+        - title
+        - status
+        - category
+        - contentType
+        - datePublished
+        - lastReviewed
+        - featured
+      search:
+        - title
+        - slug
+        - summary
+        - category
+        - status
+        - contentType
+      sort:
+        - datePublished
+        - lastReviewed
+        - title
+        - category
+        - status
+      default:
+        sort: datePublished
+        order: desc
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+        options:
+          minlength: 10
+          maxlength: 100
+      - name: description
+        label: Search description
+        type: text
+        description: Required before review. Summarize the guide plainly in 50–180 characters without promises the article cannot support.
+        options:
+          minlength: 50
+          maxlength: 180
+      - name: slug
+        label: Slug
+        type: string
+        required: true
+        description: Use the canonical lowercase words-and-hyphens form. This value also owns the Markdown filename.
+        pattern:
+          regex: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          message: Use lowercase letters and numbers separated by single hyphens.
+        options:
+          minlength: 1
+          maxlength: 120
+      - name: category
+        label: Category
+        type: select
+        description: Required before review. Choose one public category only after the guide's scope is clear.
+        options:
+          values:
+            - ai-automation
+            - business-software
+            - cybersecurity-data-protection
+            - digital-operations
+            - technology-strategy
+      - name: author
+        label: Byline
+        type: string
+        required: true
+        readonly: true
+        default: Everyday Tech Insight
+        description: Publication-name byline. It does not identify a person or legal entity.
+      - name: status
+        label: Editorial status
+        type: select
+        required: true
+        default: draft
+        options:
+          values: [draft, review, published, archived]
+      - name: contentType
+        label: Content type
+        type: select
+        description: Required before review. Select the structure the completed guide actually uses.
+        options:
+          values: [guide, checklist, framework, comparison]
+      - name: guidePromise
+        label: Guide promise
+        type: text
+        description: Required before review. State the bounded help the guide actually delivers in 90–180 characters.
+        options:
+          minlength: 90
+          maxlength: 180
+      - name: deliverable
+        label: Reader deliverable
+        type: text
+        description: Required before review. Name the concrete record, decision, or working output in 20–150 characters.
+        options:
+          minlength: 20
+          maxlength: 150
+      - name: whenToUse
+        label: When to use
+        type: text
+        description: Required before review. Describe the real decision context in 40–180 characters.
+        options:
+          minlength: 40
+          maxlength: 180
+      - name: businessProblem
+        label: Business problem
+        type: text
+        description: Required before review. Describe the operational problem without inventing results.
+        options:
+          minlength: 20
+          maxlength: 500
+      - name: technologyFocus
+        label: Technology focus
+        type: text
+        description: Required before review. Name the relevant technology and control boundary.
+        options:
+          minlength: 20
+          maxlength: 500
+      - name: intendedAudience
+        label: Intended audience
+        type: text
+        description: Required before review. Identify the reader who can use this guidance.
+        options:
+          minlength: 20
+          maxlength: 300
+      - name: readerOutcome
+        label: Reader outcome
+        type: text
+        description: Required before review. State what the reader can decide or produce after following the guide.
+        options:
+          minlength: 20
+          maxlength: 500
+      - name: verificationStatus
+        label: Verification status
+        type: select
+        default: unverified
+        description: Keep unverified until the stated evidence work has actually been completed.
+        options:
+          values: [unverified, source-checked, tested]
+      - name: datePublished
+        label: Date published
+        type: date
+        default: ""
+        description: Leave empty for drafts and review. Add only when publication really occurs.
+        options:
+          format: yyyy-MM-dd
+      - name: dateModified
+        label: Date modified
+        type: date
+        default: ""
+        description: Leave empty on initial publication. Add only after a later substantive edit.
+        options:
+          format: yyyy-MM-dd
+      - name: lastReviewed
+        label: Last reviewed
+        type: date
+        default: ""
+        description: Record the date of a completed review; do not advance it for planned work.
+        options:
+          format: yyyy-MM-dd
+      - name: dateArchived
+        label: Date archived
+        type: date
+        default: ""
+        description: Required only when status is archived and archival actually occurs.
+        options:
+          format: yyyy-MM-dd
+      - name: featured
+        label: Featured
+        type: boolean
+        default: false
+      - name: summary
+        label: Summary
+        type: text
+        description: Required before review. Summarize the practical guidance in 40–500 characters.
+        options:
+          minlength: 40
+          maxlength: 500
+      - name: visual
+        label: Editorial visual
+        type: object
+        description: Required before review. The repository validates the controlled visual key and type pair.
+        fields:
+          - name: type
+            label: Visual type
+            type: select
+            required: true
+            options:
+              values:
+                - workflow
+                - decision-tree
+                - comparison
+                - cost-stack
+                - security-boundary
+                - backup-topology
+                - process-lane
+                - risk-matrix
+                - checklist
+                - timeline
+                - data-flow
+                - governance
+                - information-architecture
+          - name: key
+            label: Visual key
+            type: select
+            required: true
+            options:
+              values:
+                - automation-candidate-screen
+                - ai-quality-scorecard
+                - ai-use-governance
+                - saas-evidence-checklist
+                - work-object-comparison
+                - saas-exit-data-flow
+                - mfa-rollout-boundary
+                - phishing-response-workflow
+                - three-two-one-topology
+                - shared-file-architecture
+                - workflow-exception-lane
+                - access-onboarding-checklist
+                - technology-risk-matrix
+                - software-cost-stack
+                - thirty-day-pilot-timeline
+          - name: alt
+            label: Alternative text
+            type: text
+            required: true
+            options:
+              minlength: 10
+              maxlength: 240
+          - name: caption
+            label: Caption
+            type: text
+            options:
+              minlength: 10
+              maxlength: 300
+          - name: decorative
+            label: Decorative
+            type: boolean
+            required: true
+            default: false
+      - name: sourceList
+        label: Sources
+        type: object
+        description: Add only sources actually reviewed and cited in the Markdown body.
+        list:
+          collapsible:
+            collapsed: true
+            summary: "{fields.title}"
+        fields:
+          - name: title
+            label: Source title
+            type: string
+            required: true
+            options:
+              minlength: 3
+              maxlength: 200
+          - name: publisher
+            label: Publisher
+            type: string
+            required: true
+            options:
+              minlength: 2
+              maxlength: 120
+          - name: url
+            label: Source URL
+            type: string
+            required: true
+            pattern:
+              regex: '^https://[^\s]+$'
+              message: Use a complete HTTPS source URL.
+          - name: accessed
+            label: Date accessed
+            type: date
+            required: true
+            default: ""
+            options:
+              format: yyyy-MM-dd
+      - name: relatedArticles
+        label: Related guides
+        type: reference
+        default: []
+        options:
+          collection: articles
+          multiple: true
+          max: 4
+          search: "title,slug"
+          value: "{fields.slug}"
+          label: "{fields.title}"
+      - name: heroImage
+        label: Hero image
+        type: image
+        description: Optional owned or licensed raster image stored in the article image folder.
+        options:
+          media: article_images
+          extensions: [webp, png, jpg, jpeg]
+          categories: [image]
+          rename: safe
+      - name: heroImageAlt
+        label: Hero image alternative text
+        type: text
+        description: Supply meaningful text for an informative hero, or an empty value only when the hero is decorative.
+        options:
+          maxlength: 240
+      - name: heroImageDecorative
+        label: Hero image is decorative
+        type: boolean
+        description: Set this only with a hero image. Decorative heroes require empty alternative text.
+      - name: heroImageCaption
+        label: Hero image caption
+        type: text
+        options:
+          minlength: 10
+          maxlength: 300
+      - name: heroImageCredit
+        label: Hero image credit
+        type: string
+        options:
+          minlength: 2
+          maxlength: 200
+      - name: heroImageSourceUrl
+        label: Hero image source URL
+        type: string
+        pattern:
+          regex: '^https://[^\s]+$'
+          message: Use a complete HTTPS source URL.
+      - name: heroImageLicense
+        label: Hero image license
+        type: string
+        options:
+          minlength: 2
+          maxlength: 120
+      - name: canonicalOverride
+        label: Canonical override
+        type: string
+        description: Optional same-site HTTPS canonical URL. Leave empty unless a reviewed canonical exception is required.
+      - name: noindex
+        label: Exclude from indexing
+        type: boolean
+        default: true
+        description: Draft, review, and archived entries stay excluded. Published entries must be deliberately changed to false.
+      - name: body
+        label: Article body
+        type: rich-text
+        required: true
+        description: Write the article in Markdown. Add only evidence-backed claims, cite sources in the text, and keep the status at draft until editorial review is complete.
+        options:
+          format: markdown
+          switcher: true
+          media: article_images
+          extensions: [webp, png, jpg, jpeg]
+          categories: [image]
+          rename: safe
+
+settings:
+  content:
+    merge: true
+  commit:
+    identity: app
+    templates:
+      create: "content(create): {path}"
+      update: "content(update): {path}"
+      delete: "content(delete): {path}"
+      rename: "content(rename): {oldPath} -> {newPath}"

@@ -1,0 +1,473 @@
+import path from "node:path";
+
+import { describe, expect, it, vi } from "vitest";
+
+import {
+  ARTICLE_STATUSES,
+  CONTENT_TYPES,
+  EDITORIAL_VISUAL_KEYS,
+  EDITORIAL_VISUAL_TYPES,
+  VERIFICATION_STATUSES,
+} from "../../src/utils/content-contract";
+import { categorySlugs } from "../../src/data/categories";
+import {
+  printCmsFindings,
+  readPagesCmsConfig,
+  validatePagesCmsConfig,
+} from "../../scripts/qa-cms.mjs";
+
+const repositoryRoot = path.resolve(import.meta.dirname, "../..");
+
+const expectedFieldOrder = [
+  "title",
+  "description",
+  "slug",
+  "category",
+  "author",
+  "status",
+  "contentType",
+  "guidePromise",
+  "deliverable",
+  "whenToUse",
+  "businessProblem",
+  "technologyFocus",
+  "intendedAudience",
+  "readerOutcome",
+  "verificationStatus",
+  "datePublished",
+  "dateModified",
+  "lastReviewed",
+  "dateArchived",
+  "featured",
+  "summary",
+  "visual",
+  "sourceList",
+  "relatedArticles",
+  "heroImage",
+  "heroImageAlt",
+  "heroImageDecorative",
+  "heroImageCaption",
+  "heroImageCredit",
+  "heroImageSourceUrl",
+  "heroImageLicense",
+  "canonicalOverride",
+  "noindex",
+  "body",
+] as const;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- mutation tests deliberately exercise untyped YAML shapes.
+type CmsConfig = Record<string, any>;
+
+function field(config: CmsConfig, name: string): CmsConfig {
+  const fields = Array.isArray(config.fields)
+    ? config.fields
+    : config.content[0].fields;
+  const match = fields.find((candidate: CmsConfig) => candidate.name === name);
+  if (!match) throw new Error(`Missing field ${name}.`);
+  return match;
+}
+
+async function validConfig(): Promise<CmsConfig> {
+  return (await readPagesCmsConfig(
+    path.join(repositoryRoot, ".pages.yml"),
+  )) as CmsConfig;
+}
+
+describe("Pages CMS configuration", () => {
+  it("matches the exact repository, collection, view, media, and settings contract", async () => {
+    const config = await validConfig();
+
+    expect(validatePagesCmsConfig(config)).toEqual([]);
+    expect(Object.keys(config)).toEqual(["media", "content", "settings"]);
+    expect(config.media).toEqual([
+      {
+        name: "article_images",
+        label: "Article images",
+        input: "public/images/articles",
+        output: "/images/articles",
+        extensions: ["webp", "png", "jpg", "jpeg"],
+        categories: ["image"],
+        rename: "safe",
+      },
+    ]);
+
+    const collection = config.content[0];
+    expect(config.content).toHaveLength(1);
+    expect(collection).toMatchObject({
+      name: "articles",
+      label: "Guides",
+      type: "collection",
+      path: "src/content/articles",
+      format: "yaml-frontmatter",
+      subfolders: false,
+      filename: { template: "{fields.slug}.md", field: false },
+      operations: { create: true, rename: false, delete: false },
+      view: {
+        primary: "title",
+        fields: [
+          "title",
+          "status",
+          "category",
+          "contentType",
+          "datePublished",
+          "lastReviewed",
+          "featured",
+        ],
+        search: [
+          "title",
+          "slug",
+          "summary",
+          "category",
+          "status",
+          "contentType",
+        ],
+        sort: ["datePublished", "lastReviewed", "title", "category", "status"],
+        default: { sort: "datePublished", order: "desc" },
+      },
+    });
+    expect(collection.fields.map(({ name }: CmsConfig) => name)).toEqual(
+      expectedFieldOrder,
+    );
+    expect(config.settings).toEqual({
+      content: { merge: true },
+      commit: {
+        identity: "app",
+        templates: {
+          create: "content(create): {path}",
+          update: "content(update): {path}",
+          delete: "content(delete): {path}",
+          rename: "content(rename): {oldPath} -> {newPath}",
+        },
+      },
+    });
+  });
+
+  it("keeps draft identity strict while leaving review and publication metadata optional", async () => {
+    const config = await validConfig();
+
+    for (const name of ["title", "slug", "author", "status"]) {
+      expect(field(config, name).required, name).toBe(true);
+    }
+    expect(field(config, "title").options).toMatchObject({
+      minlength: 10,
+      maxlength: 100,
+    });
+    expect(field(config, "slug")).toMatchObject({
+      pattern: {
+        regex: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        message: expect.stringMatching(/lowercase.*hyphen/i),
+      },
+      options: { minlength: 1, maxlength: 120 },
+    });
+    expect(field(config, "author")).toMatchObject({
+      default: "Everyday Tech Insight",
+      readonly: true,
+    });
+    expect(field(config, "status")).toMatchObject({
+      default: "draft",
+      options: { values: [...ARTICLE_STATUSES] },
+    });
+    expect(field(config, "category").required).not.toBe(true);
+    expect(field(config, "category").options.values).toEqual([
+      ...categorySlugs,
+    ]);
+    expect(field(config, "contentType").required).not.toBe(true);
+    expect(field(config, "contentType").options.values).toEqual([
+      ...CONTENT_TYPES,
+    ]);
+    expect(field(config, "verificationStatus")).toMatchObject({
+      default: "unverified",
+      options: { values: [...VERIFICATION_STATUSES] },
+    });
+    expect(field(config, "featured").default).toBe(false);
+    expect(field(config, "relatedArticles").default).toEqual([]);
+    expect(field(config, "noindex").default).toBe(true);
+  });
+
+  it("encodes current length, date, source, visual, reference, hero, and body safeguards", async () => {
+    const config = await validConfig();
+
+    for (const [name, minlength, maxlength] of [
+      ["description", 50, 180],
+      ["guidePromise", 90, 180],
+      ["deliverable", 20, 150],
+      ["whenToUse", 40, 180],
+      ["businessProblem", 20, 500],
+      ["technologyFocus", 20, 500],
+      ["intendedAudience", 20, 300],
+      ["readerOutcome", 20, 500],
+      ["summary", 40, 500],
+    ] as const) {
+      expect(field(config, name).options, name).toMatchObject({
+        minlength,
+        maxlength,
+      });
+      expect(field(config, name).required, name).not.toBe(true);
+    }
+    for (const name of [
+      "datePublished",
+      "dateModified",
+      "lastReviewed",
+      "dateArchived",
+    ]) {
+      expect(field(config, name), name).toMatchObject({
+        type: "date",
+        default: "",
+        options: { format: "yyyy-MM-dd" },
+      });
+    }
+
+    const visual = field(config, "visual");
+    expect(visual.description).toMatch(/repository.*validates.*pair/i);
+    expect(visual.fields.map(({ name }: CmsConfig) => name)).toEqual([
+      "type",
+      "key",
+      "alt",
+      "caption",
+      "decorative",
+    ]);
+    expect(visual.fields[0].options.values).toEqual([
+      ...EDITORIAL_VISUAL_TYPES,
+    ]);
+    expect(visual.fields[1].options.values).toEqual([...EDITORIAL_VISUAL_KEYS]);
+    expect(visual.fields[4].default).toBe(false);
+
+    const sources = field(config, "sourceList");
+    expect(sources).toMatchObject({
+      type: "object",
+      list: {
+        collapsible: { collapsed: true, summary: "{fields.title}" },
+      },
+    });
+    expect(sources.fields.map(({ name }: CmsConfig) => name)).toEqual([
+      "title",
+      "publisher",
+      "url",
+      "accessed",
+    ]);
+    expect(sources.fields[3]).toMatchObject({
+      type: "date",
+      required: true,
+      default: "",
+      options: { format: "yyyy-MM-dd" },
+    });
+
+    expect(field(config, "relatedArticles")).toMatchObject({
+      type: "reference",
+      options: {
+        collection: "articles",
+        multiple: true,
+        max: 4,
+        search: "title,slug",
+        value: "{fields.slug}",
+        label: "{fields.title}",
+      },
+    });
+    expect(field(config, "heroImage")).toMatchObject({
+      type: "image",
+      options: {
+        media: "article_images",
+        extensions: ["webp", "png", "jpg", "jpeg"],
+        categories: ["image"],
+        rename: "safe",
+      },
+    });
+    expect(field(config, "body")).toMatchObject({
+      type: "rich-text",
+      required: true,
+      description: expect.stringMatching(/Markdown.*evidence.*review/i),
+      options: {
+        format: "markdown",
+        switcher: true,
+        media: "article_images",
+        extensions: ["webp", "png", "jpg", "jpeg"],
+        categories: ["image"],
+        rename: "safe",
+      },
+    });
+  });
+
+  it.each([
+    [
+      "wrong media output",
+      (config: CmsConfig) => (config.media[0].output = "/admin"),
+    ],
+    [
+      "wrong media input",
+      (config: CmsConfig) => (config.media[0].input = "images"),
+    ],
+    [
+      "unsafe media rename",
+      (config: CmsConfig) => (config.media[0].rename = false),
+    ],
+    ["media action", (config: CmsConfig) => (config.media[0].actions = [])],
+    [
+      "wrong collection path",
+      (config: CmsConfig) => (config.content[0].path = "public/admin"),
+    ],
+    ["wrong format", (config: CmsConfig) => (config.content[0].format = "md")],
+    [
+      "subfolders",
+      (config: CmsConfig) => (config.content[0].subfolders = true),
+    ],
+    [
+      "filename template",
+      (config: CmsConfig) =>
+        (config.content[0].filename.template = "{primary}.md"),
+    ],
+    [
+      "editable filename",
+      (config: CmsConfig) => (config.content[0].filename.field = true),
+    ],
+    [
+      "rename operation",
+      (config: CmsConfig) => (config.content[0].operations.rename = true),
+    ],
+    [
+      "delete operation",
+      (config: CmsConfig) => (config.content[0].operations.delete = true),
+    ],
+    [
+      "collection action",
+      (config: CmsConfig) => (config.content[0].actions = []),
+    ],
+    [
+      "workflow",
+      (config: CmsConfig) => (config.content[0].workflow = "deploy.yml"),
+    ],
+    ["view fields", (config: CmsConfig) => config.content[0].view.fields.pop()],
+    [
+      "view search",
+      (config: CmsConfig) => config.content[0].view.search.reverse(),
+    ],
+    ["view sort", (config: CmsConfig) => config.content[0].view.sort.shift()],
+    [
+      "view default",
+      (config: CmsConfig) => (config.content[0].view.default.order = "asc"),
+    ],
+    ["field removed", (config: CmsConfig) => config.content[0].fields.pop()],
+    [
+      "field added",
+      (config: CmsConfig) =>
+        config.content[0].fields.push({ name: "publisherId", type: "string" }),
+    ],
+    [
+      "unknown collection key",
+      (config: CmsConfig) =>
+        (config.content[0].previewUrl = "/articles/{fields.slug}/"),
+    ],
+    ["field order", (config: CmsConfig) => config.content[0].fields.reverse()],
+    [
+      "author writable",
+      (config: CmsConfig) => (field(config, "author").readonly = false),
+    ],
+    [
+      "draft field made required",
+      (config: CmsConfig) => (field(config, "category").required = true),
+    ],
+    [
+      "field type drift",
+      (config: CmsConfig) => (field(config, "summary").type = "string"),
+    ],
+    [
+      "helper drift",
+      (config: CmsConfig) =>
+        (field(config, "guidePromise").description = "General helper text."),
+    ],
+    [
+      "date default",
+      (config: CmsConfig) =>
+        (field(config, "datePublished").default = "2026-08-25"),
+    ],
+    [
+      "enum drift",
+      (config: CmsConfig) => field(config, "status").options.values.pop(),
+    ],
+    [
+      "unsafe status default",
+      (config: CmsConfig) => (field(config, "status").default = "published"),
+    ],
+    [
+      "source list contract",
+      (config: CmsConfig) =>
+        (field(config, "sourceList").list.collapsible.collapsed = false),
+    ],
+    [
+      "source URL pattern",
+      (config: CmsConfig) =>
+        (field(field(config, "sourceList"), "url").pattern.regex = ".*"),
+    ],
+    [
+      "visual child optional",
+      (config: CmsConfig) =>
+        (field(field(config, "visual"), "type").required = false),
+    ],
+    [
+      "reference value",
+      (config: CmsConfig) =>
+        (field(config, "relatedArticles").options.value = "{path}"),
+    ],
+    [
+      "hero media",
+      (config: CmsConfig) => (field(config, "heroImage").options.media = false),
+    ],
+    [
+      "body extension",
+      (config: CmsConfig) =>
+        field(config, "body").options.extensions.push("svg"),
+    ],
+    [
+      "merge disabled",
+      (config: CmsConfig) => (config.settings.content.merge = false),
+    ],
+    [
+      "personal commit identity",
+      (config: CmsConfig) => (config.settings.commit.identity = "user"),
+    ],
+    [
+      "personal metadata template",
+      (config: CmsConfig) =>
+        (config.settings.commit.templates.update =
+          "Update {path} by {userEmail}"),
+    ],
+    [
+      "root action",
+      (config: CmsConfig) =>
+        (config.actions = [{ name: "deploy", workflow: "deploy.yml" }]),
+    ],
+    [
+      "credential-like key",
+      (config: CmsConfig) =>
+        (config.settings.publisherId = "pub-1234567890123456"),
+    ],
+    [
+      "API credential key",
+      (config: CmsConfig) => (config.settings.apiKey = "not-a-real-key"),
+    ],
+    [
+      "false hosted claim",
+      (config: CmsConfig) =>
+        (field(config, "body").description =
+          "This editor guarantees private hosted authentication and safe deployment."),
+    ],
+  ])("rejects the %s mutation", async (_label, mutate) => {
+    const config = structuredClone(await validConfig());
+    mutate(config);
+
+    expect(validatePagesCmsConfig(config)).not.toEqual([]);
+  });
+
+  it("prints the exact local PASS label only for a clean configuration", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const error = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    printCmsFindings([]);
+    expect(log).toHaveBeenCalledWith("CMS QA: PASS");
+    expect(error).not.toHaveBeenCalled();
+
+    log.mockRestore();
+    error.mockRestore();
+  });
+});
