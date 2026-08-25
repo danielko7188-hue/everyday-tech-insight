@@ -3,16 +3,16 @@ interface Props {
   businessProblem: string;
   technologyFocus: string;
   intendedAudience: string;
-  readerOutcome: string;
+  deliverable: string;
 }
 
-const { businessProblem, technologyFocus, intendedAudience, readerOutcome } =
+const { businessProblem, technologyFocus, intendedAudience, deliverable } =
   Astro.props;
 const fields = [
   ["Business problem", businessProblem],
   ["Technology focus", technologyFocus],
   ["Intended reader", intendedAudience],
-  ["Practical outcome", readerOutcome],
+  ["What you will produce", deliverable],
 ] as const;
 ---
 

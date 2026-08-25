@@ -6,9 +6,9 @@ const page = trustPages.notFound;
 ---
 
 <TrustPageLayout page={page}>
-  <p>
-    <a href="/">Return home</a> or <a href="/categories/"
-      >browse all categories</a
-    >.
-  </p>
+  <nav class="not-found-actions" aria-label="Continue browsing">
+    <a href="/">Home</a>
+    <a href="/articles/">Guides</a>
+    <a href="/categories/">Topics</a>
+  </nav>
 </TrustPageLayout>

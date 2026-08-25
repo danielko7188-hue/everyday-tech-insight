@@ -66,7 +66,7 @@ const representativeRoutes = [
     ],
   },
 ] as const;
-const requiredWidths = [360, 390, 768, 1024, 1280, 1440, 1920] as const;
+const requiredWidths = [320, 360, 390, 768, 1024, 1280, 1440, 1920] as const;
 const categorySlugs = [
   "ai-automation",
   "business-software",
@@ -424,7 +424,7 @@ test("homepage briefing cards keep metadata above their headline", async ({
     elements.map((element) => {
       const metadata = element.querySelector(".story-meta")!;
       const title = element.querySelector(".article-card__title")!;
-      const summary = element.querySelector(".article-card__summary")!;
+      const summary = element.querySelector(".article-card__promise")!;
       const cardBox = element.getBoundingClientRect();
       const metadataBox = metadata.getBoundingClientRect();
       const titleBox = title.getBoundingClientRect();

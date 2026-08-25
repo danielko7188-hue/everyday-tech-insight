@@ -134,6 +134,7 @@ interface ArticleSourceRecord {
     contentType: string;
     datePublished: string;
     summary: string;
+    guidePromise: string;
     featured: boolean;
     visual: {
       type: string;
@@ -196,16 +197,122 @@ test("home explains the publication and links all five categories", async ({
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: /practical business technology/i,
+      name: "Make technology decisions you can explain.",
     }),
   ).toBeVisible();
-  await expect(page.getByText(/source-backed guidance/i).first()).toBeVisible();
+  await expect(page.getByText(/source-backed guides/i).first()).toBeVisible();
   await expect(page.getByText(/without product hype/i)).toBeVisible();
 
   for (const category of categories) {
     await expect(
       page.getByRole("link", { name: category.name, exact: true }).first(),
     ).toHaveAttribute("href", `/categories/${category.slug}/`);
+  }
+});
+
+test("Purple Signal home uses one lead, two supports, nine guide destinations, and five topic motifs", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Make technology decisions you can explain.",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".front-page__lead .article-card--lead"),
+  ).toHaveCount(1);
+  await expect(
+    page.locator(".front-page__support .article-card--feature"),
+  ).toHaveCount(2);
+
+  const homeArticleHrefs = await page
+    .locator('main a[href^="/articles/"]')
+    .evaluateAll((links) =>
+      [
+        ...new Set(
+          links
+            .map((link) => link.getAttribute("href"))
+            .filter(
+              (href): href is string => Boolean(href) && href !== "/articles/",
+            ),
+        ),
+      ].sort(),
+    );
+  expect(homeArticleHrefs).toHaveLength(9);
+
+  const topicEntries = page.locator(".topic-directory--compact > ol > li");
+  await expect(topicEntries).toHaveCount(5);
+  for (const entry of await topicEntries.all()) {
+    await expect(entry.locator('svg[aria-hidden="true"]')).toHaveCount(1);
+  }
+});
+
+test("archive and category pages expose every guide promise once without manufactured ranking", async ({
+  page,
+}) => {
+  await page.goto("/articles/");
+  await expect(
+    page.getByRole("navigation", { name: "Jump to a topic" }),
+  ).toBeVisible();
+  await expect(page.locator(".guide-archive__list .article-card")).toHaveCount(
+    15,
+  );
+  await expect(
+    page.locator(".guide-archive__list .article-card__promise"),
+  ).toHaveCount(15);
+  const archiveHrefs = await page
+    .locator('.guide-archive__list a[href^="/articles/"]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  expect(new Set(archiveHrefs).size).toBe(15);
+
+  await page.goto("/categories/ai-automation/");
+  await expect(page.locator('[data-layout="compact"]')).toHaveAttribute(
+    "data-guide-count",
+    "3",
+  );
+  await expect(
+    page.locator(".category-compact__list .article-card--compact"),
+  ).toHaveCount(3);
+  await expect(
+    page.locator(".category-compact__list .article-card__promise"),
+  ).toHaveCount(3);
+  await expect(
+    page.locator(".category-editorial__lead, .category-archive__featured"),
+  ).toHaveCount(0);
+});
+
+test("article reading and utility surfaces expose the approved practical outcomes", async ({
+  page,
+}) => {
+  await page.goto(`/articles/${articleSlug}/`);
+  const glance = page.getByRole("region", { name: "At a glance" });
+  await expect(glance).toBeVisible();
+  for (const field of [
+    "Business problem",
+    "Technology focus",
+    "Intended reader",
+    "What you will produce",
+  ]) {
+    await expect(glance.getByText(field, { exact: true })).toBeVisible();
+  }
+
+  await page.goto("/toolkit/");
+  await expect(page.locator(".toolkit-card")).toHaveCount(4);
+  await expect(page.getByText("CSV worksheet", { exact: true })).toHaveCount(4);
+
+  const notFoundResponse = await page.goto("/purple-signal-page-not-found/");
+  expect(notFoundResponse?.status()).toBe(404);
+  const continuation = page.getByRole("navigation", {
+    name: "Continue browsing",
+  });
+  for (const label of ["Home", "Guides", "Topics"]) {
+    await expect(
+      continuation.getByRole("link", { name: label, exact: true }),
+    ).toBeVisible();
   }
 });
 
@@ -219,9 +326,12 @@ test("editorial pages ship only the local visual symbols they render", async ({
     .evaluateAll((uses) =>
       uses.map((use) => use.getAttribute("href")).filter(Boolean),
     );
-  expect(homeReferences).toHaveLength(1);
-  await expect(page.locator("body > svg > symbol")).toHaveCount(1);
-  await expect(page.locator(`symbol${homeReferences[0]}`)).toHaveCount(1);
+  expect(homeReferences).toHaveLength(8);
+  expect(new Set(homeReferences).size).toBe(8);
+  await expect(page.locator("body > svg > symbol")).toHaveCount(8);
+  for (const reference of homeReferences) {
+    await expect(page.locator(`symbol${reference}`)).toHaveCount(1);
+  }
 
   await page.goto(`/articles/${articleSlug}/`);
   const articleReference = await page
@@ -663,11 +773,11 @@ test("all-guides archive groups every published guide once in category order", a
         /Guide|Framework|Checklist|Comparison/,
       );
       await expect(
-        cards.nth(index).locator(".article-card__summary"),
+        cards.nth(index).locator(".article-card__promise"),
       ).toBeVisible();
       await expect(
-        cards.nth(index).locator(".article-card__summary"),
-      ).toHaveText(expected[index]!.data.summary);
+        cards.nth(index).locator(".article-card__promise"),
+      ).toHaveText(expected[index]!.data.guidePromise);
     }
   }
 });
@@ -1268,9 +1378,11 @@ test("trust pages are reachable and state the public evidence boundary", async (
 
   await page.goto("/privacy/");
   await expect(
-    page.getByText(/does not set cookies.*local storage/i),
+    page.getByText(/sets no cookies or browser storage/i),
   ).toBeVisible();
-  await expect(page.getByText(/no analytics or advertising/i)).toBeVisible();
+  await expect(
+    page.getByText(/includes no analytics or advertising/i),
+  ).toBeVisible();
 
   await page.goto("/advertising-disclosure/");
   await expect(
@@ -1533,7 +1645,7 @@ test("unknown paths return the custom 404 response", async ({ page }) => {
     "noindex,follow",
   );
   await expect(
-    page.getByRole("link", { name: /return home/i }),
+    page.getByRole("link", { name: "Home", exact: true }),
   ).toHaveAttribute("href", "/");
   const shell = page.locator("main .trust-page");
   await expect(shell).toHaveCount(1);

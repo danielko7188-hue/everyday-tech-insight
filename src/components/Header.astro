@@ -26,7 +26,7 @@ const categoryCurrentState = (slug: CategorySlug) => {
 };
 ---
 
-<header class="site-header">
+<header class="site-header surface-dark">
   <div class="site-header__identity-row">
     <PublicationMark class="site-header__mark" />
     <nav class="site-header__utility" aria-label="Publication navigation">
@@ -52,7 +52,10 @@ const categoryCurrentState = (slug: CategorySlug) => {
     </nav>
 
     <details class="site-header__mobile-menu">
-      <summary>Menu</summary>
+      <summary>
+        <span class="site-header__menu-label">Menu</span>
+        <span class="site-header__close-label">Close</span>
+      </summary>
       <nav aria-label="Mobile navigation">
         <ul>
           <li>

@@ -10,6 +10,8 @@ interface Props {
   publicationDate: string;
   readingMinutes: number;
   compact?: boolean;
+  showContentType?: boolean;
+  showDate?: boolean;
 }
 
 const {
@@ -19,6 +21,8 @@ const {
   publicationDate,
   readingMinutes,
   compact = false,
+  showContentType = true,
+  showDate = true,
 } = Astro.props;
 
 const formattedDate = formatPublicationDate(publicationDate, {
@@ -38,11 +42,17 @@ const minutes = Math.max(1, Math.ceil(readingMinutes));
   class:list={["story-meta", { "story-meta--compact": compact }]}
   aria-label="Story details"
 >
-  <li class="story-meta__type">{contentTypeLabel}</li>
+  {showContentType && <li class="story-meta__type">{contentTypeLabel}</li>}
   <li class="story-meta__category">
     <a href={`/categories/${categorySlug}/`}>{categoryName}</a>
   </li>
-  <li><time datetime={publicationDate}>{formattedDate}</time></li>
+  {
+    showDate && (
+      <li>
+        <time datetime={publicationDate}>{formattedDate}</time>
+      </li>
+    )
+  }
   <li>{minutes} min read</li>
 </ul>
 
@@ -53,7 +63,7 @@ const minutes = Math.max(1, Math.ceil(readingMinutes));
     gap: 0.5rem 0.75rem;
     margin: 0;
     padding: 0;
-    color: var(--color-muted, #59605e);
+    color: var(--brand-text-muted-light, #5b5566);
     font-family: "Source Sans 3 Variable", "Segoe UI", sans-serif;
     font-size: 0.9375rem;
     line-height: 1.4;
@@ -69,7 +79,7 @@ const minutes = Math.max(1, Math.ceil(readingMinutes));
   }
 
   .story-meta li + li::before {
-    color: var(--color-rule, #c9c5ba);
+    color: var(--brand-boundary, #756884);
     content: "/";
   }
 
@@ -90,7 +100,7 @@ const minutes = Math.max(1, Math.ceil(readingMinutes));
   }
 
   .story-meta__type {
-    color: var(--color-ink, #171918);
+    color: var(--brand-ink, #171221);
     font-weight: 700;
   }
 

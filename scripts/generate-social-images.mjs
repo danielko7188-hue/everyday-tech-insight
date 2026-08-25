@@ -38,27 +38,27 @@ const fontData = readFileSync(
 
 const categoryRecords = [
   {
-    accent: "#0f746c",
+    accent: "#6d28d9",
     name: "AI & Automation",
     slug: "ai-automation",
   },
   {
-    accent: "#315f98",
+    accent: "#4338ca",
     name: "Business Software & SaaS",
     slug: "business-software",
   },
   {
-    accent: "#a83d3a",
+    accent: "#a21caf",
     name: "Cybersecurity & Data Protection",
     slug: "cybersecurity-data-protection",
   },
   {
-    accent: "#397143",
+    accent: "#5b21b6",
     name: "Digital Operations & Productivity",
     slug: "digital-operations",
   },
   {
-    accent: "#9a5b13",
+    accent: "#be185d",
     name: "Technology Decisions & Strategy",
     slug: "technology-strategy",
   },
@@ -151,7 +151,7 @@ export function selectPublishedArticleFrontmatter(records) {
 export const SOCIAL_IMAGE_RECORDS = Object.freeze(
   [
     {
-      accent: "#d84a2f",
+      accent: "#7c3aed",
       alt: "Everyday Tech Insight practical business technology guidance.",
       categoryName: "Practical business technology",
       fileName: "default.png",
@@ -214,12 +214,12 @@ function visualGeometry(visualKey, accent) {
     .join(" ");
 
   return `<g data-visual-key="${escapeXml(visualKey)}">
-    <rect x="750" y="102" width="372" height="426" rx="28" fill="#f4efe4" stroke="#171918" stroke-width="3"/>
+    <rect x="750" y="102" width="372" height="426" rx="28" fill="#24143d" stroke="#756884" stroke-width="3"/>
     <path d="${pathData}" fill="none" stroke="${escapeXml(accent)}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
     ${points
       .map(
         ({ x, y }, index) =>
-          `<circle cx="${x}" cy="${y}" r="${18 + (bytes[index + 10] % 13)}" fill="${index % 2 === 0 ? escapeXml(accent) : "#fffdf8"}" stroke="#171918" stroke-width="3"/>`,
+          `<circle cx="${x}" cy="${y}" r="${18 + (bytes[index + 10] % 13)}" fill="${index % 2 === 0 ? escapeXml(accent) : "#faf8ff"}" stroke="#c4b5fd" stroke-width="3"/>`,
       )
       .join("\n    ")}
   </g>`;
@@ -240,23 +240,30 @@ export function renderSocialSvg(record) {
     @font-face { font-family: "ETI Source"; src: url("data:font/woff2;base64,${fontData}") format("woff2"); font-weight: 200 900; }
     text { font-family: "ETI Source"; }
   </style>
-  <rect width="1200" height="630" fill="#fffdf8"/>
-  <rect width="18" height="630" fill="${escapeXml(record.accent)}"/>
-  <path d="M78 84 H690" stroke="#171918" stroke-width="3"/>
-  <text x="78" y="62" fill="#171918" font-size="27" font-weight="750" letter-spacing="1.4">EVERYDAY TECH INSIGHT</text>
-  <text x="78" y="150" fill="${escapeXml(record.accent)}" font-size="25" font-weight="720" letter-spacing="1">${escapeXml(record.categoryName)}</text>
-  <text x="78" y="232" fill="#171918" font-size="${titleSize}" font-weight="730">${titleMarkup}</text>
-  <text x="78" y="564" fill="#4b514e" font-size="23">Practical guidance for small-business technology decisions</text>
+  <defs>
+    <linearGradient id="signal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#d946ef"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0d0618"/>
+  <rect width="18" height="630" fill="url(#signal)"/>
+  <path d="M78 84 H690" stroke="#3a2e51" stroke-width="3"/>
+  <text x="78" y="62" fill="#faf8ff" font-size="27" font-weight="750" letter-spacing="1.4">EVERYDAY TECH INSIGHT</text>
+  <text x="78" y="150" fill="#c4b5fd" font-size="25" font-weight="720" letter-spacing="1">${escapeXml(record.categoryName)}</text>
+  <text x="78" y="232" fill="#faf8ff" font-size="${titleSize}" font-weight="730">${titleMarkup}</text>
+  <text x="78" y="564" fill="#c9c3d8" font-size="23">Practical guidance for small-business technology decisions</text>
   ${visualGeometry(record.visualKey, record.accent)}
 </svg>`;
 }
 
 function renderAppleIconSvg() {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
-  <rect width="180" height="180" rx="32" fill="#fffdf8"/>
-  <rect x="18" y="18" width="144" height="144" rx="18" fill="none" stroke="#171918" stroke-width="10"/>
-  <rect x="18" y="18" width="22" height="144" rx="8" fill="#d84a2f"/>
-  <path d="M61 62h68M61 90h52M61 118h68" fill="none" stroke="#171918" stroke-width="12" stroke-linecap="square"/>
+  <defs><linearGradient id="signal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#d946ef"/></linearGradient></defs>
+  <rect width="180" height="180" rx="32" fill="#0d0618"/>
+  <rect x="18" y="18" width="144" height="144" rx="18" fill="none" stroke="#756884" stroke-width="8"/>
+  <rect x="18" y="18" width="18" height="144" rx="8" fill="url(#signal)"/>
+  <text x="58" y="108" fill="#faf8ff" font-family="sans-serif" font-size="48" font-weight="800" letter-spacing="2">ETI</text>
 </svg>`;
 }
 

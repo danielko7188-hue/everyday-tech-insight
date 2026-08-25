@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 
 import ArticleCard from "../components/ArticleCard.astro";
+import EditorialVisual from "../components/EditorialVisual.astro";
 import SectionHeading from "../components/SectionHeading.astro";
 import TrustModule from "../components/TrustModule.astro";
 import { categories } from "../data/categories";
@@ -39,9 +40,11 @@ const topicCounts = new Map(
     ).length,
   ]),
 );
-const editorialVisualSymbolIds = leadArticle
-  ? [leadArticle.data.visual.key]
-  : [];
+const editorialVisualSymbolIds = [
+  ...(leadArticle ? [leadArticle.data.visual.key] : []),
+  ...featureArticles.map(({ data }) => data.visual.key),
+  ...categories.map(({ slug }) => slug),
+];
 
 const title = `${site.name} | Practical Business Technology`;
 const description =
@@ -65,41 +68,43 @@ const websiteStructuredData = {
 >
   <div class="page-shell home-page">
     <header class="home-opening">
-      <div class="home-opening__promise">
-        <p class="eyebrow">Independent practical guidance</p>
-        <h1>Practical business technology, explained clearly</h1>
-        <p class="lead-summary">
-          Source-backed guidance for small-business technology decisions,
-          without product hype.
-        </p>
+      <div class="home-opening__inner">
+        <div class="home-opening__promise">
+          <p class="eyebrow">Practical business technology</p>
+          <h1>Make technology decisions you can explain.</h1>
+          <p class="lead-summary">
+            Independent, source-backed guides for choosing, securing, and
+            governing the tools your business relies on, without product hype.
+          </p>
+        </div>
+        <section class="front-page" aria-labelledby="front-page-heading">
+          <h2 id="front-page-heading" class="visually-hidden">
+            Featured guidance
+          </h2>
+          <div class="front-page__lead">
+            {
+              leadArticle && (
+                <ArticleCard
+                  article={leadArticle}
+                  variant="lead"
+                  headingLevel={3}
+                />
+              )
+            }
+          </div>
+          <div class="front-page__support">
+            {
+              featureArticles.map((article) => (
+                <ArticleCard
+                  article={article}
+                  variant="feature"
+                  headingLevel={3}
+                />
+              ))
+            }
+          </div>
+        </section>
       </div>
-      <section class="front-page" aria-labelledby="front-page-heading">
-        <h2 id="front-page-heading" class="visually-hidden">
-          Featured guidance
-        </h2>
-        <div class="front-page__lead">
-          {
-            leadArticle && (
-              <ArticleCard
-                article={leadArticle}
-                variant="lead"
-                headingLevel={3}
-              />
-            )
-          }
-        </div>
-        <div class="front-page__support">
-          {
-            featureArticles.map((article) => (
-              <ArticleCard
-                article={article}
-                variant="feature"
-                headingLevel={3}
-              />
-            ))
-          }
-        </div>
-      </section>
     </header>
 
     <section
@@ -116,12 +121,7 @@ const websiteStructuredData = {
         {
           briefingArticles.map((article) => (
             <li>
-              <ArticleCard
-                article={article}
-                variant="list"
-                headingLevel={3}
-                showSummary
-              />
+              <ArticleCard article={article} variant="list" headingLevel={3} />
             </li>
           ))
         }
@@ -144,12 +144,7 @@ const websiteStructuredData = {
         {
           startHereArticles.map((article) => (
             <li>
-              <ArticleCard
-                article={article}
-                variant="list"
-                headingLevel={3}
-                showSummary
-              />
+              <ArticleCard article={article} variant="list" headingLevel={3} />
             </li>
           ))
         }
@@ -175,6 +170,14 @@ const websiteStructuredData = {
               data-category={category.slug}
               style={`--category-accent: ${category.accent};`}
             >
+              <div class="topic-directory__motif" data-editorial-visual>
+                <EditorialVisual
+                  category={category.slug}
+                  slug={`${category.slug}-home-topic`}
+                  ratio="wide"
+                  fit="contain"
+                />
+              </div>
               <a href={`/categories/${category.slug}/`}>
                 <span>{category.name}</span>
                 <span>{topicCounts.get(category.slug)} guides</span>

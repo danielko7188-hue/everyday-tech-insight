@@ -50,6 +50,19 @@ const description =
       </p>
     </header>
 
+    <nav class="guide-archive__jump" aria-label="Jump to a topic">
+      <p>Jump to a topic</p>
+      <ul>
+        {
+          categoryGroups.map(({ category }) => (
+            <li>
+              <a href={`#archive-${category.slug}`}>{category.name}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
     {
       categoryGroups.map(({ category, articles }) => (
         <section
@@ -70,9 +83,8 @@ const description =
               <li>
                 <ArticleCard
                   article={article}
-                  variant="compact"
+                  variant="list"
                   headingLevel={3}
-                  showSummary
                   showVisual={false}
                 />
               </li>

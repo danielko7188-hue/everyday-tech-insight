@@ -9,11 +9,11 @@ export const categorySlugs = [
 export type CategorySlug = (typeof categorySlugs)[number];
 
 export const categoryAccents = {
-  "ai-automation": "#0f746c",
-  "business-software": "#315f98",
-  "cybersecurity-data-protection": "#a83d3a",
-  "digital-operations": "#397143",
-  "technology-strategy": "#9a5b13",
+  "ai-automation": "#6d28d9",
+  "business-software": "#4338ca",
+  "cybersecurity-data-protection": "#a21caf",
+  "digital-operations": "#5b21b6",
+  "technology-strategy": "#be185d",
 } as const satisfies Record<CategorySlug, string>;
 
 export interface CategoryRecord {

@@ -1,23 +1,13 @@
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 64 64"
-  role="img"
-  aria-labelledby="title"
->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
   <title id="title">Everyday Tech Insight</title>
-  <rect width="64" height="64" fill="#fffdf8" />
-  <rect
-    x="5"
-    y="5"
-    width="54"
-    height="54"
-    fill="none"
-    stroke="#171918"
-    stroke-width="4"
-  />
-  <rect x="5" y="5" width="7" height="54" fill="#d84a2f" />
-  <path
-    d="M22 20h25v5H28v5h16v5H28v5h19v5H22z"
-    fill="#171918"
-  />
+  <desc id="desc">ETI initials beside a violet-to-magenta signal bar.</desc>
+  <defs>
+    <linearGradient id="signal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7c3aed" />
+      <stop offset="1" stop-color="#d946ef" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="10" fill="#0d0618" />
+  <rect x="7" y="8" width="5" height="48" rx="2.5" fill="url(#signal)" />
+  <text x="18" y="40" fill="#faf8ff" font-family="Arial, sans-serif" font-size="20" font-weight="800" letter-spacing="1">ETI</text>
 </svg>

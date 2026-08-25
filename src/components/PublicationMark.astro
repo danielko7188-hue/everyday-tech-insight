@@ -27,12 +27,15 @@ const { href = "/", class: className } = Astro.props;
   }
 
   .publication-mark__initials {
+    position: relative;
     display: grid;
     inline-size: 3rem;
     aspect-ratio: 1;
     place-items: center;
-    border: 2px solid currentColor;
-    border-inline-start: 0.375rem solid var(--color-accent, #d84a2f);
+    border: 1px solid var(--brand-boundary, #756884);
+    border-radius: 0.25rem;
+    color: var(--brand-white, #ffffff);
+    background: var(--brand-deep, #17102a);
     font-family: "Source Sans 3 Variable", "Segoe UI", sans-serif;
     font-size: 0.8125rem;
     font-weight: 800;
@@ -40,10 +43,20 @@ const { href = "/", class: className } = Astro.props;
     line-height: 1;
   }
 
+  .publication-mark__initials::before {
+    position: absolute;
+    inset-block: 0.45rem;
+    inset-inline-start: 0.3rem;
+    inline-size: 0.2rem;
+    border-radius: 99px;
+    background: var(--brand-gradient);
+    content: "";
+  }
+
   .publication-mark__name {
-    font-family: "Newsreader Variable", Georgia, serif;
+    font-family: "Source Sans 3 Variable", "Segoe UI", sans-serif;
     font-size: clamp(1.35rem, 1.1rem + 0.75vw, 2rem);
-    font-weight: 650;
+    font-weight: 760;
     letter-spacing: -0.025em;
     line-height: 1;
     white-space: nowrap;

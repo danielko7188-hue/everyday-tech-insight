@@ -1,5 +1,60 @@
 const DEFAULT_WORDS_PER_MINUTE = 225;
 
+export type StoryTreatment =
+  "lead" | "feature" | "standard" | "compact" | "list";
+
+export interface StoryTreatmentContract {
+  compactMeta: boolean;
+  showDeliverable: boolean;
+  showFullMeta: boolean;
+  showPromise: boolean;
+  showVisual: boolean;
+}
+
+const storyTreatments = {
+  lead: {
+    compactMeta: false,
+    showDeliverable: true,
+    showFullMeta: true,
+    showPromise: true,
+    showVisual: true,
+  },
+  feature: {
+    compactMeta: false,
+    showDeliverable: false,
+    showFullMeta: false,
+    showPromise: true,
+    showVisual: true,
+  },
+  standard: {
+    compactMeta: false,
+    showDeliverable: false,
+    showFullMeta: true,
+    showPromise: true,
+    showVisual: true,
+  },
+  compact: {
+    compactMeta: true,
+    showDeliverable: false,
+    showFullMeta: false,
+    showPromise: true,
+    showVisual: false,
+  },
+  list: {
+    compactMeta: true,
+    showDeliverable: false,
+    showFullMeta: false,
+    showPromise: true,
+    showVisual: false,
+  },
+} as const satisfies Record<StoryTreatment, StoryTreatmentContract>;
+
+export function resolveStoryTreatment(
+  treatment: StoryTreatment,
+): StoryTreatmentContract {
+  return storyTreatments[treatment];
+}
+
 function markdownToReadableText(markdown: string): string {
   return markdown
     .replace(/```[\s\S]*?```/g, " ")

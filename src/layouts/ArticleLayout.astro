@@ -86,7 +86,7 @@ const formatDate = (date: string) =>
             readingMinutes={readingMinutes}
           />
           <h1>{data.title}</h1>
-          <p class="article-summary">{data.summary}</p>
+          <p class="article-summary">{data.guidePromise}</p>
           <div class="article-facts">
             <p>
               By <strong><a href="/publisher/">{data.author}</a></strong>
@@ -171,7 +171,7 @@ const formatDate = (date: string) =>
         businessProblem={data.businessProblem}
         technologyFocus={data.technologyFocus}
         intendedAudience={data.intendedAudience}
-        readerOutcome={data.readerOutcome}
+        deliverable={data.deliverable}
       />
 
       <div class="article-reading-layout">

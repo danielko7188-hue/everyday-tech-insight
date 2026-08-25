@@ -1,26 +1,28 @@
 ---
 import { categoriesBySlug } from "../data/categories";
-import { estimateReadingTime } from "../utils/presentation";
+import {
+  estimateReadingTime,
+  resolveStoryTreatment,
+  type StoryTreatment,
+} from "../utils/presentation";
 import type { PublishedArticleEntry } from "../utils/published-articles";
 import EditorialVisual from "./EditorialVisual.astro";
 import StoryMeta from "./StoryMeta.astro";
 
-type ArticleCardVariant = "lead" | "feature" | "standard" | "compact" | "list";
-
 interface Props {
   article: PublishedArticleEntry;
-  variant?: ArticleCardVariant;
+  variant?: StoryTreatment;
   headingLevel?: 2 | 3;
-  showSummary?: boolean;
   showVisual?: boolean;
+  showFullMeta?: boolean;
 }
 
 const {
   article,
   variant = "standard",
   headingLevel = 2,
-  showSummary: showSummaryOverride,
   showVisual: showVisualOverride,
+  showFullMeta: showFullMetaOverride,
 } = Astro.props;
 const Heading = `h${headingLevel}` as "h2" | "h3";
 const category = categoriesBySlug.get(article.data.category);
@@ -31,11 +33,10 @@ if (!category) {
 
 const readingMinutes = estimateReadingTime(article.body ?? "");
 const visualRatio = variant === "lead" ? "wide" : "landscape";
-const showVisual =
-  showVisualOverride ?? (variant === "lead" || variant === "standard");
-const showOutcome = variant === "lead" || variant === "standard";
-const showSummary = showSummaryOverride ?? variant !== "list";
-const isCompactMeta = variant === "compact" || variant === "list";
+const treatment = resolveStoryTreatment(variant);
+const showVisual = showVisualOverride ?? treatment.showVisual;
+const showFullMeta = showFullMetaOverride ?? treatment.showFullMeta;
+const showDate = showFullMeta || variant === "list";
 ---
 
 <article
@@ -63,16 +64,23 @@ const isCompactMeta = variant === "compact" || variant === "list";
       contentType={article.data.contentType}
       publicationDate={article.data.datePublished}
       readingMinutes={readingMinutes}
-      compact={isCompactMeta}
+      compact={treatment.compactMeta}
+      showContentType={showFullMeta || variant !== "compact"}
+      showDate={showDate}
     />
     <Heading class="article-card__title">
       <a href={`/articles/${article.data.slug}/`}>{article.data.title}</a>
     </Heading>
-    {showSummary && <p class="article-card__summary">{article.data.summary}</p>}
     {
-      showOutcome && (
-        <p class="card-outcome">
-          <strong>Use it to:</strong> {article.data.readerOutcome}
+      treatment.showPromise && (
+        <p class="article-card__promise">{article.data.guidePromise}</p>
+      )
+    }
+    {
+      treatment.showDeliverable && (
+        <p class="article-card__deliverable">
+          <strong>What you will produce</strong>
+          <span>{article.data.deliverable}</span>
         </p>
       )
     }

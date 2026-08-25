@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   estimateReadingTime,
   formatPublicationDate,
+  resolveStoryTreatment,
   visualVariantForSlug,
 } from "../../src/utils/presentation";
 
@@ -86,4 +87,32 @@ describe("formatPublicationDate", () => {
       formatPublicationDate("2026-08-21T23:30:00Z", publicationOptions),
     ).toBe("August 21, 2026");
   });
+});
+
+describe("resolveStoryTreatment", () => {
+  it.each([
+    ["lead", true, true, true, true, false],
+    ["feature", true, false, true, false, false],
+    ["standard", true, false, true, true, false],
+    ["compact", true, false, false, false, true],
+    ["list", true, false, false, false, true],
+  ] as const)(
+    "%s renders the approved promise, deliverable, visual, and compact metadata contract",
+    (
+      variant,
+      showPromise,
+      showDeliverable,
+      showVisual,
+      showFullMeta,
+      compactMeta,
+    ) => {
+      expect(resolveStoryTreatment(variant)).toMatchObject({
+        compactMeta,
+        showDeliverable,
+        showFullMeta,
+        showPromise,
+        showVisual,
+      });
+    },
+  );
 });

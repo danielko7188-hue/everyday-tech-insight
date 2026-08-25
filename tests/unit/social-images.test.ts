@@ -118,6 +118,17 @@ async function importGeneratorWithFixture({
 }
 
 describe("social image portfolio", () => {
+  it("renders the Purple Signal identity without the retired publication palette", () => {
+    const svg = renderSocialSvg(SOCIAL_IMAGE_RECORDS[0]!);
+
+    for (const color of ["#0d0618", "#7c3aed", "#d946ef", "#faf8ff"]) {
+      expect(svg.toLowerCase()).toContain(color);
+    }
+    for (const retired of ["#d84a2f", "#f4efe4", "#fffdf8", "#171918"]) {
+      expect(svg.toLowerCase()).not.toContain(retired);
+    }
+  });
+
   it("defines the fixed sorted default, five-category, and 15-article portfolio", () => {
     expect(SOCIAL_IMAGE_RECORDS).toHaveLength(21);
     expect(SOCIAL_IMAGE_RECORDS.map(({ fileName }) => fileName)).toEqual(
