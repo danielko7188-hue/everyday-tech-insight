@@ -153,6 +153,15 @@ describe("managed article image rehype transformer", () => {
         {
           type: "element",
           tagName: "img",
+          properties: {
+            src: "/images/articles-visuals/example.svg",
+            alt: "Engineering diagram",
+          },
+          children: [],
+        },
+        {
+          type: "element",
+          tagName: "img",
           properties: { src: "https://example.test/image.png", alt: "Remote" },
           children: [],
         },

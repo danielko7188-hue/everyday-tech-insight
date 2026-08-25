@@ -1,5 +1,7 @@
+import { createHash } from "node:crypto";
+import { constants as fsConstants } from "node:fs";
 import path from "node:path";
-import { lstat, readFile, readdir, realpath } from "node:fs/promises";
+import { lstat, open, readdir, realpath } from "node:fs/promises";
 
 import { fromMarkdown } from "mdast-util-from-markdown";
 import sharp from "sharp";
@@ -8,6 +10,11 @@ export const MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT = "/images/articles";
 export const MANAGED_ARTICLE_IMAGE_SOURCE_ROOT = path.join(
   "src",
   "content-assets",
+  "articles",
+);
+export const LEGACY_MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT = path.join(
+  "public",
+  "images",
   "articles",
 );
 export const MANAGED_ARTICLE_IMAGE_MAX_BYTES = 1_500_000;
@@ -63,7 +70,12 @@ function isPathInside(parentPath, childPath) {
   );
 }
 
-async function assertSafeRegularFile(repositoryRoot, sourceRoot, sourcePath) {
+async function assertSafeRegularFile(
+  repositoryRoot,
+  sourceRoot,
+  sourcePath,
+  { label = "Managed image" } = {},
+) {
   const resolvedRepositoryRoot = path.resolve(repositoryRoot);
   const resolvedSourceRoot = path.resolve(sourceRoot);
   const resolvedSourcePath = path.resolve(sourcePath);
@@ -71,18 +83,18 @@ async function assertSafeRegularFile(repositoryRoot, sourceRoot, sourcePath) {
     !isPathInside(resolvedRepositoryRoot, resolvedSourceRoot) ||
     !isPathInside(resolvedSourceRoot, resolvedSourcePath)
   ) {
-    throw new Error("Managed image path escapes its lexical source boundary.");
+    throw new Error(`${label} path escapes its lexical boundary.`);
   }
 
   const repositoryDetails = await lstat(resolvedRepositoryRoot);
   if (repositoryDetails.isSymbolicLink()) {
     throw new Error(
-      `Managed image paths cannot use a symbolic link or junction as the repository root: ${resolvedRepositoryRoot}`,
+      `${label} paths cannot use a symbolic link or junction as the repository root: ${resolvedRepositoryRoot}`,
     );
   }
   if (!repositoryDetails.isDirectory()) {
     throw new Error(
-      `Managed image repository root must be a directory: ${resolvedRepositoryRoot}`,
+      `${label} repository root must be a directory: ${resolvedRepositoryRoot}`,
     );
   }
 
@@ -98,21 +110,21 @@ async function assertSafeRegularFile(repositoryRoot, sourceRoot, sourcePath) {
       details = await lstat(currentPath);
     } catch (error) {
       throw new Error(
-        `Managed image source is missing or unreadable: ${currentPath}`,
+        `${label} file is missing or unreadable: ${currentPath}`,
         { cause: error },
       );
     }
     if (details.isSymbolicLink()) {
       throw new Error(
-        `Managed image paths cannot contain a symbolic link or junction: ${currentPath}`,
+        `${label} paths cannot contain a symbolic link or junction: ${currentPath}`,
       );
     }
     const isLast = index === relativeSegments.length - 1;
     if (isLast ? !details.isFile() : !details.isDirectory()) {
       throw new Error(
         isLast
-          ? `Managed image source must be a regular file: ${currentPath}`
-          : `Managed image ancestor must be a directory: ${currentPath}`,
+          ? `${label} must be a regular file: ${currentPath}`
+          : `${label} ancestor must be a directory: ${currentPath}`,
       );
     }
   }
@@ -127,12 +139,89 @@ async function assertSafeRegularFile(repositoryRoot, sourceRoot, sourcePath) {
     !isPathInside(canonicalRepositoryRoot, canonicalSourceRoot) ||
     !isPathInside(canonicalSourceRoot, canonicalSourcePath)
   ) {
-    throw new Error(
-      "Managed image path escapes its canonical source boundary.",
-    );
+    throw new Error(`${label} path escapes its canonical boundary.`);
   }
 
   return canonicalSourcePath;
+}
+
+function stableFileIdentityMatches(before, after) {
+  return ["dev", "ino", "size", "mtimeNs", "ctimeNs"].every(
+    (field) => before?.[field] === after?.[field],
+  );
+}
+
+async function readStableRegularFile(
+  { repositoryRoot, boundaryRoot, filePath, label = "Managed image", maxBytes },
+  { afterRead } = {},
+) {
+  const canonicalBefore = await assertSafeRegularFile(
+    repositoryRoot,
+    boundaryRoot,
+    filePath,
+    { label },
+  );
+  const noFollow = fsConstants.O_NOFOLLOW;
+  const flags =
+    fsConstants.O_RDONLY |
+    (typeof noFollow === "number" && Number.isSafeInteger(noFollow)
+      ? noFollow
+      : 0);
+  let handle;
+  try {
+    handle = await open(path.resolve(filePath), flags);
+  } catch (error) {
+    throw new Error(`${label} could not be opened safely: ${filePath}`, {
+      cause: error,
+    });
+  }
+
+  let before;
+  let after;
+  let bytes;
+  try {
+    before = await handle.stat({ bigint: true });
+    if (!before.isFile()) {
+      throw new Error(`${label} must remain a regular file: ${filePath}`);
+    }
+    const byteLength = Number(before.size);
+    if (!Number.isSafeInteger(byteLength) || byteLength < 0) {
+      throw new Error(`${label} has an unsafe byte length: ${filePath}`);
+    }
+    if (Number.isSafeInteger(maxBytes) && byteLength > maxBytes) {
+      throw new Error(
+        `${label} exceeds the ${maxBytes.toLocaleString("en-US")}-byte limit: ${filePath}`,
+      );
+    }
+    bytes = await handle.readFile();
+    if (bytes.byteLength !== byteLength) {
+      throw new Error(`${label} changed while it was being read: ${filePath}`);
+    }
+    if (typeof afterRead === "function") await afterRead();
+    after = await handle.stat({ bigint: true });
+    if (!after.isFile() || !stableFileIdentityMatches(before, after)) {
+      throw new Error(`${label} changed while it was being read: ${filePath}`);
+    }
+  } finally {
+    await handle.close();
+  }
+
+  const canonicalAfter = await assertSafeRegularFile(
+    repositoryRoot,
+    boundaryRoot,
+    filePath,
+    { label },
+  );
+  const pathAfter = await lstat(path.resolve(filePath), { bigint: true });
+  if (
+    canonicalAfter !== canonicalBefore ||
+    !pathAfter.isFile() ||
+    !stableFileIdentityMatches(after, pathAfter)
+  ) {
+    throw new Error(`${label} changed while it was being read: ${filePath}`);
+  }
+
+  return { bytes, canonicalPath: canonicalAfter };
 }
 
 export function validateManagedArticleImageMetadata(
@@ -191,36 +280,34 @@ function validateManagedArticleImageByteLength(byteLength) {
   }
 }
 
-export async function inspectManagedArticleImage({
-  articleSlug,
-  publicUrl,
-  repositoryRoot = process.cwd(),
-}) {
+export async function inspectManagedArticleImage(
+  { articleSlug, publicUrl, repositoryRoot = process.cwd() },
+  inspectionHooks = {},
+) {
   const parsed = parseManagedArticleImageUrl(publicUrl, articleSlug);
   const sourceRoot = path.join(
     path.resolve(repositoryRoot),
     MANAGED_ARTICLE_IMAGE_SOURCE_ROOT,
   );
   const sourcePath = path.join(sourceRoot, parsed.filename);
-  const canonicalSourcePath = await assertSafeRegularFile(
-    repositoryRoot,
-    sourceRoot,
-    sourcePath,
-  );
-  const preReadDetails = await lstat(canonicalSourcePath);
-  validateManagedArticleImageByteLength(preReadDetails.size);
-  const bytes = await readFile(canonicalSourcePath);
-  if (bytes.byteLength !== preReadDetails.size) {
-    throw new Error(
-      `Managed image changed while it was being inspected: ${parsed.filename}`,
+  const { bytes, canonicalPath: canonicalSourcePath } =
+    await readStableRegularFile(
+      {
+        repositoryRoot,
+        boundaryRoot: sourceRoot,
+        filePath: sourcePath,
+        label: "Managed image source",
+        maxBytes: MANAGED_ARTICLE_IMAGE_MAX_BYTES,
+      },
+      inspectionHooks,
     );
-  }
+  validateManagedArticleImageByteLength(bytes.byteLength);
 
   let metadata;
   try {
     metadata = await sharp(bytes, {
       animated: true,
-      failOn: "error",
+      failOn: "warning",
     }).metadata();
   } catch (error) {
     throw new Error(`Managed image could not be decoded: ${parsed.filename}`, {
@@ -232,6 +319,22 @@ export async function inspectManagedArticleImage({
     parsed.extension,
     bytes.byteLength,
   );
+  try {
+    await sharp(bytes, {
+      animated: true,
+      failOn: "warning",
+      limitInputPixels:
+        MANAGED_ARTICLE_IMAGE_MAX_DIMENSION *
+        MANAGED_ARTICLE_IMAGE_MAX_DIMENSION,
+    })
+      .raw()
+      .toBuffer();
+  } catch (error) {
+    throw new Error(
+      `Managed image pixel data could not be fully decoded: ${parsed.filename}`,
+      { cause: error },
+    );
+  }
 
   return {
     ...parsed,
@@ -251,6 +354,19 @@ export function findCaseFoldedDuplicateBasenames(fileNames) {
     groups.set(folded, group);
   }
   return [...groups.values()].filter((group) => group.length > 1);
+}
+
+export function classifyManagedArticleSourceFileNames(fileNames) {
+  const mediaPattern = /\.(?:webp|png|jpg|jpeg)$/;
+  return {
+    duplicateGroups: findCaseFoldedDuplicateBasenames(fileNames),
+    rasterFileNames: fileNames.filter((fileName) =>
+      mediaPattern.test(fileName),
+    ),
+    unsupportedFileNames: fileNames.filter(
+      (fileName) => fileName !== ".gitkeep" && !mediaPattern.test(fileName),
+    ),
+  };
 }
 
 function normalizeReferenceIdentifier(identifier) {
@@ -574,6 +690,46 @@ async function inspectManagedSourceDirectory(repositoryRoot) {
   };
 }
 
+async function findLegacyPublicMediaRoot(repositoryRoot) {
+  const resolvedRepositoryRoot = path.resolve(repositoryRoot);
+  const legacyRoot = path.join(
+    resolvedRepositoryRoot,
+    LEGACY_MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT,
+  );
+  const segments = path
+    .relative(resolvedRepositoryRoot, legacyRoot)
+    .split(path.sep)
+    .filter(Boolean);
+  let currentPath = resolvedRepositoryRoot;
+  for (const [index, segment] of segments.entries()) {
+    currentPath = path.join(currentPath, segment);
+    let details;
+    try {
+      details = await lstat(currentPath);
+    } catch (error) {
+      if (error?.code === "ENOENT") return undefined;
+      throw error;
+    }
+    const isLast = index === segments.length - 1;
+    if (details.isSymbolicLink()) {
+      return finding(
+        "legacy-public-media-root",
+        LEGACY_MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT,
+        `The legacy public managed-media path must be absent; a symbolic link or junction exists at ${currentPath}.`,
+      );
+    }
+    if (!isLast && !details.isDirectory()) return undefined;
+    if (isLast) {
+      return finding(
+        "legacy-public-media-root",
+        LEGACY_MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT,
+        "The legacy public managed-media root must be absent in every form; managed sources belong only under src/content-assets/articles.",
+      );
+    }
+  }
+  return undefined;
+}
+
 export async function auditManagedArticleImages(
   articles,
   { repositoryRoot = process.cwd() } = {},
@@ -607,12 +763,25 @@ export async function auditManagedArticleImages(
     for (const reference of articleReferences) {
       const current = referencesByUrl.get(reference.publicUrl);
       if (current) {
-        current.published ||= status === "published";
         current.usages.push({
           fileName: article.fileName,
           kind: reference.kind,
           status,
         });
+        if (current.articleSlug !== articleSlug) {
+          if (!current.ambiguous) {
+            findings.push(
+              finding(
+                "ambiguous-managed-image-owner",
+                reference.publicUrl,
+                `Managed image URL is claimed by distinct article slugs: ${current.articleSlug} and ${articleSlug}.`,
+              ),
+            );
+          }
+          current.ambiguous = true;
+        } else {
+          current.published ||= status === "published";
+        }
       } else {
         referencesByUrl.set(reference.publicUrl, {
           ...reference,
@@ -624,6 +793,19 @@ export async function auditManagedArticleImages(
         });
       }
     }
+  }
+
+  try {
+    const legacyFinding = await findLegacyPublicMediaRoot(repositoryRoot);
+    if (legacyFinding) findings.push(legacyFinding);
+  } catch (error) {
+    findings.push(
+      finding(
+        "legacy-public-media-root",
+        LEGACY_MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT,
+        error instanceof Error ? error.message : String(error),
+      ),
+    );
   }
 
   let sourceDirectory;
@@ -640,8 +822,9 @@ export async function auditManagedArticleImages(
     return { findings, publishedImages: [], referencedImages: [] };
   }
 
-  const rasterFileNames = [];
+  const regularFileNames = [];
   for (const entry of sourceDirectory.entries) {
+    if (entry.isFile()) regularFileNames.push(entry.name);
     if (entry.name === ".gitkeep" && entry.isFile()) {
       const marker = await lstat(
         path.join(sourceDirectory.sourceRoot, entry.name),
@@ -673,22 +856,21 @@ export async function auditManagedArticleImages(
           "Managed image source entries must be regular files in one flat directory.",
         ),
       );
-    } else if (!/\.(?:webp|png|jpg|jpeg)$/.test(entry.name)) {
-      findings.push(
-        finding(
-          "unsupported-source-entry",
-          entry.name,
-          "Managed image source contains a nonapproved file.",
-        ),
-      );
-    } else {
-      rasterFileNames.push(entry.name);
     }
   }
 
-  for (const duplicateGroup of findCaseFoldedDuplicateBasenames(
-    rasterFileNames,
-  )) {
+  const { duplicateGroups, rasterFileNames, unsupportedFileNames } =
+    classifyManagedArticleSourceFileNames(regularFileNames);
+  for (const unsupportedFileName of unsupportedFileNames) {
+    findings.push(
+      finding(
+        "unsupported-source-entry",
+        unsupportedFileName,
+        "Managed image source contains a nonapproved file.",
+      ),
+    );
+  }
+  for (const duplicateGroup of duplicateGroups) {
     findings.push(
       finding(
         "case-folded-image-duplicate",
@@ -715,6 +897,7 @@ export async function auditManagedArticleImages(
 
   const referencedImages = [];
   for (const reference of referencesByUrl.values()) {
+    if (reference.ambiguous) continue;
     try {
       const inspected = await inspectManagedArticleImage({
         articleSlug: reference.articleSlug,
@@ -740,6 +923,7 @@ export async function auditManagedArticleImages(
   const publishedUrls = new Set(
     [...referencesByUrl.values()]
       .filter(({ published }) => published)
+      .filter(({ ambiguous }) => !ambiguous)
       .map(({ publicUrl }) => publicUrl),
   );
   return {
@@ -749,6 +933,359 @@ export async function auditManagedArticleImages(
     ),
     referencedImages,
   };
+}
+
+async function inspectSafeDirectoryBoundary(
+  repositoryRoot,
+  directoryPath,
+  { label = "Managed image output" } = {},
+) {
+  const resolvedRepositoryRoot = path.resolve(repositoryRoot);
+  const resolvedDirectoryPath = path.resolve(directoryPath);
+  if (!isPathInside(resolvedRepositoryRoot, resolvedDirectoryPath)) {
+    throw new Error(`${label} escapes its lexical repository boundary.`);
+  }
+
+  const repositoryDetails = await lstat(resolvedRepositoryRoot);
+  if (repositoryDetails.isSymbolicLink()) {
+    throw new Error(
+      `${label} cannot use a symbolic link or junction as the repository root: ${resolvedRepositoryRoot}`,
+    );
+  }
+  if (!repositoryDetails.isDirectory()) {
+    throw new Error(
+      `${label} repository root must be a directory: ${resolvedRepositoryRoot}`,
+    );
+  }
+
+  const segments = path
+    .relative(resolvedRepositoryRoot, resolvedDirectoryPath)
+    .split(path.sep)
+    .filter(Boolean);
+  let currentPath = resolvedRepositoryRoot;
+  for (const segment of segments) {
+    currentPath = path.join(currentPath, segment);
+    let details;
+    try {
+      details = await lstat(currentPath);
+    } catch (error) {
+      if (error?.code === "ENOENT") {
+        return {
+          canonicalDirectory: undefined,
+          canonicalRepositoryRoot: await realpath(resolvedRepositoryRoot),
+          exists: false,
+          resolvedDirectoryPath,
+        };
+      }
+      throw error;
+    }
+    if (details.isSymbolicLink()) {
+      throw new Error(
+        `${label} cannot contain a symbolic link or junction: ${currentPath}`,
+      );
+    }
+    if (!details.isDirectory()) {
+      throw new Error(`${label} ancestor must be a directory: ${currentPath}`);
+    }
+  }
+
+  const [canonicalRepositoryRoot, canonicalDirectory] = await Promise.all([
+    realpath(resolvedRepositoryRoot),
+    realpath(resolvedDirectoryPath),
+  ]);
+  if (!isPathInside(canonicalRepositoryRoot, canonicalDirectory)) {
+    throw new Error(`${label} escapes its canonical repository boundary.`);
+  }
+  return {
+    canonicalDirectory,
+    canonicalRepositoryRoot,
+    exists: true,
+    resolvedDirectoryPath,
+  };
+}
+
+function sha256(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+function normalizedRelativePath(parentPath, childPath) {
+  return path.relative(parentPath, childPath).split(path.sep).join("/");
+}
+
+export async function auditManagedArticleImageBuildFilesystem({
+  audit,
+  repositoryRoot = process.cwd(),
+  distDirectory = path.join(repositoryRoot, "dist"),
+}) {
+  const findings = [];
+  if (!audit || !Array.isArray(audit.findings)) {
+    return [
+      finding(
+        "managed-image-source-audit",
+        MANAGED_ARTICLE_IMAGE_SOURCE_ROOT,
+        "Built-output verification requires a completed managed image source audit.",
+      ),
+    ];
+  }
+  if (audit.findings.length > 0) {
+    return audit.findings.map((issue) =>
+      finding(
+        "managed-image-source-audit",
+        issue.location,
+        `[${issue.code}] ${issue.message}`,
+      ),
+    );
+  }
+
+  const expectedByFileName = new Map();
+  for (const image of audit.publishedImages ?? []) {
+    const existing = expectedByFileName.get(image.filename);
+    if (
+      existing &&
+      (existing.articleSlug !== image.articleSlug ||
+        existing.publicUrl !== image.publicUrl)
+    ) {
+      findings.push(
+        finding(
+          "managed-image-output-collision",
+          image.filename,
+          "Published managed image manifest contains conflicting owners.",
+        ),
+      );
+      continue;
+    }
+    expectedByFileName.set(image.filename, image);
+  }
+
+  for (const [fileName, image] of expectedByFileName) {
+    try {
+      const current = await inspectManagedArticleImage({
+        articleSlug: image.articleSlug,
+        publicUrl: image.publicUrl,
+        repositoryRoot,
+      });
+      if (
+        current.byteLength !== image.byteLength ||
+        sha256(current.bytes) !== sha256(image.bytes)
+      ) {
+        findings.push(
+          finding(
+            "managed-image-source-changed",
+            fileName,
+            "Private source bytes changed after the lifecycle audit.",
+          ),
+        );
+      }
+      expectedByFileName.set(fileName, { ...image, bytes: current.bytes });
+    } catch (error) {
+      findings.push(
+        finding(
+          "managed-image-source-changed",
+          fileName,
+          error instanceof Error ? error.message : String(error),
+        ),
+      );
+    }
+  }
+
+  const resolvedDistDirectory = path.resolve(distDirectory);
+  const managedOutputRoot = path.join(
+    resolvedDistDirectory,
+    MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT.slice(1),
+  );
+  let outputBoundary;
+  try {
+    outputBoundary = await inspectSafeDirectoryBoundary(
+      repositoryRoot,
+      managedOutputRoot,
+    );
+  } catch (error) {
+    findings.push(
+      finding(
+        "unsafe-managed-output",
+        normalizedRelativePath(repositoryRoot, managedOutputRoot),
+        error instanceof Error ? error.message : String(error),
+      ),
+    );
+    return findings;
+  }
+
+  if (!outputBoundary.exists) {
+    if (expectedByFileName.size > 0) {
+      findings.push(
+        finding(
+          "managed-image-output-set",
+          normalizedRelativePath(repositoryRoot, managedOutputRoot),
+          `Missing published managed images: ${[...expectedByFileName.keys()].sort().join(", ")}.`,
+        ),
+      );
+    }
+    return findings;
+  }
+
+  const actualPaths = new Set();
+  async function walk(directory) {
+    const entries = await readdir(directory, { withFileTypes: true });
+    for (const entry of entries) {
+      const absolutePath = path.join(directory, entry.name);
+      const relativePath = normalizedRelativePath(
+        outputBoundary.resolvedDirectoryPath,
+        absolutePath,
+      );
+      actualPaths.add(relativePath);
+      let details;
+      try {
+        details = await lstat(absolutePath);
+      } catch (error) {
+        findings.push(
+          finding(
+            "unsafe-managed-output",
+            relativePath,
+            `Managed output became unreadable: ${error instanceof Error ? error.message : error}`,
+          ),
+        );
+        continue;
+      }
+      if (details.isSymbolicLink()) {
+        findings.push(
+          finding(
+            "unsafe-managed-output",
+            relativePath,
+            "Managed output cannot contain a symbolic link or junction.",
+          ),
+        );
+        continue;
+      }
+
+      let canonicalPath;
+      try {
+        canonicalPath = await realpath(absolutePath);
+      } catch (error) {
+        findings.push(
+          finding(
+            "unsafe-managed-output",
+            relativePath,
+            `Managed output canonical path is unreadable: ${error instanceof Error ? error.message : error}`,
+          ),
+        );
+        continue;
+      }
+      if (
+        !isPathInside(outputBoundary.canonicalRepositoryRoot, canonicalPath) ||
+        !isPathInside(outputBoundary.canonicalDirectory, canonicalPath)
+      ) {
+        findings.push(
+          finding(
+            "unsafe-managed-output",
+            relativePath,
+            "Managed output escapes its canonical output boundary.",
+          ),
+        );
+        continue;
+      }
+
+      if (details.isDirectory()) {
+        findings.push(
+          finding(
+            "nonregular-managed-output",
+            relativePath,
+            "Managed output must contain regular files in one flat directory.",
+          ),
+        );
+        await walk(absolutePath);
+        continue;
+      }
+      if (!details.isFile()) {
+        findings.push(
+          finding(
+            "nonregular-managed-output",
+            relativePath,
+            "Managed output entries must be regular files.",
+          ),
+        );
+        continue;
+      }
+
+      let outputBytes;
+      try {
+        ({ bytes: outputBytes } = await readStableRegularFile({
+          repositoryRoot,
+          boundaryRoot: outputBoundary.resolvedDirectoryPath,
+          filePath: absolutePath,
+          label: "Managed image output",
+          maxBytes: MANAGED_ARTICLE_IMAGE_MAX_BYTES,
+        }));
+      } catch (error) {
+        findings.push(
+          finding(
+            "unsafe-managed-output",
+            relativePath,
+            error instanceof Error ? error.message : String(error),
+          ),
+        );
+        continue;
+      }
+
+      const expected = expectedByFileName.get(relativePath);
+      if (
+        expected &&
+        (outputBytes.byteLength !== expected.bytes.byteLength ||
+          sha256(outputBytes) !== sha256(expected.bytes))
+      ) {
+        findings.push(
+          finding(
+            "managed-image-output-bytes",
+            relativePath,
+            "Built managed image bytes do not match the validated private source.",
+          ),
+        );
+      }
+    }
+  }
+  await walk(outputBoundary.resolvedDirectoryPath);
+  try {
+    const recheckedBoundary = await inspectSafeDirectoryBoundary(
+      repositoryRoot,
+      managedOutputRoot,
+    );
+    if (
+      !recheckedBoundary.exists ||
+      recheckedBoundary.canonicalDirectory !==
+        outputBoundary.canonicalDirectory ||
+      recheckedBoundary.canonicalRepositoryRoot !==
+        outputBoundary.canonicalRepositoryRoot
+    ) {
+      throw new Error(
+        "Managed image output root changed while it was being inspected.",
+      );
+    }
+  } catch (error) {
+    findings.push(
+      finding(
+        "unsafe-managed-output",
+        normalizedRelativePath(repositoryRoot, managedOutputRoot),
+        error instanceof Error ? error.message : String(error),
+      ),
+    );
+  }
+
+  const expectedPaths = new Set(expectedByFileName.keys());
+  const missing = [...expectedPaths]
+    .filter((fileName) => !actualPaths.has(fileName))
+    .sort();
+  const extra = [...actualPaths]
+    .filter((fileName) => !expectedPaths.has(fileName))
+    .sort();
+  if (missing.length > 0 || extra.length > 0) {
+    findings.push(
+      finding(
+        "managed-image-output-set",
+        normalizedRelativePath(repositoryRoot, managedOutputRoot),
+        `missing [${missing.join(", ") || "none"}]; extra [${extra.join(", ") || "none"}].`,
+      ),
+    );
+  }
+  return findings;
 }
 
 export function createPublishedManagedImagePaths(audit) {

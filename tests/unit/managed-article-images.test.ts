@@ -14,6 +14,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   auditManagedArticleImages,
+  classifyManagedArticleSourceFileNames,
   findCaseFoldedDuplicateBasenames,
   inspectManagedArticleImage,
   MANAGED_ARTICLE_IMAGE_MAX_BYTES,
@@ -60,10 +61,24 @@ function isUnavailableLinkError(error: unknown) {
   return (
     error instanceof Error &&
     "code" in error &&
-    ["EPERM", "EACCES", "ENOSYS", "UNKNOWN"].includes(
-      String((error as NodeJS.ErrnoException).code),
-    )
+    ["EPERM", "EACCES"].includes(String((error as NodeJS.ErrnoException).code))
   );
+}
+
+function corruptPngIdat(bytes: Buffer) {
+  const corrupted = Buffer.from(bytes);
+  let offset = 8;
+  while (offset + 12 <= corrupted.length) {
+    const chunkLength = corrupted.readUInt32BE(offset);
+    const chunkType = corrupted.toString("ascii", offset + 4, offset + 8);
+    if (chunkType === "IDAT" && chunkLength > 0) {
+      const payloadIndex = offset + 8 + Math.floor(chunkLength / 2);
+      corrupted[payloadIndex] = (corrupted[payloadIndex] ?? 0) ^ 0xff;
+      return corrupted;
+    }
+    offset += 12 + chunkLength;
+  }
+  throw new Error("PNG fixture did not contain an IDAT chunk.");
 }
 
 afterEach(async () => {
@@ -156,6 +171,51 @@ describe("managed article image inspection", () => {
       expect(Buffer.compare(inspected.bytes, bytes)).toBe(0);
     },
   );
+
+  it("rejects a header-valid PNG whose IDAT pixel payload is corrupt", async () => {
+    const { repositoryRoot, sourceRoot } = await makeRepository();
+    const filename = "a-practical-guide-corrupt-pixels.png";
+    const bytes = corruptPngIdat(await rasterBuffer("png"));
+    await expect(sharp(bytes).metadata()).resolves.toMatchObject({
+      format: "png",
+      width: 12,
+      height: 8,
+    });
+    await writeFile(path.join(sourceRoot, filename), bytes);
+
+    await expect(
+      inspectManagedArticleImage({
+        articleSlug: "a-practical-guide",
+        publicUrl: `/images/articles/${filename}`,
+        repositoryRoot,
+      }),
+    ).rejects.toThrow(/fully decoded|pixel/i);
+  });
+
+  it("rejects a file that changes after descriptor-backed reading", async () => {
+    const { repositoryRoot, sourceRoot } = await makeRepository();
+    const filename = "a-practical-guide-changing-file.png";
+    const sourcePath = path.join(sourceRoot, filename);
+    await writeFile(sourcePath, await rasterBuffer("png"));
+
+    await expect(
+      inspectManagedArticleImage(
+        {
+          articleSlug: "a-practical-guide",
+          publicUrl: `/images/articles/${filename}`,
+          repositoryRoot,
+        },
+        {
+          afterRead: async () => {
+            await writeFile(
+              sourcePath,
+              await rasterBuffer("png", { width: 13 }),
+            );
+          },
+        },
+      ),
+    ).rejects.toThrow(/changed while/i);
+  });
 
   it("uses orientation-aware dimensions", async () => {
     const { repositoryRoot, sourceRoot } = await makeRepository();
@@ -443,6 +503,21 @@ describe("managed article image inspection", () => {
       ]),
     ).toEqual([["guide-decision.png", "guide-decision.PNG"]]);
   });
+
+  it("detects case-fold collisions before rejecting a mixed-case extension", () => {
+    expect(
+      classifyManagedArticleSourceFileNames([
+        "guide-procedure-flow.png",
+        "GUIDE-PROCEDURE-FLOW.PNG",
+      ]),
+    ).toEqual({
+      duplicateGroups: [
+        ["guide-procedure-flow.png", "GUIDE-PROCEDURE-FLOW.PNG"],
+      ],
+      rasterFileNames: ["guide-procedure-flow.png"],
+      unsupportedFileNames: ["GUIDE-PROCEDURE-FLOW.PNG"],
+    });
+  });
 });
 
 describe("managed Markdown image policy", () => {
@@ -664,6 +739,138 @@ describe("managed article image inventory", () => {
       publishedImages: [],
       referencedImages: [],
     });
+  });
+
+  it.each(["directory", "file"] as const)(
+    "rejects the legacy public media root when it exists as a %s",
+    async (kind) => {
+      const { repositoryRoot } = await makeRepository();
+      const legacyRoot = path.join(
+        repositoryRoot,
+        "public",
+        "images",
+        "articles",
+      );
+      if (kind === "directory") {
+        await mkdir(legacyRoot, { recursive: true });
+      } else {
+        await mkdir(path.dirname(legacyRoot), { recursive: true });
+        await writeFile(legacyRoot, "shadow");
+      }
+
+      expect(
+        (await auditManagedArticleImages([], { repositoryRoot })).findings,
+      ).toContainEqual(
+        expect.objectContaining({ code: "legacy-public-media-root" }),
+      );
+    },
+  );
+
+  it("rejects the legacy public media root when it is a junction", async (context) => {
+    const { repositoryRoot } = await makeRepository();
+    const legacyRoot = path.join(
+      repositoryRoot,
+      "public",
+      "images",
+      "articles",
+    );
+    const target = path.join(repositoryRoot, "legacy-public-target");
+    await mkdir(path.dirname(legacyRoot), { recursive: true });
+    await mkdir(target, { recursive: true });
+    try {
+      await symlink(target, legacyRoot, "junction");
+    } catch (error) {
+      if (isUnavailableLinkError(error)) return context.skip();
+      throw error;
+    }
+
+    expect(
+      (await auditManagedArticleImages([], { repositoryRoot })).findings,
+    ).toContainEqual(
+      expect.objectContaining({ code: "legacy-public-media-root" }),
+    );
+  });
+
+  it("rejects the legacy public media root when it is a file symlink", async (context) => {
+    const { repositoryRoot } = await makeRepository();
+    const legacyRoot = path.join(
+      repositoryRoot,
+      "public",
+      "images",
+      "articles",
+    );
+    const target = path.join(repositoryRoot, "legacy-public-target.png");
+    await mkdir(path.dirname(legacyRoot), { recursive: true });
+    await writeFile(target, await rasterBuffer("png"));
+    try {
+      await symlink(target, legacyRoot, "file");
+    } catch (error) {
+      if (isUnavailableLinkError(error)) return context.skip();
+      throw error;
+    }
+
+    expect(
+      (await auditManagedArticleImages([], { repositoryRoot })).findings,
+    ).toContainEqual(
+      expect.objectContaining({ code: "legacy-public-media-root" }),
+    );
+  });
+
+  it("rejects a public shadow of a valid private managed image", async () => {
+    const { repositoryRoot, sourceRoot } = await makeRepository();
+    const filename = "published-guide-decision-flow.png";
+    const bytes = await rasterBuffer("png");
+    await writeFile(path.join(sourceRoot, filename), bytes);
+    const publicRoot = path.join(
+      repositoryRoot,
+      "public",
+      "images",
+      "articles",
+    );
+    await mkdir(publicRoot, { recursive: true });
+    await writeFile(path.join(publicRoot, filename), bytes);
+
+    const audit = await auditManagedArticleImages(
+      [
+        {
+          fileName: "published-guide.md",
+          data: { slug: "published-guide", status: "published" },
+          body: `![Decision workflow with approval steps](/images/articles/${filename})`,
+        },
+      ],
+      { repositoryRoot },
+    );
+
+    expect(audit.findings).toContainEqual(
+      expect.objectContaining({ code: "legacy-public-media-root" }),
+    );
+  });
+
+  it("rejects one URL claimed by distinct article slugs", async () => {
+    const { repositoryRoot, sourceRoot } = await makeRepository();
+    const filename = "guide-procedure-flow.png";
+    await writeFile(path.join(sourceRoot, filename), await rasterBuffer("png"));
+
+    const audit = await auditManagedArticleImages(
+      [
+        {
+          fileName: "guide.md",
+          data: { slug: "guide", status: "draft" },
+          body: `![Draft procedure workflow with review steps](/images/articles/${filename})`,
+        },
+        {
+          fileName: "guide-procedure.md",
+          data: { slug: "guide-procedure", status: "published" },
+          body: `![Published procedure workflow with review steps](/images/articles/${filename})`,
+        },
+      ],
+      { repositoryRoot },
+    );
+
+    expect(audit.findings).toContainEqual(
+      expect.objectContaining({ code: "ambiguous-managed-image-owner" }),
+    );
+    expect(audit.publishedImages).toEqual([]);
   });
 
   it("allows only the exact tracked empty-directory marker as non-media", async () => {

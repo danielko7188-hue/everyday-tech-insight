@@ -28,7 +28,7 @@ export default function rehypeManagedArticleImages() {
       const src = node.properties?.src;
       if (
         typeof src === "string" &&
-        src.startsWith(MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT)
+        src.startsWith(`${MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT}/`)
       ) {
         managedNodes.push(node);
       }

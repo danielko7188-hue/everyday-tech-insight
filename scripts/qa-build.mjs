@@ -11,6 +11,8 @@ import {
   REQUIRED_CATEGORY_SLUGS,
 } from "./qa-content.mjs";
 import {
+  auditManagedArticleImageBuildFilesystem,
+  auditManagedArticleImages,
   isMeaningfulManagedImageAlt,
   MANAGED_ARTICLE_IMAGE_MAX_DIMENSION,
   MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT,
@@ -194,7 +196,7 @@ export function validateManagedArticleImageBuildOutput({ files, articles }) {
     );
     const managedElements = $("img[src]").filter((_index, element) =>
       ($(element).attr("src") ?? "").startsWith(
-        MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT,
+        `${MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT}/`,
       ),
     );
     const actualUrls = sorted(
@@ -1705,7 +1707,25 @@ export async function readBuildFiles(
 }
 
 async function main() {
+  const repositoryRoot = process.cwd();
   const articles = await readArticleRecords();
+  const imageAudit = await auditManagedArticleImages(articles, {
+    repositoryRoot,
+  });
+  const managedFilesystemFindings =
+    await auditManagedArticleImageBuildFilesystem({
+      audit: imageAudit,
+      repositoryRoot,
+      distDirectory: path.join(repositoryRoot, "dist"),
+    });
+  if (managedFilesystemFindings.length > 0) {
+    const issues = managedFilesystemFindings.map(
+      ({ code, location, message }) => ({ code, file: location, message }),
+    );
+    printFindings("Built-output QA", issues);
+    process.exitCode = 1;
+    return;
+  }
   const files = await readBuildFiles();
   const issues = validateBuiltOutput({
     files,
