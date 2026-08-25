@@ -398,12 +398,7 @@ export function validateManagedArticleImageBuildOutput({
 }
 
 function compareCategoryArticles(left, right) {
-  return (
-    Number(Boolean(right.data.featured)) -
-      Number(Boolean(left.data.featured)) ||
-    right.data.datePublished.localeCompare(left.data.datePublished) ||
-    left.data.title.localeCompare(right.data.title, "en")
-  );
+  return left.data.slug.localeCompare(right.data.slug, "en");
 }
 
 function compareArchiveArticles(left, right) {

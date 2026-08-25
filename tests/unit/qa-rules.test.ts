@@ -1628,6 +1628,24 @@ describe("built-output QA rules", () => {
     expect(issues).toEqual([]);
   });
 
+  it("keeps category membership in neutral stable slug order instead of promoting featured guides", () => {
+    const fixture = validBuiltFixture();
+    const categoryArticles = fixture.articles.filter(
+      ({ data }) => data.category === "ai-automation",
+    );
+    categoryArticles[0]!.data.featured = false;
+    categoryArticles[1]!.data.featured = true;
+
+    const issues = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    });
+
+    expect(issues).toEqual([]);
+  });
+
   it("rejects incomplete all-guides archive membership", () => {
     const fixture = validBuiltFixture();
     fixture.files.set(
