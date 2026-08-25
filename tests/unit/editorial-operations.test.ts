@@ -759,6 +759,8 @@ describe("publication operating guide", () => {
       /src\/content-assets\/articles/i,
       /public URL.*\/images\/articles\//i,
       /hero.*body image.*slug-prefixed/i,
+      /EXIF[\s\S]{0,160}GPS.*location.*device.*author.*XMP.*IPTC.*comments/i,
+      /raw bytes[\s\S]{0,120}public repository[\s\S]{0,160}before CI[\s\S]{0,160}cannot erase[\s\S]{0,120}Git history/i,
       /body image.*Markdown.*path.*alt/i,
       /Pages CMS[\s\S]{0,160}does not[\s\S]{0,160}body-image[\s\S]{0,160}caption.*credit.*license.*source/i,
       /mediaRights[\s\S]{0,160}quality record/i,

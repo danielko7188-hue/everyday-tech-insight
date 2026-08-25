@@ -36,3 +36,8 @@ export function comparePublishedArticlesBySlug<T extends EntryWithSlug>(
 ): number {
   return left.data.slug.localeCompare(right.data.slug, "en");
 }
+
+export function formatGuideCount(count: number, qualifier?: string): string {
+  const qualifiedNoun = qualifier ? `${qualifier} guide` : "guide";
+  return `${count} ${qualifiedNoun}${count === 1 ? "" : "s"}`;
+}

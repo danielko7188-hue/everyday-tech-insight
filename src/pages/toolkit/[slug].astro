@@ -1,19 +1,27 @@
 ---
+import { getCollection } from "astro:content";
+
+import { toolkitResourceHasPublishedGuide } from "../../data/editorial";
 import { toolkitResources, type ToolkitResource } from "../../data/toolkit";
 import ToolkitDetailLayout from "../../layouts/ToolkitDetailLayout.astro";
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
+  const articles = await getCollection("articles");
   return toolkitResources.map((resource) => ({
     params: { slug: resource.id },
-    props: { resource },
+    props: {
+      resource,
+      showGuideLink: toolkitResourceHasPublishedGuide(resource, articles),
+    },
   }));
 }
 
 interface Props {
   resource: ToolkitResource;
+  showGuideLink: boolean;
 }
 
-const { resource } = Astro.props;
+const { resource, showGuideLink } = Astro.props;
 ---
 
-<ToolkitDetailLayout resource={resource} />
+<ToolkitDetailLayout resource={resource} showGuideLink={showGuideLink} />

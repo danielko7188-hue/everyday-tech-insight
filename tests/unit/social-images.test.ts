@@ -33,24 +33,6 @@ const expectedCategorySlugs = [
   "technology-strategy",
 ];
 
-const expectedArticleSlugs = [
-  "back-up-business-files-with-the-3-2-1-method",
-  "calculate-the-total-cost-of-business-software",
-  "create-a-shared-file-and-folder-system",
-  "create-a-simple-technology-risk-register",
-  "crm-vs-project-management-software",
-  "document-a-repetitive-workflow-before-automating",
-  "evaluate-ai-output-quality-in-a-small-team-pilot",
-  "evaluate-saas-with-a-practical-checklist",
-  "how-to-identify-business-tasks-for-automation",
-  "onboard-employees-and-contractors-to-business-technology",
-  "respond-to-a-suspected-phishing-message",
-  "roll-out-mfa-across-a-small-business",
-  "run-a-30-day-business-technology-pilot",
-  "test-data-export-and-integrations-before-saas-lock-in",
-  "write-a-practical-ai-acceptable-use-policy",
-];
-
 const currentSocialNames = SOCIAL_IMAGE_RECORDS.map(({ fileName }) => fileName);
 const expectedSocialNames = [...currentSocialNames].sort((left, right) =>
   left.localeCompare(right),
@@ -149,7 +131,6 @@ describe("social image portfolio", () => {
   });
 
   it("defines a sorted default, five-category, and complete published-article portfolio", () => {
-    expect(SOCIAL_IMAGE_RECORDS.length).toBeGreaterThanOrEqual(21);
     expect(SOCIAL_IMAGE_RECORDS.map(({ fileName }) => fileName)).toEqual(
       expectedSocialNames,
     );
@@ -166,14 +147,6 @@ describe("social image portfolio", () => {
     const articleRecords = SOCIAL_IMAGE_RECORDS.filter(
       ({ kind }) => kind === "article",
     );
-    expect(articleRecords.length).toBeGreaterThanOrEqual(15);
-    expect(
-      expectedArticleSlugs.every((slug) =>
-        articleRecords.some(
-          ({ fileName }) => fileName === `article-${slug}.png`,
-        ),
-      ),
-    ).toBe(true);
     for (const record of articleRecords) {
       expect(record.title.trim()).not.toBe("");
       expect(record.categoryName.trim()).not.toBe("");

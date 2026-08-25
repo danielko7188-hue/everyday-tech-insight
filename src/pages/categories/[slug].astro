@@ -15,6 +15,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
   comparePublishedArticlesBySlug,
   filterPublishedArticles,
+  formatGuideCount,
   type PublishedArticleEntry,
 } from "../../utils/published-articles";
 
@@ -108,7 +109,7 @@ const description = category.description;
       <SectionHeading
         eyebrow="Published guidance"
         title="All guides in this topic"
-        description={`All ${articles.length} published ${category.name} guides appear once in a neutral reading order.`}
+        description={`All ${formatGuideCount(articles.length, `published ${category.name}`)} appear once in a neutral reading order.`}
         id="category-compact-heading"
       />
       <ol class="category-compact__list">

@@ -101,9 +101,9 @@ Full repository lint, type checking, built-output QA, Playwright, axe, and Light
 
 The content portfolio test verifies:
 
-- at least 15 published guides, including the exact named 15-guide launch subset;
-- at least three published guides in each approved category;
+- the exact named 15-guide launch-record history, including three launch records in each approved category, regardless of a later valid archive transition;
 - valid additional `draft`, `review`, `published`, and `archived` records without applying launch-only assertions to nonlaunch files;
+- current public membership derived only from `status: published`, with no count minimum that could delay an urgent archive or withdrawal;
 - unique launch-subset slug, title, and description values, with file names matching frontmatter slugs;
 - `published` status and `source-checked` verification status for every published guide;
 - publication, review, modification, and archive dates ordered from the confirmed launch through the current publication date;

@@ -6,11 +6,16 @@ import EditorialVisual from "../components/EditorialVisual.astro";
 import SectionHeading from "../components/SectionHeading.astro";
 import TrustModule from "../components/TrustModule.astro";
 import { categories } from "../data/categories";
-import { resolveHomepageCuration } from "../data/editorial";
+import {
+  resolveHomepageCuration,
+  selectFeaturedToolkitResource,
+} from "../data/editorial";
 import { site } from "../data/site";
+import { toolkitResources } from "../data/toolkit";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import {
   filterPublishedArticles,
+  formatGuideCount,
   type PublishedArticleEntry,
 } from "../utils/published-articles";
 
@@ -24,14 +29,22 @@ const compareArticles = (
   return dateOrder || left.data.title.localeCompare(right.data.title, "en");
 };
 
-const publishedArticles = filterPublishedArticles(
-  await getCollection("articles"),
-).sort(compareArticles);
-const homepageSelection = resolveHomepageCuration(publishedArticles);
+const articleCollection = await getCollection("articles");
+const publishedArticles =
+  filterPublishedArticles(articleCollection).sort(compareArticles);
+const homepageCandidates = [
+  ...publishedArticles,
+  ...articleCollection.filter(({ data }) => data.status !== "published"),
+];
+const homepageSelection = resolveHomepageCuration(homepageCandidates);
 const [leadArticle] = homepageSelection.lead;
 const featureArticles = homepageSelection.features;
 const briefingArticles = homepageSelection.briefing;
 const startHereArticles = homepageSelection.startHere;
+const featuredToolkit = selectFeaturedToolkitResource(
+  publishedArticles,
+  toolkitResources,
+);
 const topicCounts = new Map(
   categories.map((category) => [
     category.slug,
@@ -114,7 +127,7 @@ const websiteStructuredData = {
       <SectionHeading
         eyebrow="Latest"
         title="Latest guides"
-        description="Three current guides for practical technology decisions."
+        description={`${formatGuideCount(briefingArticles.length, "current")} for practical technology decisions.`}
         id="latest-briefing-heading"
       />
       <ol class="latest-briefing__list">
@@ -180,7 +193,9 @@ const websiteStructuredData = {
               </div>
               <a href={`/categories/${category.slug}/`}>
                 <span>{category.name}</span>
-                <span>{topicCounts.get(category.slug)} guides</span>
+                <span>
+                  {formatGuideCount(topicCounts.get(category.slug) ?? 0)}
+                </span>
               </a>
               <p>{category.description}</p>
             </li>
@@ -189,34 +204,33 @@ const websiteStructuredData = {
       </ol>
     </section>
 
-    <section
-      class="home-section featured-toolkit"
-      aria-labelledby="featured-toolkit-heading"
-    >
-      <header class="featured-toolkit__heading">
-        <p class="eyebrow">Use the lead guide</p>
-        <h2 id="featured-toolkit-heading">Featured Toolkit resource</h2>
-      </header>
-      <div class="featured-toolkit__body">
-        <div>
-          <h3>Automation candidate screen</h3>
-          <p>
-            This blank worksheet follows the lead guide's decision sequence:
-            record a bounded task, its exceptions and failure consequences, the
-            human review point, and a usable fallback before deciding on a
-            pilot.
-          </p>
-        </div>
-        <p class="featured-toolkit__actions">
-          <a href="/articles/how-to-identify-business-tasks-for-automation/">
-            Read the automation-candidate guide
-          </a>
-          <a href="/toolkit/automation-candidate-screen.csv" download>
-            Download automation screen CSV
-          </a>
-        </p>
-      </div>
-    </section>
+    {
+      featuredToolkit && (
+        <section
+          class="home-section featured-toolkit"
+          aria-labelledby="featured-toolkit-heading"
+        >
+          <header class="featured-toolkit__heading">
+            <p class="eyebrow">Practical worksheet</p>
+            <h2 id="featured-toolkit-heading">Featured Toolkit resource</h2>
+          </header>
+          <div class="featured-toolkit__body">
+            <div>
+              <h3>{featuredToolkit.title}</h3>
+              <p>{featuredToolkit.purpose}</p>
+            </div>
+            <p class="featured-toolkit__actions">
+              <a href={featuredToolkit.guideHref}>
+                {featuredToolkit.guideLabel}
+              </a>
+              <a href={featuredToolkit.downloadHref} download>
+                {featuredToolkit.downloadLabel}
+              </a>
+            </p>
+          </div>
+        </section>
+      )
+    }
 
     <TrustModule />
   </div>

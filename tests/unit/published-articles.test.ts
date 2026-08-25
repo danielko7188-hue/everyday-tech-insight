@@ -37,6 +37,22 @@ describe("published article boundary", () => {
     ]);
   });
 
+  it.each([
+    [0, undefined, "0 guides"],
+    [1, undefined, "1 guide"],
+    [2, undefined, "2 guides"],
+    [1, "published AI and automation", "1 published AI and automation guide"],
+    [3, "current", "3 current guides"],
+  ] as const)(
+    "formats a truthful guide count",
+    async (count, qualifier, expected) => {
+      const { formatGuideCount } =
+        await import("../../src/utils/published-articles");
+
+      expect(formatGuideCount(count, qualifier)).toBe(expected);
+    },
+  );
+
   it("makes the social inventory select published frontmatter before mapping", async () => {
     const module = await import("../../scripts/generate-social-images.mjs");
 

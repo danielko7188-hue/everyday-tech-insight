@@ -8,6 +8,7 @@ import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
   filterPublishedArticles,
+  formatGuideCount,
   type PublishedArticleEntry,
 } from "../../utils/published-articles";
 
@@ -73,7 +74,7 @@ const description =
         >
           <header class="guide-archive__category-heading">
             <div>
-              <p class="eyebrow">{articles.length} guides</p>
+              <p class="eyebrow">{formatGuideCount(articles.length)}</p>
               <h2 id={`archive-${category.slug}`}>{category.name}</h2>
             </div>
             <p>{category.description}</p>

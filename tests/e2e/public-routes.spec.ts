@@ -13,29 +13,6 @@ const articleWhenToUse =
   "Use before comparing automation products or connecting AI tools to an existing business workflow.";
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
 
-const launchAiArticleHrefs = [
-  "/articles/evaluate-ai-output-quality-in-a-small-team-pilot/",
-  "/articles/how-to-identify-business-tasks-for-automation/",
-  "/articles/write-a-practical-ai-acceptable-use-policy/",
-] as const;
-const launchArticleSlugs = [
-  "back-up-business-files-with-the-3-2-1-method",
-  "calculate-the-total-cost-of-business-software",
-  "create-a-shared-file-and-folder-system",
-  "create-a-simple-technology-risk-register",
-  "crm-vs-project-management-software",
-  "document-a-repetitive-workflow-before-automating",
-  "evaluate-ai-output-quality-in-a-small-team-pilot",
-  "evaluate-saas-with-a-practical-checklist",
-  "how-to-identify-business-tasks-for-automation",
-  "onboard-employees-and-contractors-to-business-technology",
-  "respond-to-a-suspected-phishing-message",
-  "roll-out-mfa-across-a-small-business",
-  "run-a-30-day-business-technology-pilot",
-  "test-data-export-and-integrations-before-saas-lock-in",
-  "write-a-practical-ai-acceptable-use-policy",
-] as const;
-
 const toolkitCsvHeaders = {
   "/toolkit/automation-candidate-screen.csv": [
     "Task",
@@ -765,15 +742,6 @@ test("all-guides archive groups every published guide once in category order", a
         right.data.datePublished.localeCompare(left.data.datePublished) ||
         left.data.title.localeCompare(right.data.title, "en"),
     );
-  expect(publishedArticles.length).toBeGreaterThanOrEqual(
-    launchArticleSlugs.length,
-  );
-  expect(
-    launchArticleSlugs.every((slug) =>
-      publishedArticles.some(({ data }) => data.slug === slug),
-    ),
-  ).toBe(true);
-
   const response = await page.goto("/articles/");
   expect(response?.status()).toBe(200);
   await expect(
@@ -802,7 +770,6 @@ test("all-guides archive groups every published guide once in category order", a
       ({ data }) => data.category === category.slug,
     );
     const expectedHrefs = expected.map(({ data }) => `/articles/${data.slug}/`);
-    expect(expectedHrefs.length).toBeGreaterThanOrEqual(3);
     await expect(
       group.getByRole("heading", { name: category.name, exact: true }),
     ).toBeVisible();
@@ -1021,10 +988,6 @@ test("the AI category uses the compact branch with complete published membership
     );
   expect(articleHrefs).toEqual(expectedArticleHrefs);
   expect(new Set(articleHrefs).size).toBe(articleHrefs.length);
-  for (const launchHref of launchAiArticleHrefs) {
-    expect(articleHrefs).toContain(launchHref);
-  }
-
   const storyCards = page.locator(".category-compact .article-card--compact");
   await expect(storyCards).toHaveCount(expectedArticleHrefs.length);
   for (let index = 0; index < expectedArticleHrefs.length; index += 1) {
@@ -1158,10 +1121,6 @@ test("every published guide renders its assigned informative visual and local sy
     ({ data }) => data.status === "published",
   );
   const keys = new Set<string>();
-
-  expect(publishedArticles.length).toBeGreaterThanOrEqual(
-    launchArticleSlugs.length,
-  );
 
   for (const { data } of publishedArticles) {
     const response = await page.goto(`/articles/${data.slug}/`);

@@ -596,7 +596,7 @@ describe("content QA rules", () => {
     }
   });
 
-  it("accepts a complete fifteen-article, three-per-category portfolio", () => {
+  it("accepts the complete launch-shaped fixture portfolio", () => {
     expect(
       validateContentPortfolio(validPortfolio(), { today: "2026-08-21" }),
     ).toEqual([]);
@@ -612,12 +612,10 @@ describe("content QA rules", () => {
       today: "2026-08-21",
     }).map(({ code }) => code);
 
-    expect(codes).not.toContain("portfolio-count");
-    expect(codes).not.toContain("category-count");
     expect(codes).toContain("duplicate-visual-key");
   });
 
-  it("counts portfolio and category minimums from published entries only", () => {
+  it("allows urgent archival even when current publication counts fall below launch counts", () => {
     const articles = validPortfolio();
     for (const [index, status] of ["draft", "review", "archived"].entries()) {
       const article = articles[index]!;
@@ -632,9 +630,6 @@ describe("content QA rules", () => {
       today: "2026-08-21",
     }).map(({ code }) => code);
 
-    expect(codes).toEqual(
-      expect.arrayContaining(["portfolio-count", "category-count"]),
-    );
     expect(codes).not.toContain("status");
   });
 
@@ -1025,6 +1020,22 @@ describe("content QA rules", () => {
     );
   });
 
+  it("allows a published guide to retain a reference to an archived guide", () => {
+    const articles = validPortfolio();
+    const archived = articles[1]!;
+    archived.data.status = "archived";
+    archived.data.noindex = true;
+    Object.assign(archived.data, { dateArchived: "2026-08-21" });
+    articles[0]!.data.relatedArticles = [archived.data.slug];
+
+    const codes = validateContentPortfolio(articles, {
+      today: "2026-08-21",
+    }).map(({ code }) => code);
+
+    expect(codes).not.toContain("related-nonpublished");
+    expect(codes).not.toContain("related-missing");
+  });
+
   it.each(["draft", "review", "published", "archived"])(
     "rejects unsafe Markdown bodies while an entry is %s",
     (status) => {
@@ -1258,7 +1269,7 @@ describe("content QA rules", () => {
     );
   });
 
-  it("blocks count, coverage, duplicate metadata, fit, date, source, and body defects", () => {
+  it("blocks duplicate metadata, fit, date, source, and body defects", () => {
     const articles = validPortfolio();
     articles.pop();
     articles[1]!.data.title = articles[0]!.data.title;
@@ -1274,8 +1285,6 @@ describe("content QA rules", () => {
 
     expect(codes).toEqual(
       expect.arrayContaining([
-        "portfolio-count",
-        "category-count",
         "duplicate-title",
         "fit-field",
         "publication-date",

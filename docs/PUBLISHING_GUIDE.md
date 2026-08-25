@@ -79,7 +79,7 @@ Every source record needs a factual title, HTTPS URL, publisher, and genuine acc
 
 Classify source suitability through human editorial review. A government, standards, vendor, or other page is not made primary merely by labeling it so. Check what the page actually establishes, its scope, date, publisher role, and limitations.
 
-Related guides must select existing article slugs. Keep the relationship useful and specific. Draft, review, and archived entries never become public related-guide links.
+Related guides must select existing article slugs. Keep the relationship useful and specific. A published guide may retain a reference to an existing archived record so an urgent one-field withdrawal can deploy; runtime filtering simply omits that relationship from the public page. Draft and review targets remain invalid, and missing, duplicate, or self-references still fail content QA.
 
 ## Use truthful dates
 
@@ -96,6 +96,8 @@ No date may be impossible, earlier than the confirmed launch where prohibited, l
 Managed source media belongs under repository-tracked, non-deployed source path `src/content-assets/articles`. Those committed bytes are publicly visible in Git. The build validates and publishes only referenced approved files to public URLs under `/images/articles/`; there is no editable managed-media source collection inside `public/`.
 
 Use lowercase raster filenames prefixed by the article slug, for example a slug followed by a descriptive suffix and `.webp`, `.png`, `.jpg`, or `.jpeg`. Keep the source file within the validated size and dimension limits. Do not use symlinks, hidden files, traversal, duplicate bytes, executable formats, SVG uploads, or unreferenced media.
+
+Before a Pages CMS upload, inspect and strip EXIF metadata including GPS or other location data, device details, author fields, XMP, IPTC, and embedded comments. The uploaded raw bytes are committed to the public repository before CI runs. Image QA blocks detected metadata before deployment, but it cannot erase sensitive metadata from Git history after a commit.
 
 Hero and body image filenames must be slug-prefixed. Hero image records must stay factual and complete:
 
@@ -163,6 +165,10 @@ Do not call a local build, a preview deployment, or an unverified alias a produc
 ## Archive, delete, and recover
 
 Normal withdrawal is **archive, not delete**. Set a truthful `dateArchived`, preserve the complete Markdown record and Git history, and confirm the old public route receives the ordinary 404 unless a separately reviewed equivalent replacement justifies a redirect.
+
+Do not delay an urgent archive or withdrawal merely to preserve a public guide count or category count. Current routes, feeds, sitemaps, related links, and social images follow `status: published`; the retained archived record preserves launch history without remaining public.
+
+If an archived guide occupied a homepage curation slot, the homepage keeps the still-published configured guides in their sections and fills the open slot deterministically from the remaining published inventory without duplicate links. Counts and singular/plural labels follow the remaining published inventory. The featured Toolkit module selects the first Toolkit resource whose mapped guide remains published and disappears if none remain. Toolkit worksheets and detail pages stay public, but their contextual guide action is omitted whenever its mapped guide is not published; no surface links to an archived guide.
 
 Permanent deletion is allowed only through a reviewed Git operation with a documented reason, rights or privacy basis where relevant, reference cleanup, full QA, and owner acceptance. Do not use the CMS delete action as an unreviewed shortcut.
 

@@ -1125,7 +1125,10 @@ function validateArticle(
             `related article ${relatedSlug} does not exist.`,
           ),
         );
-      } else if (!publishedSlugs.has(relatedSlug)) {
+      } else if (
+        !publishedSlugs.has(relatedSlug) &&
+        entriesBySlug.get(relatedSlug)?.data.status !== "archived"
+      ) {
         issues.push(
           finding(
             "related-nonpublished",
@@ -1173,31 +1176,6 @@ export function validateContentPortfolio(
   const publishedArticles = normalizedArticles.filter(
     ({ data }) => data.status === "published",
   );
-
-  if (publishedArticles.length < 15) {
-    issues.push(
-      finding(
-        "portfolio-count",
-        "portfolio",
-        `expected at least 15 published articles; found ${publishedArticles.length}.`,
-      ),
-    );
-  }
-
-  for (const category of REQUIRED_CATEGORY_SLUGS) {
-    const count = publishedArticles.filter(
-      ({ data }) => data.category === category,
-    ).length;
-    if (count < 3) {
-      issues.push(
-        finding(
-          "category-count",
-          category,
-          `expected at least 3 published articles; found ${count}.`,
-        ),
-      );
-    }
-  }
 
   const entriesBySlug = new Map();
   for (const article of normalizedArticles) {

@@ -363,10 +363,10 @@ function articleBySlug(slug: string): ArticleRecord {
   return article;
 }
 
-function launchPublishedArticleRecords(
+function launchArticleRecords(
   records: ArticleRecord[] = articleRecords(),
-): PublishedArticleRecord[] {
-  return publishedArticleRecords(records).filter((article) =>
+): ArticleRecord[] {
+  return records.filter((article) =>
     launchArticleSlugSet.has(article.data.slug),
   );
 }
@@ -464,7 +464,7 @@ function whitespaceTokenCount(value: string): number {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
 
-describe("published content portfolio", () => {
+describe("content portfolio", () => {
   it("keeps the fifteen launch contracts scoped when valid lifecycle records are added", () => {
     const seed = articleBySlug(launchArticleSlugs[0]);
     const extras = (["draft", "review", "archived", "published"] as const).map(
@@ -472,6 +472,14 @@ describe("published content portfolio", () => {
         lifecycleFixtureRecord(seed, `future-${status}-article`, status),
     );
     const expandedPortfolio = [...articleRecords(), ...extras];
+    const archivedLaunch = lifecycleFixtureRecord(
+      seed,
+      seed.data.slug,
+      "archived",
+    );
+    const portfolioAfterLaunchArchive = expandedPortfolio.map((article) =>
+      article.data.slug === seed.data.slug ? archivedLaunch : article,
+    );
 
     expect(extras.map((article) => article.data.status)).toEqual([
       "draft",
@@ -480,11 +488,17 @@ describe("published content portfolio", () => {
       "published",
     ]);
     expect(
-      launchPublishedArticleRecords(expandedPortfolio).map(
+      launchArticleRecords(expandedPortfolio).map(
         (article) => article.data.slug,
       ),
     ).toEqual([...launchArticleSlugs]);
     expect(publishedArticleRecords(expandedPortfolio)).toHaveLength(16);
+    expect(launchArticleRecords(portfolioAfterLaunchArchive)).toHaveLength(
+      launchArticleSlugs.length,
+    );
+    expect(publishedArticleRecords(portfolioAfterLaunchArchive)).toHaveLength(
+      15,
+    );
   });
 
   it("centralizes four complete Toolkit records with stable article and CSV contracts", async () => {
@@ -551,8 +565,8 @@ describe("published content portfolio", () => {
     }
   });
 
-  it("contains at least fifteen Markdown articles and three in every category", () => {
-    const articles = publishedArticleRecords();
+  it("preserves the fifteen launch records and their three-per-category history", () => {
+    const articles = launchArticleRecords();
     const categoryCounts = Object.fromEntries(
       categorySlugs.map((category) => [
         category,
@@ -560,14 +574,14 @@ describe("published content portfolio", () => {
       ]),
     );
 
-    expect(articles.length).toBeGreaterThanOrEqual(15);
+    expect(articles).toHaveLength(launchArticleSlugs.length);
     for (const category of categorySlugs) {
-      expect(categoryCounts[category]).toBeGreaterThanOrEqual(3);
+      expect(categoryCounts[category]).toBe(3);
     }
   });
 
   it("keeps the launch slugs, titles, and descriptions distinct and matched to their files", () => {
-    const articles = launchPublishedArticleRecords();
+    const articles = launchArticleRecords();
 
     for (const field of ["slug", "title", "description"] as const) {
       const values = articles.map((article) => scalar(article, field));
@@ -582,7 +596,7 @@ describe("published content portfolio", () => {
   });
 
   it("assigns every launch article its exact stable informative visual", () => {
-    const articles = launchPublishedArticleRecords();
+    const articles = launchArticleRecords();
     const visuals = articles.map((article) => ({
       slug: scalar(article, "slug"),
       visual: visualMetadata(article),
@@ -607,7 +621,7 @@ describe("published content portfolio", () => {
   });
 
   it("provides the exact approved explanation metadata for all fifteen guides", () => {
-    const articles = launchPublishedArticleRecords();
+    const articles = launchArticleRecords();
 
     expect(articles).toHaveLength(15);
     expect(Object.keys(expectedGuideExplanations)).toHaveLength(15);

@@ -6,9 +6,10 @@ import BaseLayout from "./BaseLayout.astro";
 
 interface Props {
   resource: ToolkitResource;
+  showGuideLink: boolean;
 }
 
-const { resource } = Astro.props;
+const { resource, showGuideLink } = Astro.props;
 const title = `${resource.title} | ${site.name}`;
 const description = resource.purpose;
 ---
@@ -33,7 +34,11 @@ const description = resource.purpose;
           aria-label={`${resource.title} primary actions`}
         >
           <a href={resource.downloadHref} download>{resource.downloadLabel}</a>
-          <a href={resource.guideHref}>{resource.guideLabel}</a>
+          {
+            showGuideLink && (
+              <a href={resource.guideHref}>{resource.guideLabel}</a>
+            )
+          }
         </nav>
       </header>
 

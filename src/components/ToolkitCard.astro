@@ -3,9 +3,10 @@ import type { ToolkitResource } from "../data/toolkit";
 
 interface Props {
   resource: ToolkitResource;
+  showGuideLink: boolean;
 }
 
-const { resource } = Astro.props;
+const { resource, showGuideLink } = Astro.props;
 const headingId = `toolkit-card-${resource.id}`;
 ---
 
@@ -28,7 +29,7 @@ const headingId = `toolkit-card-${resource.id}`;
     <a class="toolkit-card__primary" href={resource.detailHref}
       >View worksheet guide</a
     >
-    <a href={resource.guideHref}>{resource.guideLabel}</a>
+    {showGuideLink && <a href={resource.guideHref}>{resource.guideLabel}</a>}
     <a href={resource.downloadHref} download>{resource.downloadLabel}</a>
   </nav>
 </article>

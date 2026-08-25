@@ -1,6 +1,9 @@
 ---
+import { getCollection } from "astro:content";
+
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import ToolkitCard from "../components/ToolkitCard.astro";
+import { toolkitResourceHasPublishedGuide } from "../data/editorial";
 import { site } from "../data/site";
 import { toolkitResources } from "../data/toolkit";
 import BaseLayout from "../layouts/BaseLayout.astro";
@@ -8,6 +11,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 const title = `Business technology decision toolkit | ${site.name}`;
 const description =
   "Download four blank CSV worksheets for screening automation, evaluating SaaS, recording technology risk, and testing backup restoration.";
+const articles = await getCollection("articles");
 ---
 
 <BaseLayout title={title} description={description} path="/toolkit/">
@@ -46,7 +50,13 @@ const description =
       <div class="toolkit-grid">
         {
           toolkitResources.map((resource) => (
-            <ToolkitCard resource={resource} />
+            <ToolkitCard
+              resource={resource}
+              showGuideLink={toolkitResourceHasPublishedGuide(
+                resource,
+                articles,
+              )}
+            />
           ))
         }
       </div>
