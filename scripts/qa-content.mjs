@@ -83,6 +83,7 @@ const PUBLISHED_EXPLANATION_RULES = [
   },
 ];
 const EXPLANATION_SUPPORT_RATIO = 0.25;
+const EXPLANATION_NEAR_DUPLICATE_THRESHOLD = 0.9;
 const EXPLANATION_STOPWORDS = new Set([
   "about",
   "after",
@@ -160,14 +161,10 @@ function wordCount(value) {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
 
-function normalizedExplanationValue(value) {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
-}
-
 function significantExplanationTerms(value) {
   const tokens =
     value
-      .normalize("NFKD")
+      .normalize("NFKC")
       .toLowerCase()
       .match(/[a-z0-9]+/g) ?? [];
 
@@ -185,18 +182,87 @@ function significantExplanationTerms(value) {
   );
 }
 
+function significantExplanationSignature(value) {
+  return [...significantExplanationTerms(value)].sort();
+}
+
+function significantTokenOverlap(left, right) {
+  if (left.length === 0 || right.length === 0) return 0;
+  const rightTerms = new Set(right);
+  const intersectionSize = left.filter((term) => rightTerms.has(term)).length;
+  return (2 * intersectionSize) / (left.length + right.length);
+}
+
+function explanationSignaturesNearDuplicate(left, right) {
+  const exactSignature =
+    left.length === right.length &&
+    left.every((term, index) => term === right[index]);
+  return (
+    exactSignature ||
+    significantTokenOverlap(left, right) >= EXPLANATION_NEAR_DUPLICATE_THRESHOLD
+  );
+}
+
+function visibleMarkdownProse(markdown) {
+  let visible = markdown
+    .replace(/\r\n?/g, "\n")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(
+      /<(script|style|template|noscript|head)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,
+      " ",
+    )
+    .replace(
+      /<([a-z][\w:-]*)\b(?=[^>]*(?:\bhidden\b|\baria-hidden\s*=\s*["']?true["']?))[^>]*>[\s\S]*?<\/\1\s*>/gi,
+      " ",
+    );
+
+  const proseLines = [];
+  let openFence;
+  for (const line of visible.split("\n")) {
+    const fence = line.match(/^ {0,3}(`{3,}|~{3,})/);
+    if (fence) {
+      const marker = fence[1];
+      if (openFence === undefined) {
+        openFence = { character: marker[0], length: marker.length };
+      } else if (
+        marker[0] === openFence.character &&
+        marker.length >= openFence.length
+      ) {
+        openFence = undefined;
+      }
+      continue;
+    }
+    if (openFence !== undefined) continue;
+    if (/^(?: {4}|\t)\S/.test(line)) continue;
+    if (/^ {0,3}\[[^\]]+\]:\s*\S+/.test(line)) continue;
+    proseLines.push(line);
+  }
+
+  visible = proseLines
+    .join("\n")
+    .replace(/(`+)([^\n]*?)\1/g, " ")
+    .replace(/!\[[^\]]*\]\([^\n)]*\)/g, " ")
+    .replace(/!\[[^\]]*\]\[[^\]]*\]/g, " ")
+    .replace(/\[([^\]]+)\]\([^\n)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\[[^\]]*\]/g, "$1")
+    .replace(/<https?:\/\/[^>\s]+>/gi, " ")
+    .replace(/https?:\/\/[^\s<>)\]]+/gi, " ")
+    .replace(/<\/?[a-z][^>]*>/gi, " ");
+
+  return visible;
+}
+
 function validatePublishedExplanations(publishedArticles) {
   const issues = [];
   const seenByField = new Map(
-    PUBLISHED_EXPLANATION_RULES.map(({ field }) => [field, new Map()]),
+    PUBLISHED_EXPLANATION_RULES.map(({ field }) => [field, []]),
   );
 
   for (const article of publishedArticles) {
     const evidence = [
-      article.data.title,
       article.data.summary,
       typeof article.body === "string"
-        ? article.body.replace(/https?:\/\/\S+/gi, " ")
+        ? visibleMarkdownProse(article.body)
         : "",
     ]
       .filter((value) => typeof value === "string")
@@ -207,22 +273,28 @@ function validatePublishedExplanations(publishedArticles) {
       const value = article.data[rule.field];
       if (typeof value !== "string" || value.trim() === "") continue;
 
-      const normalized = normalizedExplanationValue(value);
+      const signature = significantExplanationSignature(value);
       const seen = seenByField.get(rule.field);
-      if (seen.has(normalized)) {
+      const nearDuplicate = seen.find(({ signature: priorSignature }) =>
+        explanationSignaturesNearDuplicate(signature, priorSignature),
+      );
+      if (nearDuplicate !== undefined) {
+        const overlap = significantTokenOverlap(
+          signature,
+          nearDuplicate.signature,
+        );
         issues.push(
           finding(
             rule.duplicateCode,
             article.fileName,
-            `${rule.field} duplicates ${seen.get(normalized)}.`,
+            `${rule.field} near-duplicates ${nearDuplicate.fileName} (${Math.round(overlap * 100)}% significant-token overlap; threshold ${EXPLANATION_NEAR_DUPLICATE_THRESHOLD * 100}%).`,
           ),
         );
-      } else {
-        seen.set(normalized, article.fileName);
       }
+      seen.push({ fileName: article.fileName, signature });
 
-      // This is a deterministic terminology-traceability check only. It does
-      // not assess factual accuracy, usefulness, completeness, or editorial quality.
+      // This is mechanical terminology traceability, not semantic or editorial
+      // proof. Only summary and extracted visible body prose can provide support.
       const explanationTerms = significantExplanationTerms(value);
       const supportedCount = [...explanationTerms].filter((term) =>
         evidenceTerms.has(term),
@@ -236,7 +308,7 @@ function validatePublishedExplanations(publishedArticles) {
           finding(
             rule.unsupportedCode,
             article.fileName,
-            `${rule.field} has ${supportedCount} significant terms represented in the title, summary, or body; expected at least ${requiredCount} for mechanical terminology support.`,
+            `${rule.field} has ${supportedCount} significant terms represented in the summary or visible body prose; expected at least ${requiredCount} for mechanical terminology support.`,
           ),
         );
       }

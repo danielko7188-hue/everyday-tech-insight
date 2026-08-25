@@ -55,11 +55,140 @@ function words(count: number): string {
   return Array.from({ length: count }, (_, index) => `word${index}`).join(" ");
 }
 
-function validBody(slug: string, sources: string[]): string {
+const explanationScenarios = [
+  {
+    promise:
+      "Map invoice approvals, capture routing decisions and exceptions, and confirm ownership for disputed payment reviews.",
+    deliverable: "Invoice-approval workflow map",
+    when: "before automating finance review or payment routing",
+    risk: "unresolved payment exceptions",
+  },
+  {
+    promise:
+      "Trace customer handoffs, verify account ownership, and separate relationship records from delivery coordination.",
+    deliverable: "Customer-to-delivery handoff record",
+    when: "when CRM and project tools overlap across customer work",
+    risk: "unclear system boundaries",
+  },
+  {
+    promise:
+      "Inventory backup copies, distinguish independent media, and verify recovery through a representative restore exercise.",
+    deliverable: "Backup inventory and restore-test log",
+    when: "before relying on cloud synchronization for recovery",
+    risk: "untested restoration gaps",
+  },
+  {
+    promise:
+      "Prioritize privileged accounts, protect recovery paths, and stage multi-factor enrollment with measured coverage.",
+    deliverable: "MFA rollout and recovery coverage register",
+    when: "before enforcing multi-factor authentication across critical accounts",
+    risk: "lockout and enrollment gaps",
+  },
+  {
+    promise:
+      "Verify suspicious requests through known channels and route click, credential, payment, or data exposure correctly.",
+    deliverable: "Phishing response checklist and incident record",
+    when: "immediately after receiving a suspicious message or payment request",
+    risk: "delayed incident containment",
+  },
+  {
+    promise:
+      "Organize shared files by durable functions, naming rules, ownership, permissions, and documented lifecycle decisions.",
+    deliverable: "Shared-folder architecture and governance rules",
+    when: "when files are scattered across personal drives and duplicate folders",
+    risk: "lost records and unclear access",
+  },
+  {
+    promise:
+      "Export representative records, exercise critical integrations, and estimate migration effort before dependence grows.",
+    deliverable: "Portability test record and dependency map",
+    when: "before selecting or renewing a record-holding SaaS product",
+    risk: "costly data lock-in",
+  },
+  {
+    promise:
+      "Score artificial-intelligence output against representative cases, a baseline rubric, and actual correction effort.",
+    deliverable: "AI pilot scorecard and recommendation",
+    when: "before expanding an AI drafting or classification pilot",
+    risk: "unmeasured correction work",
+  },
+  {
+    promise:
+      "Define allowed, restricted, and prohibited AI tools, data, uses, approvals, and employee reporting duties.",
+    deliverable: "AI acceptable-use policy draft",
+    when: "before authorizing broader employee use of AI tools",
+    risk: "uncontrolled data disclosure",
+  },
+  {
+    promise:
+      "Calculate implementation, labor, operating, change, and exit costs instead of comparing subscription prices alone.",
+    deliverable: "Total-cost range and assumptions register",
+    when: "when comparing, renewing, consolidating, or replacing software",
+    risk: "hidden ownership costs",
+  },
+  {
+    promise:
+      "Convert technology concerns into event-to-consequence risks with evidence, treatment, ownership, and review dates.",
+    deliverable: "Prioritized technology risk register",
+    when: "when technology concerns lack priority, evidence, or accountable owners",
+    risk: "unmanaged operational exposure",
+  },
+  {
+    promise:
+      "Run a controlled four-week technology evaluation with entry criteria, evidence collection, and an explicit stop decision.",
+    deliverable: "Pilot charter, evidence log, and decision record",
+    when: "before moving a technology trial into normal production",
+    risk: "accidental production dependence",
+  },
+  {
+    promise:
+      "Provision role-based accounts, devices, access, and training while preserving an approved onboarding record.",
+    deliverable: "Technology onboarding and approved-access checklist",
+    when: "before a worker or service provider receives system access",
+    risk: "excess or undocumented permissions",
+  },
+  {
+    promise:
+      "Document workflow decisions, exceptions, inputs, and owners before selecting any improvement or automation target.",
+    deliverable: "Current-state workflow and requirements packet",
+    when: "before buying workflow software or automating recurring work",
+    risk: "automated process defects",
+  },
+  {
+    promise:
+      "Turn software requirements into test scenarios and verify workflow, security, administration, data, and exit claims.",
+    deliverable: "SaaS evidence sheet and purchase decision",
+    when: "during a vendor trial, demonstration, renewal, or replacement review",
+    risk: "unsupported vendor assumptions",
+  },
+  {
+    promise:
+      "Remove departing vendor access, transfer owned records, and verify service dependencies before closing accounts.",
+    deliverable: "Vendor offboarding and dependency checklist",
+    when: "before terminating a contractor, provider, or managed service",
+    risk: "orphaned access and records",
+  },
+] as const;
+
+function fixtureExplanations(index: number) {
+  const scenario =
+    explanationScenarios[(index - 1) % explanationScenarios.length]!;
+  return {
+    guidePromise: `${scenario.promise} Keep the decision bounded, owned, and reversible.`,
+    deliverable: `${scenario.deliverable}, with assumptions, ownership, and next actions.`,
+    whenToUse: `Use ${scenario.when} to resolve ${scenario.risk} before wider commitment.`,
+  };
+}
+
+function validBody(
+  slug: string,
+  sources: string[],
+  explanationSupport: string,
+): string {
   return [
     "## Direct answer",
     `${words(170)} limitation`,
-    "Representative business evidence supports this bounded, reversible technology decision with clear ownership and a human fallback. The documented decision record, implementation brief, workflow, business record, and technology product are all addressed here.",
+    explanationSupport,
     "## Practical steps",
     words(170),
     "## Decision checks",
@@ -80,6 +209,7 @@ function validArticle(
     `https://www.nist.gov/example/${slug}/one`,
     `https://www.cisa.gov/example/${slug}/two`,
   ];
+  const explanations = fixtureExplanations(index);
 
   return {
     fileName: `${slug}.md`,
@@ -91,9 +221,9 @@ function validArticle(
       author: "Everyday Tech Insight",
       status: "published",
       contentType: "guide",
-      guidePromise: `Use representative business evidence to make one bounded, reversible technology decision for scenario ${index}, with clear ownership and a human fallback.`,
-      deliverable: `Documented decision record and bounded implementation brief for scenario ${index}.`,
-      whenToUse: `Use before committing important workflow or business record number ${index} to a technology product.`,
+      guidePromise: explanations.guidePromise,
+      deliverable: explanations.deliverable,
+      whenToUse: explanations.whenToUse,
       businessProblem: `A specific business problem that needs a careful decision ${index}.`,
       technologyFocus: `A specific technology capability relevant to the decision ${index}.`,
       intendedAudience: `Small-business decision makers responsible for choice ${index}.`,
@@ -119,7 +249,7 @@ function validArticle(
       relatedArticles: [] as string[],
       noindex: false,
     },
-    body: validBody(slug, sources),
+    body: validBody(slug, sources, Object.values(explanations).join(" ")),
   };
 }
 
@@ -509,6 +639,42 @@ describe("content QA rules", () => {
     );
   });
 
+  it("reports punctuation, Unicode, whitespace, and numeric-noise copies as near-duplicates", () => {
+    const articles = validPortfolio();
+    articles[1]!.data.guidePromise = articles[0]!.data.guidePromise
+      .replaceAll(",", " — ")
+      .replace(" approvals", "\tapprovals")
+      .replace(".", "!");
+    articles[2]!.data.deliverable = articles[0]!.data.deliverable.replace(
+      "Invoice",
+      "Ｉｎｖｏｉｃｅ",
+    );
+    articles[3]!.data.whenToUse = `${articles[0]!.data.whenToUse} 2`;
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "duplicate-guide-promise",
+        "duplicate-deliverable",
+        "duplicate-when-to-use",
+      ]),
+    );
+  });
+
+  it("reports a trivial one-token explanation variant at high overlap", () => {
+    const articles = validPortfolio();
+    articles[1]!.data.guidePromise = `${articles[0]!.data.guidePromise} Today.`;
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).toContain("duplicate-guide-promise");
+  });
+
   it("excludes draft, review, and archived explanations from published uniqueness", () => {
     const articles = validPortfolio();
     const excluded = ["draft", "review", "archived"].map((status, index) => {
@@ -563,6 +729,89 @@ describe("content QA rules", () => {
         "unsupported-when-to-use",
       ]),
     );
+  });
+
+  it.each([
+    [
+      "title",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.data.title = explanation;
+      },
+    ],
+    [
+      "HTML comments",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body += `\n\n<!-- ${explanation} -->`;
+      },
+    ],
+    [
+      "fenced code",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body += `\n\n\`\`\`text\n${explanation}\n\`\`\``;
+      },
+    ],
+    [
+      "inline code",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body += `\n\n\`${explanation}\``;
+      },
+    ],
+    [
+      "indented code",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body += `\n\n    ${explanation}`;
+      },
+    ],
+    [
+      "relative URL destinations",
+      (article: ReturnType<typeof validArticle>) => {
+        article.body +=
+          "\n\n[Visible reference](/quasar-metallurgy-calibrates-zirconium-chambers-nebula-cartography-directs-catalyst-arrays/)";
+      },
+    ],
+    [
+      "non-visible raw HTML",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body += `\n\n<template>${explanation}</template>`;
+      },
+    ],
+    [
+      "non-public image alternative text",
+      (article: ReturnType<typeof validArticle>, explanation: string) => {
+        article.body += `\n\n![${explanation}](https://images.example.test/hidden.png)`;
+      },
+    ],
+  ])(
+    "does not accept explanation support found only in %s",
+    (_name, injectSupport) => {
+      const articles = validPortfolio();
+      const article = articles[0]!;
+      const explanation =
+        "Quasar metallurgy calibrates zirconium chambers while nebula cartography directs catalyst arrays.";
+      article.data.guidePromise = explanation;
+      injectSupport(article, explanation);
+
+      expect(
+        validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+          ({ code }) => code,
+        ),
+      ).toContain("unsupported-guide-promise");
+    },
+  );
+
+  it("retains visible Markdown link text as explanation support", () => {
+    const articles = validPortfolio();
+    const article = articles[0]!;
+    const explanation =
+      "Quasar metallurgy calibrates zirconium chambers while nebula cartography directs catalyst arrays.";
+    article.data.guidePromise = explanation;
+    article.body += `\n\n[${explanation}](/articles/visible-reference/)`;
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).not.toContain("unsupported-guide-promise");
   });
 
   it("keeps slug uniqueness global across every lifecycle status", () => {
