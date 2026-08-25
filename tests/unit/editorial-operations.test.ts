@@ -83,6 +83,7 @@ const expectedQaCommands = [
   "npm run check:seo",
   "npm run check:links",
   "npm run test:e2e",
+  "npm run test:visual",
   "npm run lighthouse",
 ] as const;
 
@@ -646,7 +647,7 @@ describe("public-repository safety boundary", () => {
     );
 
     for (const [label, unsafe] of [
-      ["publisher identifier", "pub-1234567890123456"],
+      ["publisher identifier", `pub-${"1".repeat(16)}`],
       ["email address", "owner@real-looking-domain.com"],
       ["GitHub token", `ghp_${"A".repeat(36)}`],
       ["Google API token", `AIza${"A".repeat(35)}`],
@@ -706,7 +707,7 @@ describe("public-repository safety boundary", () => {
     ]);
     const unsafeSource = sourceText.replace(
       "A nonsecret evidence reference",
-      "Publisher evidence pub-1234567890123456",
+      `Publisher evidence pub-${"1".repeat(16)}`,
     );
     expect(unsafeSource).not.toBe(sourceText);
     const writes: string[] = [];

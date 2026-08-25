@@ -400,14 +400,14 @@ test("publication mark keeps the full name visible on one line at every required
   }
 });
 
-test("At a glance stays one column below the tablet breakpoint and becomes two by two at tablet", async ({
+test("At a glance uses one mobile column, two tablet columns, and four wide columns", async ({
   page,
 }) => {
   for (const { width, columns } of [
     { width: 390, columns: 1 },
     { width: 767, columns: 1 },
     { width: 768, columns: 2 },
-    { width: 1440, columns: 2 },
+    { width: 1440, columns: 4 },
   ]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/articles/how-to-identify-business-tasks-for-automation/");

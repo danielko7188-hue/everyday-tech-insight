@@ -137,6 +137,7 @@ npm run check:cms-fixture
 npm run check:seo
 npm run check:links
 npm run test:e2e
+npm run test:visual
 npm run lighthouse
 ```
 

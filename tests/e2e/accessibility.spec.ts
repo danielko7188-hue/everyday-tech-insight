@@ -494,6 +494,52 @@ test("article-card headlines keep a visible destination affordance without hover
   expect(decoration.decorationColor).toBe(decoration.color);
 });
 
+test("homepage editorial visual captions meet WCAG AA contrast on dark cards", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1200 });
+  await page.goto("/");
+
+  const captions = page.locator(".home-opening .editorial-visual__caption");
+  expect(await captions.count()).toBeGreaterThan(0);
+
+  for (const caption of await captions.all()) {
+    const appearance = await captureFocusAppearance(caption);
+    const foreground = parseCssColor(appearance.color);
+    const background = appearance.ancestorBackgrounds
+      .map(parseCssColor)
+      .find((color): color is RgbaColor => Boolean(color && color.alpha > 0));
+
+    expect(foreground).not.toBeNull();
+    expect(background).not.toBeUndefined();
+    expect(contrastRatio(foreground!, background!)).toBeGreaterThanOrEqual(4.5);
+  }
+});
+
+test("homepage briefing numbers meet WCAG AA contrast", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1200 });
+  await page.goto("/");
+
+  const items = page.locator(".latest-briefing__list > li");
+  expect(await items.count()).toBeGreaterThan(0);
+
+  for (const item of await items.all()) {
+    const foreground = parseCssColor(
+      await item.evaluate(
+        (element) => getComputedStyle(element, "::before").color,
+      ),
+    );
+    const appearance = await captureFocusAppearance(item);
+    const background = appearance.ancestorBackgrounds
+      .map(parseCssColor)
+      .find((color): color is RgbaColor => Boolean(color && color.alpha > 0));
+
+    expect(foreground).not.toBeNull();
+    expect(background).not.toBeUndefined();
+    expect(contrastRatio(foreground!, background!)).toBeGreaterThanOrEqual(4.5);
+  }
+});
+
 test("focused editorial links retain WCAG AA text contrast", async ({
   page,
 }) => {

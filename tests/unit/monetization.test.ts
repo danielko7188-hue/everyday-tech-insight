@@ -143,6 +143,7 @@ describe("advertising-off public and source safety", () => {
       .join("\n");
 
     for (const forbidden of [
+      /\.ad-slot\b/i,
       /google-adsense-account/i,
       /pagead2\.googlesyndication/i,
       /adsbygoogle/i,

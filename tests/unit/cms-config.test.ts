@@ -864,7 +864,7 @@ describe("Pages CMS configuration", () => {
     [
       "credential-like key",
       (config: CmsConfig) =>
-        (config.settings.publisherId = "pub-1234567890123456"),
+        (config.settings.publisherId = `pub-${"1".repeat(16)}`),
     ],
     [
       "API credential key",

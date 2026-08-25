@@ -21,6 +21,22 @@ describe("published article boundary", () => {
     expect(module.filterPublishedArticles(entries)).toEqual([entries[2]]);
   });
 
+  it("orders category entries by public slug even when nested source IDs differ", async () => {
+    const module = await import("../../src/utils/published-articles");
+    expect(module).toHaveProperty("comparePublishedArticlesBySlug");
+    if (!("comparePublishedArticlesBySlug" in module)) return;
+
+    const entries = [
+      { id: "alpha/nested-entry", data: { slug: "zulu-guide" } },
+      { id: "zulu/top-level-entry", data: { slug: "alpha-guide" } },
+    ];
+
+    expect([...entries].sort(module.comparePublishedArticlesBySlug)).toEqual([
+      entries[1],
+      entries[0],
+    ]);
+  });
+
   it("makes the social inventory select published frontmatter before mapping", async () => {
     const module = await import("../../scripts/generate-social-images.mjs");
 

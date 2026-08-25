@@ -1881,14 +1881,6 @@ strong {
   margin-block-start: var(--space-2);
 }
 
-.ad-slot {
-  margin-inline: auto;
-  color: var(--color-muted);
-  font-size: 0.875rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
 /* Footer */
 .site-footer {
   display: grid;
@@ -2326,6 +2318,10 @@ strong {
 }
 
 @media (min-width: 67.5rem) {
+  .fit-summary dl {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .latest-briefing,
   .start-here {
     contain-intrinsic-block-size: auto 29.5rem;
@@ -2758,6 +2754,11 @@ strong {
   background: var(--brand-surface-dark);
 }
 
+.home-opening .editorial-visual__caption {
+  color: var(--brand-text-muted-dark);
+  background: var(--brand-surface-dark);
+}
+
 .home-opening .article-card__copy {
   border-color: var(--brand-rule-dark);
   background: var(--brand-deep);
@@ -2869,7 +2870,7 @@ strong {
 
 .latest-briefing__list > li::before {
   margin-block-start: var(--space-6);
-  color: var(--brand-magenta);
+  color: var(--brand-violet-dark);
   font-family: var(--font-body);
   font-size: 0.875rem;
   font-weight: 800;

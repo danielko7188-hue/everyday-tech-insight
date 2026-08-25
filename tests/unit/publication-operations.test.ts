@@ -68,11 +68,12 @@ describe("publication operations documentation", () => {
   });
 
   it("keeps monetization off and distinguishes readiness work from Google approval", async () => {
-    const [readme, audit, privacy, deployment] = await Promise.all([
+    const [readme, audit, privacy, deployment, trustPages] = await Promise.all([
       read("README.md"),
       read("docs/ADSENSE_READINESS_AUDIT_2026-08-25.md"),
       read("docs/PRIVACY_AND_CONSENT_REVIEW.md"),
       read("docs/DEPLOYMENT_GUIDE.md"),
+      read("src/data/trust-pages.ts"),
     ]);
     const combined = `${readme}\n${audit}\n${privacy}\n${deployment}`;
 
@@ -88,6 +89,19 @@ describe("publication operations documentation", () => {
     expect(combined).not.toMatch(
       /(?:guaranteed|guarantees) (?:AdSense )?approval/i,
     );
+    expect(trustPages).toMatch(/privacy:[\s\S]*reviewed on August 25, 2026/i);
+    expect(trustPages).not.toMatch(
+      /privacy:[\s\S]*reviewed on August 22, 2026/i,
+    );
+  });
+
+  it("retrieves trusted deployment metadata from the SHA-bearing Vercel API", async () => {
+    const deployment = await read("docs/DEPLOYMENT_GUIDE.md");
+
+    expect(deployment).toMatch(
+      /vercel@latest api\s+"?\/v13\/deployments\/\$deploymentHost"?\s+--raw/i,
+    );
+    expect(deployment).not.toMatch(/vercel@latest inspect[^\n]*--json/i);
   });
 
   it("classifies current evidence without carrying an old READY claim forward", async () => {

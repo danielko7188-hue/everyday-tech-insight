@@ -14,6 +14,10 @@ type EntryWithStatus = {
   data: ArticleFrontmatter;
 };
 
+type EntryWithSlug = {
+  data: { slug: string };
+};
+
 export function isPublishedArticle<T extends EntryWithStatus>(
   article: T,
 ): article is T & { data: PublishedArticleFrontmatter } {
@@ -24,4 +28,11 @@ export function filterPublishedArticles<T extends EntryWithStatus>(
   articles: readonly T[],
 ): Array<T & { data: PublishedArticleFrontmatter }> {
   return articles.filter(isPublishedArticle);
+}
+
+export function comparePublishedArticlesBySlug<T extends EntryWithSlug>(
+  left: T,
+  right: T,
+): number {
+  return left.data.slug.localeCompare(right.data.slug, "en");
 }

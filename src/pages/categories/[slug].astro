@@ -13,6 +13,7 @@ import {
 import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
+  comparePublishedArticlesBySlug,
   filterPublishedArticles,
   type PublishedArticleEntry,
 } from "../../utils/published-articles";
@@ -41,7 +42,7 @@ export async function getStaticPaths() {
       category,
       articles: publishedArticles
         .filter(({ data }) => data.category === category.slug)
-        .sort((left, right) => left.id.localeCompare(right.id, "en")),
+        .sort(comparePublishedArticlesBySlug),
     },
   }));
 }
