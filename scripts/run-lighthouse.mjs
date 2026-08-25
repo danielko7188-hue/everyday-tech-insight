@@ -16,14 +16,86 @@ import { chromium } from "@playwright/test";
 import * as chromeLauncher from "chrome-launcher";
 import lighthouse from "lighthouse";
 
-const THRESHOLDS = {
+export const LIGHTHOUSE_THRESHOLDS = Object.freeze({
   performance: 0.9,
   accessibility: 0.95,
   "best-practices": 0.95,
   seo: 0.95,
-};
+});
+const THRESHOLDS = LIGHTHOUSE_THRESHOLDS;
 
-const RUNS_PER_PAGE = 3;
+export const RUNS_PER_PAGE_DEVICE = 3;
+const RUNS_PER_PAGE = RUNS_PER_PAGE_DEVICE;
+
+export const LIGHTHOUSE_PAGES = Object.freeze([
+  Object.freeze({ name: "home", path: "/" }),
+  Object.freeze({
+    name: "cybersecurity-category",
+    path: "/categories/cybersecurity-data-protection/",
+  }),
+  Object.freeze({
+    name: "automation-candidates-article",
+    path: "/articles/how-to-identify-business-tasks-for-automation/",
+  }),
+  Object.freeze({ name: "toolkit", path: "/toolkit/" }),
+]);
+
+export const LIGHTHOUSE_DEVICES = Object.freeze([
+  Object.freeze({
+    name: "mobile",
+    formFactor: "mobile",
+    screenEmulation: Object.freeze({
+      mobile: true,
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 1,
+      disabled: false,
+    }),
+  }),
+  Object.freeze({
+    name: "desktop",
+    formFactor: "desktop",
+    preset: "desktop",
+    screenEmulation: Object.freeze({
+      mobile: false,
+      width: 1440,
+      height: 900,
+      deviceScaleFactor: 1,
+      disabled: false,
+    }),
+  }),
+]);
+
+export function buildLighthouseAuditPlan() {
+  return LIGHTHOUSE_PAGES.flatMap((page) =>
+    LIGHTHOUSE_DEVICES.map((device) => ({ device, page })),
+  );
+}
+
+export function lighthouseFlagsForDevice(deviceName) {
+  const device = LIGHTHOUSE_DEVICES.find(({ name }) => name === deviceName);
+  if (!device) {
+    throw new TypeError(`Unsupported Lighthouse device: ${String(deviceName)}`);
+  }
+  return {
+    ...(device.preset ? { preset: device.preset } : {}),
+    formFactor: device.formFactor,
+    screenEmulation: { ...device.screenEmulation },
+  };
+}
+
+export function lighthouseRawReportName(pageName, deviceName, runNumber) {
+  if (
+    !LIGHTHOUSE_PAGES.some(({ name }) => name === pageName) ||
+    !LIGHTHOUSE_DEVICES.some(({ name }) => name === deviceName) ||
+    !Number.isInteger(runNumber) ||
+    runNumber < 1 ||
+    runNumber > RUNS_PER_PAGE_DEVICE
+  ) {
+    throw new TypeError("Invalid Lighthouse raw report identity.");
+  }
+  return `${pageName}-${deviceName}-run-${runNumber}.json`;
+}
 
 const CONTENT_TYPES = {
   ".css": "text/css; charset=utf-8",
@@ -93,11 +165,64 @@ export function aggregateLighthouseScores(runScores) {
 }
 
 export function createLighthouseSummary(pages) {
+  const usesDeviceMatrix = pages.some(({ device }) => device !== undefined);
+  if (!usesDeviceMatrix) {
+    return {
+      status: pages.some(({ failures }) => failures.length > 0)
+        ? "FAIL"
+        : "PASS",
+      formFactor: "desktop",
+      runsPerPage: RUNS_PER_PAGE,
+      thresholds: THRESHOLDS,
+      pages,
+    };
+  }
+
+  const expectedAuditKeys = buildLighthouseAuditPlan().map(
+    ({ device, page }) => `${page.name}:${device.name}`,
+  );
+  const actualAuditKeys = pages.map(({ device, name }) => `${name}:${device}`);
+  const actualAuditKeySet = new Set(actualAuditKeys);
+  const missingAudits = expectedAuditKeys.filter(
+    (key) => !actualAuditKeySet.has(key),
+  );
+  const unexpectedAudits = actualAuditKeys.filter(
+    (key) => !expectedAuditKeys.includes(key),
+  );
+  const duplicateAudits = [...new Set(actualAuditKeys)].filter(
+    (key) =>
+      actualAuditKeys.filter((candidate) => candidate === key).length > 1,
+  );
+  const incompleteAudits = pages
+    .filter(
+      ({ representativeRun, runScores }) =>
+        !Array.isArray(runScores) ||
+        runScores.length !== RUNS_PER_PAGE_DEVICE ||
+        !Number.isInteger(representativeRun) ||
+        representativeRun < 1 ||
+        representativeRun > RUNS_PER_PAGE_DEVICE,
+    )
+    .map(({ device, name }) => `${name}:${device}`);
+  const hasThresholdFailure = pages.some(
+    ({ failures }) => !Array.isArray(failures) || failures.length > 0,
+  );
   return {
-    status: pages.some(({ failures }) => failures.length > 0) ? "FAIL" : "PASS",
-    formFactor: "desktop",
-    runsPerPage: RUNS_PER_PAGE,
+    status:
+      hasThresholdFailure ||
+      missingAudits.length > 0 ||
+      unexpectedAudits.length > 0 ||
+      duplicateAudits.length > 0 ||
+      incompleteAudits.length > 0
+        ? "FAIL"
+        : "PASS",
+    auditCount: pages.length,
+    deviceTypes: LIGHTHOUSE_DEVICES.map(({ name }) => name),
+    runsPerPageDevice: RUNS_PER_PAGE_DEVICE,
     thresholds: THRESHOLDS,
+    missingAudits,
+    unexpectedAudits,
+    duplicateAudits,
+    incompleteAudits,
     pages,
   };
 }
@@ -331,22 +456,20 @@ async function startStaticServer(distDirectory) {
   };
 }
 
-async function runAudit(url, port) {
+async function runAudit(url, port, deviceName) {
+  const deviceFlags = lighthouseFlagsForDevice(deviceName);
   const result = await lighthouse(url, {
     port,
     output: "json",
     logLevel: "error",
     onlyCategories: Object.keys(THRESHOLDS),
-    formFactor: "desktop",
-    screenEmulation: {
-      mobile: false,
-      width: 1350,
-      height: 940,
-      deviceScaleFactor: 1,
-      disabled: false,
-    },
+    ...deviceFlags,
   });
-  if (!result) throw new Error(`Lighthouse returned no result for ${url}.`);
+  if (!result) {
+    throw new Error(
+      `Lighthouse returned no result for ${url} (${deviceName}).`,
+    );
+  }
 
   const scores = Object.fromEntries(
     Object.keys(THRESHOLDS).map((category) => [
@@ -365,14 +488,6 @@ async function main() {
   let chromeProfile;
   let chrome;
 
-  const pages = [
-    { name: "home", path: "/" },
-    { name: "ai-automation-category", path: "/categories/ai-automation/" },
-    {
-      name: "automation-candidates-article",
-      path: "/articles/how-to-identify-business-tasks-for-automation/",
-    },
-  ];
   const summary = [];
   let hasFailure = false;
   let resourceCleanupPromise;
@@ -472,11 +587,31 @@ async function main() {
         if (!Number.isInteger(chrome.port)) {
           throw new Error("Chromium did not expose a valid debugging port.");
         }
-        for (const page of pages) {
+        for (const { device, page } of buildLighthouseAuditPlan()) {
           const url = `${server.origin}${page.path}`;
           const audits = [];
           for (let runIndex = 0; runIndex < RUNS_PER_PAGE; runIndex += 1) {
-            const audit = await runAudit(url, chrome.port);
+            let audit;
+            try {
+              audit = await runAudit(url, chrome.port, device.name);
+            } catch (error) {
+              const message =
+                error instanceof Error ? error.message : String(error);
+              audit = {
+                error: message,
+                raw: {
+                  device: device.name,
+                  error: message,
+                  page: page.name,
+                  path: page.path,
+                  run: runIndex + 1,
+                  status: "ERROR",
+                },
+                scores: Object.fromEntries(
+                  Object.keys(THRESHOLDS).map((category) => [category, null]),
+                ),
+              };
+            }
             audits.push(audit);
             const raw =
               typeof audit.raw === "string"
@@ -485,7 +620,7 @@ async function main() {
             await writeFile(
               path.join(
                 pendingDirectory,
-                `${page.name}-run-${runIndex + 1}.json`,
+                lighthouseRawReportName(page.name, device.name, runIndex + 1),
               ),
               raw,
               "utf8",
@@ -498,15 +633,17 @@ async function main() {
           hasFailure ||= failures.length > 0;
           const representativeRaw = audits[representativeRunIndex].raw;
           await writeFile(
-            path.join(pendingDirectory, `${page.name}.json`),
+            path.join(pendingDirectory, `${page.name}-${device.name}.json`),
             typeof representativeRaw === "string"
               ? representativeRaw
               : JSON.stringify(representativeRaw),
             "utf8",
           );
           summary.push({
+            device: device.name,
             name: page.name,
             path: page.path,
+            runErrors: audits.map(({ error }) => error ?? null),
             runScores,
             scores,
             failures,
@@ -526,10 +663,11 @@ async function main() {
             )
             .join("/");
           console.log(
-            `${page.path} (desktop; median of ${RUNS_PER_PAGE}; performance runs=${performanceRuns}): ${printableScores}`,
+            `${page.path} (${device.name}; median of ${RUNS_PER_PAGE}; performance runs=${performanceRuns}): ${printableScores}`,
           );
         }
         const reportSummary = createLighthouseSummary(summary);
+        hasFailure ||= reportSummary.status !== "PASS";
         await writeFile(
           path.join(pendingDirectory, "summary.json"),
           `${JSON.stringify(reportSummary, null, 2)}\n`,
@@ -564,12 +702,12 @@ async function main() {
 
   if (hasFailure) {
     console.error(
-      "Lighthouse: FAIL (desktop; performance requires 90; accessibility, best practices, and SEO require 95).",
+      "Lighthouse: FAIL (mobile and desktop; performance requires 90; accessibility, best practices, and SEO require 95).",
     );
     process.exitCode = 1;
   } else {
     console.log(
-      `Lighthouse: PASS (desktop; median of ${RUNS_PER_PAGE} runs) on all three representative pages.`,
+      `Lighthouse: PASS (mobile and desktop; median of ${RUNS_PER_PAGE} runs) on all four representative pages.`,
     );
   }
 }

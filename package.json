@@ -15,6 +15,7 @@
     "lint": "eslint .",
     "typecheck": "astro check",
     "test": "vitest",
+    "test:release-evidence": "vitest --run tests/unit/production-capture.test.ts tests/unit/audit-manifest.test.ts tests/unit/lighthouse-config.test.ts",
     "test:e2e": "playwright test",
     "test:visual": "playwright test tests/e2e/visual-regression.spec.ts --project=visual-chromium",
     "setup:browsers": "playwright install chromium",
