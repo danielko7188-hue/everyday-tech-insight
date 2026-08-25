@@ -10,13 +10,11 @@ test-results/
 coverage/
 .planning/
 
-# Repository-only review and evidence material
+# Repository-only evidence and test material. Documentation remains available
+# because the production prebuild validates its editorial release-gate inputs.
 artifacts/
-docs/*
-!docs/editorial-operations.yml
 tests/
 AGENTS.md
 DESIGN.md
-README.md
 playwright.config.ts
 vitest.config.ts

@@ -898,17 +898,18 @@ describe("historical implementation plan", () => {
 });
 
 describe("current executable plans", () => {
-  it("keeps the editorial release-gate source in the Vercel build bundle", async () => {
+  it("keeps every editorial release-gate input in the Vercel build bundle", async () => {
     const rules = (await readFile(vercelIgnorePath, "utf8"))
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter((line) => line && !line.startsWith("#"));
-    const docsContentsRule = rules.indexOf("docs/*");
-    const editorialSourceRule = rules.indexOf("!docs/editorial-operations.yml");
+    const ignoredEditorialInputs = rules.filter(
+      (rule) =>
+        !rule.startsWith("!") &&
+        (rule === "README.md" || /^\/?docs(?:\/|\*|$)/.test(rule)),
+    );
 
-    expect(rules).not.toContain("docs/");
-    expect(docsContentsRule).toBeGreaterThanOrEqual(0);
-    expect(editorialSourceRule).toBeGreaterThan(docsContentsRule);
+    expect(ignoredEditorialInputs).toEqual([]);
   });
 
   it("keeps the structured editorial source, generator, checker, tests, and staged paths together", async () => {
