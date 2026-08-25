@@ -1,5 +1,4 @@
 ---
-import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
 
 import ArticleCard from "../../components/ArticleCard.astro";
@@ -7,15 +6,20 @@ import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import { categories } from "../../data/categories";
 import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  filterPublishedArticles,
+  type PublishedArticleEntry,
+} from "../../utils/published-articles";
 
-type ArticleEntry = CollectionEntry<"articles">;
-
-const compareArticles = (left: ArticleEntry, right: ArticleEntry) =>
+const compareArticles = (
+  left: PublishedArticleEntry,
+  right: PublishedArticleEntry,
+) =>
   right.data.datePublished.localeCompare(left.data.datePublished) ||
   left.data.title.localeCompare(right.data.title, "en");
 
-const publishedArticles = (
-  await getCollection("articles", ({ data }) => data.status === "published")
+const publishedArticles = filterPublishedArticles(
+  await getCollection("articles"),
 ).sort(compareArticles);
 const categoryGroups = categories.map((category) => ({
   category,

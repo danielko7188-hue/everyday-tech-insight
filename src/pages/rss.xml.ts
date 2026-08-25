@@ -2,10 +2,11 @@ import rss from "@astrojs/rss";
 import { getCollection } from "astro:content";
 
 import { site } from "../data/site";
+import { filterPublishedArticles } from "../utils/published-articles";
 
 export async function GET(context: { site?: URL }) {
-  const publishedArticles = (
-    await getCollection("articles", ({ data }) => data.status === "published")
+  const publishedArticles = filterPublishedArticles(
+    await getCollection("articles"),
   ).sort((left, right) =>
     right.data.datePublished.localeCompare(left.data.datePublished),
   );

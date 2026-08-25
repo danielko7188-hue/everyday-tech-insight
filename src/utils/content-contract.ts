@@ -3,7 +3,12 @@ import { z } from "zod";
 import { categorySlugs } from "../data/categories";
 import { site } from "../data/site";
 
-export const ARTICLE_STATUSES = ["draft", "review", "published"] as const;
+export const ARTICLE_STATUSES = [
+  "draft",
+  "review",
+  "published",
+  "archived",
+] as const;
 export const CONTENT_TYPES = [
   "guide",
   "checklist",
@@ -42,11 +47,33 @@ export const EDITORIAL_VISUAL_KEYS = [
   "software-cost-stack",
   "thirty-day-pilot-timeline",
 ] as const;
+export const EDITORIAL_VISUAL_TYPE_BY_KEY = {
+  "automation-candidate-screen": "decision-tree",
+  "ai-quality-scorecard": "comparison",
+  "ai-use-governance": "governance",
+  "saas-evidence-checklist": "checklist",
+  "work-object-comparison": "comparison",
+  "saas-exit-data-flow": "data-flow",
+  "mfa-rollout-boundary": "security-boundary",
+  "phishing-response-workflow": "workflow",
+  "three-two-one-topology": "backup-topology",
+  "shared-file-architecture": "information-architecture",
+  "workflow-exception-lane": "process-lane",
+  "access-onboarding-checklist": "checklist",
+  "technology-risk-matrix": "risk-matrix",
+  "software-cost-stack": "cost-stack",
+  "thirty-day-pilot-timeline": "timeline",
+} as const satisfies Record<
+  (typeof EDITORIAL_VISUAL_KEYS)[number],
+  (typeof EDITORIAL_VISUAL_TYPES)[number]
+>;
 export const VERIFICATION_STATUSES = [
   "unverified",
   "source-checked",
   "tested",
 ] as const;
+
+const PUBLICATION_VERIFICATION_STATUSES = ["source-checked", "tested"] as const;
 
 export const BUSINESS_TECHNOLOGY_FIT_FIELDS = [
   "businessProblem",
@@ -62,6 +89,8 @@ const TRACKING_IDENTIFIER_PATTERN =
   /(?:\b(?:ca-)?pub-\d{10,}\b|\bUA-\d{4,}-\d+\b|\bG-[A-Z0-9]{6,}\b|\bGTM-[A-Z0-9]{4,}\b)/i;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const HERO_IMAGE_PATTERN =
+  /^\/images\/articles\/(?![^/]*\.\.)[A-Za-z0-9][A-Za-z0-9._-]*\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 
 function containsForbiddenMetadata(value: string): boolean {
   return (
@@ -78,6 +107,14 @@ function requiredText(minimumLength: number, maximumLength = 500) {
     .refine((value) => !containsForbiddenMetadata(value), {
       message: "Value must be complete and contain no tracking identifiers.",
     });
+}
+
+function normalizeEmptyOptional(value: unknown): unknown {
+  return typeof value === "string" && value.trim() === "" ? undefined : value;
+}
+
+function optionalCmsValue<T extends z.ZodType>(schema: T) {
+  return z.preprocess(normalizeEmptyOptional, schema.optional());
 }
 
 function isRealCalendarDate(value: string): boolean {
@@ -125,19 +162,28 @@ const publicationEraDateSchema = dateOnlySchema.refine(
   `Date must not precede the ${site.launchDate} publication launch.`,
 );
 
-const httpsUrlSchema = z
-  .url()
-  .refine((value) => new URL(value).protocol === "https:", {
-    message: "URL must use HTTPS.",
-  });
+const httpsUrlSchema = z.url().refine(
+  (value) => {
+    try {
+      return new URL(value).protocol === "https:";
+    } catch {
+      return false;
+    }
+  },
+  { message: "URL must use HTTPS." },
+);
 
 const configuredSiteOrigin = new URL(site.url).origin;
 const canonicalOverrideSchema = httpsUrlSchema.refine(
   (value) => {
-    const url = new URL(value);
-    return (
-      url.origin === configuredSiteOrigin && !url.username && !url.password
-    );
+    try {
+      const url = new URL(value);
+      return (
+        url.origin === configuredSiteOrigin && !url.username && !url.password
+      );
+    } catch {
+      return false;
+    }
   },
   {
     message: "Canonical override must use the configured site origin.",
@@ -154,7 +200,17 @@ export const articleVisualSchema = z
     caption: requiredText(10, 300).optional(),
     decorative: z.literal(false),
   })
-  .strict();
+  .strict()
+  .superRefine((visual, context) => {
+    const expectedType = EDITORIAL_VISUAL_TYPE_BY_KEY[visual.key];
+    if (visual.type !== expectedType) {
+      context.addIssue({
+        code: "custom",
+        path: ["type"],
+        message: `Visual ${visual.key} must use type ${expectedType}.`,
+      });
+    }
+  });
 
 export const sourceSchema = z
   .object({
@@ -197,103 +253,314 @@ export function assessBusinessTechnologyFit(input: FitInput): {
   return { passes: missing.length === 0, missing };
 }
 
-export const articleFrontmatterSchema = z
+const identityShape = {
+  title: requiredText(10, 100),
+  slug: slugSchema,
+  author: z.literal(site.publicationByline),
+} as const;
+
+const explanationShape = {
+  guidePromise: requiredText(90, 180),
+  deliverable: requiredText(20, 150),
+  whenToUse: requiredText(40, 180),
+} as const;
+
+const fitShape = {
+  businessProblem: requiredText(20, 500),
+  technologyFocus: requiredText(20, 500),
+  intendedAudience: requiredText(20, 300),
+  readerOutcome: requiredText(20, 500),
+} as const;
+
+const heroShape = {
+  heroImage: optionalCmsValue(
+    z
+      .string()
+      .trim()
+      .regex(
+        HERO_IMAGE_PATTERN,
+        "Hero image must be a safe flat path under /images/articles/.",
+      ),
+  ),
+  heroImageAlt: z.string().trim().max(240).optional(),
+  heroImageDecorative: z.boolean().optional(),
+  heroImageCaption: optionalCmsValue(requiredText(10, 300)),
+  heroImageCredit: optionalCmsValue(requiredText(2, 200)),
+  heroImageSourceUrl: optionalCmsValue(httpsUrlSchema),
+  heroImageLicense: optionalCmsValue(requiredText(2, 120)),
+} as const;
+
+const commonPublicationShape = {
+  ...identityShape,
+  description: requiredText(50, 180),
+  category: z.enum(categorySlugs),
+  contentType: z.enum(CONTENT_TYPES),
+  ...explanationShape,
+  ...fitShape,
+  verificationStatus: z.enum(PUBLICATION_VERIFICATION_STATUSES),
+  datePublished: publicationEraDateSchema,
+  dateModified: optionalCmsValue(publicationEraDateSchema),
+  lastReviewed: publicationEraDateSchema,
+  featured: z.boolean().default(false),
+  summary: requiredText(40, 500),
+  visual: articleVisualSchema,
+  sourceList: z.array(sourceSchema).min(2),
+  relatedArticles: z.array(slugSchema).default([]),
+  ...heroShape,
+  canonicalOverride: optionalCmsValue(canonicalOverrideSchema),
+} as const;
+
+const draftArticleSchema = z
   .object({
-    title: requiredText(10, 100),
+    ...identityShape,
+    status: z.literal("draft"),
+    description: optionalCmsValue(requiredText(50, 180)),
+    category: z.enum(categorySlugs).optional(),
+    contentType: z.enum(CONTENT_TYPES).optional(),
+    guidePromise: optionalCmsValue(explanationShape.guidePromise),
+    deliverable: optionalCmsValue(explanationShape.deliverable),
+    whenToUse: optionalCmsValue(explanationShape.whenToUse),
+    businessProblem: optionalCmsValue(fitShape.businessProblem),
+    technologyFocus: optionalCmsValue(fitShape.technologyFocus),
+    intendedAudience: optionalCmsValue(fitShape.intendedAudience),
+    readerOutcome: optionalCmsValue(fitShape.readerOutcome),
+    verificationStatus: z.enum(VERIFICATION_STATUSES).default("unverified"),
+    datePublished: optionalCmsValue(publicationEraDateSchema),
+    dateModified: optionalCmsValue(publicationEraDateSchema),
+    lastReviewed: optionalCmsValue(publicationEraDateSchema),
+    featured: z.boolean().default(false),
+    summary: optionalCmsValue(requiredText(40, 500)),
+    visual: articleVisualSchema.optional(),
+    sourceList: z.array(sourceSchema).optional(),
+    relatedArticles: z.array(slugSchema).default([]),
+    ...heroShape,
+    canonicalOverride: optionalCmsValue(canonicalOverrideSchema),
+    noindex: z.literal(true).default(true),
+  })
+  .strict();
+
+const reviewArticleSchema = z
+  .object({
+    ...identityShape,
+    status: z.literal("review"),
     description: requiredText(50, 180),
-    slug: slugSchema,
     category: z.enum(categorySlugs),
-    author: z.literal(site.publicationByline),
-    status: z.enum(ARTICLE_STATUSES),
     contentType: z.enum(CONTENT_TYPES),
-    businessProblem: requiredText(20, 500),
-    technologyFocus: requiredText(20, 500),
-    intendedAudience: requiredText(20, 300),
-    readerOutcome: requiredText(20, 500),
-    verificationStatus: z.enum(VERIFICATION_STATUSES),
-    datePublished: publicationEraDateSchema,
-    dateModified: publicationEraDateSchema.optional(),
-    lastReviewed: publicationEraDateSchema,
+    ...explanationShape,
+    ...fitShape,
+    verificationStatus: z.enum(VERIFICATION_STATUSES).default("unverified"),
+    datePublished: optionalCmsValue(publicationEraDateSchema),
+    dateModified: optionalCmsValue(publicationEraDateSchema),
+    lastReviewed: optionalCmsValue(publicationEraDateSchema),
     featured: z.boolean().default(false),
     summary: requiredText(40, 500),
     visual: articleVisualSchema,
-    sourceList: z.array(sourceSchema),
+    sourceList: z.array(sourceSchema).min(1),
     relatedArticles: z.array(slugSchema).default([]),
-    heroImage: z
-      .string()
-      .trim()
-      .min(1)
-      .refine(
-        (value) => value.startsWith("/") && !value.startsWith("//"),
-        "Hero image must be a root-relative local path.",
-      )
-      .optional(),
-    heroImageAlt: requiredText(10, 240).optional(),
-    canonicalOverride: canonicalOverrideSchema.optional(),
-    noindex: z.boolean().default(false),
+    ...heroShape,
+    canonicalOverride: optionalCmsValue(canonicalOverrideSchema),
+    noindex: z.literal(true),
   })
-  .strict()
-  .superRefine((article, context) => {
-    if (article.status === "published") {
-      const fit = assessBusinessTechnologyFit(article);
-      for (const field of fit.missing) {
+  .strict();
+
+const publishedArticleSchema = z
+  .object({
+    ...commonPublicationShape,
+    status: z.literal("published"),
+    noindex: z.literal(false).default(false),
+  })
+  .strict();
+
+const archivedArticleSchema = z
+  .object({
+    ...commonPublicationShape,
+    status: z.literal("archived"),
+    dateArchived: publicationEraDateSchema,
+    noindex: z.literal(true),
+  })
+  .strict();
+
+const CMS_EMPTY_OPTIONAL_FIELDS = [
+  "description",
+  "guidePromise",
+  "deliverable",
+  "whenToUse",
+  "businessProblem",
+  "technologyFocus",
+  "intendedAudience",
+  "readerOutcome",
+  "datePublished",
+  "dateModified",
+  "lastReviewed",
+  "dateArchived",
+  "summary",
+  "heroImage",
+  "heroImageCaption",
+  "heroImageCredit",
+  "heroImageSourceUrl",
+  "heroImageLicense",
+  "canonicalOverride",
+] as const;
+
+function normalizeCmsEmptyOptionals(input: unknown): unknown {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+
+  const normalized = { ...(input as Record<string, unknown>) };
+  for (const field of CMS_EMPTY_OPTIONAL_FIELDS) {
+    if (
+      typeof normalized[field] === "string" &&
+      normalized[field].trim() === ""
+    ) {
+      delete normalized[field];
+    }
+  }
+
+  if (
+    normalized.heroImage === undefined &&
+    typeof normalized.heroImageAlt === "string" &&
+    normalized.heroImageAlt.trim() === ""
+  ) {
+    delete normalized.heroImageAlt;
+  }
+
+  return normalized;
+}
+
+function addDateOrderIssues(
+  article: {
+    datePublished?: string;
+    dateModified?: string;
+    lastReviewed?: string;
+  },
+  context: z.RefinementCtx,
+) {
+  if (
+    article.dateModified &&
+    (!article.datePublished || article.dateModified <= article.datePublished)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["dateModified"],
+      message: "Modification date must be later than publication date.",
+    });
+  }
+
+  if (
+    article.lastReviewed &&
+    article.datePublished &&
+    article.lastReviewed < article.datePublished
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["lastReviewed"],
+      message: "Review date cannot precede publication date.",
+    });
+  }
+}
+
+function addHeroIssues(
+  article: Record<string, unknown>,
+  context: z.RefinementCtx,
+) {
+  const ancillaryFields = [
+    "heroImageAlt",
+    "heroImageDecorative",
+    "heroImageCaption",
+    "heroImageCredit",
+    "heroImageSourceUrl",
+    "heroImageLicense",
+  ] as const;
+
+  if (!article.heroImage) {
+    for (const field of ancillaryFields) {
+      if (article[field] !== undefined) {
         context.addIssue({
           code: "custom",
           path: [field],
-          message: "Published content must pass the five-part fit.",
+          message: "Hero metadata requires a hero image.",
         });
       }
+    }
+    return;
+  }
 
-      if (article.sourceList.length < 2) {
+  if (typeof article.heroImageDecorative !== "boolean") {
+    context.addIssue({
+      code: "custom",
+      path: ["heroImageDecorative"],
+      message: "Hero images must declare whether they are decorative.",
+    });
+  }
+  if (typeof article.heroImageAlt !== "string") {
+    context.addIssue({
+      code: "custom",
+      path: ["heroImageAlt"],
+      message: "Hero images must provide an alternative-text value.",
+    });
+    return;
+  }
+
+  if (article.heroImageDecorative === true && article.heroImageAlt !== "") {
+    context.addIssue({
+      code: "custom",
+      path: ["heroImageAlt"],
+      message: "Decorative hero images must use empty alternative text.",
+    });
+  }
+  if (
+    article.heroImageDecorative === false &&
+    (article.heroImageAlt.length < 10 ||
+      containsForbiddenMetadata(article.heroImageAlt))
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["heroImageAlt"],
+      message: "Informative hero images require meaningful alternative text.",
+    });
+  }
+}
+
+export const articleFrontmatterSchema = z
+  .preprocess(
+    normalizeCmsEmptyOptionals,
+    z.discriminatedUnion("status", [
+      draftArticleSchema,
+      reviewArticleSchema,
+      publishedArticleSchema,
+      archivedArticleSchema,
+    ]),
+  )
+  .superRefine((article, context) => {
+    addDateOrderIssues(article, context);
+    addHeroIssues(article, context);
+
+    const sourceUrls = new Set<string>();
+    for (const source of article.sourceList ?? []) {
+      const normalizedUrl = new URL(source.url).href;
+      if (sourceUrls.has(normalizedUrl)) {
         context.addIssue({
-          code: "too_small",
-          origin: "array",
-          minimum: 2,
-          inclusive: true,
+          code: "custom",
           path: ["sourceList"],
-          message: "Published content requires at least two HTTPS sources.",
+          message: "Source URLs must be unique within an article.",
         });
       }
+      sourceUrls.add(normalizedUrl);
+    }
 
-      if (article.noindex) {
+    if (article.status === "archived") {
+      const precedingDates = [
+        article.datePublished,
+        article.dateModified,
+        article.lastReviewed,
+      ].filter((value): value is string => value !== undefined);
+      if (precedingDates.some((date) => article.dateArchived < date)) {
         context.addIssue({
           code: "custom",
-          path: ["noindex"],
-          message: "Published content cannot be excluded from indexing.",
+          path: ["dateArchived"],
+          message:
+            "Archive date cannot precede publication, modification, or review.",
         });
       }
-
-      if (article.verificationStatus === "unverified") {
-        context.addIssue({
-          code: "custom",
-          path: ["verificationStatus"],
-          message: "Published content must be source-checked or tested.",
-        });
-      }
-    }
-
-    if (Boolean(article.heroImage) !== Boolean(article.heroImageAlt)) {
-      context.addIssue({
-        code: "custom",
-        path: article.heroImage ? ["heroImageAlt"] : ["heroImage"],
-        message: "Hero image and alternative text must be supplied together.",
-      });
-    }
-
-    if (article.dateModified && article.dateModified <= article.datePublished) {
-      context.addIssue({
-        code: "custom",
-        path: ["dateModified"],
-        message: "Modification date must be later than publication date.",
-      });
-    }
-
-    if (article.lastReviewed < article.datePublished) {
-      context.addIssue({
-        code: "custom",
-        path: ["lastReviewed"],
-        message: "Review date cannot precede publication date.",
-      });
     }
 
     if (TRACKING_IDENTIFIER_PATTERN.test(JSON.stringify(article))) {
@@ -306,6 +573,22 @@ export const articleFrontmatterSchema = z
     }
   });
 
-export type ArticleFrontmatter = z.infer<typeof articleFrontmatterSchema>;
+export type ArticleFrontmatter = z.output<typeof articleFrontmatterSchema>;
+export type DraftArticleFrontmatter = Extract<
+  ArticleFrontmatter,
+  { status: "draft" }
+>;
+export type ReviewArticleFrontmatter = Extract<
+  ArticleFrontmatter,
+  { status: "review" }
+>;
+export type PublishedArticleFrontmatter = Extract<
+  ArticleFrontmatter,
+  { status: "published" }
+>;
+export type ArchivedArticleFrontmatter = Extract<
+  ArticleFrontmatter,
+  { status: "archived" }
+>;
 export type ArticleSource = z.infer<typeof sourceSchema>;
 export type ArticleVisual = z.infer<typeof articleVisualSchema>;

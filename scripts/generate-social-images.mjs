@@ -82,26 +82,43 @@ const categoryBySlug = new Map(
   categoryRecords.map((category) => [category.slug, category]),
 );
 
+export function listArticleSourceFiles(directory, relativeDirectory = "") {
+  const files = [];
+  const entries = readdirSync(directory, { withFileTypes: true }).sort(
+    (left, right) => left.name.localeCompare(right.name),
+  );
+  for (const entry of entries) {
+    const absolutePath = path.join(directory, entry.name);
+    const relativePath = relativeDirectory
+      ? `${relativeDirectory}/${entry.name}`
+      : entry.name;
+    if (entry.isDirectory()) {
+      files.push(...listArticleSourceFiles(absolutePath, relativePath));
+    } else if (entry.isFile() && /\.mdx?$/.test(entry.name)) {
+      files.push({ absolutePath, relativePath });
+    }
+  }
+  return files;
+}
+
 function loadPublishedArticleRecords() {
-  return readdirSync(articleDirectory, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
-    .map((entry) => {
-      const source = readFileSync(
-        path.join(articleDirectory, entry.name),
-        "utf8",
-      );
+  const records = listArticleSourceFiles(articleDirectory).map(
+    ({ absolutePath, relativePath }) => {
+      const source = readFileSync(absolutePath, "utf8");
       const frontmatter = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
       if (!frontmatter) {
-        throw new Error(`Missing YAML frontmatter in ${entry.name}.`);
+        throw new Error(`Missing YAML frontmatter in ${relativePath}.`);
       }
       const data = loadYaml(frontmatter[1]);
       if (!data || typeof data !== "object") {
-        throw new Error(`Invalid YAML frontmatter in ${entry.name}.`);
+        throw new Error(`Invalid YAML frontmatter in ${relativePath}.`);
       }
       return data;
-    })
-    .filter(({ status }) => status === "published")
-    .map(({ category, slug, title, visual }) => {
+    },
+  );
+
+  return selectPublishedArticleFrontmatter(records).map(
+    ({ category, slug, title, visual }) => {
       const categoryRecord = categoryBySlug.get(category);
       if (
         !categoryRecord ||
@@ -123,7 +140,12 @@ function loadPublishedArticleRecords() {
         title,
         visualKey: visual.key,
       };
-    });
+    },
+  );
+}
+
+export function selectPublishedArticleFrontmatter(records) {
+  return records.filter((record) => record?.status === "published");
 }
 
 export const SOCIAL_IMAGE_RECORDS = Object.freeze(

@@ -1,15 +1,17 @@
 ---
-import type { CollectionEntry } from "astro:content";
 import { getCollection, render } from "astro:content";
 
 import { categoriesBySlug, type CategoryRecord } from "../../data/categories";
 import ArticleLayout from "../../layouts/ArticleLayout.astro";
 import { estimateReadingTime } from "../../utils/presentation";
+import {
+  filterPublishedArticles,
+  type PublishedArticleEntry,
+} from "../../utils/published-articles";
 
 export async function getStaticPaths() {
-  const publishedArticles = await getCollection(
-    "articles",
-    ({ data }) => data.status === "published",
+  const publishedArticles = filterPublishedArticles(
+    await getCollection("articles"),
   );
 
   return publishedArticles.map((article) => ({
@@ -21,7 +23,7 @@ export async function getStaticPaths() {
           publishedArticles.find((candidate) => candidate.data.slug === slug),
         )
         .filter(
-          (candidate): candidate is CollectionEntry<"articles"> =>
+          (candidate): candidate is PublishedArticleEntry =>
             candidate !== undefined,
         ),
     },
@@ -29,8 +31,8 @@ export async function getStaticPaths() {
 }
 
 interface Props {
-  article: CollectionEntry<"articles">;
-  relatedArticles: CollectionEntry<"articles">[];
+  article: PublishedArticleEntry;
+  relatedArticles: PublishedArticleEntry[];
 }
 
 const { article, relatedArticles } = Astro.props as Props;

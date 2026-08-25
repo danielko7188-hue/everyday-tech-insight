@@ -7,10 +7,10 @@ import SectionHeading from "../../components/SectionHeading.astro";
 import { categories } from "../../data/categories";
 import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { filterPublishedArticles } from "../../utils/published-articles";
 
-const publishedArticles = await getCollection(
-  "articles",
-  ({ data }) => data.status === "published",
+const publishedArticles = filterPublishedArticles(
+  await getCollection("articles"),
 );
 const title = `Business technology categories | ${site.name}`;
 const description =

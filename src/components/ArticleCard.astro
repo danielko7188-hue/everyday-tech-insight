@@ -1,15 +1,14 @@
 ---
-import type { CollectionEntry } from "astro:content";
-
 import { categoriesBySlug } from "../data/categories";
 import { estimateReadingTime } from "../utils/presentation";
+import type { PublishedArticleEntry } from "../utils/published-articles";
 import EditorialVisual from "./EditorialVisual.astro";
 import StoryMeta from "./StoryMeta.astro";
 
 type ArticleCardVariant = "lead" | "feature" | "standard" | "compact" | "list";
 
 interface Props {
-  article: CollectionEntry<"articles">;
+  article: PublishedArticleEntry;
   variant?: ArticleCardVariant;
   headingLevel?: 2 | 3;
   showSummary?: boolean;

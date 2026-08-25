@@ -1,6 +1,5 @@
 ---
 import type { MarkdownHeading } from "astro";
-import type { CollectionEntry } from "astro:content";
 
 import ArticleCard from "../components/ArticleCard.astro";
 import ArticleEvidence from "../components/ArticleEvidence.astro";
@@ -14,14 +13,15 @@ import type { CategoryRecord } from "../data/categories";
 import { site } from "../data/site";
 import { getToolkitResourceForArticle } from "../data/toolkit";
 import { formatPublicationDate } from "../utils/presentation";
+import type { PublishedArticleEntry } from "../utils/published-articles";
 import BaseLayout from "./BaseLayout.astro";
 
 interface Props {
-  article: CollectionEntry<"articles">;
+  article: PublishedArticleEntry;
   category: CategoryRecord;
   headings: MarkdownHeading[];
   readingMinutes: number;
-  relatedArticles?: CollectionEntry<"articles">[];
+  relatedArticles?: PublishedArticleEntry[];
 }
 
 const {

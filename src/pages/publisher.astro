@@ -3,9 +3,10 @@ import { getCollection } from "astro:content";
 
 import { trustPages } from "../data/trust-pages";
 import TrustPageLayout from "../layouts/TrustPageLayout.astro";
+import { filterPublishedArticles } from "../utils/published-articles";
 
-const publishedArticles = (
-  await getCollection("articles", ({ data }) => data.status === "published")
+const publishedArticles = filterPublishedArticles(
+  await getCollection("articles"),
 ).sort((left, right) => {
   const dateOrder = right.data.datePublished.localeCompare(
     left.data.datePublished,

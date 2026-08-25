@@ -1004,7 +1004,7 @@ export function validateBuiltOutput({
     ) {
       issues.push(
         finding(
-          "draft-leakage",
+          "nonpublished-leakage",
           fileName,
           "non-published content appears in public output.",
         ),

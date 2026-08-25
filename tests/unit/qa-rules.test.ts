@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
 import { EventEmitter } from "node:events";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import astroConfig from "../../astro.config.mjs";
 import { validateBuiltOutput } from "../../scripts/qa-build.mjs";
-import { validateContentPortfolio } from "../../scripts/qa-content.mjs";
+import {
+  readArticleRecords,
+  validateContentPortfolio,
+} from "../../scripts/qa-content.mjs";
 import {
   checkExternalUrls,
   checkUrl,
@@ -84,6 +90,12 @@ function validArticle(
       author: "Everyday Tech Insight",
       status: "published",
       contentType: "guide",
+      guidePromise:
+        "Use representative business evidence to make one bounded, reversible technology decision with clear ownership and a human fallback.",
+      deliverable:
+        "Documented decision record and bounded implementation brief.",
+      whenToUse:
+        "Use before committing an important workflow or business record to a technology product.",
       businessProblem: `A specific business problem that needs a careful decision ${index}.`,
       technologyFocus: `A specific technology capability relevant to the decision ${index}.`,
       intendedAudience: `Small-business decision makers responsible for choice ${index}.`,
@@ -94,13 +106,19 @@ function validArticle(
       lastReviewed: "2026-08-21",
       featured: index === 1,
       summary: `A useful summary of the decision and the practical result for guide ${index}.`,
+      visual: {
+        type: "decision-tree",
+        key: "automation-candidate-screen",
+        alt: "A bounded decision tree with evidence, review, fallback, and a stop condition.",
+        decorative: false,
+      },
       sourceList: sources.map((url, sourceIndex) => ({
         title: `Official source ${sourceIndex + 1} for guide ${index}`,
         url,
         publisher: sourceIndex === 0 ? "NIST" : "CISA",
         accessed: "2026-08-21",
       })),
-      relatedArticles: [],
+      relatedArticles: [] as string[],
       noindex: false,
     },
     body: validBody(slug, sources),
@@ -383,6 +401,26 @@ function validBuiltFixture() {
   return { articles, files };
 }
 
+function addExcludedLifecycleArticles(
+  fixture: ReturnType<typeof validBuiltFixture>,
+) {
+  const excluded = ["draft", "review", "archived"].map((status, index) => {
+    const article = validArticle(
+      `${status}-lifecycle-entry`,
+      categorySlugs[index]!,
+      101 + index,
+    );
+    article.data.status = status;
+    article.data.noindex = true;
+    if (status === "archived") {
+      Object.assign(article.data, { dateArchived: "2026-08-21" });
+    }
+    return article;
+  });
+  fixture.articles.push(...excluded);
+  return excluded;
+}
+
 describe("content QA rules", () => {
   it("loads the content checker in the same Node ESM runtime used by npm scripts", () => {
     const result = spawnSync(
@@ -393,6 +431,27 @@ describe("content QA rules", () => {
 
     expect(result.stderr).toBe("");
     expect(result.status).toBe(0);
+  });
+
+  it("discovers nested Markdown and MDX entries using the same recursive boundary as Astro", async () => {
+    const root = await mkdtemp(join(tmpdir(), "eti-content-discovery-"));
+    try {
+      await mkdir(join(root, "nested"));
+      const source = (slug: string) =>
+        `---\ntitle: "A complete nested article title"\nslug: "${slug}"\nauthor: "Everyday Tech Insight"\nstatus: "draft"\n---\nSafe draft body.\n`;
+      await writeFile(join(root, "top.md"), source("top"));
+      await writeFile(join(root, "nested", "inside.mdx"), source("inside"));
+      await writeFile(join(root, "nested", "ignored.txt"), "not content");
+
+      const records = await readArticleRecords(root);
+
+      expect(records.map(({ fileName }) => fileName)).toEqual([
+        "nested/inside.mdx",
+        "top.md",
+      ]);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
   });
 
   it("accepts a complete fifteen-article, three-per-category portfolio", () => {
@@ -410,6 +469,173 @@ describe("content QA rules", () => {
     expect(validateContentPortfolio(articles, { today: "2026-08-21" })).toEqual(
       [],
     );
+  });
+
+  it("counts portfolio and category minimums from published entries only", () => {
+    const articles = validPortfolio();
+    for (const [index, status] of ["draft", "review", "archived"].entries()) {
+      const article = articles[index]!;
+      article.data.status = status;
+      article.data.noindex = true;
+      if (status === "archived") {
+        Object.assign(article.data, { dateArchived: "2026-08-21" });
+      }
+    }
+
+    const codes = validateContentPortfolio(articles, {
+      today: "2026-08-21",
+    }).map(({ code }) => code);
+
+    expect(codes).toEqual(
+      expect.arrayContaining(["portfolio-count", "category-count"]),
+    );
+    expect(codes).not.toContain("status");
+  });
+
+  it("keeps slug uniqueness global across every lifecycle status", () => {
+    const articles = validPortfolio();
+    const draft = validArticle(
+      articles[0]!.data.slug,
+      "technology-strategy",
+      99,
+    );
+    draft.fileName = "duplicate-draft-file.md";
+    draft.data.status = "draft";
+    draft.data.noindex = true;
+
+    expect(
+      validateContentPortfolio([...articles, draft], {
+        today: "2026-08-21",
+      }).map(({ code }) => code),
+    ).toContain("duplicate-slug");
+  });
+
+  it("rejects published related links that are self, duplicate, missing, or non-published", () => {
+    const articles = validPortfolio();
+    const draft = validArticle("draft-related-target", "ai-automation", 99);
+    draft.data.status = "draft";
+    draft.data.noindex = true;
+    const published = articles[0]!;
+    published.data.relatedArticles = [
+      published.data.slug,
+      articles[1]!.data.slug,
+      articles[1]!.data.slug,
+      "missing-related-target",
+      draft.data.slug,
+    ];
+
+    const codes = validateContentPortfolio([...articles, draft], {
+      today: "2026-08-21",
+    }).map(({ code }) => code);
+
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        "related-self",
+        "related-duplicate",
+        "related-missing",
+        "related-nonpublished",
+      ]),
+    );
+  });
+
+  it.each(["draft", "review", "published", "archived"])(
+    "rejects unsafe Markdown bodies while an entry is %s",
+    (status) => {
+      const articles = validPortfolio();
+      const article = articles[0]!;
+      article.data.status = status;
+      article.data.noindex = status === "published" ? false : true;
+      if (status === "archived") {
+        Object.assign(article.data, { dateArchived: "2026-08-21" });
+      }
+      article.body =
+        '<script src="https://tracking.example/collect.js"></script>';
+
+      expect(
+        validateContentPortfolio(articles, {
+          today: "2026-08-21",
+        }).map(({ code }) => code),
+      ).toContain("unsafe-body");
+    },
+  );
+
+  it.each([
+    ["empty body", "", "body-empty"],
+    [
+      "embedded frame",
+      '<iframe src="https://example.org"></iframe>',
+      "unsafe-body",
+    ],
+    [
+      "embedded media",
+      '<video src="https://example.org/demo.mp4"></video>',
+      "unsafe-body",
+    ],
+    ["event handler", '<button onclick="submit()">Run</button>', "unsafe-body"],
+    ["JavaScript URL", "[Run](javascript:submit())", "unsafe-body"],
+    [
+      "data HTML URL",
+      "[Run](data:text/html,%3Ch1%3Eunsafe%3C/h1%3E)",
+      "unsafe-body",
+    ],
+    [
+      "remote image",
+      "![Pixel](https://tracking.example/pixel.gif)",
+      "path-hazard",
+    ],
+    ["tracking identifier", "Tracking G-ABC123XYZ9", "tracking-or-ad-code"],
+    ["placeholder", "## TODO\nReplace this later.", "placeholder"],
+    ["filesystem path", "[Private](C:\\Users\\owner\\file.txt)", "path-hazard"],
+  ])("rejects a Markdown %s hazard", (_name, body, expectedCode) => {
+    const articles = validPortfolio();
+    articles[0]!.body = body;
+
+    expect(
+      validateContentPortfolio(articles, {
+        today: "2026-08-21",
+      }).map(({ code }) => code),
+    ).toContain(expectedCode);
+  });
+
+  it("validates source shape and HTTPS without labeling substantive primariness", () => {
+    const articles = validPortfolio();
+    const oldUrl = articles[0]!.data.sourceList[0]!.url;
+    const newUrl = "https://standards.example.org/guidance/source-record";
+    articles[0]!.data.sourceList[0]!.url = newUrl;
+    articles[0]!.body = articles[0]!.body.replace(oldUrl, newUrl);
+
+    const codes = validateContentPortfolio(articles, {
+      today: "2026-08-21",
+    }).map(({ code }) => code);
+
+    expect(codes).not.toContain("source-host");
+  });
+
+  it("enforces explanation ranges and the exact visual key/type pairing", () => {
+    const articles = validPortfolio();
+    articles[0]!.data.guidePromise = "Too short";
+    articles[1]!.data.visual.type = "workflow";
+
+    expect(
+      validateContentPortfolio(articles, {
+        today: "2026-08-21",
+      }).map(({ code }) => code),
+    ).toEqual(expect.arrayContaining(["guide-field", "visual-pair"]));
+  });
+
+  it("rejects a non-image extension in an otherwise flat hero path", () => {
+    const articles = validPortfolio();
+    Object.assign(articles[0]!.data, {
+      heroImage: "/images/articles/unsafe-script.js",
+      heroImageAlt: "An informative description of the intended hero image.",
+      heroImageDecorative: false,
+    });
+
+    expect(
+      validateContentPortfolio(articles, {
+        today: "2026-08-21",
+      }).map(({ code }) => code),
+    ).toContain("hero-path");
   });
 
   it("allows truthful later publication, review, modification, and source-access dates", () => {
@@ -512,6 +738,74 @@ describe("built-output QA rules", () => {
         siteUrl,
       }),
     ).toEqual([]);
+  });
+
+  it("keeps draft, review, and archived entries out of every expected public inventory", () => {
+    const fixture = validBuiltFixture();
+    const excluded = addExcludedLifecycleArticles(fixture);
+
+    expect(
+      validateBuiltOutput({
+        files: fixture.files,
+        articles: fixture.articles,
+        categorySlugs: [...categorySlugs],
+        siteUrl,
+      }),
+    ).toEqual([]);
+
+    for (const article of excluded) {
+      expect(
+        fixture.files.has(`articles/${article.data.slug}/index.html`),
+      ).toBe(false);
+      expect(fixture.files.has(`social/article-${article.data.slug}.png`)).toBe(
+        false,
+      );
+    }
+  });
+
+  it.each([
+    ["home", "index.html"],
+    ["article archive", "articles/index.html"],
+    ["category", "categories/ai-automation/index.html"],
+    ["publisher", "publisher/index.html"],
+    ["HTML sitemap", "sitemap/index.html"],
+    ["RSS", "rss.xml"],
+    ["related reading", "articles/ai-automation-guide-1/index.html"],
+  ])("detects non-published leakage in the %s sink", (_sink, fileName) => {
+    const fixture = validBuiltFixture();
+    const excluded = addExcludedLifecycleArticles(fixture);
+    const current = fixture.files.get(fileName)!;
+    fixture.files.set(
+      fileName,
+      `${current}\n${excluded.map(({ data }) => `${data.title} /articles/${data.slug}/`).join("\n")}`,
+    );
+
+    const leakage = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+    }).filter(({ code }) => code === "nonpublished-leakage");
+
+    expect(leakage).toHaveLength(3);
+  });
+
+  it("rejects a social image generated for a non-published entry", () => {
+    const fixture = validBuiltFixture();
+    const [draft] = addExcludedLifecycleArticles(fixture);
+    fixture.files.set(
+      `social/article-${draft!.data.slug}.png`,
+      "[binary resource]",
+    );
+
+    expect(
+      validateBuiltOutput({
+        files: fixture.files,
+        articles: fixture.articles,
+        categorySlugs: [...categorySlugs],
+        siteUrl,
+      }).map(({ code }) => code),
+    ).toContain("social-image-set");
   });
 
   it("rejects duplicate required robots directives", () => {
@@ -1093,7 +1387,7 @@ describe("built-output QA rules", () => {
         "missing-resource",
         "placeholder",
         "tracking-or-ad-code",
-        "draft-leakage",
+        "nonpublished-leakage",
       ]),
     );
   });

@@ -1,5 +1,4 @@
 ---
-import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
 
 import ArticleCard from "../../components/ArticleCard.astro";
@@ -14,6 +13,10 @@ import {
 import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { partitionCategoryEdition } from "../../utils/category-edition";
+import {
+  filterPublishedArticles,
+  type PublishedArticleEntry,
+} from "../../utils/published-articles";
 
 const categoryPurposes: Record<CategorySlug, string> = {
   "ai-automation":
@@ -29,9 +32,8 @@ const categoryPurposes: Record<CategorySlug, string> = {
 };
 
 export async function getStaticPaths() {
-  const publishedArticles = await getCollection(
-    "articles",
-    ({ data }) => data.status === "published",
+  const publishedArticles = filterPublishedArticles(
+    await getCollection("articles"),
   );
 
   return categories.map((category) => ({
@@ -52,7 +54,7 @@ export async function getStaticPaths() {
 
 interface Props {
   category: CategoryRecord;
-  articles: CollectionEntry<"articles">[];
+  articles: PublishedArticleEntry[];
 }
 
 const { category, articles } = Astro.props;

@@ -105,6 +105,126 @@ const expectedArticleVisuals = {
   },
 } as const;
 
+const expectedGuideExplanations = {
+  "how-to-identify-business-tasks-for-automation": {
+    guidePromise:
+      "Inventory recurring work, screen repeatability and risk, and select one bounded automation candidate with a human-owned fallback.",
+    deliverable:
+      "Ranked automation-candidate shortlist and one-page pilot brief.",
+    whenToUse:
+      "Use before comparing automation products or connecting AI tools to an existing business workflow.",
+  },
+  "evaluate-ai-output-quality-in-a-small-team-pilot": {
+    guidePromise:
+      "Test AI output against representative cases, a defined rubric, a baseline, and the real time required for human correction.",
+    deliverable:
+      "AI pilot scorecard with a go, revise, or stop recommendation.",
+    whenToUse:
+      "Use before expanding an AI drafting, extraction, classification, or summarization pilot into normal operations.",
+  },
+  "write-a-practical-ai-acceptable-use-policy": {
+    guidePromise:
+      "Define which AI tools, data, and use cases are allowed, restricted, or prohibited before employees begin using them.",
+    deliverable:
+      "Short AI acceptable-use policy draft with approval and reporting duties.",
+    whenToUse:
+      "Use when employees are already experimenting with AI or before the business authorizes broader AI use.",
+  },
+  "evaluate-saas-with-a-practical-checklist": {
+    guidePromise:
+      "Turn business requirements into test scenarios and verify workflow, security, data, administration, and exit claims before buying.",
+    deliverable:
+      "SaaS evidence sheet and documented buy, revise, or reject decision.",
+    whenToUse:
+      "Use during a trial, vendor demonstration, renewal review, or replacement decision for important business software.",
+  },
+  "crm-vs-project-management-software": {
+    guidePromise:
+      "Choose software by whether the durable record is the customer relationship or the coordinated delivery of project work.",
+    deliverable:
+      "System-category decision and documented CRM-to-project handoff.",
+    whenToUse:
+      "Use when sales, customer, and delivery tools appear to offer overlapping tasks, notes, owners, and reports.",
+  },
+  "test-data-export-and-integrations-before-saas-lock-in": {
+    guidePromise:
+      "Export representative data and test critical integrations before dependence grows and migration becomes expensive.",
+    deliverable:
+      "Portability test record, dependency map, and exit-effort estimate.",
+    whenToUse:
+      "Use before selecting, renewing, or deeply integrating a SaaS product that will hold important business records.",
+  },
+  "roll-out-mfa-across-a-small-business": {
+    guidePromise:
+      "Prioritize critical accounts, protect recovery paths, stage enrollment, and verify that MFA is actually enforced.",
+    deliverable:
+      "Prioritized MFA rollout, recovery procedure, and coverage record.",
+    whenToUse:
+      "Use when introducing MFA, correcting uneven enrollment, or reviewing privileged and recovery-account protection.",
+  },
+  "respond-to-a-suspected-phishing-message": {
+    guidePromise:
+      "Verify a suspicious request through a known channel and escalate containment based on clicks, credentials, payments, or exposed data.",
+    deliverable: "Phishing response checklist and initial incident record.",
+    whenToUse:
+      "Use immediately after a suspicious email, text, call, attachment, login page, or payment request is received.",
+  },
+  "back-up-business-files-with-the-3-2-1-method": {
+    guidePromise:
+      "Separate live data from independent backup copies and prove that representative files can be restored before an incident.",
+    deliverable:
+      "Backup inventory, 3-2-1 plan, and documented restore-test log.",
+    whenToUse:
+      "Use when cloud sync is being treated as backup or when recovery has never been tested.",
+  },
+  "create-a-shared-file-and-folder-system": {
+    guidePromise:
+      "Organize shared files by durable business function, consistent naming, ownership, permissions, and lifecycle.",
+    deliverable:
+      "Shared-folder map, naming convention, and file-governance rules.",
+    whenToUse:
+      "Use when important files are scattered across personal drives, inboxes, duplicate folders, or inconsistent names.",
+  },
+  "document-a-repetitive-workflow-before-automating": {
+    guidePromise:
+      "Map the real workflow, including decisions and exceptions, before choosing what should be improved or automated.",
+    deliverable:
+      "Verified current-state workflow map and automation-requirements packet.",
+    whenToUse:
+      "Use before purchasing workflow software or automating a recurring administrative or operational process.",
+  },
+  "onboard-employees-and-contractors-to-business-technology": {
+    guidePromise:
+      "Provision role-based accounts, devices, access, and training while preserving the records needed for later changes or departure.",
+    deliverable: "Technology onboarding checklist and approved-access record.",
+    whenToUse:
+      "Use before an employee, contractor, temporary worker, or service provider receives business-system access.",
+  },
+  "calculate-the-total-cost-of-business-software": {
+    guidePromise:
+      "Compare software using the full cost of implementation, labor, operation, change, and exit—not subscription price alone.",
+    deliverable: "Transparent total-cost range and assumptions register.",
+    whenToUse:
+      "Use when comparing, renewing, consolidating, replacing, building, or retaining business software.",
+  },
+  "create-a-simple-technology-risk-register": {
+    guidePromise:
+      "Turn vague technology concerns into prioritized event-to-consequence risks with evidence, ownership, treatment, and review.",
+    deliverable:
+      "Prioritized technology risk register with owners and treatment actions.",
+    whenToUse:
+      "Use when technology concerns are scattered, appear equally urgent, or lack ownership and review dates.",
+  },
+  "run-a-30-day-business-technology-pilot": {
+    guidePromise:
+      "Run a controlled four-week technology test without allowing a trial to become production by default.",
+    deliverable:
+      "Pilot charter, evidence log, and documented go, revise, or stop decision.",
+    whenToUse:
+      "Use before a broader commitment to SaaS, automation, collaboration, security, or operational technology.",
+  },
+} as const;
+
 const expectedToolkitResources = [
   {
     id: "automation-candidate-screen",
@@ -430,6 +550,33 @@ describe("published content portfolio", () => {
     }
   });
 
+  it("provides the exact approved explanation metadata for all fifteen guides", () => {
+    const articles = articleRecords();
+
+    expect(articles).toHaveLength(15);
+    expect(Object.keys(expectedGuideExplanations)).toHaveLength(15);
+
+    for (const article of articles) {
+      const slug = scalar(article, "slug");
+      expect(
+        {
+          guidePromise: scalar(article, "guidePromise"),
+          deliverable: scalar(article, "deliverable"),
+          whenToUse: scalar(article, "whenToUse"),
+        },
+        slug,
+      ).toEqual(
+        expectedGuideExplanations[
+          slug as keyof typeof expectedGuideExplanations
+        ],
+      );
+
+      expect(article.frontmatter.indexOf("contentType:")).toBeLessThan(
+        article.frontmatter.indexOf("guidePromise:"),
+      );
+    }
+  });
+
   it("keeps publication evidence ordered from launch through the current date", () => {
     const today = todayInPublicationTimeZone();
     for (const article of articleRecords()) {
@@ -485,7 +632,7 @@ describe("published content portfolio", () => {
     }
   });
 
-  it("uses traceable HTTPS sources on approved official or primary hosts", () => {
+  it("uses unique traceable HTTPS source records cited in each body", () => {
     for (const article of articleRecords()) {
       const urls = sourceUrls(article);
 

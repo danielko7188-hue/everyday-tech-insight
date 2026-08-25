@@ -1,5 +1,4 @@
 ---
-import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
 
 import ArticleCard from "../components/ArticleCard.astro";
@@ -9,20 +8,24 @@ import { categories } from "../data/categories";
 import { resolveHomepageCuration } from "../data/editorial";
 import { site } from "../data/site";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  filterPublishedArticles,
+  type PublishedArticleEntry,
+} from "../utils/published-articles";
 
-type ArticleEntry = CollectionEntry<"articles">;
-
-const compareArticles = (left: ArticleEntry, right: ArticleEntry) => {
+const compareArticles = (
+  left: PublishedArticleEntry,
+  right: PublishedArticleEntry,
+) => {
   const dateOrder =
     Date.parse(`${right.data.datePublished}T00:00:00Z`) -
     Date.parse(`${left.data.datePublished}T00:00:00Z`);
   return dateOrder || left.data.title.localeCompare(right.data.title, "en");
 };
 
-const allArticles = await getCollection("articles");
-const publishedArticles = allArticles
-  .filter(({ data }) => data.status === "published")
-  .sort(compareArticles);
+const publishedArticles = filterPublishedArticles(
+  await getCollection("articles"),
+).sort(compareArticles);
 const homepageSelection = resolveHomepageCuration(publishedArticles);
 const [leadArticle] = homepageSelection.lead;
 const featureArticles = homepageSelection.features;

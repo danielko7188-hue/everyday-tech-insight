@@ -18,6 +18,12 @@ const validPublishedArticle = {
   author: "Everyday Tech Insight",
   status: "published",
   contentType: "framework",
+  guidePromise:
+    "Inventory recurring work, screen repeatability and risk, and select one bounded automation candidate with a human-owned fallback.",
+  deliverable:
+    "Ranked automation-candidate shortlist and one-page pilot brief.",
+  whenToUse:
+    "Use before comparing automation products or connecting AI tools to an existing business workflow.",
   businessProblem:
     "Manual handoffs consume staff time and make routine work harder to verify.",
   technologyFocus:
@@ -55,8 +61,9 @@ const validPublishedArticle = {
     },
   ],
   relatedArticles: ["compare-business-software"],
-  heroImage: "/images/automation-workflow.svg",
+  heroImage: "/images/articles/automation-workflow.svg",
   heroImageAlt: "Decision flow for evaluating a business automation workflow",
+  heroImageDecorative: false,
   canonicalOverride: new URL(
     "articles/evaluate-automation-workflow/",
     siteUrl,
@@ -166,7 +173,12 @@ describe("article frontmatter contract", () => {
   });
 
   it("limits workflow, content, and verification values to the approved vocabularies", () => {
-    expect(ARTICLE_STATUSES).toEqual(["draft", "review", "published"]);
+    expect(ARTICLE_STATUSES).toEqual([
+      "draft",
+      "review",
+      "published",
+      "archived",
+    ]);
     expect(CONTENT_TYPES).toEqual([
       "guide",
       "checklist",
@@ -339,6 +351,197 @@ describe("article frontmatter contract", () => {
 
     expect(missingAlt.success).toBe(false);
     expect(missingImage.success).toBe(false);
+  });
+
+  it("accepts a minimal draft, applies safe defaults, and normalizes empty CMS optionals", () => {
+    const result = articleFrontmatterSchema.safeParse({
+      title: "A bounded draft article title",
+      slug: "bounded-draft-article",
+      author: "Everyday Tech Insight",
+      status: "draft",
+      description: "   ",
+      summary: "",
+      datePublished: "",
+      dateModified: " ",
+      lastReviewed: "",
+      heroImage: "",
+      heroImageAlt: "",
+      canonicalOverride: "",
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(result.data).toMatchObject({
+      status: "draft",
+      verificationStatus: "unverified",
+      featured: false,
+      relatedArticles: [],
+      noindex: true,
+    });
+    expect(result.data).not.toHaveProperty("description");
+    expect(result.data).not.toHaveProperty("summary");
+    expect(result.data).not.toHaveProperty("datePublished");
+    expect(result.data).not.toHaveProperty("heroImage");
+    expect(result.data).not.toHaveProperty("heroImageAlt");
+  });
+
+  it("requires review-ready explanation, fit, visual, and source metadata without dates", () => {
+    const reviewArticle = {
+      ...validPublishedArticle,
+      status: "review",
+      verificationStatus: "unverified",
+      datePublished: undefined,
+      dateModified: undefined,
+      lastReviewed: undefined,
+      sourceList: validPublishedArticle.sourceList.slice(0, 1),
+      noindex: true,
+    } as const;
+
+    expect(articleFrontmatterSchema.safeParse(reviewArticle).success).toBe(
+      true,
+    );
+
+    for (const field of [
+      "category",
+      "contentType",
+      "description",
+      "summary",
+      "guidePromise",
+      "deliverable",
+      "whenToUse",
+      "businessProblem",
+      "technologyFocus",
+      "intendedAudience",
+      "readerOutcome",
+      "visual",
+      "sourceList",
+    ] as const) {
+      expect(
+        articleFrontmatterSchema.safeParse({
+          ...reviewArticle,
+          [field]: undefined,
+        }).success,
+        field,
+      ).toBe(false);
+    }
+
+    expect(
+      articleFrontmatterSchema.safeParse({
+        ...reviewArticle,
+        noindex: false,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("requires the three guide-explanation fields and unique source URLs for publication", () => {
+    for (const field of ["guidePromise", "deliverable", "whenToUse"] as const) {
+      expect(
+        articleFrontmatterSchema.safeParse({
+          ...validPublishedArticle,
+          [field]: undefined,
+        }).success,
+        field,
+      ).toBe(false);
+    }
+
+    expect(
+      articleFrontmatterSchema.safeParse({
+        ...validPublishedArticle,
+        sourceList: [
+          validPublishedArticle.sourceList[0],
+          validPublishedArticle.sourceList[0],
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts only publication-complete archived entries with a terminal ordered date", () => {
+    const archivedArticle = {
+      ...validPublishedArticle,
+      status: "archived",
+      dateModified: "2026-08-22",
+      lastReviewed: "2026-08-23",
+      dateArchived: "2026-08-23",
+      noindex: true,
+    } as const;
+
+    expect(articleFrontmatterSchema.safeParse(archivedArticle).success).toBe(
+      true,
+    );
+    expect(
+      articleFrontmatterSchema.safeParse({
+        ...archivedArticle,
+        dateArchived: "2026-08-22",
+      }).success,
+    ).toBe(false);
+    expect(
+      articleFrontmatterSchema.safeParse({
+        ...archivedArticle,
+        guidePromise: undefined,
+      }).success,
+    ).toBe(false);
+    expect(
+      articleFrontmatterSchema.safeParse({
+        ...archivedArticle,
+        noindex: false,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a visual key paired with the wrong visual type", () => {
+    expect(
+      articleFrontmatterSchema.safeParse({
+        ...validPublishedArticle,
+        visual: { ...validPublishedArticle.visual, type: "workflow" },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("enforces informative and decorative hero tuples without ancillary or path hazards", () => {
+    const decorativeHero = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      heroImageAlt: "",
+      heroImageDecorative: true,
+    });
+    const informativeEmptyAlt = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      heroImageAlt: "",
+      heroImageDecorative: false,
+    });
+    const decorativeNamedAlt = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      heroImageDecorative: true,
+    });
+    const ancillaryWithoutImage = articleFrontmatterSchema.safeParse({
+      ...validPublishedArticle,
+      heroImage: undefined,
+      heroImageAlt: undefined,
+      heroImageDecorative: undefined,
+      heroImageCaption: "A caption without an owned image.",
+    });
+
+    expect(decorativeHero.success).toBe(true);
+    expect(informativeEmptyAlt.success).toBe(false);
+    expect(decorativeNamedAlt.success).toBe(false);
+    expect(ancillaryWithoutImage.success).toBe(false);
+
+    for (const heroImage of [
+      "/images/hero.png",
+      "/images/articles/nested/hero.png",
+      "/images/articles/../hero.png",
+      "//images/articles/hero.png",
+      "/images/articles/hero.png?tracking=1",
+      "/images/articles/hero.js",
+    ]) {
+      expect(
+        articleFrontmatterSchema.safeParse({
+          ...validPublishedArticle,
+          heroImage,
+        }).success,
+        heroImage,
+      ).toBe(false);
+    }
   });
 
   it("rejects remote hero images that the production CSP cannot load", () => {

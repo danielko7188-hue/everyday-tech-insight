@@ -6,9 +6,10 @@ import { categories } from "../data/categories";
 import { site } from "../data/site";
 import { toolkitResources } from "../data/toolkit";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { filterPublishedArticles } from "../utils/published-articles";
 
-const publishedArticles = (
-  await getCollection("articles", ({ data }) => data.status === "published")
+const publishedArticles = filterPublishedArticles(
+  await getCollection("articles"),
 ).sort((left, right) => left.data.title.localeCompare(right.data.title));
 const title = `HTML sitemap | ${site.name}`;
 const description =
