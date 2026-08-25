@@ -377,10 +377,10 @@ test("tablet article evidence keeps the reviewed date on one line", async ({
   expect(renderedLines).toBe(1);
 });
 
-test("publication mark keeps the full name on one line when room permits and falls back narrowly", async ({
+test("publication mark keeps the full name visible on one line at every required width", async ({
   page,
 }) => {
-  for (const width of [390, 768, 1440]) {
+  for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await page.evaluate(async () => {
@@ -398,15 +398,28 @@ test("publication mark keeps the full name on one line when room permits and fal
     });
     expect(renderedLines, `${width}px publication name lines`).toBe(1);
   }
+});
 
-  await page.setViewportSize({ width: 320, height: 844 });
-  await page.goto("/");
-  await expect(
-    page.locator(".site-header__mark .publication-mark__initials"),
-  ).toBeVisible();
-  await expect(
-    page.locator(".site-header__mark .publication-mark__name"),
-  ).toBeHidden();
+test("At a glance stays one column below the tablet breakpoint and becomes two by two at tablet", async ({
+  page,
+}) => {
+  for (const { width, columns } of [
+    { width: 390, columns: 1 },
+    { width: 767, columns: 1 },
+    { width: 768, columns: 2 },
+    { width: 1440, columns: 2 },
+  ]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+
+    const renderedColumns = await page
+      .locator(".fit-summary dl")
+      .evaluate(
+        (element) =>
+          getComputedStyle(element).gridTemplateColumns.split(/\s+/).length,
+      );
+    expect(renderedColumns, `${width}px At a glance columns`).toBe(columns);
+  }
 });
 
 test("homepage briefing cards keep metadata above their headline", async ({
@@ -783,4 +796,53 @@ test("mobile tables use a readable contained horizontal region", async ({
   expect(geometry.regionLeft).toBeGreaterThanOrEqual(-1);
   expect(geometry.regionRight).toBeLessThanOrEqual(geometry.viewportWidth + 1);
   expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+});
+
+test("200 percent zoom equivalent reflows header, article navigation, table, and footer", async ({
+  page,
+}) => {
+  // A 640 CSS-pixel viewport is the reflow equivalent of a 1280px desktop
+  // viewport viewed at 200% browser zoom.
+  await page.setViewportSize({ width: 640, height: 900 });
+  await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+
+  const menu = page.locator("header.site-header details").first();
+  await expect(menu).toBeVisible();
+  await menu.locator("summary").click();
+  await expect(menu).toHaveAttribute("open", "");
+  await expect(
+    menu.getByRole("navigation", { name: "Mobile navigation" }),
+  ).toBeVisible();
+
+  const toc = page.getByRole("navigation", { name: "On this page" });
+  const tableRegion = page.getByRole("region", {
+    name: "Scrollable data table",
+  });
+  const footer = page.locator("footer.site-footer");
+  await expect(toc).toBeVisible();
+  await expect(tableRegion).toBeVisible();
+  await expect(footer).toBeVisible();
+
+  for (const [label, locator] of [
+    ["header", page.locator("header.site-header")],
+    ["mobile menu", menu],
+    ["table region", tableRegion],
+    ["footer", footer],
+  ] as const) {
+    const box = await locator.boundingBox();
+    expect(box, `${label} box`).not.toBeNull();
+    expect(box!.x, `${label} left edge`).toBeGreaterThanOrEqual(-1);
+    expect(box!.x + box!.width, `${label} right edge`).toBeLessThanOrEqual(641);
+  }
+
+  const widths = await page.evaluate(() => ({
+    body: document.body.scrollWidth,
+    document: document.documentElement.scrollWidth,
+    viewport: document.documentElement.clientWidth,
+  }));
+  expect(widths.body).toBeLessThanOrEqual(widths.viewport);
+  expect(widths.document).toBeLessThanOrEqual(widths.viewport);
 });

@@ -9,6 +9,8 @@ import {
 } from "../../src/data/editorial";
 
 const articleSlug = "how-to-identify-business-tasks-for-automation";
+const articleWhenToUse =
+  "Use before comparing automation products or connecting AI tools to an existing business workflow.";
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
 
 const launchAiArticleHrefs = [
@@ -228,6 +230,17 @@ test("Purple Signal home uses one lead, two supports, nine guide destinations, a
   await expect(
     page.locator(".front-page__support .article-card--feature"),
   ).toHaveCount(2);
+  const supportVisuals = page.locator(
+    ".front-page__support .article-card--feature .article-card__visual",
+  );
+  await expect(supportVisuals).toHaveCount(2);
+  for (const visual of await supportVisuals.all()) {
+    await expect(visual).toBeVisible();
+    const box = await visual.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeGreaterThanOrEqual(96);
+    expect(box!.height).toBeLessThanOrEqual(240);
+  }
 
   const homeArticleHrefs = await page
     .locator('main a[href^="/articles/"]')
@@ -931,12 +944,6 @@ test("a three-guide category uses the compact branch with complete membership an
       ({ data }) =>
         data.status === "published" && data.category === "ai-automation",
     )
-    .sort(
-      (left, right) =>
-        Number(right.data.featured) - Number(left.data.featured) ||
-        right.data.datePublished.localeCompare(left.data.datePublished) ||
-        left.data.title.localeCompare(right.data.title, "en"),
-    )
     .map(({ data }) => `/articles/${data.slug}/`);
 
   await page.goto("/categories/ai-automation/");
@@ -1208,6 +1215,15 @@ test("article emits one semantic fit summary in the raw DOM", async ({
   await expect(fitSummary.locator("dl")).toHaveCount(1);
   await expect(fitSummary.locator("dt")).toHaveCount(4);
   await expect(fitSummary.locator("dd")).toHaveCount(4);
+  await expect(
+    fitSummary.getByText("When to use this guide", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    fitSummary.getByText(articleWhenToUse, { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(articleWhenToUse, { exact: true })).toHaveCount(
+    1,
+  );
   await expect(page.getByText("At a glance", { exact: true })).toHaveCount(1);
 });
 

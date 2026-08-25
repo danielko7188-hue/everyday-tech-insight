@@ -41,12 +41,7 @@ export async function getStaticPaths() {
       category,
       articles: publishedArticles
         .filter(({ data }) => data.category === category.slug)
-        .sort(
-          (left, right) =>
-            Number(right.data.featured) - Number(left.data.featured) ||
-            right.data.datePublished.localeCompare(left.data.datePublished) ||
-            left.data.title.localeCompare(right.data.title, "en"),
-        ),
+        .sort((left, right) => left.id.localeCompare(right.id, "en")),
     },
   }));
 }

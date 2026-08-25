@@ -475,6 +475,25 @@ test("article body links are visibly underlined and keyboard focus is visible", 
   await expectVisibleFocusIndicator(sourceLink, sourceLinkUnfocused);
 });
 
+test("article-card headlines keep a visible destination affordance without hover", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const headlineLink = page.locator(".article-card__title a").first();
+  await expect(headlineLink).toBeVisible();
+  const decoration = await headlineLink.evaluate((element) => {
+    const styles = getComputedStyle(element);
+    return {
+      color: styles.color,
+      decorationColor: styles.textDecorationColor,
+      decorationLine: styles.textDecorationLine,
+    };
+  });
+  expect(decoration.decorationLine).toContain("underline");
+  expect(decoration.decorationColor).toBe(decoration.color);
+});
+
 test("focused editorial links retain WCAG AA text contrast", async ({
   page,
 }) => {
@@ -488,6 +507,62 @@ test("focused editorial links retain WCAG AA text contrast", async ({
 
   await expectFocusedTextContrast(page, storyMetaLink, 30);
   await expectFocusedTextContrast(page, sectionLink, 120);
+});
+
+test("footer navigation hover and keyboard focus use the dark-surface focus color with WCAG AA contrast", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+
+  const footer = page.locator("footer.site-footer");
+  const footerLink = footer.locator(".site-footer__groups a").first();
+  const focusDark = parseCssColor(
+    await page
+      .locator(":root")
+      .evaluate((element) =>
+        getComputedStyle(element).getPropertyValue("--brand-focus-dark").trim(),
+      ),
+  );
+  const footerBackground = parseCssColor(
+    await footer.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    ),
+  );
+  expect(focusDark).not.toBeNull();
+  expect(footerBackground).not.toBeNull();
+
+  await footer.scrollIntoViewIfNeeded();
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+  await page.waitForTimeout(220);
+  await footerLink.hover();
+  await page.waitForTimeout(220);
+  expect(
+    await footerLink.evaluate((element) => element.matches(":hover")),
+  ).toBe(true);
+  const hoverForeground = parseCssColor(
+    await footerLink.evaluate((element) => getComputedStyle(element).color),
+  );
+  expect(hoverForeground).toEqual(focusDark);
+  expect(
+    contrastRatio(hoverForeground!, footerBackground!),
+  ).toBeGreaterThanOrEqual(4.5);
+
+  await page.mouse.move(0, 0);
+  await reachByTab(page, footerLink, 160);
+  await page.waitForTimeout(220);
+  const focused = await captureFocusAppearance(footerLink);
+  const focusedForeground = parseCssColor(focused.color);
+  const focusedBackground = parseCssColor(focused.backgroundColor);
+  const focusedOutline = parseCssColor(focused.outlineColor);
+  expect(focusedBackground).toEqual(focusDark);
+  expect(focusedOutline).toEqual(focusDark);
+  expect(focusedForeground).not.toBeNull();
+  expect(
+    contrastRatio(focusedForeground!, focusedBackground!),
+  ).toBeGreaterThanOrEqual(4.5);
 });
 
 test("mobile article exposes one keyboard-accessible TOC and data table inside the page boundary", async ({

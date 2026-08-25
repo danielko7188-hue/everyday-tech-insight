@@ -4,10 +4,16 @@ interface Props {
   technologyFocus: string;
   intendedAudience: string;
   deliverable: string;
+  whenToUse: string;
 }
 
-const { businessProblem, technologyFocus, intendedAudience, deliverable } =
-  Astro.props;
+const {
+  businessProblem,
+  technologyFocus,
+  intendedAudience,
+  deliverable,
+  whenToUse,
+} = Astro.props;
 const fields = [
   ["Business problem", businessProblem],
   ["Technology focus", technologyFocus],
@@ -18,6 +24,10 @@ const fields = [
 
 <section class="fit-summary" aria-labelledby="fit-heading">
   <h2 id="fit-heading">At a glance</h2>
+  <div class="fit-summary__when">
+    <p class="fit-summary__when-label">When to use this guide</p>
+    <p>{whenToUse}</p>
+  </div>
   <dl>
     {
       fields.map(([term, value]) => (
