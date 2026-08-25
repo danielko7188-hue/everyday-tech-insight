@@ -973,7 +973,9 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
   await expect(article.getByRole("region", { name: "Sources" })).toBeVisible();
   await expect(
     article.getByRole("region", { name: "About the publication byline" }),
-  ).toContainText(/publication-name byline.*not.*named person/i);
+  ).toContainText(
+    /publication-name byline.*not.*identified person.*legal organization.*never represents a person/i,
+  );
 
   const relatedGuides = article.locator("section.related-articles");
   await expect(
@@ -1158,7 +1160,7 @@ test("publication byline links to its truthful profile and published article ind
     name: "About the publication byline",
   });
   await expect(bylineBox).toContainText(
-    /publication-name byline.*not.*named person/i,
+    /publication-name byline.*not.*identified person.*legal organization.*never represents a person/i,
   );
   await expect(
     bylineBox.getByRole("link", { name: "Contact" }),
