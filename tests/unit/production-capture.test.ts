@@ -71,6 +71,7 @@ describe("production screenshot capture contract", () => {
       "before",
       "after-local",
       "after-production",
+      "runtime-verification",
     ]);
     expect(CAPTURE_WIDTHS).toEqual([390, 768, 1024, 1440, 1920]);
     expect(BEFORE_CAPTURE_ROUTES).toEqual([
@@ -144,49 +145,100 @@ describe("production screenshot capture contract", () => {
   });
 
   it("builds the exact 97-image after inventory including keyboard states", () => {
-    const plan = buildCapturePlan({
+    const productionPlan = buildCapturePlan({
       origin: "https://publication.example",
       phase: "after-production",
     });
-    const fileNames = plan.map(({ fileName }) => fileName);
+    const localPlan = buildCapturePlan({
+      origin: "http://127.0.0.1:4321",
+      phase: "after-local",
+    });
+    const runtimePlan = buildCapturePlan({
+      origin: "https://publication.example",
+      phase: "runtime-verification",
+    });
+    const fileNames = productionPlan.map(({ fileName }) => fileName);
 
-    expect(plan).toHaveLength(97);
+    expect(productionPlan).toHaveLength(97);
     expect(new Set(fileNames).size).toBe(97);
     expect(
-      plan
+      productionPlan
         .filter(({ state }) => state === "menu-open")
         .map(({ width }) => width),
     ).toEqual([390, 768]);
     expect(
-      plan
+      productionPlan
         .filter(({ state }) => state === "skip-link-focus")
         .map(({ width }) => width),
     ).toEqual(CAPTURE_WIDTHS);
-    expect(plan.filter(({ state }) => state === "full-page")).toHaveLength(
-      AFTER_CAPTURE_ROUTES.length * CAPTURE_WIDTHS.length,
-    );
+    expect(
+      productionPlan.filter(({ state }) => state === "full-page"),
+    ).toHaveLength(AFTER_CAPTURE_ROUTES.length * CAPTURE_WIDTHS.length);
+    expect(localPlan.map(({ fileName }) => fileName)).toEqual(fileNames);
+    expect(runtimePlan.map(({ fileName }) => fileName)).toEqual(fileNames);
+    expect(runtimePlan).toHaveLength(97);
   });
 
-  it("accepts only an explicit canonical HTTPS origin", () => {
-    expect(normalizeCaptureOrigin("https://publication.example")).toBe(
-      "https://publication.example",
-    );
-    expect(normalizeCaptureOrigin("https://publication.example/")).toBe(
-      "https://publication.example",
-    );
+  it.each(["before", "after-production", "runtime-verification"] as const)(
+    "accepts only an explicit canonical HTTPS origin for %s",
+    (phase) => {
+      expect(normalizeCaptureOrigin("https://publication.example", phase)).toBe(
+        "https://publication.example",
+      );
+      expect(
+        normalizeCaptureOrigin("https://publication.example/", phase),
+      ).toBe("https://publication.example");
+
+      for (const candidate of [
+        "",
+        " https://publication.example",
+        "http://publication.example",
+        "http://127.0.0.1:4321",
+        "https://user:secret@publication.example",
+        "https://publication.example/path",
+        "https://publication.example/a/..",
+        "https://publication.example/?",
+        "https://publication.example/#",
+        "publication.example",
+      ]) {
+        expect(() => normalizeCaptureOrigin(candidate, phase)).toThrow(
+          /HTTPS origin/i,
+        );
+      }
+    },
+  );
+
+  it("accepts only canonical loopback HTTP origins with safe explicit ports for after-local", () => {
+    for (const candidate of [
+      "http://127.0.0.1",
+      "http://127.0.0.1/",
+      "http://127.0.0.1:1024",
+      "http://127.0.0.1:4321",
+      "http://127.0.0.1:65535",
+    ]) {
+      expect(normalizeCaptureOrigin(candidate, "after-local")).toBe(
+        candidate.endsWith("/") ? candidate.slice(0, -1) : candidate,
+      );
+    }
 
     for (const candidate of [
-      "",
-      " https://publication.example",
-      "http://publication.example",
-      "https://user:secret@publication.example",
-      "https://publication.example/path",
-      "https://publication.example/a/..",
-      "https://publication.example/?",
-      "https://publication.example/#",
-      "publication.example",
+      "http://localhost:4321",
+      "http://127.0.0.2:4321",
+      "http://[::1]:4321",
+      "http://0.0.0.0:4321",
+      "https://127.0.0.1:4321",
+      "http://user:secret@127.0.0.1:4321",
+      "http://127.0.0.1:0",
+      "http://127.0.0.1:1023",
+      "http://127.0.0.1:04321",
+      "http://127.0.0.1:4321/path",
+      "http://127.0.0.1:4321/a/..",
+      "http://127.0.0.1:4321/?",
+      "http://127.0.0.1:4321/#",
     ]) {
-      expect(() => normalizeCaptureOrigin(candidate)).toThrow(/HTTPS origin/i);
+      expect(() => normalizeCaptureOrigin(candidate, "after-local")).toThrow(
+        /loopback HTTP origin/i,
+      );
     }
   });
 
@@ -208,11 +260,26 @@ describe("production screenshot capture contract", () => {
       origin: "https://publication.example",
       phase: "after-production",
     });
+    expect(
+      parseCaptureArguments([
+        "--origin",
+        "http://127.0.0.1:4321",
+        "--phase",
+        "after-local",
+        "--expected-sha",
+        "0123456789abcdef0123456789abcdef01234567",
+      ]),
+    ).toEqual({
+      deploymentId: null,
+      expectedGitSha: "0123456789abcdef0123456789abcdef01234567",
+      origin: "http://127.0.0.1:4321",
+      phase: "after-local",
+    });
     expect(() => parseCaptureArguments([])).toThrow(/--origin/i);
     expect(() =>
       parseCaptureArguments([
         "--origin",
-        "https://publication.example",
+        "http://127.0.0.1:4321",
         "--phase",
         "after-local",
         "--expected-sha",
@@ -249,6 +316,50 @@ describe("production screenshot capture contract", () => {
     ).toThrow(/phase/i);
   });
 
+  it("enforces phase-specific capture provenance", () => {
+    const sha = "0123456789abcdef0123456789abcdef01234567";
+    const deploymentId = "dpl_AbCdEf1234567890";
+    const parse = (phase: string, extra: string[] = []) =>
+      parseCaptureArguments([
+        "--origin",
+        phase === "after-local"
+          ? "http://127.0.0.1:4321"
+          : "https://publication.example",
+        "--phase",
+        phase,
+        ...extra,
+      ]);
+
+    for (const phase of [
+      "before",
+      "after-production",
+      "runtime-verification",
+    ]) {
+      expect(() => parse(phase)).toThrow(/expected SHA/i);
+      expect(() => parse(phase, ["--expected-sha", sha])).toThrow(
+        /deployment ID/i,
+      );
+      expect(
+        parse(phase, ["--expected-sha", sha, "--deployment-id", deploymentId]),
+      ).toMatchObject({ deploymentId, expectedGitSha: sha, phase });
+    }
+
+    expect(() => parse("after-local")).toThrow(/expected SHA/i);
+    expect(parse("after-local", ["--expected-sha", sha])).toMatchObject({
+      deploymentId: null,
+      expectedGitSha: sha,
+      phase: "after-local",
+    });
+    expect(() =>
+      parse("after-local", [
+        "--expected-sha",
+        sha,
+        "--deployment-id",
+        deploymentId,
+      ]),
+    ).toThrow(/after-local.*deployment ID/i);
+  });
+
   it("maps phases to fixed versioned evidence directories", () => {
     const repositoryRoot = createTemporaryRoot("eti-capture-paths-");
     expect(createCapturePaths(repositoryRoot, "before").outputDirectory).toBe(
@@ -273,6 +384,20 @@ describe("production screenshot capture contract", () => {
         "artifacts/site-audit/after/purple-signal-2026-08-25/production",
       ),
     );
+    const runtimePaths = createCapturePaths(
+      repositoryRoot,
+      "runtime-verification",
+    );
+    expect(runtimePaths.outputDirectory).toBe(
+      resolve(
+        repositoryRoot,
+        "artifacts/site-audit/runtime-verification/purple-signal-2026-08-25-final",
+      ),
+    );
+    expect(runtimePaths.expectedFileNames).toHaveLength(97);
+    expect(
+      readFileSync(new URL("../../.gitignore", import.meta.url), "utf8"),
+    ).toMatch(/^artifacts\/site-audit\/runtime-verification\/$/m);
     expect(() => createCapturePaths(repositoryRoot, "../outside")).toThrow(
       /phase/i,
     );
@@ -416,5 +541,98 @@ describe("production screenshot capture contract", () => {
         url,
       }),
     ).toThrow(/redirect chain/i);
+  });
+
+  it("records failed same-origin subresources and redirect chains from Playwright responses", async () => {
+    const productionCapture =
+      (await import("../../scripts/capture-production-screenshots.mjs")) as Record<
+        string,
+        unknown
+      >;
+    expect(productionCapture).toHaveProperty("createRuntimeMonitor");
+    const createRuntimeMonitor = productionCapture.createRuntimeMonitor;
+    if (typeof createRuntimeMonitor !== "function") return;
+
+    type EventHandler = (event: unknown) => void;
+    const listeners = new Map<string, EventHandler[]>();
+    const mainFrame = {};
+    const page = {
+      mainFrame: () => mainFrame,
+      on: (event: string, handler: EventHandler) => {
+        const handlers = listeners.get(event) ?? [];
+        handlers.push(handler);
+        listeners.set(event, handlers);
+        return page;
+      },
+    };
+    const emit = (event: string, value: unknown) => {
+      for (const handler of listeners.get(event) ?? []) handler(value);
+    };
+    const response = ({
+      from = null,
+      navigation = false,
+      status,
+      url,
+    }: {
+      from?: string | null;
+      navigation?: boolean;
+      status: number;
+      url: string;
+    }) => {
+      const request = {
+        frame: () => mainFrame,
+        isNavigationRequest: () => navigation,
+        redirectedFrom: () => (from ? { url: () => from } : null),
+        url: () => url,
+      };
+      return {
+        request: () => request,
+        status: () => status,
+        url: () => url,
+      };
+    };
+
+    const origin = "https://publication.example";
+    const route = {
+      path: "/publication-audit-route-that-does-not-exist/",
+      status: 404,
+    };
+    const errors = createRuntimeMonitor(page, origin, route) as string[];
+    expect(listeners.has("response")).toBe(true);
+
+    emit(
+      "response",
+      response({
+        navigation: true,
+        status: 404,
+        url: `${origin}${route.path}`,
+      }),
+    );
+    expect(errors).toEqual([]);
+
+    emit(
+      "response",
+      response({ status: 404, url: `${origin}/styles/missing.css` }),
+    );
+    emit(
+      "response",
+      response({ status: 503, url: `${origin}/images/unavailable.png` }),
+    );
+    emit(
+      "response",
+      response({
+        from: `${origin}/scripts/legacy.js`,
+        status: 200,
+        url: `${origin}/scripts/current.js`,
+      }),
+    );
+
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/404.*missing\.css/i),
+        expect.stringMatching(/503.*unavailable\.png/i),
+        expect.stringMatching(/redirect chain.*legacy\.js.*current\.js/i),
+      ]),
+    );
   });
 });

@@ -5,11 +5,18 @@ import path from "node:path";
 export const AUDIT_MANIFEST_FILE = "audit-manifest.json";
 export const AUDIT_MANIFEST_SCHEMA_VERSION = 1;
 
-const PHASES = new Set(["before", "after-local", "after-production"]);
+const PHASES = new Set([
+  "before",
+  "after-local",
+  "after-production",
+  "runtime-verification",
+]);
 const CAPTURE_STATES = new Set(["full-page", "menu-open", "skip-link-focus"]);
 const SHA_PATTERN = /^[a-f\d]{40}$/;
 const DIGEST_PATTERN = /^[a-f\d]{64}$/;
 const DEPLOYMENT_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{2,127}$/;
+const SAFE_LOOPBACK_PORT_MIN = 1024;
+const SAFE_LOOPBACK_PORT_MAX = 65_535;
 
 function assertPlainFileName(fileName) {
   if (
@@ -26,6 +33,72 @@ function assertPlainFileName(fileName) {
 function assertUnique(values, label) {
   if (new Set(values).size !== values.length) {
     throw new Error(`Audit manifest contains a duplicate ${label}.`);
+  }
+}
+
+function originError(phase) {
+  return phase === "after-local"
+    ? "Audit origin must be the canonical loopback HTTP origin http://127.0.0.1 with an optional safe port."
+    : "Audit origin must be a canonical HTTPS origin.";
+}
+
+export function normalizeAuditOrigin(origin, phase) {
+  let parsedOrigin;
+  try {
+    parsedOrigin = new URL(origin);
+  } catch {
+    throw new TypeError(originError(phase));
+  }
+  const isCanonicalOrigin =
+    typeof origin === "string" &&
+    origin === parsedOrigin.origin &&
+    !parsedOrigin.username &&
+    !parsedOrigin.password &&
+    parsedOrigin.pathname === "/" &&
+    !parsedOrigin.search &&
+    !parsedOrigin.hash;
+  if (!isCanonicalOrigin) {
+    throw new TypeError(originError(phase));
+  }
+
+  if (phase === "after-local") {
+    const port = parsedOrigin.port === "" ? null : Number(parsedOrigin.port);
+    const hasSafePort =
+      port === null ||
+      (Number.isInteger(port) &&
+        port >= SAFE_LOOPBACK_PORT_MIN &&
+        port <= SAFE_LOOPBACK_PORT_MAX &&
+        String(port) === parsedOrigin.port);
+    if (
+      parsedOrigin.protocol !== "http:" ||
+      parsedOrigin.hostname !== "127.0.0.1" ||
+      !hasSafePort
+    ) {
+      throw new TypeError(originError(phase));
+    }
+    return parsedOrigin.origin;
+  }
+
+  if (parsedOrigin.protocol !== "https:") {
+    throw new TypeError(originError(phase));
+  }
+  return parsedOrigin.origin;
+}
+
+function assertPhaseProvenance({ deploymentId, expectedGitSha, phase }) {
+  if (expectedGitSha === null) {
+    throw new TypeError(`Audit phase ${phase} requires an expected Git SHA.`);
+  }
+  if (phase === "after-local") {
+    if (deploymentId !== null) {
+      throw new TypeError(
+        "Audit phase after-local must not include a deployment ID.",
+      );
+    }
+    return;
+  }
+  if (deploymentId === null) {
+    throw new TypeError(`Audit phase ${phase} requires a deployment ID.`);
   }
 }
 
@@ -57,24 +130,7 @@ function normalizeMetadata({
   if (!PHASES.has(phase)) {
     throw new TypeError(`Unsupported audit phase: ${String(phase)}`);
   }
-
-  let parsedOrigin;
-  try {
-    parsedOrigin = new URL(origin);
-  } catch {
-    throw new TypeError("Audit origin must be a canonical HTTPS origin.");
-  }
-  if (
-    parsedOrigin.protocol !== "https:" ||
-    parsedOrigin.username ||
-    parsedOrigin.password ||
-    parsedOrigin.pathname !== "/" ||
-    parsedOrigin.search ||
-    parsedOrigin.hash ||
-    origin !== parsedOrigin.origin
-  ) {
-    throw new TypeError("Audit origin must be a canonical HTTPS origin.");
-  }
+  const normalizedOrigin = normalizeAuditOrigin(origin, phase);
 
   if (expectedGitSha !== null && !SHA_PATTERN.test(expectedGitSha)) {
     throw new TypeError(
@@ -88,12 +144,13 @@ function normalizeMetadata({
   ) {
     throw new TypeError("Deployment ID contains unsupported characters.");
   }
+  assertPhaseProvenance({ deploymentId, expectedGitSha, phase });
 
   return {
     capturedAt,
     deploymentId,
     expectedGitSha,
-    origin,
+    origin: normalizedOrigin,
     phase,
   };
 }

@@ -61,6 +61,15 @@ const plan = [
   },
 ] as const;
 
+function captureRecords() {
+  return plan.map(({ fileName }) => ({
+    actualStatus: 200,
+    byteCount: 10,
+    fileName,
+    sha256: "a".repeat(64),
+  }));
+}
+
 describe("audit manifest contract", () => {
   it("records every required field and sorts captures and assertions deterministically", () => {
     const manifest = buildAuditManifest({
@@ -135,12 +144,7 @@ describe("audit manifest contract", () => {
   });
 
   it("fails closed on duplicate, incomplete, unexpected, or status-mismatched inventory", () => {
-    const validRecords = plan.map(({ fileName }) => ({
-      actualStatus: 200,
-      byteCount: 10,
-      fileName,
-      sha256: "a".repeat(64),
-    }));
+    const validRecords = captureRecords();
 
     expect(() =>
       buildAuditManifest({
@@ -185,6 +189,82 @@ describe("audit manifest contract", () => {
         plan,
       }),
     ).toThrow(/status/i);
+  });
+
+  it("enforces phase-specific canonical origins and provenance metadata", () => {
+    const build = (overrides: Record<string, unknown>) =>
+      buildAuditManifest({
+        ...metadata,
+        assertions: [],
+        captureRecords: captureRecords(),
+        plan,
+        ...overrides,
+      });
+
+    expect(
+      build({
+        deploymentId: null,
+        origin: "http://127.0.0.1:4321",
+        phase: "after-local",
+      }),
+    ).toMatchObject({
+      deploymentId: null,
+      expectedGitSha: metadata.expectedGitSha,
+      origin: "http://127.0.0.1:4321",
+      phase: "after-local",
+    });
+    expect(build({ phase: "runtime-verification" })).toMatchObject({
+      deploymentId: metadata.deploymentId,
+      expectedGitSha: metadata.expectedGitSha,
+      origin: metadata.origin,
+      phase: "runtime-verification",
+    });
+
+    for (const phase of [
+      "before",
+      "after-production",
+      "runtime-verification",
+    ]) {
+      expect(() => build({ expectedGitSha: null, phase })).toThrow(
+        /expected Git SHA/i,
+      );
+      expect(() => build({ deploymentId: null, phase })).toThrow(
+        /deployment ID/i,
+      );
+      expect(() => build({ origin: "http://127.0.0.1:4321", phase })).toThrow(
+        /HTTPS origin/i,
+      );
+    }
+
+    expect(() =>
+      build({
+        deploymentId: null,
+        expectedGitSha: null,
+        origin: "http://127.0.0.1:4321",
+        phase: "after-local",
+      }),
+    ).toThrow(/expected Git SHA/i);
+    expect(() =>
+      build({
+        origin: "http://127.0.0.1:4321",
+        phase: "after-local",
+      }),
+    ).toThrow(/after-local.*deployment ID/i);
+
+    for (const origin of [
+      "https://publication.example",
+      "http://localhost:4321",
+      "http://127.0.0.1:1023",
+      "http://127.0.0.1:4321/",
+      "http://127.0.0.1:4321/path",
+    ]) {
+      expect(() =>
+        build({ deploymentId: null, origin, phase: "after-local" }),
+      ).toThrow(/loopback HTTP origin/i);
+    }
+    expect(() => build({ origin: `${metadata.origin}/` })).toThrow(
+      /HTTPS origin/i,
+    );
   });
 
   it("hashes the exact staged files and writes stable JSON with a factual timestamp", async () => {

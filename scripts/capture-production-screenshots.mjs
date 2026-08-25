@@ -4,12 +4,16 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { chromium } from "@playwright/test";
 
-import { writeAuditManifest } from "./write-audit-manifest.mjs";
+import {
+  normalizeAuditOrigin,
+  writeAuditManifest,
+} from "./write-audit-manifest.mjs";
 
 export const CAPTURE_PHASES = Object.freeze([
   "before",
   "after-local",
   "after-production",
+  "runtime-verification",
 ]);
 export const CAPTURE_WIDTHS = Object.freeze([390, 768, 1024, 1440, 1920]);
 export const CAPTURE_HEIGHT = 900;
@@ -112,6 +116,10 @@ const phaseOutputSegments = Object.freeze({
   before: ["before", RELEASE_EVIDENCE_ID],
   "after-local": ["after", RELEASE_EVIDENCE_ID, "local"],
   "after-production": ["after", RELEASE_EVIDENCE_ID, "production"],
+  "runtime-verification": [
+    "runtime-verification",
+    `${RELEASE_EVIDENCE_ID}-final`,
+  ],
 });
 
 function assertCapturePhase(phase) {
@@ -409,39 +417,43 @@ export async function prepareCaptureWorkspace(paths, overrides = {}) {
   await assertSafeOwnedCapturePath(paths, paths.pendingDirectory, fileSystem);
 }
 
-export function normalizeCaptureOrigin(candidate) {
+function captureOriginError(phase) {
+  return phase === "after-local"
+    ? "Capture origin must be the canonical loopback HTTP origin http://127.0.0.1 with an optional safe port and without credentials, path, query, or hash."
+    : "Capture origin must be an explicit HTTPS origin without credentials, path, query, or hash.";
+}
+
+export function normalizeCaptureOrigin(candidate, phaseCandidate) {
+  const phase = assertCapturePhase(phaseCandidate);
   if (typeof candidate !== "string" || candidate.trim() !== candidate) {
-    throw new TypeError(
-      "Capture origin must be an explicit HTTPS origin without credentials, path, query, or hash.",
-    );
+    throw new TypeError(captureOriginError(phase));
   }
 
   let parsed;
   try {
     parsed = new URL(candidate);
   } catch {
-    throw new TypeError(
-      "Capture origin must be an explicit HTTPS origin without credentials, path, query, or hash.",
-    );
+    throw new TypeError(captureOriginError(phase));
   }
 
   const lexicalOrigin =
     candidate === parsed.origin || candidate === `${parsed.origin}/`;
   if (
     !lexicalOrigin ||
-    parsed.protocol !== "https:" ||
     parsed.username ||
     parsed.password ||
     parsed.pathname !== "/" ||
     parsed.search ||
     parsed.hash
   ) {
-    throw new TypeError(
-      "Capture origin must be an explicit HTTPS origin without credentials, path, query, or hash.",
-    );
+    throw new TypeError(captureOriginError(phase));
   }
 
-  return parsed.origin;
+  try {
+    return normalizeAuditOrigin(parsed.origin, phase);
+  } catch {
+    throw new TypeError(captureOriginError(phase));
+  }
 }
 
 export function normalizeExpectedGitSha(candidate) {
@@ -461,6 +473,23 @@ export function normalizeDeploymentId(candidate) {
     throw new TypeError("Deployment ID contains unsupported characters.");
   }
   return candidate;
+}
+
+function assertCaptureProvenance(phase, expectedGitSha, deploymentId) {
+  if (expectedGitSha === null) {
+    throw new TypeError(`Capture phase ${phase} requires an expected SHA.`);
+  }
+  if (phase === "after-local") {
+    if (deploymentId !== null) {
+      throw new TypeError(
+        "Capture phase after-local must not include a deployment ID.",
+      );
+    }
+    return;
+  }
+  if (deploymentId === null) {
+    throw new TypeError(`Capture phase ${phase} requires a deployment ID.`);
+  }
 }
 
 export function parseCaptureArguments(arguments_) {
@@ -495,15 +524,19 @@ export function parseCaptureArguments(arguments_) {
     throw new TypeError("Provide exactly one --phase value.");
   }
 
+  const phase = assertCapturePhase(values.get("--phase"));
+  const deploymentId = values.has("--deployment-id")
+    ? normalizeDeploymentId(values.get("--deployment-id"))
+    : null;
+  const expectedGitSha = values.has("--expected-sha")
+    ? normalizeExpectedGitSha(values.get("--expected-sha"))
+    : null;
+  assertCaptureProvenance(phase, expectedGitSha, deploymentId);
   return {
-    deploymentId: values.has("--deployment-id")
-      ? normalizeDeploymentId(values.get("--deployment-id"))
-      : null,
-    expectedGitSha: values.has("--expected-sha")
-      ? normalizeExpectedGitSha(values.get("--expected-sha"))
-      : null,
-    origin: normalizeCaptureOrigin(values.get("--origin")),
-    phase: assertCapturePhase(values.get("--phase")),
+    deploymentId,
+    expectedGitSha,
+    origin: normalizeCaptureOrigin(values.get("--origin"), phase),
+    phase,
   };
 }
 
@@ -524,8 +557,8 @@ export function buildCapturePlan({
   origin: originCandidate,
   phase: phaseCandidate,
 }) {
-  const origin = normalizeCaptureOrigin(originCandidate);
   const phase = assertCapturePhase(phaseCandidate);
+  const origin = normalizeCaptureOrigin(originCandidate, phase);
   const routes =
     phase === "before" ? BEFORE_CAPTURE_ROUTES : AFTER_CAPTURE_ROUTES;
   const plan = CAPTURE_WIDTHS.flatMap((width) =>
@@ -655,8 +688,14 @@ export async function publishCaptureRun(paths, overrides = {}) {
   }
 }
 
-function createRuntimeMonitor(page, origin, route) {
+export function createRuntimeMonitor(page, origin, route) {
   const errors = [];
+  const recordedErrors = new Set();
+  const recordError = (message) => {
+    if (recordedErrors.has(message)) return;
+    recordedErrors.add(message);
+    errors.push(message);
+  };
   page.on("console", (message) => {
     if (message.type() !== "error") return;
     const locationUrl = message.location().url;
@@ -665,14 +704,14 @@ function createRuntimeMonitor(page, origin, route) {
       locationUrl === new URL(route.path, `${origin}/`).href &&
       /Failed to load resource.*404/i.test(message.text());
     if (!expectedMissingRouteNoise) {
-      errors.push(`console error: ${message.text()}`);
+      recordError(`console error: ${message.text()}`);
     }
   });
   page.on("pageerror", (error) => {
-    errors.push(`page error: ${error.message}`);
+    recordError(`page error: ${error.message}`);
   });
   page.on("requestfailed", (request) => {
-    errors.push(
+    recordError(
       `request failed: ${request.url()} (${request.failure()?.errorText ?? "unknown error"})`,
     );
   });
@@ -680,8 +719,36 @@ function createRuntimeMonitor(page, origin, route) {
     const requestUrl = new URL(request.url());
     if (["http:", "https:"].includes(requestUrl.protocol)) {
       if (requestUrl.origin !== origin) {
-        errors.push(`cross-origin request: ${request.url()}`);
+        recordError(`cross-origin request: ${request.url()}`);
       }
+    }
+  });
+  page.on("response", (response) => {
+    const responseUrl = new URL(response.url());
+    const request = response.request();
+    const redirectedFrom = request.redirectedFrom();
+    const redirectedTo = request.redirectedTo?.();
+    const status = response.status();
+    if (redirectedFrom) {
+      recordError(
+        `unexpected redirect chain: ${redirectedFrom.url()} -> ${response.url()}`,
+      );
+    } else if ([301, 302, 303, 307, 308].includes(status)) {
+      recordError(
+        `unexpected redirect response ${status}: ${response.url()} -> ${redirectedTo?.url() ?? "[unknown target]"}`,
+      );
+    }
+
+    if (responseUrl.origin !== origin || status < 400) return;
+    const expectedUrl = new URL(route.path, `${origin}/`).href;
+    const expectedPrimary404 =
+      route.status === 404 &&
+      status === 404 &&
+      response.url() === expectedUrl &&
+      request.isNavigationRequest() &&
+      request.frame() === page.mainFrame();
+    if (!expectedPrimary404) {
+      recordError(`HTTP ${status} response: ${response.url()}`);
     }
   });
   return errors;
@@ -916,14 +983,15 @@ export async function captureProductionScreenshots(options, overrides = {}) {
   if (!options || typeof options !== "object") {
     throw new TypeError("Production capture options must be explicit.");
   }
-  const origin = normalizeCaptureOrigin(options.origin);
   const phase = assertCapturePhase(options.phase);
+  const origin = normalizeCaptureOrigin(options.origin, phase);
   const expectedGitSha = options.expectedGitSha
     ? normalizeExpectedGitSha(options.expectedGitSha)
     : null;
   const deploymentId = options.deploymentId
     ? normalizeDeploymentId(options.deploymentId)
     : null;
+  assertCaptureProvenance(phase, expectedGitSha, deploymentId);
   const capturedAt = (overrides.nowImpl ?? (() => new Date()))().toISOString();
   const plan = buildCapturePlan({ origin, phase });
   const expectedNames = plan.map(({ fileName }) => fileName);
