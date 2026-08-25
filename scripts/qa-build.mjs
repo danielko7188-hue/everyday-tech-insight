@@ -132,6 +132,8 @@ function managedReferencesForArticle(article, issues) {
           article.data.heroImage,
           article.data.slug,
         ),
+        alt: article.data.heroImageAlt,
+        decorative: article.data.heroImageDecorative === true,
         kind: "hero",
       });
     } catch (error) {
@@ -147,7 +149,22 @@ function managedReferencesForArticle(article, issues) {
   return references;
 }
 
-export function validateManagedArticleImageBuildOutput({ files, articles }) {
+function managedImageManifestKey(articleSlug, publicUrl) {
+  return `${articleSlug}\0${publicUrl}`;
+}
+
+function managedImageRenderedTupleMessage(index, expected, actual) {
+  return `Occurrence ${index + 1} expected ${JSON.stringify(expected)}; found ${JSON.stringify(actual)}.`;
+}
+
+/**
+ * @param {{ files: any, articles: any[], managedImageAudit?: any }} options
+ */
+export function validateManagedArticleImageBuildOutput({
+  files,
+  articles,
+  managedImageAudit,
+}) {
   const normalizedFiles = new Map(
     [...files].map(([fileName, contents]) => [
       normalizeFileName(fileName),
@@ -157,6 +174,26 @@ export function validateManagedArticleImageBuildOutput({ files, articles }) {
   const issues = [];
   const expectedPublishedFiles = new Set();
   const referencesByArticle = new Map();
+  const inspectedByArticleAndUrl = new Map();
+
+  for (const image of managedImageAudit?.publishedImages ?? []) {
+    const key = managedImageManifestKey(image.articleSlug, image.publicUrl);
+    const existing = inspectedByArticleAndUrl.get(key);
+    if (
+      existing &&
+      (existing.width !== image.width || existing.height !== image.height)
+    ) {
+      issues.push(
+        finding(
+          "managed-image-rendered-tuple",
+          image.publicUrl,
+          "The revalidated source manifest contains conflicting decoded dimensions.",
+        ),
+      );
+      continue;
+    }
+    inspectedByArticleAndUrl.set(key, image);
+  }
 
   for (const article of articles) {
     const references = managedReferencesForArticle(article, issues);
@@ -212,6 +249,60 @@ export function validateManagedArticleImageBuildOutput({ files, articles }) {
           orderedMembershipMessage(actualUrls, expectedUrls),
         ),
       );
+    }
+
+    const expectedTuples = expectedReferences.map((reference) => {
+      const inspected = inspectedByArticleAndUrl.get(
+        managedImageManifestKey(article.data.slug, reference.publicUrl),
+      );
+      return {
+        role: reference.kind,
+        url: reference.publicUrl,
+        alt: reference.alt,
+        ariaHidden:
+          reference.kind === "hero" && reference.decorative
+            ? "true"
+            : undefined,
+        width: inspected?.width,
+        height: inspected?.height,
+        loading: reference.kind === "hero" ? "eager" : "lazy",
+        decoding: "async",
+      };
+    });
+    const actualTuples = managedElements
+      .map((_index, element) => {
+        const image = $(element);
+        const isHero = image.closest("[data-managed-hero-image]").length === 1;
+        const isBody = image.closest(".article-body").length === 1;
+        return {
+          role: isHero === isBody ? "unrecognized" : isHero ? "hero" : "body",
+          url: image.attr("src"),
+          alt: image.attr("alt"),
+          ariaHidden: image.attr("aria-hidden"),
+          width: Number(image.attr("width")),
+          height: Number(image.attr("height")),
+          loading: image.attr("loading"),
+          decoding: image.attr("decoding"),
+        };
+      })
+      .get();
+    const tupleCount = Math.max(expectedTuples.length, actualTuples.length);
+    for (let index = 0; index < tupleCount; index += 1) {
+      const expected = expectedTuples[index];
+      const actual = actualTuples[index];
+      const matches =
+        expected !== undefined &&
+        actual !== undefined &&
+        Object.keys(expected).every((key) => actual[key] === expected[key]);
+      if (!matches) {
+        issues.push(
+          finding(
+            "managed-image-rendered-tuple",
+            articleFile,
+            managedImageRenderedTupleMessage(index, expected, actual),
+          ),
+        );
+      }
     }
 
     managedElements.each((_index, element) => {
@@ -1090,11 +1181,15 @@ function everyElement($, selector, predicate) {
   return valid;
 }
 
+/**
+ * @param {{ files: any, articles: any[], categorySlugs: string[], siteUrl: string, managedImageAudit?: any }} options
+ */
 export function validateBuiltOutput({
   files,
   articles,
   categorySlugs,
   siteUrl,
+  managedImageAudit,
 }) {
   const normalizedFiles = new Map(
     [...files].map(([fileName, contents]) => [
@@ -1105,6 +1200,7 @@ export function validateBuiltOutput({
   const issues = validateManagedArticleImageBuildOutput({
     files: normalizedFiles,
     articles,
+    managedImageAudit,
   });
   const publishedArticles = articles.filter(
     ({ data }) => data.status === "published",
@@ -1732,6 +1828,7 @@ async function main() {
     articles,
     categorySlugs: REQUIRED_CATEGORY_SLUGS,
     siteUrl: configuredSiteUrl,
+    managedImageAudit: imageAudit,
   });
   printFindings("Built-output QA", issues);
   if (issues.length > 0) process.exitCode = 1;

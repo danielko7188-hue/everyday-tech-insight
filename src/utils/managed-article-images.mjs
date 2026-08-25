@@ -6,6 +6,8 @@ import { lstat, open, readdir, realpath } from "node:fs/promises";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import sharp from "sharp";
 
+import { visitTreeIterative } from "./managed-image-ast.mjs";
+
 export const MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT = "/images/articles";
 export const MANAGED_ARTICLE_IMAGE_SOURCE_ROOT = path.join(
   "src",
@@ -153,8 +155,11 @@ function stableFileIdentityMatches(before, after) {
 
 async function readStableRegularFile(
   { repositoryRoot, boundaryRoot, filePath, label = "Managed image", maxBytes },
-  { afterRead } = {},
+  { afterInitialStat, afterRead, onReadProgress } = {},
 ) {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 0) {
+    throw new Error(`${label} requires a safe nonnegative read limit.`);
+  }
   const canonicalBefore = await assertSafeRegularFile(
     repositoryRoot,
     boundaryRoot,
@@ -188,12 +193,29 @@ async function readStableRegularFile(
     if (!Number.isSafeInteger(byteLength) || byteLength < 0) {
       throw new Error(`${label} has an unsafe byte length: ${filePath}`);
     }
-    if (Number.isSafeInteger(maxBytes) && byteLength > maxBytes) {
+    if (byteLength > maxBytes) {
       throw new Error(
         `${label} exceeds the ${maxBytes.toLocaleString("en-US")}-byte limit: ${filePath}`,
       );
     }
-    bytes = await handle.readFile();
+    if (typeof afterInitialStat === "function") await afterInitialStat();
+    const readLimit = Math.min(maxBytes + 1, byteLength + 1);
+    const readBuffer = Buffer.allocUnsafe(readLimit);
+    let totalBytesRead = 0;
+    while (totalBytesRead < readLimit) {
+      const { bytesRead } = await handle.read(
+        readBuffer,
+        totalBytesRead,
+        readLimit - totalBytesRead,
+        totalBytesRead,
+      );
+      if (bytesRead === 0) break;
+      totalBytesRead += bytesRead;
+      if (typeof onReadProgress === "function") {
+        await onReadProgress({ readLimit, totalBytesRead });
+      }
+    }
+    bytes = readBuffer.subarray(0, totalBytesRead);
     if (bytes.byteLength !== byteLength) {
       throw new Error(`${label} changed while it was being read: ${filePath}`);
     }
@@ -426,13 +448,6 @@ export function isMeaningfulManagedImageAlt(alt, filename) {
   return normalizedAlt !== normalizedFilename;
 }
 
-function walkTree(node, visit) {
-  visit(node);
-  if (Array.isArray(node?.children)) {
-    for (const child of node.children) walkTree(child, visit);
-  }
-}
-
 export function scanManagedImagesInMarkdown(
   body,
   { articleSlug, fileName = `${articleSlug}.md` },
@@ -457,7 +472,7 @@ export function scanManagedImagesInMarkdown(
 
   const definitions = new Map();
   const duplicateDefinitions = new Set();
-  walkTree(tree, (node) => {
+  visitTreeIterative(tree, (node) => {
     if (node.type === "definition") {
       const identifier = normalizeReferenceIdentifier(node.identifier);
       if (definitions.has(identifier)) {
@@ -468,16 +483,13 @@ export function scanManagedImagesInMarkdown(
     }
   });
 
-  walkTree(tree, (node) => {
-    if (
-      (node.type === "raw" || node.type === "html") &&
-      /<(?:img|picture|source)\b/i.test(node.value ?? "")
-    ) {
+  visitTreeIterative(tree, (node) => {
+    if (node.type === "raw" || node.type === "html") {
       findings.push(
         finding(
-          "raw-image-html",
+          "raw-html",
           fileName,
-          "Raw HTML img, picture, and source elements are not allowed in article Markdown.",
+          "Raw HTML is not allowed in article Markdown; use reviewed Markdown structures instead.",
         ),
       );
       return;
@@ -1192,7 +1204,6 @@ export async function auditManagedArticleImageBuildFilesystem({
             "Managed output must contain regular files in one flat directory.",
           ),
         );
-        await walk(absolutePath);
         continue;
       }
       if (!details.isFile()) {
@@ -1326,7 +1337,9 @@ export function createManagedArticleImageResponse(image) {
   return new Response(image.bytes, {
     status: 200,
     headers: {
-      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=86400",
+      "CDN-Cache-Control":
+        "public, max-age=86400, stale-while-revalidate=604800",
       "Content-Length": String(image.byteLength),
       "Content-Type": image.mimeType,
       "X-Content-Type-Options": "nosniff",

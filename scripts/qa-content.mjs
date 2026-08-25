@@ -6,6 +6,7 @@ import { load as loadYaml } from "js-yaml";
 import { fromMarkdown } from "mdast-util-from-markdown";
 
 import { siteConfig, siteOrigin } from "../site.config.mjs";
+import { visitTreeIterative } from "../src/utils/managed-image-ast.mjs";
 
 export const REQUIRED_CATEGORY_SLUGS = [
   "ai-automation",
@@ -269,19 +270,35 @@ function updateHiddenHtmlStack(html, stack) {
   }
 }
 
-function collectVisibleMarkdownText(node, output, hiddenHtmlStack = []) {
-  if (NON_PROSE_MARKDOWN_NODE_TYPES.has(node.type)) return;
-  if (node.type === "text" && hiddenHtmlStack.length === 0) {
-    output.push(node.value);
-  }
-  if (!Array.isArray(node.children)) return;
-  for (const child of node.children) {
-    if (child.type === "html") {
-      updateHiddenHtmlStack(child.value, hiddenHtmlStack);
+function collectVisibleMarkdownText(root, output, hiddenHtmlStack = []) {
+  const stack = [root];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (!node || typeof node !== "object") continue;
+    if (node.type === "html" || node.type === "raw") {
+      updateHiddenHtmlStack(node.value ?? "", hiddenHtmlStack);
       continue;
     }
-    collectVisibleMarkdownText(child, output, hiddenHtmlStack);
+    if (NON_PROSE_MARKDOWN_NODE_TYPES.has(node.type)) continue;
+    if (node.type === "text" && hiddenHtmlStack.length === 0) {
+      output.push(node.value);
+    }
+    if (!Array.isArray(node.children)) continue;
+    for (let index = node.children.length - 1; index >= 0; index -= 1) {
+      stack.push(node.children[index]);
+    }
   }
+}
+
+function containsRawMarkdownHtml(markdown) {
+  const tree = fromMarkdown(withoutLeadingFrontmatter(markdown));
+  let containsRawHtml = false;
+  visitTreeIterative(tree, (node) => {
+    if (node.type === "html" || node.type === "raw") {
+      containsRawHtml = true;
+    }
+  });
+  return containsRawHtml;
 }
 
 function visibleMarkdownProse(markdown) {
@@ -1005,6 +1022,15 @@ function validateArticle(
   if (body.trim().length === 0) {
     issues.push(
       finding("body-empty", fileName, "article Markdown body cannot be empty."),
+    );
+  }
+  if (containsRawMarkdownHtml(body)) {
+    issues.push(
+      finding(
+        "raw-html",
+        fileName,
+        "article Markdown cannot contain raw HTML; use Markdown structures instead.",
+      ),
     );
   }
   if (

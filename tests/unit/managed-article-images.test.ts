@@ -217,6 +217,48 @@ describe("managed article image inspection", () => {
     ).rejects.toThrow(/changed while/i);
   });
 
+  it("caps descriptor reads when a file grows after its initial stat", async () => {
+    const { repositoryRoot, sourceRoot } = await makeRepository();
+    const filename = "a-practical-guide-growing-file.png";
+    const sourcePath = path.join(sourceRoot, filename);
+    await writeFile(sourcePath, await rasterBuffer("png"));
+    let maximumObservedRead = 0;
+    let observedReadLimit = 0;
+
+    await expect(
+      inspectManagedArticleImage(
+        {
+          articleSlug: "a-practical-guide",
+          publicUrl: `/images/articles/${filename}`,
+          repositoryRoot,
+        },
+        {
+          afterInitialStat: async () => {
+            await writeFile(
+              sourcePath,
+              Buffer.alloc(MANAGED_ARTICLE_IMAGE_MAX_BYTES + 10_000, 0x61),
+            );
+          },
+          onReadProgress: ({
+            readLimit,
+            totalBytesRead,
+          }: {
+            readLimit: number;
+            totalBytesRead: number;
+          }) => {
+            observedReadLimit = readLimit;
+            maximumObservedRead = Math.max(maximumObservedRead, totalBytesRead);
+          },
+        },
+      ),
+    ).rejects.toThrow(/changed while|byte limit/i);
+    expect(observedReadLimit).toBeGreaterThan(0);
+    expect(observedReadLimit).toBeLessThanOrEqual(
+      MANAGED_ARTICLE_IMAGE_MAX_BYTES + 1,
+    );
+    expect(maximumObservedRead).toBeLessThanOrEqual(observedReadLimit);
+  });
+
   it("uses orientation-aware dimensions", async () => {
     const { repositoryRoot, sourceRoot } = await makeRepository();
     const filename = "a-practical-guide-oriented-photo.jpg";
@@ -652,13 +694,29 @@ describe("managed Markdown image policy", () => {
     '<img src="/images/articles/a-practical-guide-flow.png" alt="Decision workflow">',
     '<picture><img src="/images/articles/a-practical-guide-flow.png" alt="Decision workflow"></picture>',
     '<source srcset="/images/articles/a-practical-guide-flow.webp">',
-  ])("rejects raw image HTML: %s", (body) => {
+    '<svg><use href="/images/articles/a-practical-guide-flow.png"></use></svg>',
+    '<object data="/images/articles/a-practical-guide-flow.png"></object>',
+    '<embed src="/images/articles/a-practical-guide-flow.png">',
+    '<div style="background-image:url(/images/articles/a-practical-guide-flow.png)">Visual</div>',
+    "<!-- /images/articles/a-practical-guide-flow.png -->",
+  ])("rejects every raw HTML form: %s", (body) => {
     expect(
       scanManagedImagesInMarkdown(body, {
         articleSlug: "a-practical-guide",
         fileName: "a-practical-guide.md",
       }).findings,
-    ).toContainEqual(expect.objectContaining({ code: "raw-image-html" }));
+    ).toContainEqual(expect.objectContaining({ code: "raw-html" }));
+  });
+
+  it("finds raw HTML below roughly 5,000 nested Markdown nodes without overflowing", () => {
+    const body = `${"> ".repeat(6_000)}<!-- hidden image bypass -->`;
+
+    expect(
+      scanManagedImagesInMarkdown(body, {
+        articleSlug: "a-practical-guide",
+        fileName: "a-practical-guide.md",
+      }).findings,
+    ).toContainEqual(expect.objectContaining({ code: "raw-html" }));
   });
 });
 

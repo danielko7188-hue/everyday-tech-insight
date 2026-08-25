@@ -175,6 +175,38 @@ describe("managed article image rehype transformer", () => {
     expect(tree).toEqual(before);
   });
 
+  it("transforms a managed image below roughly 5,000 nested nodes without overflowing", async () => {
+    const { file } = await managedFixture();
+    const image = {
+      type: "element",
+      tagName: "img",
+      properties: {
+        alt: "Decision workflow with approval and review steps",
+        src: "/images/articles/a-practical-guide-decision-flow.png",
+      },
+      children: [],
+    };
+    let nested: Record<string, unknown> = image;
+    for (let depth = 0; depth < 6_000; depth += 1) {
+      nested = {
+        type: "element",
+        tagName: "div",
+        properties: {},
+        children: [nested],
+      };
+    }
+    const tree = { type: "root", children: [nested] };
+
+    await rehypeManagedArticleImages()(tree, file);
+
+    expect(image.properties).toMatchObject({
+      width: 17,
+      height: 11,
+      loading: "lazy",
+      decoding: "async",
+    });
+  });
+
   it("is registered after the existing table transformer", async () => {
     const config = await import("../../astro.config.mjs");
     const markdown = config.default.markdown;

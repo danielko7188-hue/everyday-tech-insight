@@ -42,7 +42,27 @@ function validFixture() {
       </article>`,
     ],
   ]);
-  return { articles, files };
+  const managedImageAudit = {
+    findings: [],
+    publishedImages: [
+      {
+        articleSlug: "published-guide",
+        filename: "published-guide-hero.png",
+        height: 16,
+        publicUrl: "/images/articles/published-guide-hero.png",
+        width: 24,
+      },
+      {
+        articleSlug: "published-guide",
+        filename: "published-guide-decision-flow.webp",
+        height: 12,
+        publicUrl: "/images/articles/published-guide-decision-flow.webp",
+        width: 20,
+      },
+    ],
+    referencedImages: [],
+  };
+  return { articles, files, managedImageAudit };
 }
 
 describe("built managed image output", () => {
@@ -156,5 +176,93 @@ describe("built managed image output", () => {
     expect(
       validateManagedArticleImageBuildOutput(fixture).map(({ code }) => code),
     ).toContain("managed-image-markup-set");
+  });
+
+  it("rejects positive intrinsic dimensions that differ from the decoded source", () => {
+    const fixture = validFixture();
+    fixture.files.set(
+      "articles/published-guide/index.html",
+      fixture.files
+        .get("articles/published-guide/index.html")!
+        .replace('width="24" height="16"', 'width="23" height="15"'),
+    );
+
+    expect(
+      validateManagedArticleImageBuildOutput(fixture).map(({ code }) => code),
+    ).toContain("managed-image-rendered-tuple");
+  });
+
+  it("rejects hero and body URLs swapped between otherwise valid occurrences", () => {
+    const fixture = validFixture();
+    fixture.files.set(
+      "articles/published-guide/index.html",
+      fixture.files
+        .get("articles/published-guide/index.html")!
+        .replace("published-guide-hero.png", "temporary-image-name")
+        .replace(
+          "published-guide-decision-flow.webp",
+          "published-guide-hero.png",
+        )
+        .replace("temporary-image-name", "published-guide-decision-flow.webp"),
+    );
+
+    expect(
+      validateManagedArticleImageBuildOutput(fixture).map(({ code }) => code),
+    ).toContain("managed-image-rendered-tuple");
+  });
+
+  it("rejects a meaningful body alt that differs from the reviewed source alt", () => {
+    const fixture = validFixture();
+    fixture.files.set(
+      "articles/published-guide/index.html",
+      fixture.files
+        .get("articles/published-guide/index.html")!
+        .replace(
+          "Decision workflow showing approval and review steps",
+          "Different workflow showing escalation and approval decisions",
+        ),
+    );
+
+    expect(
+      validateManagedArticleImageBuildOutput(fixture).map(({ code }) => code),
+    ).toContain("managed-image-rendered-tuple");
+  });
+
+  it("binds decorative hero alt and aria semantics to the reviewed source tuple", () => {
+    const fixture = validFixture();
+    const published = fixture.articles[0]!;
+    Object.assign(published.data, {
+      heroImageAlt: "",
+      heroImageDecorative: true,
+    });
+    const articleFile = "articles/published-guide/index.html";
+    fixture.files.set(
+      articleFile,
+      fixture.files
+        .get(articleFile)!
+        .replace(
+          'alt="Editors reviewing the documented publication workflow"',
+          'alt="" aria-hidden="true"',
+        ),
+    );
+    expect(validateManagedArticleImageBuildOutput(fixture)).toEqual([]);
+
+    fixture.files.set(
+      articleFile,
+      fixture.files.get(articleFile)!.replace(' aria-hidden="true"', ""),
+    );
+    expect(
+      validateManagedArticleImageBuildOutput(fixture).map(({ code }) => code),
+    ).toContain("managed-image-rendered-tuple");
+  });
+
+  it("rejects dimensions from a manifest owned by a different article", () => {
+    const fixture = validFixture();
+    fixture.managedImageAudit.publishedImages[0]!.articleSlug =
+      "different-published-guide";
+
+    expect(
+      validateManagedArticleImageBuildOutput(fixture).map(({ code }) => code),
+    ).toContain("managed-image-rendered-tuple");
   });
 });

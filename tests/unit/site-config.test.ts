@@ -299,4 +299,38 @@ describe("static deployment configuration", () => {
     );
     expect(headerSet["Content-Security-Policy"]).not.toMatch(/https?:\/\//);
   });
+
+  it("adds a deployable managed-image cache policy without immutable caching", () => {
+    const vercelConfig = readJson("../../vercel.json") as {
+      headers?: Array<{
+        source: string;
+        headers: Array<{ key: string; value: string }>;
+      }>;
+    };
+    const globalRule = vercelConfig.headers?.[0];
+    const mediaRule = vercelConfig.headers?.find(
+      ({ source }) => source === "/images/articles/(.*)",
+    );
+
+    expect(globalRule?.source).toBe("/(.*)");
+    expect(globalRule?.headers.map(({ key }) => key)).toEqual([
+      "X-Content-Type-Options",
+      "Referrer-Policy",
+      "Permissions-Policy",
+      "Content-Security-Policy",
+      "Cross-Origin-Opener-Policy",
+      "X-Frame-Options",
+    ]);
+    expect(mediaRule?.headers).toEqual([
+      {
+        key: "Cache-Control",
+        value: "public, max-age=300, stale-while-revalidate=86400",
+      },
+      {
+        key: "CDN-Cache-Control",
+        value: "public, max-age=86400, stale-while-revalidate=604800",
+      },
+    ]);
+    expect(JSON.stringify(mediaRule)).not.toContain("immutable");
+  });
 });

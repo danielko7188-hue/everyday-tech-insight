@@ -89,6 +89,9 @@ describe("published managed image endpoint helpers", () => {
     expect(response.headers.get("content-type")).toBe("image/png");
     expect(response.headers.get("content-length")).toBe("4");
     expect(response.headers.get("cache-control")).toBe(
+      "public, max-age=300, stale-while-revalidate=86400",
+    );
+    expect(response.headers.get("cdn-cache-control")).toBe(
       "public, max-age=86400, stale-while-revalidate=604800",
     );
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");

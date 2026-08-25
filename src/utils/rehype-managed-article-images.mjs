@@ -5,13 +5,7 @@ import {
   isMeaningfulManagedImageAlt,
   MANAGED_ARTICLE_IMAGE_PUBLIC_ROOT,
 } from "./managed-article-images.mjs";
-
-function visitElements(node, visitor) {
-  if (node?.type === "element") visitor(node);
-  if (Array.isArray(node?.children)) {
-    for (const child of node.children) visitElements(child, visitor);
-  }
-}
+import { visitTreeIterative } from "./managed-image-ast.mjs";
 
 function articleSlugFromFile(file) {
   const filePath = file?.path ?? file?.history?.[0];
@@ -23,7 +17,8 @@ function articleSlugFromFile(file) {
 export default function rehypeManagedArticleImages() {
   return async function transformManagedArticleImages(tree, file) {
     const managedNodes = [];
-    visitElements(tree, (node) => {
+    visitTreeIterative(tree, (node) => {
+      if (node.type !== "element") return;
       if (node.tagName !== "img") return;
       const src = node.properties?.src;
       if (

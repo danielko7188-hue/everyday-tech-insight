@@ -886,6 +886,53 @@ describe("content QA rules", () => {
     ).not.toContain("unsupported-guide-promise");
   });
 
+  it.each([
+    "<!-- hidden HTML comment -->",
+    "<em>Ordinary raw markup is still outside the article contract.</em>",
+    '<svg><use href="/images/articles/example.png"></use></svg>',
+    '<object data="/images/articles/example.png"></object>',
+    '<div style="background:url(/images/articles/example.png)">Visual</div>',
+  ])("rejects raw HTML structurally across article content: %s", (rawHtml) => {
+    const articles = validPortfolio();
+    articles[0]!.body += `\n\n${rawHtml}`;
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).toContain("raw-html");
+  });
+
+  it.each(["draft", "review", "published", "archived"] as const)(
+    "rejects raw HTML in the %s lifecycle state",
+    (status) => {
+      const articles = validPortfolio();
+      articles[0]!.data.status = status;
+      articles[0]!.body += "\n\n<!-- lifecycle-independent bypass -->";
+
+      expect(
+        validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+          ({ code }) => code,
+        ),
+      ).toContain("raw-html");
+    },
+  );
+
+  it("collects visible prose below thousands of nested nodes without overflowing", () => {
+    const articles = validPortfolio();
+    const article = articles[0]!;
+    const explanation =
+      "Quasar metallurgy calibrates zirconium chambers while nebula cartography directs catalyst arrays.";
+    article.data.guidePromise = explanation;
+    article.body += `\n\n${"> ".repeat(6_500)}${explanation}`;
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).not.toContain("unsupported-guide-promise");
+  });
+
   it("keeps slug uniqueness global across every lifecycle status", () => {
     const articles = validPortfolio();
     const draft = validArticle(
@@ -1153,6 +1200,46 @@ describe("built-output QA rules", () => {
         siteUrl,
       }),
     ).toEqual([]);
+  });
+
+  it("propagates exact managed-image tuple validation through full built-output QA", () => {
+    const fixture = validBuiltFixture();
+    const article = fixture.articles[0]!;
+    const publicUrl = `/images/articles/${article.data.slug}-decision-flow.png`;
+    const articleFile = `articles/${article.data.slug}/index.html`;
+    article.body += `\n\n![Decision workflow with approval and review steps](${publicUrl})`;
+    fixture.files.set(publicUrl.slice(1), "[binary resource]");
+    fixture.files.set(
+      articleFile,
+      fixture.files
+        .get(articleFile)!
+        .replace(
+          '<div class="article-body"><h2 id="decision">Decision</h2></div>',
+          `<div class="article-body"><h2 id="decision">Decision</h2><img src="${publicUrl}" alt="Decision workflow with approval and review steps" width="23" height="15" loading="lazy" decoding="async"></div>`,
+        ),
+    );
+
+    const codes = validateBuiltOutput({
+      files: fixture.files,
+      articles: fixture.articles,
+      categorySlugs: [...categorySlugs],
+      siteUrl,
+      managedImageAudit: {
+        findings: [],
+        publishedImages: [
+          {
+            articleSlug: article.data.slug,
+            filename: `${article.data.slug}-decision-flow.png`,
+            height: 16,
+            publicUrl,
+            width: 24,
+          },
+        ],
+        referencedImages: [],
+      },
+    }).map(({ code }) => code);
+
+    expect(codes).toContain("managed-image-rendered-tuple");
   });
 
   it("keeps draft, review, and archived entries out of every expected public inventory", () => {
