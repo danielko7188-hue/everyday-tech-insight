@@ -3,7 +3,11 @@ import { basename, join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { todayInPublicationTimeZone } from "../../scripts/qa-content.mjs";
+import {
+  readArticleRecords,
+  todayInPublicationTimeZone,
+  validateContentPortfolio,
+} from "../../scripts/qa-content.mjs";
 import { siteConfig } from "../../site.config.mjs";
 import { categorySlugs } from "../../src/data/categories";
 import { BUSINESS_TECHNOLOGY_FIT_FIELDS } from "../../src/utils/content-contract";
@@ -575,6 +579,22 @@ describe("published content portfolio", () => {
         article.frontmatter.indexOf("guidePromise:"),
       );
     }
+  });
+
+  it("passes mechanical published-explanation uniqueness and body-support QA", async () => {
+    const issues = validateContentPortfolio(await readArticleRecords(), {
+      today: todayInPublicationTimeZone(),
+    });
+    const explanationCodes = new Set([
+      "duplicate-guide-promise",
+      "duplicate-deliverable",
+      "duplicate-when-to-use",
+      "unsupported-guide-promise",
+      "unsupported-deliverable",
+      "unsupported-when-to-use",
+    ]);
+
+    expect(issues.filter(({ code }) => explanationCodes.has(code))).toEqual([]);
   });
 
   it("keeps publication evidence ordered from launch through the current date", () => {

@@ -61,7 +61,7 @@ const validPublishedArticle = {
     },
   ],
   relatedArticles: ["compare-business-software"],
-  heroImage: "/images/articles/automation-workflow.svg",
+  heroImage: "/images/articles/automation-workflow.png",
   heroImageAlt: "Decision flow for evaluating a business automation workflow",
   heroImageDecorative: false,
   canonicalOverride: new URL(
@@ -543,6 +543,30 @@ describe("article frontmatter contract", () => {
       ).toBe(false);
     }
   });
+
+  it.each(["webp", "png", "jpg", "jpeg"])(
+    "accepts a lowercase .%s raster hero under the article image root",
+    (extension) => {
+      expect(
+        articleFrontmatterSchema.safeParse({
+          ...validPublishedArticle,
+          heroImage: `/images/articles/automation-purpose.${extension}`,
+        }).success,
+      ).toBe(true);
+    },
+  );
+
+  it.each(["svg", "PNG", "WebP", "gif", "avif", "js"])(
+    "rejects the nonapproved or mixed-case .%s hero extension",
+    (extension) => {
+      expect(
+        articleFrontmatterSchema.safeParse({
+          ...validPublishedArticle,
+          heroImage: `/images/articles/automation-purpose.${extension}`,
+        }).success,
+      ).toBe(false);
+    },
+  );
 
   it("rejects remote hero images that the production CSP cannot load", () => {
     const result = articleFrontmatterSchema.safeParse({

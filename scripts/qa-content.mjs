@@ -61,7 +61,63 @@ const PATH_HAZARD_PATTERN =
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const HERO_IMAGE_PATTERN =
-  /^\/images\/articles\/(?![^/]*\.\.)[A-Za-z0-9][A-Za-z0-9._-]*\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
+  /^\/images\/articles\/(?![^/]*\.\.)[A-Za-z0-9][A-Za-z0-9._-]*\.(?:webp|png|jpe?g)$/;
+const PUBLISHED_EXPLANATION_RULES = [
+  {
+    field: "guidePromise",
+    duplicateCode: "duplicate-guide-promise",
+    unsupportedCode: "unsupported-guide-promise",
+    minimumSupportedTerms: 3,
+  },
+  {
+    field: "deliverable",
+    duplicateCode: "duplicate-deliverable",
+    unsupportedCode: "unsupported-deliverable",
+    minimumSupportedTerms: 2,
+  },
+  {
+    field: "whenToUse",
+    duplicateCode: "duplicate-when-to-use",
+    unsupportedCode: "unsupported-when-to-use",
+    minimumSupportedTerms: 2,
+  },
+];
+const EXPLANATION_SUPPORT_RATIO = 0.25;
+const EXPLANATION_STOPWORDS = new Set([
+  "about",
+  "after",
+  "also",
+  "already",
+  "before",
+  "being",
+  "between",
+  "both",
+  "could",
+  "during",
+  "each",
+  "from",
+  "have",
+  "into",
+  "other",
+  "should",
+  "their",
+  "there",
+  "these",
+  "they",
+  "this",
+  "those",
+  "through",
+  "under",
+  "until",
+  "using",
+  "when",
+  "where",
+  "which",
+  "while",
+  "with",
+  "without",
+  "would",
+]);
 
 function finding(code, file, message) {
   return { code, file, message };
@@ -102,6 +158,92 @@ export function todayInPublicationTimeZone(
 
 function wordCount(value) {
   return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function normalizedExplanationValue(value) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function significantExplanationTerms(value) {
+  const tokens =
+    value
+      .normalize("NFKD")
+      .toLowerCase()
+      .match(/[a-z0-9]+/g) ?? [];
+
+  return new Set(
+    tokens
+      .filter(
+        (token) =>
+          token.length >= 4 &&
+          /[a-z]/.test(token) &&
+          !EXPLANATION_STOPWORDS.has(token),
+      )
+      // Six-character term families handle common inflections such as
+      // compare/comparing and automate/automation without fuzzy matching.
+      .map((token) => (token.length > 6 ? token.slice(0, 6) : token)),
+  );
+}
+
+function validatePublishedExplanations(publishedArticles) {
+  const issues = [];
+  const seenByField = new Map(
+    PUBLISHED_EXPLANATION_RULES.map(({ field }) => [field, new Map()]),
+  );
+
+  for (const article of publishedArticles) {
+    const evidence = [
+      article.data.title,
+      article.data.summary,
+      typeof article.body === "string"
+        ? article.body.replace(/https?:\/\/\S+/gi, " ")
+        : "",
+    ]
+      .filter((value) => typeof value === "string")
+      .join("\n");
+    const evidenceTerms = significantExplanationTerms(evidence);
+
+    for (const rule of PUBLISHED_EXPLANATION_RULES) {
+      const value = article.data[rule.field];
+      if (typeof value !== "string" || value.trim() === "") continue;
+
+      const normalized = normalizedExplanationValue(value);
+      const seen = seenByField.get(rule.field);
+      if (seen.has(normalized)) {
+        issues.push(
+          finding(
+            rule.duplicateCode,
+            article.fileName,
+            `${rule.field} duplicates ${seen.get(normalized)}.`,
+          ),
+        );
+      } else {
+        seen.set(normalized, article.fileName);
+      }
+
+      // This is a deterministic terminology-traceability check only. It does
+      // not assess factual accuracy, usefulness, completeness, or editorial quality.
+      const explanationTerms = significantExplanationTerms(value);
+      const supportedCount = [...explanationTerms].filter((term) =>
+        evidenceTerms.has(term),
+      ).length;
+      const requiredCount = Math.max(
+        rule.minimumSupportedTerms,
+        Math.ceil(explanationTerms.size * EXPLANATION_SUPPORT_RATIO),
+      );
+      if (supportedCount < requiredCount) {
+        issues.push(
+          finding(
+            rule.unsupportedCode,
+            article.fileName,
+            `${rule.field} has ${supportedCount} significant terms represented in the title, summary, or body; expected at least ${requiredCount} for mechanical terminology support.`,
+          ),
+        );
+      }
+    }
+  }
+
+  return issues;
 }
 
 function normalizedOptionalData(data) {
@@ -991,6 +1133,8 @@ export function validateContentPortfolio(
       }
     }
   }
+
+  issues.push(...validatePublishedExplanations(publishedArticles));
 
   const publishedSlugs = new Set(
     publishedArticles

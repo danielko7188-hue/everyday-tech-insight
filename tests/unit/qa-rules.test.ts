@@ -59,6 +59,7 @@ function validBody(slug: string, sources: string[]): string {
   return [
     "## Direct answer",
     `${words(170)} limitation`,
+    "Representative business evidence supports this bounded, reversible technology decision with clear ownership and a human fallback. The documented decision record, implementation brief, workflow, business record, and technology product are all addressed here.",
     "## Practical steps",
     words(170),
     "## Decision checks",
@@ -90,12 +91,9 @@ function validArticle(
       author: "Everyday Tech Insight",
       status: "published",
       contentType: "guide",
-      guidePromise:
-        "Use representative business evidence to make one bounded, reversible technology decision with clear ownership and a human fallback.",
-      deliverable:
-        "Documented decision record and bounded implementation brief.",
-      whenToUse:
-        "Use before committing an important workflow or business record to a technology product.",
+      guidePromise: `Use representative business evidence to make one bounded, reversible technology decision for scenario ${index}, with clear ownership and a human fallback.`,
+      deliverable: `Documented decision record and bounded implementation brief for scenario ${index}.`,
+      whenToUse: `Use before committing important workflow or business record number ${index} to a technology product.`,
       businessProblem: `A specific business problem that needs a careful decision ${index}.`,
       technologyFocus: `A specific technology capability relevant to the decision ${index}.`,
       intendedAudience: `Small-business decision makers responsible for choice ${index}.`,
@@ -492,6 +490,81 @@ describe("content QA rules", () => {
     expect(codes).not.toContain("status");
   });
 
+  it("reports duplicate explanation fields between published articles", () => {
+    const articles = validPortfolio();
+    articles[1]!.data.guidePromise = articles[0]!.data.guidePromise;
+    articles[2]!.data.deliverable = articles[0]!.data.deliverable;
+    articles[3]!.data.whenToUse = articles[0]!.data.whenToUse;
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "duplicate-guide-promise",
+        "duplicate-deliverable",
+        "duplicate-when-to-use",
+      ]),
+    );
+  });
+
+  it("excludes draft, review, and archived explanations from published uniqueness", () => {
+    const articles = validPortfolio();
+    const excluded = ["draft", "review", "archived"].map((status, index) => {
+      const article = validArticle(
+        `${status}-duplicate-explanation`,
+        categorySlugs[index]!,
+        101 + index,
+      );
+      article.data.status = status;
+      article.data.noindex = true;
+      article.data.guidePromise = articles[0]!.data.guidePromise;
+      article.data.deliverable = articles[0]!.data.deliverable;
+      article.data.whenToUse = articles[0]!.data.whenToUse;
+      if (status === "archived") {
+        Object.assign(article.data, { dateArchived: "2026-08-21" });
+      }
+      return article;
+    });
+
+    const codes = validateContentPortfolio([...articles, ...excluded], {
+      today: "2026-08-21",
+    }).map(({ code }) => code);
+
+    expect(
+      codes.filter((code) =>
+        [
+          "duplicate-guide-promise",
+          "duplicate-deliverable",
+          "duplicate-when-to-use",
+        ].includes(code),
+      ),
+    ).toEqual([]);
+  });
+
+  it("reports published explanation terms unsupported by title, summary, or body", () => {
+    const articles = validPortfolio();
+    articles[0]!.data.guidePromise =
+      "Quasar metallurgy calibrates zirconium resonance chambers through lunar spectroscopy while nebula cartography directs isolated catalyst arrays.";
+    articles[1]!.data.deliverable =
+      "Zirconium nebula resonance ledger for lunar catalysts.";
+    articles[2]!.data.whenToUse =
+      "Use during quasar spectroscopy when lunar catalyst arrays require nebula calibration.";
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "unsupported-guide-promise",
+        "unsupported-deliverable",
+        "unsupported-when-to-use",
+      ]),
+    );
+  });
+
   it("keeps slug uniqueness global across every lifecycle status", () => {
     const articles = validPortfolio();
     const draft = validArticle(
@@ -623,20 +696,41 @@ describe("content QA rules", () => {
     ).toEqual(expect.arrayContaining(["guide-field", "visual-pair"]));
   });
 
-  it("rejects a non-image extension in an otherwise flat hero path", () => {
-    const articles = validPortfolio();
-    Object.assign(articles[0]!.data, {
-      heroImage: "/images/articles/unsafe-script.js",
-      heroImageAlt: "An informative description of the intended hero image.",
-      heroImageDecorative: false,
-    });
+  it.each(["webp", "png", "jpg", "jpeg"])(
+    "accepts a lowercase .%s raster hero in content QA",
+    (extension) => {
+      const articles = validPortfolio();
+      Object.assign(articles[0]!.data, {
+        heroImage: `/images/articles/automation-purpose.${extension}`,
+        heroImageAlt: "An informative description of the intended hero image.",
+        heroImageDecorative: false,
+      });
 
-    expect(
-      validateContentPortfolio(articles, {
-        today: "2026-08-21",
-      }).map(({ code }) => code),
-    ).toContain("hero-path");
-  });
+      expect(
+        validateContentPortfolio(articles, {
+          today: "2026-08-21",
+        }).map(({ code }) => code),
+      ).not.toContain("hero-path");
+    },
+  );
+
+  it.each(["svg", "PNG", "WebP", "gif", "avif", "js"])(
+    "rejects the nonapproved or mixed-case .%s hero extension in content QA",
+    (extension) => {
+      const articles = validPortfolio();
+      Object.assign(articles[0]!.data, {
+        heroImage: `/images/articles/automation-purpose.${extension}`,
+        heroImageAlt: "An informative description of the intended hero image.",
+        heroImageDecorative: false,
+      });
+
+      expect(
+        validateContentPortfolio(articles, {
+          today: "2026-08-21",
+        }).map(({ code }) => code),
+      ).toContain("hero-path");
+    },
+  );
 
   it("allows truthful later publication, review, modification, and source-access dates", () => {
     const articles = validPortfolio();

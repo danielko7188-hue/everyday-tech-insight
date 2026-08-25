@@ -90,7 +90,7 @@ const TRACKING_IDENTIFIER_PATTERN =
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const HERO_IMAGE_PATTERN =
-  /^\/images\/articles\/(?![^/]*\.\.)[A-Za-z0-9][A-Za-z0-9._-]*\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
+  /^\/images\/articles\/(?![^/]*\.\.)[A-Za-z0-9][A-Za-z0-9._-]*\.(?:webp|png|jpe?g)$/;
 
 function containsForbiddenMetadata(value: string): boolean {
   return (
@@ -279,7 +279,7 @@ const heroShape = {
       .trim()
       .regex(
         HERO_IMAGE_PATTERN,
-        "Hero image must be a safe flat path under /images/articles/.",
+        "Hero image must be a flat path under /images/articles/ with a lowercase .webp, .png, .jpg, or .jpeg extension.",
       ),
   ),
   heroImageAlt: z.string().trim().max(240).optional(),
