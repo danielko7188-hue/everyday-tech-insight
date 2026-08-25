@@ -276,22 +276,9 @@ const FORBIDDEN_KEY_PATTERN =
   /^(?:actions?|workflow|deploy|secret|token|password|credential|api.?key|publisher.?id|analytics.?id|verification.?code|client.?(?:id|secret))$/i;
 const TRACKING_OR_SECRET_PATTERN =
   /(?:\b(?:ca-)?pub-\d{10,}\b|\bUA-\d{4,}-\d+\b|\bG-[A-Z0-9]{6,}\b|\bGTM-[A-Z0-9]{4,}\b|-----BEGIN [A-Z ]*PRIVATE KEY-----)/i;
-const HOSTED_CMS_CONTEXT_SCAN_PATTERN = /\b(?:pages\s+cms|cms|hosted)\b/gi;
+const HOSTED_CONTEXT_PATTERN = /\b(?:pages\s+cms|cms|hosted)\b/i;
 const HOSTED_OPERATION_PATTERN =
-  /\b(?:auth(?:entication)?|sign[ -]?in|sav(?:e|ed|ing)|round[ -]?trip)\b/gi;
-const HOSTED_SUCCESS_PATTERN =
-  /\b(?:secure|verified|tested|guaranteed|complete|guarantee(?:s|d)?|verif(?:y|ies|ied)|test(?:s|ed)?|complet(?:e|es|ed))\b/gi;
-const HOSTED_SENTENCE_BOUNDARY_PATTERN = /[.;!?\n]+/;
-const HOSTED_COORDINATION_BOUNDARY_PATTERN =
-  /(?:,\s*)?\b(?:while|whereas)\b\s*|,\s*(?=(?:(?:the|this|that|a|an|our)\s+)?(?:pages\s+cms|cms|hosted|browser|local|unit(?:[- ](?:test|suite))?|repository|validator|script|test\s+(?:suite|runner))\b)|\b(?:and|but)\b(?=\s+(?:(?:the|this|that|a|an|our)\s+)?(?:pages\s+cms|cms|hosted|browser|local|unit(?:[- ](?:test|suite))?|repository|validator|script|test\s+(?:suite|runner))\b)/i;
-const NON_HOSTED_SUBJECT_PATTERN =
-  /^\s*(?:(?:the|this|that|a|an|our)\s+)?(?:browser|local|unit(?:[- ](?:test|suite))?|repository|validator|script|test\s+(?:suite|runner))\b/i;
-const LOCAL_NEGATION_PATTERN =
-  /\b(?:not|never|cannot|can't|does\s+not|has\s+not|have\s+not|without)\b(?:\s+\w+){0,5}\s*$/i;
-const LOCAL_OBLIGATION_OR_FUTURE_PATTERN =
-  /\b(?:must|should|need(?:s|ed)?(?:\s+to)?|require(?:s|d)?(?:\s+to)?|will|would|can|could|may|might)\b(?:\s+\w+){0,5}\s*$/i;
-const LOCAL_PENDING_PATTERN =
-  /\b(?:remain(?:s|ed)?\s+to\s+be|(?:is|are|was|were|has|have|had)\s+(?:still\s+)?yet\s+to\s+be|(?:is|are|was|were)\s+(?:still\s+)?(?:pending|awaiting))\b(?:\s+\w+){0,4}\s*$/i;
+  /\b(?:auth(?:entication|orization)?|sign[ -]?in|sav(?:e|es|ed|ing)|round[ -]?trip)\b/i;
 const FIELD_SEMANTIC_KEYS = [
   "type",
   "required",
@@ -376,56 +363,10 @@ function addExactFinding(findings, code, location, actual, expected) {
   }
 }
 
-function isFalseHostedSuccessClaim(value) {
-  for (const sentence of value.split(HOSTED_SENTENCE_BOUNDARY_PATTERN)) {
-    let inheritedHostedContext = false;
-    for (const clause of sentence.split(HOSTED_COORDINATION_BOUNDARY_PATTERN)) {
-      if (!clause.trim()) continue;
-      const startsWithNonHostedSubject =
-        NON_HOSTED_SUBJECT_PATTERN.test(clause);
-      const hostedAtClauseStart = startsWithNonHostedSubject
-        ? false
-        : inheritedHostedContext;
-      const contexts = [...clause.matchAll(HOSTED_CMS_CONTEXT_SCAN_PATTERN)];
-      const operations = [...clause.matchAll(HOSTED_OPERATION_PATTERN)];
-      const hasFalseClaim = [...clause.matchAll(HOSTED_SUCCESS_PATTERN)].some(
-        (success) => {
-          if (operations.length === 0) return false;
-          const operation = operations.reduce((nearest, candidate) =>
-            Math.abs(candidate.index - success.index) <
-            Math.abs(nearest.index - success.index)
-              ? candidate
-              : nearest,
-          );
-          const operationEnd = operation.index + operation[0].length;
-          const precedingContext = contexts
-            .filter((context) => context.index <= operation.index)
-            .at(-1);
-          if (!hostedAtClauseStart && !precedingContext) return false;
-          const prefix =
-            success.index >= operationEnd
-              ? clause.slice(
-                  precedingContext
-                    ? precedingContext.index + precedingContext[0].length
-                    : Math.max(0, operation.index - 80),
-                  success.index,
-                )
-              : clause.slice(Math.max(0, success.index - 80), success.index);
-          const localPrefix = prefix.replace(/\bnot\s+only\b/gi, "");
-          return (
-            !LOCAL_NEGATION_PATTERN.test(localPrefix) &&
-            !LOCAL_OBLIGATION_OR_FUTURE_PATTERN.test(localPrefix) &&
-            !LOCAL_PENDING_PATTERN.test(localPrefix)
-          );
-        },
-      );
-      inheritedHostedContext =
-        contexts.length > 0 ||
-        (!startsWithNonHostedSubject && inheritedHostedContext);
-      if (hasFalseClaim) return true;
-    }
-  }
-  return false;
+function containsHostedOutcomeLanguage(value) {
+  return (
+    HOSTED_CONTEXT_PATTERN.test(value) && HOSTED_OPERATION_PATTERN.test(value)
+  );
 }
 
 function scanForbidden(value, location, findings) {
@@ -446,12 +387,12 @@ function scanForbidden(value, location, findings) {
           ),
         );
       }
-      if (isFalseHostedSuccessClaim(value)) {
+      if (containsHostedOutcomeLanguage(value)) {
         findings.push(
           finding(
-            "false-hosted-claim",
+            "hosted-outcome-language",
             location,
-            "Local CMS configuration cannot claim successful hosted authentication, sign-in, saving, or round-trip verification.",
+            "Hosted CMS outcome language is not allowed in configuration; document external validation state separately.",
           ),
         );
       }

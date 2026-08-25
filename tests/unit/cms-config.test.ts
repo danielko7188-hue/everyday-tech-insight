@@ -287,124 +287,76 @@ describe("Pages CMS configuration", () => {
     });
   });
 
-  it("rejects unsupported hosted-success claims in any string while allowing explicit uncertainty", async () => {
-    const falseClaim = structuredClone(await validConfig());
-    field(falseClaim, "title").label =
+  it.each([
+    "Hosted CMS auth is tested",
+    "Hosted CMS authentication is tested",
+    "Hosted CMS authorization is tested",
+    "Hosted CMS sign-in is tested",
+    "Hosted CMS sign in is tested",
+    "Hosted CMS save is tested",
+    "Hosted CMS saves are tested",
+    "Hosted CMS saved content is tested",
+    "Hosted CMS saving is tested",
+    "Hosted CMS round-trip is tested",
+    "Hosted CMS round trip is tested",
+    "Hosted CMS roundtrip is tested",
+    "CMS authentication is pending",
+    "Pages CMS save is pending",
+    "Hosted Pages CMS authentication is unverified and not tested by this local check",
+    "Hosted CMS sign-in must be tested before use",
+    "Hosted CMS saving remains to be tested before use",
+    "Hosted CMS authentication is unverified, while GitHub saving is tested in its own unit suite",
+    "Hosted CMS authentication is unverified after browser saving is tested",
+    "Browser saving is tested and the hosted CMS authentication is unverified",
+    "GitHub's hosted CMS saving is tested",
+    "Hosted CMS authentication remains unverified until saving has been tested",
+    "Hosted authentication is pending external review",
+  ])("rejects hosted outcome language fail closed: %s", async (statement) => {
+    const config = structuredClone(await validConfig());
+    field(config, "title").label = statement;
+
+    expect(validatePagesCmsConfig(config), statement).toContainEqual(
+      expect.objectContaining({
+        code: "hosted-outcome-language",
+        location: "content[0].fields[0].label",
+        message:
+          "Hosted CMS outcome language is not allowed in configuration; document external validation state separately.",
+      }),
+    );
+  });
+
+  it("rejects hosted outcome language in recursively nested strings", async () => {
+    const config = structuredClone(await validConfig());
+    field(field(config, "sourceList"), "publisher").description =
       "This CMS guarantees secure hosted authentication";
 
-    expect(validatePagesCmsConfig(falseClaim)).toContainEqual(
+    expect(validatePagesCmsConfig(config)).toContainEqual(
       expect.objectContaining({
-        code: "false-hosted-claim",
-        location: "content[0].fields[0].label",
+        code: "hosted-outcome-language",
+        location: "content[0].fields[22].fields[1].description",
       }),
     );
+  });
 
-    const truthfulBoundary = structuredClone(await validConfig());
-    field(truthfulBoundary, "title").label =
-      "Hosted Pages CMS authentication is unverified and not tested by this local check";
+  it.each([
+    "Browser saving is tested in its own unit suite",
+    "GitHub authentication is verified in a local test",
+    "Local round-trip tests are complete",
+    "tested",
+    "unverified",
+    "Editorial status",
+    "Hosted editor status",
+    "CMS configuration status",
+    "Pages CMS editorial status",
+  ])("allows unrelated or standalone wording: %s", async (statement) => {
+    const config = structuredClone(await validConfig());
+    field(config, "title").label = statement;
+
     expect(
-      validatePagesCmsConfig(truthfulBoundary).filter(
-        ({ code }) => code === "false-hosted-claim",
+      validatePagesCmsConfig(config).filter(
+        ({ code }) => code === "hosted-outcome-language",
       ),
     ).toEqual([]);
-
-    const mixedClaims = structuredClone(await validConfig());
-    field(mixedClaims, "title").label =
-      "Hosted CMS authentication is not verified and CMS saving is tested";
-    expect(validatePagesCmsConfig(mixedClaims)).toContainEqual(
-      expect.objectContaining({
-        code: "false-hosted-claim",
-        location: "content[0].fields[0].label",
-      }),
-    );
-
-    const truthfulObligation = structuredClone(await validConfig());
-    field(truthfulObligation, "title").label =
-      "Hosted CMS sign-in must be tested before use";
-    expect(
-      validatePagesCmsConfig(truthfulObligation).filter(
-        ({ code }) => code === "false-hosted-claim",
-      ),
-    ).toEqual([]);
-
-    for (const boundary of [
-      "Hosted CMS must have authentication tested before use",
-      "Hosted CMS does not have authentication verified",
-    ]) {
-      const prefixedBoundary = structuredClone(await validConfig());
-      field(prefixedBoundary, "title").label = boundary;
-      expect(
-        validatePagesCmsConfig(prefixedBoundary).filter(
-          ({ code }) => code === "false-hosted-claim",
-        ),
-        boundary,
-      ).toEqual([]);
-    }
-
-    for (const claim of [
-      "Hosted CMS saving works and is verified",
-      "Hosted CMS saving is not only tested but verified",
-    ]) {
-      const coordinatedClaim = structuredClone(await validConfig());
-      field(coordinatedClaim, "title").label = claim;
-      expect(validatePagesCmsConfig(coordinatedClaim), claim).toContainEqual(
-        expect.objectContaining({
-          code: "false-hosted-claim",
-          location: "content[0].fields[0].label",
-        }),
-      );
-    }
-
-    const unrelatedOperation = structuredClone(await validConfig());
-    field(unrelatedOperation, "title").label =
-      "Hosted CMS authentication is unverified. Browser saving is tested in its own unit suite.";
-    expect(
-      validatePagesCmsConfig(unrelatedOperation).filter(
-        ({ code }) => code === "false-hosted-claim",
-      ),
-    ).toEqual([]);
-
-    for (const boundary of [
-      "Hosted CMS authentication is unverified, while browser saving is tested in its own unit suite",
-      "Hosted CMS authentication is unverified, but the browser saving is tested",
-      "Browser saving is tested and the hosted CMS authentication is unverified",
-      "Hosted CMS saving remains to be tested before use",
-      "Hosted CMS authentication is unverified, but local round-trip is verified by its unit suite",
-      "Hosted CMS saving has yet to be tested before use",
-      "Hosted CMS saving is yet to be tested before use",
-      "Hosted CMS saving is pending review before it is tested",
-      "Hosted CMS saving is awaiting independent review before being tested",
-      "Hosted CMS saving is pending and browser authentication is verified in its unit suite",
-    ]) {
-      const localOrPendingBoundary = structuredClone(await validConfig());
-      field(localOrPendingBoundary, "title").label = boundary;
-      expect(
-        validatePagesCmsConfig(localOrPendingBoundary).filter(
-          ({ code }) => code === "false-hosted-claim",
-        ),
-        boundary,
-      ).toEqual([]);
-    }
-
-    const hostedCoordinatedClaim = structuredClone(await validConfig());
-    field(hostedCoordinatedClaim, "title").label =
-      "Hosted CMS authentication is unverified, while CMS saving is tested";
-    expect(validatePagesCmsConfig(hostedCoordinatedClaim)).toContainEqual(
-      expect.objectContaining({
-        code: "false-hosted-claim",
-        location: "content[0].fields[0].label",
-      }),
-    );
-
-    const elidedHostedSubject = structuredClone(await validConfig());
-    field(elidedHostedSubject, "title").label =
-      "Hosted CMS authentication is unverified, while saving is tested";
-    expect(validatePagesCmsConfig(elidedHostedSubject)).toContainEqual(
-      expect.objectContaining({
-        code: "false-hosted-claim",
-        location: "content[0].fields[0].label",
-      }),
-    );
   });
 
   it.each([
@@ -913,7 +865,7 @@ describe("Pages CMS configuration", () => {
       (config: CmsConfig) => (config.settings.apiKey = "not-a-real-key"),
     ],
     [
-      "false hosted claim",
+      "hosted outcome language",
       (config: CmsConfig) =>
         (field(config, "body").description =
           "This editor guarantees private hosted authentication and safe deployment."),
