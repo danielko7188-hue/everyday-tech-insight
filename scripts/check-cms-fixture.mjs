@@ -1,12 +1,22 @@
 import { spawn } from "node:child_process";
-import { stat } from "node:fs/promises";
-import { readFile, readdir, rm, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { dump as dumpYaml } from "js-yaml";
 
-import { renderArticleDraft, validateArticleSlug } from "./new-article.mjs";
+import {
+  renderArticleDraft,
+  resolveSafeArticleTarget,
+  validateArticleSlug,
+} from "./new-article.mjs";
 import { readArticleRecords } from "./qa-content.mjs";
 
 const repositoryRoot = path.resolve(
@@ -51,8 +61,53 @@ function serializeArticle(data, body) {
   return `---\n${frontmatter}\n---\n${body.startsWith("\n") ? "" : "\n"}${body}`;
 }
 
-export async function createCmsLifecycleFixtures({ articlesDirectory }) {
-  const records = await readArticleRecords(articlesDirectory);
+function assertCanonicalContainment(root, candidate, label) {
+  const relative = path.relative(root, candidate);
+  if (
+    relative === ".." ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative)
+  ) {
+    throw new Error(`${label} escapes its canonical containment root.`);
+  }
+}
+
+async function readVerifiedArticleRecords(articlesDirectory) {
+  await resolveSafeArticleTarget(articlesDirectory, "cms-path-safety-probe");
+  const canonicalDirectory = await realpath(articlesDirectory);
+  const entries = await readdir(articlesDirectory);
+  for (const name of entries) {
+    const candidate = path.join(articlesDirectory, name);
+    const stats = await lstat(candidate);
+    if (stats.isSymbolicLink()) {
+      throw new Error(
+        `Article source contains a symbolic link or junction: ${candidate}`,
+      );
+    }
+    if (!name.endsWith(".md")) continue;
+    if (!stats.isFile()) {
+      throw new Error(`Article source must be a regular file: ${candidate}`);
+    }
+    assertCanonicalContainment(
+      canonicalDirectory,
+      await realpath(candidate),
+      "Article source",
+    );
+  }
+  return readArticleRecords(articlesDirectory);
+}
+
+function publishedSlugsFromRecords(records) {
+  const slugs = records
+    .filter((record) => record.data.status === "published")
+    .map((record) => validateArticleSlug(record.data.slug));
+  if (new Set(slugs).size !== slugs.length) {
+    throw new Error("Published article slugs must be unique.");
+  }
+  return slugs.sort();
+}
+
+function createCmsLifecycleFixturesFromRecords(records) {
   const published = records.find(
     (record) => record.data.status === "published",
   );
@@ -117,6 +172,12 @@ export async function createCmsLifecycleFixtures({ articlesDirectory }) {
   ];
 }
 
+export async function createCmsLifecycleFixtures({ articlesDirectory }) {
+  return createCmsLifecycleFixturesFromRecords(
+    await readVerifiedArticleRecords(articlesDirectory),
+  );
+}
+
 function fixtureTarget(articlesDirectory, fixture) {
   validateArticleSlug(fixture.slug);
   if (fixture.fileName !== `${fixture.slug}.md`) {
@@ -137,9 +198,20 @@ function fixtureTarget(articlesDirectory, fixture) {
   return target;
 }
 
+/**
+ * @param {{ articlesDirectory: string, fixtures: Array<{ fileName: string, slug: string, source: string, status?: string, title?: string }> }} fixtureOptions
+ * @param {(targets: string[], signalControl: { trackChild: (child: { kill: (signal: NodeJS.Signals) => boolean }) => () => void, throwIfSignaled: () => void }) => unknown | Promise<unknown>} operation
+ * @param {{ processTarget?: import("node:events").EventEmitter & { pid?: number, exitCode?: number }, reemitSignal?: (signal: NodeJS.Signals) => void, removeFixture?: (target: string) => Promise<void> }} signalOptions
+ */
 export async function withTemporaryArticleFixtures(
   { articlesDirectory, fixtures },
   operation,
+  {
+    processTarget = process,
+    reemitSignal = (signal) =>
+      reemitCmsFixtureSignal(signal, { processTarget }),
+    removeFixture = (target) => rm(target, { force: false }),
+  } = {},
 ) {
   if (!Array.isArray(fixtures) || fixtures.length === 0) {
     throw new Error("At least one CMS fixture is required.");
@@ -147,85 +219,311 @@ export async function withTemporaryArticleFixtures(
   if (typeof operation !== "function") {
     throw new TypeError("CMS fixture operation must be a function.");
   }
-  const targets = fixtures.map((fixture) =>
-    fixtureTarget(articlesDirectory, fixture),
+  const targets = await Promise.all(
+    fixtures.map(async (fixture) => {
+      const lexicalTarget = fixtureTarget(articlesDirectory, fixture);
+      const safeTarget = await resolveSafeArticleTarget(
+        articlesDirectory,
+        fixture.slug,
+      );
+      if (safeTarget !== lexicalTarget) {
+        throw new Error("CMS fixture target changed during path verification.");
+      }
+      return safeTarget;
+    }),
   );
   if (new Set(targets).size !== targets.length) {
     throw new Error("CMS fixture targets must be unique.");
   }
 
+  if (
+    !processTarget ||
+    typeof processTarget.on !== "function" ||
+    typeof processTarget.off !== "function"
+  ) {
+    throw new TypeError("Signal process target must support on() and off().");
+  }
+  if (typeof reemitSignal !== "function") {
+    throw new TypeError("Signal re-emitter must be a function.");
+  }
+  if (typeof removeFixture !== "function") {
+    throw new TypeError("Fixture remover must be a function.");
+  }
+
   const createdTargets = [];
+  let activeChild;
+  let receivedSignal;
+  const signalHandlers = new Map(
+    ["SIGINT", "SIGTERM"].map((signal) => [
+      signal,
+      () => {
+        if (receivedSignal) return;
+        receivedSignal = signal;
+        if (activeChild && typeof activeChild.kill === "function") {
+          activeChild.kill(signal);
+        }
+      },
+    ]),
+  );
+  const signalControl = {
+    trackChild(child) {
+      if (!child || typeof child.kill !== "function") {
+        throw new TypeError("Tracked build child must support kill().");
+      }
+      activeChild = child;
+      if (receivedSignal) child.kill(receivedSignal);
+      return () => {
+        if (activeChild === child) activeChild = undefined;
+      };
+    },
+    throwIfSignaled() {
+      if (receivedSignal) {
+        throw new CmsFixtureSignalError(receivedSignal);
+      }
+    },
+  };
+  for (const [signal, handler] of signalHandlers) {
+    processTarget.on(signal, handler);
+  }
+
+  let result;
+  let operationError;
+  let cleanupError;
   try {
-    const writes = await Promise.allSettled(
-      fixtures.map(async (fixture, index) => {
-        await writeFile(targets[index], fixture.source, {
-          encoding: "utf8",
-          flag: "wx",
-        });
-        createdTargets.push(targets[index]);
-      }),
-    );
-    const rejected = writes.find((result) => result.status === "rejected");
-    if (rejected) {
-      const collision =
-        rejected.reason &&
-        typeof rejected.reason === "object" &&
-        rejected.reason.code === "EEXIST";
-      throw new Error(
-        collision
-          ? "Refusing to replace a pre-existing CMS fixture collision."
-          : `Unable to create CMS fixtures: ${String(rejected.reason)}`,
-        { cause: rejected.reason },
+    try {
+      signalControl.throwIfSignaled();
+      const writes = await Promise.allSettled(
+        fixtures.map(async (fixture, index) => {
+          await writeFile(targets[index], fixture.source, {
+            encoding: "utf8",
+            flag: "wx",
+          });
+          createdTargets.push(targets[index]);
+        }),
       );
+      const rejected = writes.find((entry) => entry.status === "rejected");
+      if (rejected) {
+        const collision =
+          rejected.reason &&
+          typeof rejected.reason === "object" &&
+          rejected.reason.code === "EEXIST";
+        throw new Error(
+          collision
+            ? "Refusing to replace a pre-existing CMS fixture collision."
+            : `Unable to create CMS fixtures: ${String(rejected.reason)}`,
+          { cause: rejected.reason },
+        );
+      }
+      signalControl.throwIfSignaled();
+      result = await operation(targets, signalControl);
+    } catch (error) {
+      operationError = error;
     }
-    return await operation(targets);
   } finally {
-    await Promise.all(
-      createdTargets.map((target) => rm(target, { force: false })),
-    );
+    try {
+      const cleanupResults = await Promise.allSettled(
+        createdTargets.map((target) =>
+          Promise.resolve().then(() => removeFixture(target)),
+        ),
+      );
+      const cleanupFailures = cleanupResults
+        .filter((entry) => entry.status === "rejected")
+        .map((entry) => entry.reason);
+      if (cleanupFailures.length > 0) {
+        cleanupError = new AggregateError(
+          cleanupFailures,
+          "Unable to remove every owned CMS fixture.",
+        );
+      }
+    } finally {
+      for (const [signal, handler] of signalHandlers) {
+        processTarget.off(signal, handler);
+      }
+    }
+  }
+
+  if (receivedSignal) {
+    reemitSignal(receivedSignal);
+    const cause =
+      operationError && cleanupError
+        ? new AggregateError(
+            [operationError, cleanupError],
+            "CMS fixture operation and cleanup both failed.",
+          )
+        : (operationError ?? cleanupError);
+    throw new CmsFixtureSignalError(receivedSignal, { cause });
+  }
+  if (cleanupError) throw cleanupError;
+  if (operationError) throw operationError;
+  return result;
+}
+
+export class CmsFixtureSignalError extends Error {
+  constructor(signal, options = {}) {
+    super(`CMS fixture interrupted by ${signal}.`, options);
+    this.name = "CmsFixtureSignalError";
+    this.code = "CMS_FIXTURE_SIGNAL";
+    this.signal = signal;
   }
 }
 
-async function listFilesRecursively(directory, relativeDirectory = "") {
+/**
+ * @param {NodeJS.Signals} signal
+ * @param {{ processTarget?: { pid: number, exitCode?: number }, killProcess?: (pid: number, signal: NodeJS.Signals) => boolean }} options
+ */
+export function reemitCmsFixtureSignal(
+  signal,
+  { processTarget = process, killProcess = process.kill.bind(process) } = {},
+) {
+  let delivered;
+  try {
+    delivered = killProcess(processTarget.pid, signal);
+  } catch {
+    delivered = false;
+  }
+  if (delivered === false) {
+    processTarget.exitCode = signal === "SIGINT" ? 130 : 143;
+  }
+}
+
+async function assertNoLinkedPathComponents(candidate, label) {
+  const resolved = path.resolve(candidate);
+  const { root } = path.parse(resolved);
+  const parts = path.relative(root, resolved).split(path.sep).filter(Boolean);
+  let current = root;
+  for (const part of parts) {
+    current = path.join(current, part);
+    const stats = await lstat(current);
+    if (stats.isSymbolicLink()) {
+      throw new Error(
+        `${label} contains a symbolic link or junction: ${current}`,
+      );
+    }
+  }
+}
+
+async function requireDirectory(directory, label, canonicalRoot) {
+  await assertNoLinkedPathComponents(directory, label);
+  const stats = await lstat(directory);
+  if (!stats.isDirectory()) {
+    throw new Error(
+      `CMS fixture check requires the ${label} directory: ${directory}`,
+    );
+  }
+  const canonicalDirectory = await realpath(directory);
+  if (canonicalRoot) {
+    assertCanonicalContainment(canonicalRoot, canonicalDirectory, label);
+  }
+  return canonicalDirectory;
+}
+
+async function listFilesRecursively(
+  directory,
+  canonicalRoot,
+  relativeDirectory = "",
+) {
   const files = [];
-  const entries = await readdir(directory, { withFileTypes: true });
-  for (const entry of entries.sort((left, right) =>
-    left.name.localeCompare(right.name),
-  )) {
+  const entries = (await readdir(directory)).sort((left, right) =>
+    left.localeCompare(right),
+  );
+  for (const name of entries) {
     const relativePath = relativeDirectory
-      ? path.join(relativeDirectory, entry.name)
-      : entry.name;
-    const absolutePath = path.join(directory, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...(await listFilesRecursively(absolutePath, relativePath)));
-    } else if (entry.isFile()) {
+      ? path.join(relativeDirectory, name)
+      : name;
+    const absolutePath = path.join(directory, name);
+    const stats = await lstat(absolutePath);
+    if (stats.isSymbolicLink()) {
+      throw new Error(
+        `Built output contains a symbolic link or junction: ${absolutePath}`,
+      );
+    }
+    assertCanonicalContainment(
+      canonicalRoot,
+      await realpath(absolutePath),
+      "Built output",
+    );
+    if (stats.isDirectory()) {
+      files.push(
+        ...(await listFilesRecursively(
+          absolutePath,
+          canonicalRoot,
+          relativePath,
+        )),
+      );
+    } else if (stats.isFile()) {
       files.push({ absolutePath, relativePath });
+    } else {
+      throw new Error(`Built output must be a regular file: ${absolutePath}`);
     }
   }
   return files;
 }
 
-async function requireFile(filePath, label) {
+async function requireFile(filePath, label, canonicalRoot) {
   try {
-    if (!(await stat(filePath)).isFile()) throw new Error();
-  } catch {
+    await assertNoLinkedPathComponents(filePath, `Built ${label}`);
+    if (!(await lstat(filePath)).isFile()) {
+      throw new Error(`Built ${label} is not a regular file.`);
+    }
+    assertCanonicalContainment(
+      canonicalRoot,
+      await realpath(filePath),
+      `Built ${label}`,
+    );
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      /symbolic link|junction|canonical|regular file/i.test(error.message)
+    ) {
+      throw error;
+    }
     throw new Error(
       `CMS fixture check requires the built ${label}: ${filePath}`,
+      { cause: error },
+    );
+  }
+}
+
+function assertExactInventory(actualValues, expectedValues, label) {
+  const actual = [...new Set(actualValues)].sort();
+  const expected = [...new Set(expectedValues)].sort();
+  const missing = expected.filter((value) => !actual.includes(value));
+  const unexpected = actual.filter((value) => !expected.includes(value));
+  if (missing.length > 0 || unexpected.length > 0) {
+    throw new Error(
+      `CMS fixture ${label} set differs from published sources; missing ${JSON.stringify(missing)}, unexpected ${JSON.stringify(unexpected)}.`,
     );
   }
 }
 
 /**
- * @param {{ projectRoot: string, fixtureSlugs?: string[], fixtureTitles?: string[] }} options
+ * @param {{ projectRoot: string, expectedPublishedSlugs: string[], fixtureSlugs?: string[], fixtureTitles?: string[] }} options
  */
 export async function validateCmsBuildOutput({
   projectRoot,
+  expectedPublishedSlugs,
   fixtureSlugs = CMS_FIXTURE_SLUGS,
   fixtureTitles = [],
 }) {
+  if (!Array.isArray(expectedPublishedSlugs)) {
+    throw new TypeError(
+      "Expected published slugs must be supplied as an array.",
+    );
+  }
+  for (const slug of expectedPublishedSlugs) validateArticleSlug(slug);
+  if (new Set(expectedPublishedSlugs).size !== expectedPublishedSlugs.length) {
+    throw new Error("Expected published slugs must be unique.");
+  }
   const resolvedRoot = path.resolve(projectRoot);
+  const canonicalRoot = await requireDirectory(resolvedRoot, "project root");
   const distDirectory = path.join(resolvedRoot, "dist");
+  const canonicalDist = await requireDirectory(
+    distDirectory,
+    "built output",
+    canonicalRoot,
+  );
   const articleDirectory = path.join(distDirectory, "articles");
+  await requireDirectory(articleDirectory, "article output", canonicalDist);
   const requiredSurfaces = [
     [path.join(distDirectory, "index.html"), "homepage"],
     [path.join(articleDirectory, "index.html"), "article archive"],
@@ -238,10 +536,12 @@ export async function validateCmsBuildOutput({
     ]),
   ];
   await Promise.all(
-    requiredSurfaces.map(([filePath, label]) => requireFile(filePath, label)),
+    requiredSurfaces.map(([filePath, label]) =>
+      requireFile(filePath, label, canonicalDist),
+    ),
   );
 
-  const distFiles = await listFilesRecursively(distDirectory);
+  const distFiles = await listFilesRecursively(distDirectory, canonicalDist);
   const sitemapXml = distFiles.filter(({ relativePath }) =>
     /(?:^|[\\/])sitemap[^\\/]*\.xml$/i.test(relativePath),
   );
@@ -249,22 +549,23 @@ export async function validateCmsBuildOutput({
     throw new Error("CMS fixture check requires the generated XML sitemap.");
   }
 
-  const articleEntries = await readdir(articleDirectory, {
-    withFileTypes: true,
-  });
-  const publicArticleRoutes = articleEntries.filter((entry) =>
-    entry.isDirectory(),
-  );
-  if (publicArticleRoutes.length !== 15) {
-    throw new Error(
-      `CMS fixture build must keep exactly 15 public article routes; found ${publicArticleRoutes.length}.`,
-    );
+  const publicArticleRoutes = [];
+  for (const name of await readdir(articleDirectory)) {
+    const candidate = path.join(articleDirectory, name);
+    const stats = await lstat(candidate);
+    if (stats.isDirectory()) publicArticleRoutes.push(name);
   }
+  assertExactInventory(
+    publicArticleRoutes,
+    expectedPublishedSlugs,
+    "article route",
+  );
   await Promise.all(
-    publicArticleRoutes.map((entry) =>
+    publicArticleRoutes.map((slug) =>
       requireFile(
-        path.join(articleDirectory, entry.name, "index.html"),
-        `article route ${entry.name}`,
+        path.join(articleDirectory, slug, "index.html"),
+        `article route ${slug}`,
+        canonicalDist,
       ),
     ),
   );
@@ -295,20 +596,43 @@ export async function validateCmsBuildOutput({
   }
 
   const socialDirectory = path.join(resolvedRoot, "public", "social");
-  const socialEntries = await readdir(socialDirectory, { withFileTypes: true });
-  const articleSocialImages = socialEntries.filter(
-    (entry) => entry.isFile() && /^article-.+\.png$/.test(entry.name),
+  const canonicalSocial = await requireDirectory(
+    socialDirectory,
+    "social output",
+    canonicalRoot,
   );
-  if (articleSocialImages.length !== 15) {
-    throw new Error(
-      `CMS fixture build must keep exactly 15 public article social images; found ${articleSocialImages.length}.`,
+  const socialEntries = [];
+  for (const name of await readdir(socialDirectory)) {
+    const candidate = path.join(socialDirectory, name);
+    const stats = await lstat(candidate);
+    if (stats.isSymbolicLink()) {
+      throw new Error(
+        `Social output contains a symbolic link or junction: ${candidate}`,
+      );
+    }
+    if (!stats.isFile()) {
+      throw new Error(`Social output must be a regular file: ${candidate}`);
+    }
+    assertCanonicalContainment(
+      canonicalSocial,
+      await realpath(candidate),
+      "Social output",
     );
+    socialEntries.push(name);
   }
-  for (const entry of socialEntries) {
+  const articleSocialImages = socialEntries.filter((name) =>
+    /^article-.+\.png$/.test(name),
+  );
+  assertExactInventory(
+    articleSocialImages,
+    expectedPublishedSlugs.map((slug) => `article-${slug}.png`),
+    "article social image",
+  );
+  for (const name of socialEntries) {
     for (const { kind, value } of forbiddenFixtureValues) {
-      if (entry.name.includes(value)) {
+      if (name.includes(value)) {
         throw new Error(
-          `CMS fixture ${kind} ${value} leaked into social inventory ${entry.name}.`,
+          `CMS fixture ${kind} ${value} leaked into social inventory ${name}.`,
         );
       }
     }
@@ -340,7 +664,8 @@ export function resolveNpmBuildInvocation({
   };
 }
 
-export async function runProductionBuild({ projectRoot }) {
+export async function runProductionBuild({ projectRoot, signalControl }) {
+  signalControl?.throwIfSignaled();
   await new Promise((resolve, reject) => {
     const { command, args } = resolveNpmBuildInvocation();
     const child = spawn(command, args, {
@@ -349,8 +674,13 @@ export async function runProductionBuild({ projectRoot }) {
       stdio: "inherit",
       windowsHide: true,
     });
-    child.once("error", reject);
+    const releaseChild = signalControl?.trackChild(child) ?? (() => undefined);
+    child.once("error", (error) => {
+      releaseChild();
+      reject(error);
+    });
     child.once("exit", (code, signal) => {
+      releaseChild();
       if (code === 0) resolve();
       else {
         reject(
@@ -373,13 +703,16 @@ export async function runCmsLifecycleFixture({
     "content",
     "articles",
   );
-  const fixtures = await createCmsLifecycleFixtures({ articlesDirectory });
+  const verifiedRecords = await readVerifiedArticleRecords(articlesDirectory);
+  const expectedPublishedSlugs = publishedSlugsFromRecords(verifiedRecords);
+  const fixtures = createCmsLifecycleFixturesFromRecords(verifiedRecords);
   return withTemporaryArticleFixtures(
     { articlesDirectory, fixtures },
-    async () => {
-      await runBuild({ projectRoot });
+    async (_targets, signalControl) => {
+      await runBuild({ projectRoot, signalControl });
       return validateCmsBuildOutput({
         projectRoot,
+        expectedPublishedSlugs,
         fixtureSlugs: fixtures.map(({ slug }) => slug),
         fixtureTitles: fixtures.map(({ title }) => title),
       });
@@ -399,6 +732,7 @@ if (
   pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url
 ) {
   main().catch((error) => {
+    if (error?.code === "CMS_FIXTURE_SIGNAL") return;
     console.error(
       `CMS fixture: ERROR\n${error instanceof Error ? error.stack : error}`,
     );

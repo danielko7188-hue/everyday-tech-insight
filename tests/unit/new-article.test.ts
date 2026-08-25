@@ -1,5 +1,5 @@
-import { readFile, writeFile } from "node:fs/promises";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -33,6 +33,27 @@ function temporaryArticleDirectory(): string {
   const root = mkdtempSync(path.join(tmpdir(), "eti-new-article-"));
   temporaryRoots.push(root);
   return root;
+}
+
+function tryCreateDirectoryLink(target: string, linkPath: string): boolean {
+  try {
+    symlinkSync(
+      target,
+      linkPath,
+      process.platform === "win32" ? "junction" : "dir",
+    );
+    return true;
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      ["EACCES", "EPERM", "ENOSYS", "ENOTSUP"].includes(String(error.code))
+    ) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 describe("new article generator", () => {
@@ -190,6 +211,41 @@ describe("new article generator", () => {
       createArticleDraft({ title, articlesDirectory }),
     ).rejects.toThrow(/exists|refusing|collision/i);
     expect(await readFile(target)).toEqual(original);
+  });
+
+  it("rejects a linked article-directory component before writing", async (context) => {
+    const parent = temporaryArticleDirectory();
+    const realArticlesDirectory = path.join(parent, "real-articles");
+    const linkedArticlesDirectory = path.join(parent, "linked-articles");
+    await mkdir(realArticlesDirectory);
+    if (
+      !tryCreateDirectoryLink(realArticlesDirectory, linkedArticlesDirectory)
+    ) {
+      context.skip("Creating a directory link is unavailable on this host.");
+      return;
+    }
+
+    await expect(
+      createArticleDraft({
+        title: "A link-safe business technology guide",
+        articlesDirectory: linkedArticlesDirectory,
+      }),
+    ).rejects.toThrow(/symbolic link|junction|canonical/i);
+    expect(await readdir(realArticlesDirectory)).toEqual([]);
+  });
+
+  it("rejects a non-regular existing article target", async () => {
+    const articlesDirectory = temporaryArticleDirectory();
+    const slug = "non-regular-article-target";
+    await mkdir(path.join(articlesDirectory, `${slug}.md`));
+
+    await expect(
+      createArticleDraft({
+        title: "A non-regular article target must be rejected",
+        slug,
+        articlesDirectory,
+      }),
+    ).rejects.toThrow(/regular file/i);
   });
 
   it("does not write when title or explicit slug violates the article schema", async () => {

@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { lstat, realpath, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -116,6 +116,75 @@ export function resolveArticleTarget(articlesDirectory, slug) {
   return target;
 }
 
+function isMissingPathError(error) {
+  return error && typeof error === "object" && error.code === "ENOENT";
+}
+
+async function assertNoLinkedPathComponents(candidate) {
+  const resolved = path.resolve(candidate);
+  const { root } = path.parse(resolved);
+  const parts = path.relative(root, resolved).split(path.sep).filter(Boolean);
+  let current = root;
+  for (const part of parts) {
+    current = path.join(current, part);
+    const stats = await lstat(current);
+    if (stats.isSymbolicLink()) {
+      throw new Error(
+        `Article path contains a symbolic link or junction: ${current}`,
+      );
+    }
+  }
+}
+
+function assertCanonicalContainment(root, candidate, label) {
+  const relative = path.relative(root, candidate);
+  if (
+    relative === ".." ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative)
+  ) {
+    throw new Error(`${label} escapes its canonical article directory.`);
+  }
+}
+
+export async function resolveSafeArticleTarget(articlesDirectory, slug) {
+  const target = resolveArticleTarget(articlesDirectory, slug);
+  const resolvedDirectory = path.resolve(articlesDirectory);
+  await assertNoLinkedPathComponents(resolvedDirectory);
+  const directoryStats = await lstat(resolvedDirectory);
+  if (!directoryStats.isDirectory()) {
+    throw new Error("Article directory must be an existing regular directory.");
+  }
+  const canonicalDirectory = await realpath(resolvedDirectory);
+  const canonicalParent = await realpath(path.dirname(target));
+  assertCanonicalContainment(
+    canonicalDirectory,
+    canonicalParent,
+    "Article target parent",
+  );
+
+  try {
+    const targetStats = await lstat(target);
+    if (targetStats.isSymbolicLink()) {
+      throw new Error(
+        `Article target contains a symbolic link or junction: ${target}`,
+      );
+    }
+    if (!targetStats.isFile()) {
+      throw new Error(`Article target is not a regular file: ${target}`);
+    }
+    const canonicalTarget = await realpath(target);
+    assertCanonicalContainment(
+      canonicalDirectory,
+      canonicalTarget,
+      "Article target",
+    );
+  } catch (error) {
+    if (!isMissingPathError(error)) throw error;
+  }
+  return target;
+}
+
 function resolveDraftIdentity({ title: rawTitle, slug: rawSlug }) {
   const title = validateArticleTitle(rawTitle);
   const automaticSlug = slugifyArticleTitle(title);
@@ -170,7 +239,10 @@ export async function createArticleDraft({
   articlesDirectory = defaultArticlesDirectory,
 }) {
   const identity = resolveDraftIdentity({ title, slug });
-  const target = resolveArticleTarget(articlesDirectory, identity.slug);
+  const target = await resolveSafeArticleTarget(
+    articlesDirectory,
+    identity.slug,
+  );
   const source = renderArticleDraft(identity);
   try {
     await writeFile(target, source, { encoding: "utf8", flag: "wx" });

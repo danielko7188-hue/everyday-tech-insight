@@ -277,12 +277,16 @@ const FORBIDDEN_KEY_PATTERN =
 const TRACKING_OR_SECRET_PATTERN =
   /(?:\b(?:ca-)?pub-\d{10,}\b|\bUA-\d{4,}-\d+\b|\bG-[A-Z0-9]{6,}\b|\bGTM-[A-Z0-9]{4,}\b|-----BEGIN [A-Z ]*PRIVATE KEY-----)/i;
 const HOSTED_CMS_CONTEXT_PATTERN = /\b(?:pages\s+cms|cms|hosted)\b/i;
+const HOSTED_CMS_CONTEXT_SCAN_PATTERN = /\b(?:pages\s+cms|cms|hosted)\b/gi;
 const HOSTED_OPERATION_PATTERN =
-  /\b(?:auth(?:entication)?|sign[ -]?in|sav(?:e|ed|ing)|round[ -]?trip)\b/i;
+  /\b(?:auth(?:entication)?|sign[ -]?in|sav(?:e|ed|ing)|round[ -]?trip)\b/gi;
 const HOSTED_SUCCESS_PATTERN =
-  /\b(?:secure|verified|tested|guaranteed|complete|guarantee(?:s|d)?|verif(?:y|ies|ied)|test(?:s|ed)?|complet(?:e|es|ed))\b/i;
-const NEGATED_HOSTED_SUCCESS_PATTERN =
-  /\b(?:unverified|untested|incomplete|unknown|not\s+(?:been\s+)?(?:secure|verified|tested|guaranteed|complete)|never\s+(?:secure|verified|tested|guaranteed|complete)|cannot\s+(?:verify|test|guarantee|complete)|can't\s+(?:verify|test|guarantee|complete)|does\s+not\s+(?:verify|test|guarantee|complete)|has\s+not\s+(?:been\s+)?(?:verified|tested|guaranteed|completed))\b/i;
+  /\b(?:secure|verified|tested|guaranteed|complete|guarantee(?:s|d)?|verif(?:y|ies|ied)|test(?:s|ed)?|complet(?:e|es|ed))\b/gi;
+const HOSTED_SENTENCE_BOUNDARY_PATTERN = /[.;!?\n]+/;
+const LOCAL_NEGATION_PATTERN =
+  /\b(?:not|never|cannot|can't|does\s+not|has\s+not|have\s+not|without)\b(?:\s+\w+){0,5}\s*$/i;
+const LOCAL_OBLIGATION_OR_FUTURE_PATTERN =
+  /\b(?:must|should|need(?:s|ed)?(?:\s+to)?|require(?:s|d)?(?:\s+to)?|will|would|can|could|may|might)\b(?:\s+\w+){0,5}\s*$/i;
 
 function finding(code, location, message) {
   return { code, location, message };
@@ -298,6 +302,16 @@ function fieldByName(collection, name) {
     : undefined;
 }
 
+function fieldConstraintSnapshot(field) {
+  return {
+    type: field?.type,
+    required: field?.required,
+    default: field?.default,
+    options: field?.options,
+    pattern: field?.pattern,
+  };
+}
+
 function addExactFinding(findings, code, location, actual, expected) {
   if (!isDeepStrictEqual(actual, expected)) {
     findings.push(
@@ -311,15 +325,38 @@ function addExactFinding(findings, code, location, actual, expected) {
 }
 
 function isFalseHostedSuccessClaim(value) {
-  return value
-    .split(/(?:[.;!?\n]+|\bbut\b|\bhowever\b)/i)
-    .some(
-      (clause) =>
-        HOSTED_CMS_CONTEXT_PATTERN.test(clause) &&
-        HOSTED_OPERATION_PATTERN.test(clause) &&
-        HOSTED_SUCCESS_PATTERN.test(clause) &&
-        !NEGATED_HOSTED_SUCCESS_PATTERN.test(clause),
-    );
+  return value.split(HOSTED_SENTENCE_BOUNDARY_PATTERN).some((sentence) => {
+    if (!HOSTED_CMS_CONTEXT_PATTERN.test(sentence)) return false;
+    const contexts = [...sentence.matchAll(HOSTED_CMS_CONTEXT_SCAN_PATTERN)];
+    const operations = [...sentence.matchAll(HOSTED_OPERATION_PATTERN)];
+    if (operations.length === 0) return false;
+    return [...sentence.matchAll(HOSTED_SUCCESS_PATTERN)].some((success) => {
+      const operation = operations.reduce((nearest, candidate) =>
+        Math.abs(candidate.index - success.index) <
+        Math.abs(nearest.index - success.index)
+          ? candidate
+          : nearest,
+      );
+      const operationEnd = operation.index + operation[0].length;
+      const precedingContext = contexts
+        .filter((context) => context.index <= operation.index)
+        .at(-1);
+      const prefix =
+        success.index >= operationEnd
+          ? sentence.slice(
+              precedingContext
+                ? precedingContext.index + precedingContext[0].length
+                : Math.max(0, operation.index - 80),
+              success.index,
+            )
+          : sentence.slice(Math.max(0, success.index - 80), success.index);
+      const localPrefix = prefix.replace(/\bnot\s+only\b/gi, "");
+      return (
+        !LOCAL_NEGATION_PATTERN.test(localPrefix) &&
+        !LOCAL_OBLIGATION_OR_FUTURE_PATTERN.test(localPrefix)
+      );
+    });
+  });
 }
 
 function scanForbidden(value, location, findings) {
@@ -541,6 +578,19 @@ function validateFieldContract(collection, findings) {
   const visual = fieldByName(collection, "visual");
   addExactFinding(
     findings,
+    "visual-object-contract",
+    "fields.visual",
+    fieldConstraintSnapshot(visual),
+    {
+      type: "object",
+      required: undefined,
+      default: undefined,
+      options: undefined,
+      pattern: undefined,
+    },
+  );
+  addExactFinding(
+    findings,
     "visual-fields",
     "fields.visual.fields",
     visual?.fields?.map((field) => field?.name),
@@ -576,6 +626,67 @@ function validateFieldContract(collection, findings) {
       { type, required },
     );
   }
+  const visualChildConstraints = new Map([
+    [
+      "type",
+      {
+        type: "select",
+        required: true,
+        default: undefined,
+        options: { values: VISUAL_TYPES },
+        pattern: undefined,
+      },
+    ],
+    [
+      "key",
+      {
+        type: "select",
+        required: true,
+        default: undefined,
+        options: { values: VISUAL_KEYS },
+        pattern: undefined,
+      },
+    ],
+    [
+      "alt",
+      {
+        type: "text",
+        required: true,
+        default: undefined,
+        options: { minlength: 10, maxlength: 240 },
+        pattern: undefined,
+      },
+    ],
+    [
+      "caption",
+      {
+        type: "text",
+        required: undefined,
+        default: undefined,
+        options: { minlength: 10, maxlength: 300 },
+        pattern: undefined,
+      },
+    ],
+    [
+      "decorative",
+      {
+        type: "boolean",
+        required: true,
+        default: false,
+        options: undefined,
+        pattern: undefined,
+      },
+    ],
+  ]);
+  for (const [name, expected] of visualChildConstraints) {
+    addExactFinding(
+      findings,
+      "visual-child-contract",
+      `fields.visual.${name}`,
+      fieldConstraintSnapshot(fieldByName(visual, name)),
+      expected,
+    );
+  }
   addExactFinding(
     findings,
     "visual-default",
@@ -583,6 +694,18 @@ function validateFieldContract(collection, findings) {
     fieldByName(visual, "decorative")?.default,
     false,
   );
+  for (const [name, options] of [
+    ["alt", { minlength: 10, maxlength: 240 }],
+    ["caption", { minlength: 10, maxlength: 300 }],
+  ]) {
+    addExactFinding(
+      findings,
+      "visual-child-options",
+      `fields.visual.${name}.options`,
+      fieldByName(visual, name)?.options,
+      options,
+    );
+  }
   if (!/repository.*validates.*pair/i.test(visual?.description ?? "")) {
     findings.push(
       finding(
@@ -602,6 +725,10 @@ function validateFieldContract(collection, findings) {
       type: sourceList?.type,
       list: sourceList?.list,
       fields: sourceList?.fields?.map((field) => field?.name),
+      required: sourceList?.required,
+      default: sourceList?.default,
+      options: sourceList?.options,
+      pattern: sourceList?.pattern,
     },
     {
       type: "object",
@@ -609,6 +736,10 @@ function validateFieldContract(collection, findings) {
         collapsible: { collapsed: true, summary: "{fields.title}" },
       },
       fields: ["title", "publisher", "url", "accessed"],
+      required: undefined,
+      default: undefined,
+      options: undefined,
+      pattern: undefined,
     },
   );
   for (const name of ["title", "publisher", "url", "accessed"]) {
@@ -634,12 +765,81 @@ function validateFieldContract(collection, findings) {
       type,
     );
   }
+  for (const [name, options] of [
+    ["title", { minlength: 3, maxlength: 200 }],
+    ["publisher", { minlength: 2, maxlength: 120 }],
+  ]) {
+    addExactFinding(
+      findings,
+      "source-child-options",
+      `fields.sourceList.${name}.options`,
+      fieldByName(sourceList, name)?.options,
+      options,
+    );
+  }
+  const sourceChildConstraints = new Map([
+    [
+      "title",
+      {
+        type: "string",
+        required: true,
+        default: undefined,
+        options: { minlength: 3, maxlength: 200 },
+        pattern: undefined,
+      },
+    ],
+    [
+      "publisher",
+      {
+        type: "string",
+        required: true,
+        default: undefined,
+        options: { minlength: 2, maxlength: 120 },
+        pattern: undefined,
+      },
+    ],
+    [
+      "url",
+      {
+        type: "string",
+        required: true,
+        default: undefined,
+        options: undefined,
+        pattern: {
+          regex: "^https://[^\\s]+$",
+          message: "Use a complete HTTPS source URL.",
+        },
+      },
+    ],
+    [
+      "accessed",
+      {
+        type: "date",
+        required: true,
+        default: "",
+        options: { format: "yyyy-MM-dd" },
+        pattern: undefined,
+      },
+    ],
+  ]);
+  for (const [name, expected] of sourceChildConstraints) {
+    addExactFinding(
+      findings,
+      "source-child-contract",
+      `fields.sourceList.${name}`,
+      fieldConstraintSnapshot(fieldByName(sourceList, name)),
+      expected,
+    );
+  }
   addExactFinding(
     findings,
     "source-url-pattern",
     "fields.sourceList.url.pattern",
-    fieldByName(sourceList, "url")?.pattern?.regex,
-    "^https://[^\\s]+$",
+    fieldByName(sourceList, "url")?.pattern,
+    {
+      regex: "^https://[^\\s]+$",
+      message: "Use a complete HTTPS source URL.",
+    },
   );
   const sourceAccessed = fieldByName(sourceList, "accessed");
   addExactFinding(
@@ -678,32 +878,114 @@ function validateFieldContract(collection, findings) {
     findings,
     "hero-media",
     "fields.heroImage",
-    { type: hero?.type, options: hero?.options },
+    fieldConstraintSnapshot(hero),
     {
       type: "image",
+      required: undefined,
+      default: undefined,
       options: {
         media: "article_images",
         extensions: RASTER_EXTENSIONS,
         categories: ["image"],
         rename: "safe",
       },
+      pattern: undefined,
     },
   );
-  for (const name of [
-    "heroImageAlt",
-    "heroImageDecorative",
-    "heroImageCaption",
-    "heroImageCredit",
-    "heroImageSourceUrl",
-    "heroImageLicense",
-    "canonicalOverride",
-    "noindex",
-  ]) {
-    if (!fieldByName(collection, name)) {
-      findings.push(
-        finding("hero-or-seo-field", `fields.${name}`, `Missing ${name}.`),
-      );
-    }
+  const heroAndSeoConstraints = new Map([
+    [
+      "heroImageAlt",
+      {
+        type: "text",
+        required: undefined,
+        default: undefined,
+        options: { maxlength: 240 },
+        pattern: undefined,
+      },
+    ],
+    [
+      "heroImageDecorative",
+      {
+        type: "boolean",
+        required: undefined,
+        default: undefined,
+        options: undefined,
+        pattern: undefined,
+      },
+    ],
+    [
+      "heroImageCaption",
+      {
+        type: "text",
+        required: undefined,
+        default: undefined,
+        options: { minlength: 10, maxlength: 300 },
+        pattern: undefined,
+      },
+    ],
+    [
+      "heroImageCredit",
+      {
+        type: "string",
+        required: undefined,
+        default: undefined,
+        options: { minlength: 2, maxlength: 200 },
+        pattern: undefined,
+      },
+    ],
+    [
+      "heroImageSourceUrl",
+      {
+        type: "string",
+        required: undefined,
+        default: undefined,
+        options: undefined,
+        pattern: {
+          regex: "^https://[^\\s]+$",
+          message: "Use a complete HTTPS source URL.",
+        },
+      },
+    ],
+    [
+      "heroImageLicense",
+      {
+        type: "string",
+        required: undefined,
+        default: undefined,
+        options: { minlength: 2, maxlength: 120 },
+        pattern: undefined,
+      },
+    ],
+    [
+      "canonicalOverride",
+      {
+        type: "string",
+        required: undefined,
+        default: undefined,
+        options: undefined,
+        pattern: undefined,
+      },
+    ],
+    [
+      "noindex",
+      {
+        type: "boolean",
+        required: undefined,
+        default: true,
+        options: undefined,
+        pattern: undefined,
+      },
+    ],
+  ]);
+  for (const [name, expected] of heroAndSeoConstraints) {
+    const articleField = fieldByName(collection, name);
+    addExactFinding(
+      findings,
+      "hero-seo-contract",
+      `fields.${name}`,
+      fieldConstraintSnapshot(articleField),
+      expected,
+    );
   }
 
   const body = fieldByName(collection, "body");

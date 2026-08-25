@@ -307,7 +307,212 @@ describe("Pages CMS configuration", () => {
         ({ code }) => code === "false-hosted-claim",
       ),
     ).toEqual([]);
+
+    const mixedClaims = structuredClone(await validConfig());
+    field(mixedClaims, "title").label =
+      "Hosted CMS authentication is not verified and CMS saving is tested";
+    expect(validatePagesCmsConfig(mixedClaims)).toContainEqual(
+      expect.objectContaining({
+        code: "false-hosted-claim",
+        location: "content[0].fields[0].label",
+      }),
+    );
+
+    const truthfulObligation = structuredClone(await validConfig());
+    field(truthfulObligation, "title").label =
+      "Hosted CMS sign-in must be tested before use";
+    expect(
+      validatePagesCmsConfig(truthfulObligation).filter(
+        ({ code }) => code === "false-hosted-claim",
+      ),
+    ).toEqual([]);
+
+    for (const boundary of [
+      "Hosted CMS must have authentication tested before use",
+      "Hosted CMS does not have authentication verified",
+    ]) {
+      const prefixedBoundary = structuredClone(await validConfig());
+      field(prefixedBoundary, "title").label = boundary;
+      expect(
+        validatePagesCmsConfig(prefixedBoundary).filter(
+          ({ code }) => code === "false-hosted-claim",
+        ),
+        boundary,
+      ).toEqual([]);
+    }
+
+    for (const claim of [
+      "Hosted CMS saving works and is verified",
+      "Hosted CMS saving is not only tested but verified",
+    ]) {
+      const coordinatedClaim = structuredClone(await validConfig());
+      field(coordinatedClaim, "title").label = claim;
+      expect(validatePagesCmsConfig(coordinatedClaim), claim).toContainEqual(
+        expect.objectContaining({
+          code: "false-hosted-claim",
+          location: "content[0].fields[0].label",
+        }),
+      );
+    }
+
+    const unrelatedOperation = structuredClone(await validConfig());
+    field(unrelatedOperation, "title").label =
+      "Hosted CMS authentication is unverified. Browser saving is tested in its own unit suite.";
+    expect(
+      validatePagesCmsConfig(unrelatedOperation).filter(
+        ({ code }) => code === "false-hosted-claim",
+      ),
+    ).toEqual([]);
   });
+
+  it.each([
+    [
+      "source title minimum",
+      (config: CmsConfig) =>
+        (field(field(config, "sourceList"), "title").options.minlength = 0),
+      "source-child-options",
+      "fields.sourceList.title.options",
+    ],
+    [
+      "source publisher maximum",
+      (config: CmsConfig) =>
+        (field(field(config, "sourceList"), "publisher").options.maxlength =
+          999),
+      "source-child-options",
+      "fields.sourceList.publisher.options",
+    ],
+    [
+      "source URL pattern message",
+      (config: CmsConfig) =>
+        (field(field(config, "sourceList"), "url").pattern.message =
+          "Any URL is accepted."),
+      "source-url-pattern",
+      "fields.sourceList.url.pattern",
+    ],
+    [
+      "source accessed date default",
+      (config: CmsConfig) =>
+        (field(field(config, "sourceList"), "accessed").default = "2026-08-25"),
+      "source-date",
+      "fields.sourceList.accessed",
+    ],
+    [
+      "source title unexpected default",
+      (config: CmsConfig) =>
+        (field(field(config, "sourceList"), "title").default =
+          "Invented source"),
+      "source-child-contract",
+      "fields.sourceList.title",
+    ],
+    [
+      "source list unexpected default",
+      (config: CmsConfig) => (field(config, "sourceList").default = []),
+      "source-list",
+      "fields.sourceList",
+    ],
+    [
+      "visual alt minimum",
+      (config: CmsConfig) =>
+        (field(field(config, "visual"), "alt").options.minlength = 0),
+      "visual-child-options",
+      "fields.visual.alt.options",
+    ],
+    [
+      "visual caption maximum",
+      (config: CmsConfig) =>
+        (field(field(config, "visual"), "caption").options.maxlength = 999),
+      "visual-child-options",
+      "fields.visual.caption.options",
+    ],
+    [
+      "visual alt unexpected default",
+      (config: CmsConfig) =>
+        (field(field(config, "visual"), "alt").default = "Decorative"),
+      "visual-child-contract",
+      "fields.visual.alt",
+    ],
+    [
+      "visual object unexpected options",
+      (config: CmsConfig) => (field(config, "visual").options = {}),
+      "visual-object-contract",
+      "fields.visual",
+    ],
+    [
+      "hero image unexpected default",
+      (config: CmsConfig) =>
+        (field(config, "heroImage").default = "/images/articles/hero.png"),
+      "hero-media",
+      "fields.heroImage",
+    ],
+    [
+      "hero alt maximum",
+      (config: CmsConfig) =>
+        (field(config, "heroImageAlt").options.maxlength = 999),
+      "hero-seo-contract",
+      "fields.heroImageAlt",
+    ],
+    [
+      "hero decorative default",
+      (config: CmsConfig) =>
+        (field(config, "heroImageDecorative").default = true),
+      "hero-seo-contract",
+      "fields.heroImageDecorative",
+    ],
+    [
+      "hero caption minimum",
+      (config: CmsConfig) =>
+        (field(config, "heroImageCaption").options.minlength = 0),
+      "hero-seo-contract",
+      "fields.heroImageCaption",
+    ],
+    [
+      "hero credit maximum",
+      (config: CmsConfig) =>
+        (field(config, "heroImageCredit").options.maxlength = 999),
+      "hero-seo-contract",
+      "fields.heroImageCredit",
+    ],
+    [
+      "hero source URL pattern",
+      (config: CmsConfig) =>
+        (field(config, "heroImageSourceUrl").pattern.regex = "^http://"),
+      "hero-seo-contract",
+      "fields.heroImageSourceUrl",
+    ],
+    [
+      "hero license minimum",
+      (config: CmsConfig) =>
+        (field(config, "heroImageLicense").options.minlength = 0),
+      "hero-seo-contract",
+      "fields.heroImageLicense",
+    ],
+    [
+      "canonical override default",
+      (config: CmsConfig) =>
+        (field(config, "canonicalOverride").default = "/articles/guide/"),
+      "hero-seo-contract",
+      "fields.canonicalOverride",
+    ],
+    [
+      "noindex options",
+      (config: CmsConfig) => (field(config, "noindex").options = {}),
+      "hero-seo-contract",
+      "fields.noindex",
+    ],
+  ])(
+    "rejects exact nested constraint drift for %s",
+    async (_label, mutate, expectedCode, expectedLocation) => {
+      const config = structuredClone(await validConfig());
+      mutate(config);
+
+      expect(validatePagesCmsConfig(config)).toContainEqual(
+        expect.objectContaining({
+          code: expectedCode,
+          location: expectedLocation,
+        }),
+      );
+    },
+  );
 
   it.each([
     [

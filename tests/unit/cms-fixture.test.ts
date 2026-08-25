@@ -1,12 +1,14 @@
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { EventEmitter } from "node:events";
+import { existsSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createCmsLifecycleFixtures,
+  reemitCmsFixtureSignal,
   resolveNpmBuildInvocation,
   validateCmsBuildOutput,
   withTemporaryArticleFixtures,
@@ -19,6 +21,11 @@ import { articleFrontmatterSchema } from "../../src/utils/content-contract";
 
 const repositoryRoot = path.resolve(import.meta.dirname, "../..");
 const temporaryRoots: string[] = [];
+type SignalControl = {
+  trackChild: (child: {
+    kill: (signal: NodeJS.Signals) => boolean;
+  }) => () => void;
+};
 
 afterEach(() => {
   for (const root of temporaryRoots.splice(0)) {
@@ -30,6 +37,27 @@ function temporaryRoot(prefix: string): string {
   const root = mkdtempSync(path.join(tmpdir(), prefix));
   temporaryRoots.push(root);
   return root;
+}
+
+function tryCreateDirectoryLink(target: string, linkPath: string): boolean {
+  try {
+    symlinkSync(
+      target,
+      linkPath,
+      process.platform === "win32" ? "junction" : "dir",
+    );
+    return true;
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      ["EACCES", "EPERM", "ENOSYS", "ENOTSUP"].includes(String(error.code))
+    ) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 describe("CMS lifecycle build fixture", () => {
@@ -56,6 +84,30 @@ describe("CMS lifecycle build fixture", () => {
       }),
     ).toEqual({ command: "npm", args: ["run", "build"] });
   });
+
+  it.each([
+    ["SIGINT", 130],
+    ["SIGTERM", 143],
+  ] as const)(
+    "uses the conventional %s exit code when signal re-emission is unavailable",
+    (signal, exitCode) => {
+      const processTarget = {
+        pid: 42,
+        exitCode: undefined as number | undefined,
+      };
+      expect(() =>
+        reemitCmsFixtureSignal(signal, {
+          processTarget,
+          killProcess: () => {
+            throw Object.assign(new Error("signal unavailable"), {
+              code: "ENOSYS",
+            });
+          },
+        }),
+      ).not.toThrow();
+      expect(processTarget.exitCode).toBe(exitCode);
+    },
+  );
 
   it("creates exactly one minimum draft, structurally valid review, and complete archived fixture", async () => {
     const articlesDirectory = path.join(
@@ -146,7 +198,108 @@ describe("CMS lifecycle build fixture", () => {
     expect(await readdir(articlesDirectory)).toEqual(["cms-review.md"]);
   });
 
-  it("accepts a clean 15-route build inventory and detects leaks into public surfaces or social inventory", async () => {
+  it("terminates and awaits an active child, cleans owned fixtures, then re-emits the original signal", async () => {
+    const articlesDirectory = temporaryRoot("eti-cms-fixture-signal-");
+    const fixtures = ["draft", "review", "archived"].map((status) => ({
+      fileName: `cms-${status}.md`,
+      slug: `cms-${status}`,
+      status,
+      source: `fixture ${status}`,
+    }));
+    const processTarget = new EventEmitter();
+    const child = new EventEmitter() as EventEmitter & {
+      killed: boolean;
+      kill: (signal: NodeJS.Signals) => boolean;
+    };
+    let childSettled = false;
+    child.killed = false;
+    child.kill = vi.fn((signal: NodeJS.Signals) => {
+      child.killed = true;
+      queueMicrotask(() => {
+        childSettled = true;
+        child.emit("exit", null, signal);
+      });
+      return true;
+    });
+    const reemitSignal = vi.fn((signal: NodeJS.Signals) => {
+      expect(signal).toBe("SIGTERM");
+      expect(childSettled).toBe(true);
+      expect(
+        fixtures.every((fixture) =>
+          existsSync(path.join(articlesDirectory, fixture.fileName)),
+        ),
+      ).toBe(false);
+    });
+
+    await expect(
+      withTemporaryArticleFixtures(
+        { articlesDirectory, fixtures },
+        async (_paths: string[], signalControl: SignalControl) => {
+          signalControl.trackChild(child);
+          await new Promise<never>((_resolve, reject) => {
+            child.once("exit", (_code, signal) => {
+              reject(new Error(`child exited via ${String(signal)}`));
+            });
+            processTarget.emit("SIGTERM");
+          });
+        },
+        { processTarget, reemitSignal },
+      ),
+    ).rejects.toMatchObject({
+      code: "CMS_FIXTURE_SIGNAL",
+      signal: "SIGTERM",
+    });
+
+    expect(child.kill).toHaveBeenCalledWith("SIGTERM");
+    expect(reemitSignal).toHaveBeenCalledOnce();
+    expect(await readdir(articlesDirectory)).toEqual([]);
+    expect(processTarget.listenerCount("SIGINT")).toBe(0);
+    expect(processTarget.listenerCount("SIGTERM")).toBe(0);
+  });
+
+  it("awaits every cleanup attempt and preserves signal re-emission when one removal fails", async () => {
+    const articlesDirectory = temporaryRoot("eti-cms-fixture-cleanup-signal-");
+    const fixtures = ["draft", "review", "archived"].map((status) => ({
+      fileName: `cms-${status}.md`,
+      slug: `cms-${status}`,
+      status,
+      source: `fixture ${status}`,
+    }));
+    const processTarget = new EventEmitter();
+    const removalAttempts: string[] = [];
+    const reemitSignal = vi.fn();
+
+    await expect(
+      withTemporaryArticleFixtures(
+        { articlesDirectory, fixtures },
+        async () => {
+          processTarget.emit("SIGINT");
+          throw new Error("operation interrupted");
+        },
+        {
+          processTarget,
+          reemitSignal,
+          removeFixture: async (target: string) => {
+            removalAttempts.push(path.basename(target));
+            if (removalAttempts.length === 1) {
+              throw new Error("injected cleanup failure");
+            }
+            rmSync(target);
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: "CMS_FIXTURE_SIGNAL",
+      signal: "SIGINT",
+    });
+
+    expect(removalAttempts.sort()).toEqual(
+      fixtures.map(({ fileName }) => fileName).sort(),
+    );
+    expect(reemitSignal).toHaveBeenCalledWith("SIGINT");
+  });
+
+  it("accepts exact dynamic route and social parity and detects nonpublished leaks", async () => {
     const projectRoot = temporaryRoot("eti-cms-build-output-");
     const distDirectory = path.join(projectRoot, "dist");
     const socialDirectory = path.join(projectRoot, "public", "social");
@@ -177,14 +330,18 @@ describe("CMS lifecycle build fixture", () => {
     await mkdir(path.join(distDirectory, "sitemap"), { recursive: true });
     await mkdir(socialDirectory, { recursive: true });
 
-    for (let index = 1; index <= 15; index += 1) {
+    const expectedPublishedSlugs = Array.from(
+      { length: 16 },
+      (_, index) => `published-article-${index + 1}`,
+    );
+    for (let index = 1; index <= expectedPublishedSlugs.length; index += 1) {
       const slug = `published-article-${index}`;
       await mkdir(path.join(distDirectory, "articles", slug), {
         recursive: true,
       });
       await writeFile(
         path.join(distDirectory, "articles", slug, "index.html"),
-        `<a href="/articles/published-article-${(index % 15) + 1}/">Related</a>`,
+        `<a href="/articles/published-article-${(index % expectedPublishedSlugs.length) + 1}/">Related</a>`,
       );
       await writeFile(
         path.join(socialDirectory, `article-${slug}.png`),
@@ -213,8 +370,13 @@ describe("CMS lifecycle build fixture", () => {
     }
 
     await expect(
-      validateCmsBuildOutput({ projectRoot, fixtureSlugs, fixtureTitles }),
-    ).resolves.toMatchObject({ publicArticleRoutes: 15 });
+      validateCmsBuildOutput({
+        projectRoot,
+        expectedPublishedSlugs,
+        fixtureSlugs,
+        fixtureTitles,
+      }),
+    ).resolves.toMatchObject({ publicArticleRoutes: 16 });
 
     await writeFile(
       path.join(distDirectory, "rss.xml"),
@@ -222,7 +384,12 @@ describe("CMS lifecycle build fixture", () => {
       "utf8",
     );
     await expect(
-      validateCmsBuildOutput({ projectRoot, fixtureSlugs, fixtureTitles }),
+      validateCmsBuildOutput({
+        projectRoot,
+        expectedPublishedSlugs,
+        fixtureSlugs,
+        fixtureTitles,
+      }),
     ).rejects.toThrow(/fixture.*rss|rss.*fixture/i);
 
     await writeFile(path.join(distDirectory, "rss.xml"), "<rss></rss>", "utf8");
@@ -232,7 +399,134 @@ describe("CMS lifecycle build fixture", () => {
       "utf8",
     );
     await expect(
-      validateCmsBuildOutput({ projectRoot, fixtureSlugs, fixtureTitles }),
+      validateCmsBuildOutput({
+        projectRoot,
+        expectedPublishedSlugs,
+        fixtureSlugs,
+        fixtureTitles,
+      }),
     ).rejects.toThrow(/fixture.*title.*publisher|publisher.*fixture.*title/i);
+
+    await writeFile(
+      path.join(distDirectory, "publisher", "index.html"),
+      "Published publisher record",
+      "utf8",
+    );
+    const leakedRoute = path.join(
+      distDirectory,
+      "articles",
+      "unpublished-review-guide",
+    );
+    await mkdir(leakedRoute);
+    await writeFile(path.join(leakedRoute, "index.html"), "Not public", "utf8");
+    await expect(
+      validateCmsBuildOutput({
+        projectRoot,
+        expectedPublishedSlugs,
+        fixtureSlugs,
+        fixtureTitles,
+      }),
+    ).rejects.toThrow(/article route.*unexpected|route set.*unpublished/i);
+
+    rmSync(leakedRoute, { recursive: true });
+    await writeFile(
+      path.join(socialDirectory, "article-unpublished-review-guide.png"),
+      Buffer.from([137, 80, 78, 71]),
+    );
+    await expect(
+      validateCmsBuildOutput({
+        projectRoot,
+        expectedPublishedSlugs,
+        fixtureSlugs,
+        fixtureTitles,
+      }),
+    ).rejects.toThrow(/social.*unexpected|social.*set.*unpublished/i);
+
+    rmSync(path.join(socialDirectory, "article-unpublished-review-guide.png"));
+    const rssPath = path.join(distDirectory, "rss.xml");
+    rmSync(rssPath);
+    await mkdir(rssPath);
+    await expect(
+      validateCmsBuildOutput({
+        projectRoot,
+        expectedPublishedSlugs,
+        fixtureSlugs,
+        fixtureTitles,
+      }),
+    ).rejects.toThrow(/regular file/i);
+
+    rmSync(rssPath, { recursive: true });
+    await writeFile(rssPath, "<rss></rss>", "utf8");
+    const socialFilePath = path.join(
+      socialDirectory,
+      `article-${expectedPublishedSlugs[0]}.png`,
+    );
+    rmSync(socialFilePath);
+    await mkdir(socialFilePath);
+    await expect(
+      validateCmsBuildOutput({
+        projectRoot,
+        expectedPublishedSlugs,
+        fixtureSlugs,
+        fixtureTitles,
+      }),
+    ).rejects.toThrow(/social.*regular file/i);
+  });
+
+  it("rejects a non-regular Markdown source before fixture derivation", async () => {
+    const articlesDirectory = temporaryRoot("eti-cms-nonregular-source-");
+    await mkdir(path.join(articlesDirectory, "not-a-file.md"));
+
+    await expect(
+      createCmsLifecycleFixtures({ articlesDirectory }),
+    ).rejects.toThrow(/source.*regular file/i);
+  });
+
+  it("rejects linked fixture source and built-output directories", async (context) => {
+    const parent = temporaryRoot("eti-cms-linked-path-");
+    const realArticles = path.join(parent, "real-articles");
+    const linkedArticles = path.join(parent, "linked-articles");
+    await mkdir(realArticles);
+    if (!tryCreateDirectoryLink(realArticles, linkedArticles)) {
+      context.skip("Creating a directory link is unavailable on this host.");
+      return;
+    }
+
+    await expect(
+      withTemporaryArticleFixtures(
+        {
+          articlesDirectory: linkedArticles,
+          fixtures: [
+            {
+              fileName: "cms-draft.md",
+              slug: "cms-draft",
+              status: "draft",
+              source: "fixture",
+            },
+          ],
+        },
+        async () => undefined,
+      ),
+    ).rejects.toThrow(/symbolic link|junction|canonical/i);
+
+    const projectRoot = path.join(parent, "project");
+    const outsideDist = path.join(parent, "outside-dist");
+    await mkdir(projectRoot);
+    await mkdir(outsideDist);
+    const linkedDist = path.join(projectRoot, "dist");
+    if (!tryCreateDirectoryLink(outsideDist, linkedDist)) {
+      context.skip(
+        "Creating a second directory link is unavailable on this host.",
+      );
+      return;
+    }
+    await expect(
+      validateCmsBuildOutput({
+        projectRoot,
+        expectedPublishedSlugs: [],
+        fixtureSlugs: [],
+        fixtureTitles: [],
+      }),
+    ).rejects.toThrow(/symbolic link|junction|canonical/i);
   });
 });
