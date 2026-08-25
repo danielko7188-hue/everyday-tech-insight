@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sketch 002 · Purple Signal story hierarchy</title>
+    <link rel="stylesheet" href="../themes/default.css" />
+    <style>
+      * { box-sizing: border-box; }
+      html { background: #ece8f5; color: var(--ink); font-family: var(--font-sans); }
+      body { margin: 0; padding-top: 58px; }
+      a, button { font: inherit; }
+      a { color: inherit; }
+      a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+      .variant-nav { position: fixed; inset: 0 0 auto; z-index: 20; min-height: 58px; display: flex; gap: 8px; align-items: center; padding: 8px 18px; background: white; border-bottom: 1px solid #d8d1e6; }
+      .variant-nav strong { margin-right: auto; font-size: 14px; }
+      .variant-tab { min-height: 40px; padding: 7px 13px; cursor: pointer; color: #3a3150; background: white; border: 1px solid #c9bfdc; border-radius: 8px; }
+      .variant-tab:hover, .variant-tab.active { color: var(--violet-dark); background: var(--mist); border-color: var(--violet); }
+      .variant { display: none; }
+      .variant.active { display: block; }
+      .viewport { max-width: 100%; min-height: calc(100vh - 58px); margin-inline: auto; overflow: hidden; background: var(--paper); transition: max-width .2s; }
+      .top { color: white; background: var(--night); border-top: 4px solid var(--violet); }
+      .top-inner, .content { width: min(84rem, calc(100% - 40px)); margin-inline: auto; }
+      .top-inner { display: flex; gap: 24px; align-items: end; justify-content: space-between; padding: 48px 0 38px; }
+      .top h1 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.8rem, 5vw, 5rem); letter-spacing: -.045em; }
+      .top p { max-width: 580px; margin: 12px 0 0; color: var(--muted-dark); font-size: 18px; line-height: 1.5; }
+      .count { padding-bottom: 8px; color: var(--lavender); font-weight: 800; white-space: nowrap; }
+      .jump { background: var(--deep); }
+      .jump nav { width: min(84rem, calc(100% - 40px)); min-height: 52px; margin-inline: auto; display: flex; align-items: center; gap: 22px; overflow-x: auto; }
+      .jump a { min-height: 44px; display: inline-flex; align-items: center; color: var(--muted-dark); text-decoration-thickness: 2px; text-underline-offset: 5px; white-space: nowrap; }
+      .jump a:hover { color: white; }
+      .content { padding-block: 54px 80px; }
+      .section-title { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
+      .section-title h2 { margin: 0; font-family: var(--font-serif); font-size: 38px; letter-spacing: -.03em; }
+      .section-title p { max-width: 530px; margin: 0; color: var(--muted-light); text-align: right; }
+      .story-list { list-style: none; margin: 0; padding: 0; }
+      .story-row { display: grid; grid-template-columns: 150px minmax(0,1fr) 150px; gap: 28px; align-items: center; padding: 26px 0; border-bottom: 1px solid #d9d2e8; }
+      .story-kicker { color: var(--violet-dark); font-size: 14px; font-weight: 800; line-height: 1.45; }
+      .story-row h3 { margin: 0 0 7px; font-size: clamp(1.35rem, 2.2vw, 1.85rem); letter-spacing: -.025em; }
+      .story-row h3 a { text-decoration: none; }
+      .story-row h3 a:hover { color: var(--violet-dark); text-decoration: underline; text-underline-offset: 5px; }
+      .promise { margin: 0; color: var(--muted-light); font-size: 17px; line-height: 1.5; }
+      .story-end { color: var(--muted-light); text-align: right; }
+      .story-end a { min-height: 44px; display: inline-flex; align-items: center; color: var(--violet-dark); font-weight: 800; text-underline-offset: 5px; }
+      .topics { display: grid; grid-template-columns: repeat(5,1fr); margin-top: 58px; border: 1px solid var(--rule-light); background: var(--mist); }
+      .topic { min-height: 210px; padding: 22px; border-right: 1px solid var(--rule-light); }
+      .topic:last-child { border-right: 0; }
+      .motif { width: 48px; height: 34px; margin-bottom: 26px; border: 2px solid var(--topic); border-radius: 6px; position: relative; }
+      .motif::after { content: ""; position: absolute; width: 8px; height: 8px; right: -5px; bottom: -5px; border-radius: 50%; background: var(--topic); }
+      .topic h3 { margin: 0; font-size: 18px; }
+      .topic p { color: var(--muted-light); font-size: 14px; line-height: 1.45; }
+      .topic a { color: var(--violet-dark); font-weight: 800; text-underline-offset: 4px; }
+      /* B: magazine mosaic */
+      .mosaic { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 18px; }
+      .mosaic .story-row { display: block; min-height: 330px; padding: 24px; border: 1px solid #cfc4e3; border-radius: 12px; background: white; }
+      .mosaic .story-row:first-child { grid-row: span 2; min-height: 678px; color: white; background: var(--deep); border-color: var(--surface-dark); box-shadow: var(--shadow-feature); }
+      .mosaic .story-row:first-child .promise, .mosaic .story-row:first-child .story-end { color: var(--muted-dark); }
+      .mosaic .story-row:first-child .story-kicker, .mosaic .story-row:first-child .story-end a { color: var(--lavender); }
+      .mosaic .story-row:not(:first-child) .story-end { margin-top: 28px; text-align: left; }
+      /* C: report grid */
+      .report-grid { display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid #bcb1d0; border-left: 1px solid #bcb1d0; }
+      .report-grid .story-row { display: grid; grid-template-columns: 1fr; gap: 12px; min-height: 250px; padding: 25px; border-right: 1px solid #bcb1d0; border-bottom: 1px solid #bcb1d0; background: #fff; }
+      .report-grid .story-end { text-align: left; align-self: end; }
+      .report-grid .story-kicker { text-transform: uppercase; letter-spacing: .06em; }
+      .tools { position: fixed; right: 12px; bottom: 12px; z-index: 30; display: flex; gap: 5px; padding: 8px 10px; color: white; background: rgba(0,0,0,.78); border-radius: 8px; opacity: .45; transition: opacity .2s; }
+      .tools:hover { opacity: 1; }
+      .tools button { min-height: 30px; color: white; background: #252525; border: 1px solid #777; border-radius: 5px; }
+      .toast { position: fixed; left: 50%; bottom: 22px; z-index: 40; translate: -50% 20px; padding: 10px 15px; color: white; background: var(--violet-dark); border-radius: 8px; opacity: 0; transition: .2s; }
+      .toast.show { opacity: 1; translate: -50% 0; }
+      @media (max-width: 900px) { .topics { grid-template-columns: repeat(2,1fr); } .topic { border-bottom: 1px solid var(--rule-light); } .mosaic { grid-template-columns: 1fr 1fr; } .mosaic .story-row:first-child { grid-column: 1 / -1; grid-row: auto; min-height: 380px; } }
+      @media (max-width: 660px) {
+        .variant-nav { overflow-x: auto; } .variant-nav strong { display: none; } .variant-tab { white-space: nowrap; }
+        .top-inner { display: block; padding-top: 38px; } .count { margin-top: 20px; }
+        .section-title { grid-template-columns: 1fr; } .section-title p { text-align: left; }
+        .story-row, .mosaic, .report-grid { grid-template-columns: 1fr; }
+        .story-row { gap: 8px; } .story-end { text-align: left; }
+        .mosaic .story-row:first-child { grid-column: auto; min-height: 360px; }
+        .topics { grid-template-columns: 1fr; } .topic { min-height: 0; border-right: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="variant-nav" aria-label="Sketch variants"><strong>002 · Story hierarchy</strong><button class="variant-tab active" data-target="a">A: Editorial Rail ★</button><button class="variant-tab" data-target="b">B: Magazine Mosaic</button><button class="variant-tab" data-target="c">C: Report Grid</button></nav>
+    <main id="viewport" class="viewport">
+      <section id="variant-a" class="variant active"></section><section id="variant-b" class="variant"></section><section id="variant-c" class="variant"></section>
+    </main>
+    <div class="tools"><button data-width="390px">Phone</button><button data-width="768px">Tablet</button><button data-width="100%">Desktop</button></div><div id="toast" class="toast" role="status"></div>
+    <template id="frame">
+      <header class="top"><div class="top-inner"><div><h1>Guides</h1><p>Practical methods for choosing, securing, and governing business technology—organized around the decision or record you need to produce.</p></div><div class="count">15 published guides · 5 topics</div></div></header>
+      <div class="jump"><nav aria-label="Jump to topic"><a href="#ai">AI &amp; Automation</a><a href="#software">Business Software</a><a href="#security">Cybersecurity</a><a href="#operations">Digital Operations</a><a href="#strategy">Technology Strategy</a></nav></div>
+      <div class="content"><div class="section-title"><h2 id="ai">AI &amp; Automation</h2><p>Choose bounded uses, test outputs, and define responsible operating rules before scale.</p></div><ol class="story-list">
+        <li class="story-row"><div class="story-kicker">Framework<br />Aug 21</div><div><h3><a href="#">How to identify business tasks for automation</a></h3><p class="promise">Inventory recurring work, screen repeatability and risk, and select one bounded automation candidate with a human-owned fallback.</p></div><div class="story-end">9 min<br /><a href="#">Read guide →</a></div></li>
+        <li class="story-row"><div class="story-kicker">Guide<br />Aug 21</div><div><h3><a href="#">How to evaluate AI output quality in a small-team pilot</a></h3><p class="promise">Test representative cases against a defined rubric, a baseline, harmful errors, and the real time required for correction.</p></div><div class="story-end">12 min<br /><a href="#">Read guide →</a></div></li>
+        <li class="story-row"><div class="story-kicker">Framework<br />Aug 21</div><div><h3><a href="#">How to write a practical AI acceptable-use policy</a></h3><p class="promise">Define which AI tools, data, and uses are allowed, restricted, or prohibited before employees begin using them.</p></div><div class="story-end">10 min<br /><a href="#">Read guide →</a></div></li>
+      </ol>
+      <div class="topics"><article class="topic" style="--topic:#6d28d9"><div class="motif"></div><h3>AI &amp; Automation</h3><p>Bounded use, evaluation, and governance.</p><a href="#">3 guides</a></article><article class="topic" style="--topic:#4338ca"><div class="motif"></div><h3>Business Software</h3><p>Selection, portability, and work fit.</p><a href="#">3 guides</a></article><article class="topic" style="--topic:#a21caf"><div class="motif"></div><h3>Cybersecurity</h3><p>Practical protection and response.</p><a href="#">3 guides</a></article><article class="topic" style="--topic:#5b21b6"><div class="motif"></div><h3>Digital Operations</h3><p>Reliable files, workflows, and access.</p><a href="#">3 guides</a></article><article class="topic" style="--topic:#be185d"><div class="motif"></div><h3>Technology Strategy</h3><p>Costs, risks, pilots, and decisions.</p><a href="#">3 guides</a></article></div>
+      </div>
+    </template>
+    <script>
+      const tpl = document.querySelector('#frame'); document.querySelectorAll('.variant').forEach((v) => v.append(tpl.content.cloneNode(true)));
+      document.querySelector('#variant-b .story-list').classList.add('mosaic'); document.querySelector('#variant-c .story-list').classList.add('report-grid');
+      const toast = document.querySelector('#toast'); const signal = (m) => { toast.textContent=m; toast.classList.add('show'); clearTimeout(window.t); window.t=setTimeout(()=>toast.classList.remove('show'),1200); };
+      document.querySelectorAll('.variant-tab').forEach((tab)=>tab.addEventListener('click',()=>{document.querySelectorAll('.variant-tab,.variant').forEach((el)=>el.classList.remove('active'));tab.classList.add('active');document.querySelector('#variant-'+tab.dataset.target).classList.add('active');}));
+      document.querySelectorAll('[data-width]').forEach((b)=>b.addEventListener('click',()=>{document.querySelector('#viewport').style.maxWidth=b.dataset.width;signal(b.textContent+' viewport');}));
+      document.addEventListener('click',(e)=>{if(e.target.closest('a')){e.preventDefault();signal('Destination previewed');}});
+    </script>
+  </body>
+</html>

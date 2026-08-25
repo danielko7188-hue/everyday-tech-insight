@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sketch 003 · Purple Signal reading system</title>
+    <link rel="stylesheet" href="../themes/default.css" />
+    <style>
+      * { box-sizing: border-box; }
+      html { background: #ece8f5; color: var(--ink); font-family: var(--font-sans); }
+      body { margin: 0; padding-top: 58px; }
+      a, button { font: inherit; }
+      a { color: inherit; }
+      a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+      .variant-nav { position: fixed; inset: 0 0 auto; z-index: 20; min-height: 58px; display: flex; gap: 8px; align-items: center; padding: 8px 18px; background: white; border-bottom: 1px solid #d8d1e6; }
+      .variant-nav strong { margin-right: auto; font-size: 14px; }
+      .variant-tab { min-height: 40px; padding: 7px 13px; color: #3a3150; background: white; border: 1px solid #c9bfdc; border-radius: 8px; cursor: pointer; }
+      .variant-tab:hover, .variant-tab.active { color: var(--violet-dark); background: var(--mist); border-color: var(--violet); }
+      .variant { display: none; }
+      .variant.active { display: block; }
+      .viewport { max-width: 100%; min-height: calc(100vh - 58px); margin-inline: auto; overflow: hidden; background: var(--paper); transition: max-width .2s; }
+      .hero { color: white; background: var(--night); border-top: 4px solid transparent; border-image: var(--gradient) 1; }
+      .hero-inner, .reading, .toolkit { width: min(84rem, calc(100% - 40px)); margin-inline: auto; }
+      .hero-inner { display: grid; grid-template-columns: 7fr 5fr; gap: 54px; align-items: center; padding: 64px 0 58px; }
+      .crumb { margin-bottom: 22px; color: var(--lavender); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      .hero h1 { margin: 0; max-width: 820px; font-family: var(--font-serif); font-size: clamp(3rem, 5vw, 5.1rem); line-height: 1.01; letter-spacing: -.045em; }
+      .deck { max-width: 720px; margin: 22px 0; color: var(--muted-dark); font-size: 20px; line-height: 1.5; }
+      .byline { display: flex; flex-wrap: wrap; gap: 8px 18px; padding-top: 18px; border-top: 1px solid var(--rule-dark); color: var(--muted-dark); font-size: 14px; }
+      .byline strong { color: white; }
+      .visual { min-height: 370px; display: grid; place-items: center; padding: 28px; border: 1px solid #594370; border-radius: 16px; background: radial-gradient(circle at 85% 10%,rgba(217,70,239,.32),transparent 34%),var(--deep); }
+      .diagram { width: 100%; display: grid; gap: 13px; }
+      .diagram-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+      .diagram-box { min-height: 60px; display: grid; place-items: center; padding: 10px; text-align: center; border: 1px solid var(--lavender); border-radius: 8px; background: var(--night); font-weight: 750; }
+      .diagram-box.signal { color: var(--ink); background: var(--magenta); border-color: #ef89fa; }
+      .arrow { color: var(--lavender); font-size: 22px; }
+      .reading { padding: 42px 0 84px; }
+      .glance { display: grid; grid-template-columns: repeat(4,1fr); margin-bottom: 48px; border: 1px solid var(--rule-light); border-top: 4px solid var(--violet); border-radius: 12px; background: var(--mist); overflow: hidden; }
+      .glance > div { min-height: 138px; padding: 22px; border-right: 1px solid var(--rule-light); }
+      .glance > div:last-child { border-right: 0; }
+      .glance dt { margin-bottom: 10px; color: var(--violet-dark); font-size: 13px; font-weight: 850; text-transform: uppercase; letter-spacing: .05em; }
+      .glance dd { margin: 0; line-height: 1.45; }
+      .reading-grid { display: grid; grid-template-columns: 240px minmax(0,44rem) minmax(170px,1fr); gap: 42px; align-items: start; }
+      .toc { position: sticky; top: 82px; padding: 18px 0; border-top: 2px solid var(--violet); border-bottom: 1px solid var(--rule-light); }
+      .toc h2 { margin: 0 0 12px; font-size: 15px; text-transform: uppercase; letter-spacing: .06em; }
+      .toc ol { margin: 0; padding-left: 20px; }
+      .toc a { min-height: 38px; display: inline-flex; align-items: center; color: var(--violet-dark); text-underline-offset: 4px; }
+      .body { font-size: 18.5px; line-height: 1.72; }
+      .body h2 { margin: 2.5em 0 .65em; font-family: var(--font-serif); font-size: 36px; line-height: 1.1; letter-spacing: -.025em; }
+      .body h2:first-child { margin-top: 0; }
+      .body a { color: var(--violet-dark); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+      .note { margin: 26px 0; padding: 20px 22px; border-left: 4px solid var(--magenta); background: var(--mist); }
+      .evidence { padding: 18px; border: 1px solid var(--rule-light); border-radius: 10px; background: white; font-size: 14px; }
+      .evidence h2 { margin: 0 0 12px; font-size: 16px; }
+      .evidence dl { margin: 0; }
+      .evidence dt { margin-top: 14px; color: var(--muted-light); font-weight: 800; }
+      .evidence dd { margin: 3px 0 0; }
+      .toolkit-band { color: white; background: var(--deep); }
+      .toolkit { display: grid; grid-template-columns: 5fr 7fr; gap: 48px; align-items: center; padding-block: 54px; }
+      .toolkit h2 { margin: 0; font-family: var(--font-serif); font-size: 40px; }
+      .toolkit p { color: var(--muted-dark); line-height: 1.5; }
+      .download-card { padding: 24px; border: 1px solid #594370; border-radius: 12px; background: var(--night); }
+      .download-card strong { display: block; margin-bottom: 7px; font-size: 20px; }
+      .download-card a { min-height: 44px; display: inline-flex; align-items: center; margin-top: 14px; padding: 0 18px; color: white; background: var(--violet); border-radius: 8px; font-weight: 800; text-decoration: none; }
+      .download-card a:hover { background: var(--violet-dark); }
+      /* B immersive */
+      .immersive .hero-inner { min-height: 690px; grid-template-columns: 1fr; text-align: center; }
+      .immersive .hero-copy { max-width: 980px; margin-inline: auto; }
+      .immersive .hero h1 { max-width: none; }
+      .immersive .byline { justify-content: center; }
+      .immersive .visual { min-height: 260px; }
+      .immersive .diagram { max-width: 720px; }
+      /* C quiet */
+      .quiet .hero { color: var(--ink); background: var(--paper); border-bottom: 1px solid var(--rule-light); }
+      .quiet .crumb { color: var(--violet-dark); }
+      .quiet .deck, .quiet .byline { color: var(--muted-light); }
+      .quiet .byline { border-color: var(--rule-light); }
+      .quiet .byline strong { color: var(--ink); }
+      .quiet .visual { color: white; }
+      .quiet .hero-inner { grid-template-columns: 8fr 4fr; }
+      .quiet .hero h1 { font-size: clamp(2.8rem,4.3vw,4.5rem); }
+      .tools { position: fixed; right: 12px; bottom: 12px; z-index: 30; display: flex; gap: 5px; padding: 8px 10px; color: white; background: rgba(0,0,0,.78); border-radius: 8px; opacity: .45; transition: opacity .2s; }
+      .tools:hover { opacity: 1; }
+      .tools button { min-height: 30px; color: white; background: #252525; border: 1px solid #777; border-radius: 5px; }
+      .toast { position: fixed; left: 50%; bottom: 22px; z-index: 40; translate: -50% 20px; padding: 10px 15px; color: white; background: var(--violet-dark); border-radius: 8px; opacity: 0; transition: .2s; }
+      .toast.show { opacity: 1; translate: -50% 0; }
+      @media (max-width: 1040px) { .glance { grid-template-columns: repeat(2,1fr); } .glance > div:nth-child(2) { border-right: 0; } .glance > div { border-bottom: 1px solid var(--rule-light); } .reading-grid { grid-template-columns: 210px minmax(0,1fr); } .evidence { grid-column: 2; } }
+      @media (max-width: 720px) {
+        .variant-nav { overflow-x: auto; } .variant-nav strong { display: none; } .variant-tab { white-space: nowrap; }
+        .hero-inner, .quiet .hero-inner, .toolkit { grid-template-columns: 1fr; gap: 34px; padding-block: 42px; }
+        .hero h1 { font-size: clamp(2.3rem,9vw,3.35rem); }
+        .visual { min-height: 260px; }
+        .glance { grid-template-columns: 1fr; }
+        .glance > div { min-height: 0; border-right: 0; }
+        .reading-grid { grid-template-columns: 1fr; gap: 28px; }
+        .toc { position: static; } .evidence { grid-column: auto; }
+        .body { font-size: 18px; }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="variant-nav" aria-label="Sketch variants"><strong>003 · Reading system</strong><button class="variant-tab active" data-target="a">A: Evidence-first ★</button><button class="variant-tab" data-target="b">B: Immersive Feature</button><button class="variant-tab" data-target="c">C: Quiet Reading</button></nav>
+    <main id="viewport" class="viewport"><section id="variant-a" class="variant active"></section><section id="variant-b" class="variant immersive"></section><section id="variant-c" class="variant quiet"></section></main>
+    <div class="tools"><button data-width="390px">Phone</button><button data-width="768px">Tablet</button><button data-width="100%">Desktop</button></div><div id="toast" class="toast" role="status"></div>
+    <template id="article">
+      <header class="hero"><div class="hero-inner"><div class="hero-copy"><div class="crumb">AI &amp; Automation · Framework</div><h1>How to identify business tasks for automation</h1><p class="deck">Inventory recurring work, screen repeatability and risk, and select one bounded automation candidate with a human-owned fallback.</p><div class="byline"><span>By <strong>Everyday Tech Insight</strong> <em>— publication name</em></span><span>Published Aug 21, 2026</span><span>9 min read</span></div></div><div class="visual" role="img" aria-label="Decision path from recurring work through repeatability and risk gates to a bounded pilot"><div class="diagram"><div class="diagram-row"><div class="diagram-box">Recurring work</div><span class="arrow">→</span><div class="diagram-box">Repeatable?</div></div><div class="diagram-row"><div class="diagram-box">Exception load</div><span class="arrow">→</span><div class="diagram-box">Risk veto</div></div><div class="diagram-row"><div class="diagram-box">Manual fallback</div><span class="arrow">→</span><div class="diagram-box signal">Bounded pilot</div></div></div></div></div></header>
+      <div class="reading"><dl class="glance"><div><dt>Business problem</dt><dd>Too many recurring tasks appear equally suitable for automation.</dd></div><div><dt>Technology focus</dt><dd>Workflow automation and AI-assisted operations.</dd></div><div><dt>Intended reader</dt><dd>Small-business owner or operations lead.</dd></div><div><dt>What you will produce</dt><dd>Ranked candidate shortlist and one-page pilot brief.</dd></div></dl>
+        <div class="reading-grid"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ol><li><a href="#">Inventory work</a></li><li><a href="#">Screen repeatability</a></li><li><a href="#">Apply risk vetoes</a></li><li><a href="#">Choose a pilot</a></li></ol></nav><article class="body"><h2>Start with the work, not the product</h2><p>List recurring tasks before comparing automation tools. Record the trigger, inputs, decisions, exceptions, output, owner, and current recovery path for each task.</p><div class="note"><strong>Keep human ownership visible.</strong> A candidate is not ready when judgment is poorly documented, exceptions are frequent, or a safe manual fallback does not exist.</div><h2>Screen repeatability and risk separately</h2><p>A task can be repetitive and still be a poor automation candidate. Apply an explicit risk veto for payments, sensitive data, legal commitments, safety decisions, or customer-impacting exceptions that cannot be reviewed promptly.</p><p>Use the linked primary sources and the publication’s <a href="#">editorial standards</a> to verify the method’s evidence boundary.</p></article><aside class="evidence"><h2>Evidence record</h2><dl><dt>Primary sources</dt><dd>3 cited records</dd><dt>Last reviewed</dt><dd>Aug 21, 2026</dd><dt>Verification</dt><dd>Source-checked synthesis</dd><dt>Not claimed</dt><dd>No firsthand product test</dd></dl></aside></div>
+      </div>
+      <section class="toolkit-band"><div class="toolkit"><div><h2>Take the method into a working session.</h2><p>The blank worksheet captures task triggers, exceptions, risk vetoes, owners, and the decision to pilot, redesign, or stop.</p></div><div class="download-card"><strong>Automation Candidate Screen</strong><span>CSV · blank first-party worksheet</span><p>Do not enter passwords, secrets, regulated records, or unnecessary personal data.</p><a href="#">Download CSV</a></div></div></section>
+    </template>
+    <script>
+      const tpl=document.querySelector('#article');document.querySelectorAll('.variant').forEach((v)=>v.append(tpl.content.cloneNode(true)));
+      const toast=document.querySelector('#toast');const signal=(m)=>{toast.textContent=m;toast.classList.add('show');clearTimeout(window.t);window.t=setTimeout(()=>toast.classList.remove('show'),1200);};
+      document.querySelectorAll('.variant-tab').forEach((tab)=>tab.addEventListener('click',()=>{document.querySelectorAll('.variant-tab,.variant').forEach((el)=>el.classList.remove('active'));tab.classList.add('active');document.querySelector('#variant-'+tab.dataset.target).classList.add('active');}));
+      document.querySelectorAll('[data-width]').forEach((b)=>b.addEventListener('click',()=>{document.querySelector('#viewport').style.maxWidth=b.dataset.width;signal(b.textContent+' viewport');}));
+      document.addEventListener('click',(e)=>{if(e.target.closest('a')){e.preventDefault();signal(e.target.closest('a').textContent.trim()+' response previewed');}});
+    </script>
+  </body>
+</html>

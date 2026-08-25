@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sketch 001 · Purple Signal publication shell</title>
+    <link rel="stylesheet" href="../themes/default.css" />
+    <style>
+      * { box-sizing: border-box; }
+      html { background: #ece8f5; color: var(--ink); font-family: var(--font-sans); }
+      body { margin: 0; padding-top: 58px; }
+      button, a { font: inherit; }
+      a { color: inherit; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+      .variant-nav { position: fixed; inset: 0 0 auto; z-index: 20; display: flex; gap: 8px; align-items: center; min-height: 58px; padding: 8px 18px; background: #fff; border-bottom: 1px solid #d8d1e6; box-shadow: 0 4px 18px rgba(13,6,24,.08); }
+      .variant-nav strong { margin-right: auto; font-size: 14px; }
+      .variant-tab { min-height: 40px; padding: 7px 13px; border: 1px solid #c9bfdc; border-radius: 8px; background: #fff; color: #3a3150; cursor: pointer; }
+      .variant-tab:hover, .variant-tab.active { border-color: var(--violet); background: var(--mist); color: var(--violet-dark); }
+      .variant { display: none; }
+      .variant.active { display: block; }
+      .viewport { width: 100%; max-width: 100%; margin: 0 auto; background: var(--paper); transition: max-width .2s ease; min-height: calc(100vh - 58px); overflow: hidden; }
+      .masthead { color: var(--white); background: var(--night); }
+      .gradient-rule { height: 4px; background: var(--gradient); }
+      .identity-row, .topic-row, .opening-inner, .editorial-inner { width: min(84rem, calc(100% - 40px)); margin-inline: auto; }
+      .identity-row { min-height: 76px; display: flex; align-items: center; gap: 24px; }
+      .mark { display: inline-flex; align-items: center; gap: 13px; text-decoration: none; }
+      .tile { position: relative; display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid #6f5d8d; color: #fff; font-weight: 850; letter-spacing: -.04em; background: var(--deep); }
+      .tile::before { content: ""; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 3px; border-radius: 4px; background: var(--gradient); }
+      .brand-name { font-size: 22px; font-weight: 800; letter-spacing: -.025em; }
+      .utility { margin-left: auto; display: flex; align-items: center; gap: 24px; }
+      .utility a, .topic-row a { min-height: 44px; display: inline-flex; align-items: center; color: #f8f5ff; text-decoration: none; font-weight: 650; }
+      .utility a:hover, .topic-row a:hover { color: var(--lavender); }
+      .topic-surface { background: var(--deep); border-top: 1px solid var(--rule-dark); }
+      .topic-row { min-height: 48px; display: flex; gap: 28px; overflow: hidden; }
+      .topic-row a { color: var(--muted-dark); font-size: 14px; white-space: nowrap; position: relative; }
+      .topic-row a:first-child { color: #fff; }
+      .topic-row a:first-child::after { content: ""; position: absolute; height: 3px; inset: auto 0 0; background: var(--magenta); }
+      .menu { display: none; margin-left: auto; min-width: 44px; min-height: 44px; color: white; border: 1px solid #6e5d88; border-radius: 8px; background: transparent; cursor: pointer; }
+      .mobile-panel { display: none; padding: 12px 20px 24px; background: var(--deep); border-top: 1px solid var(--rule-dark); }
+      .mobile-panel.open { display: grid; gap: 6px; }
+      .mobile-panel a { min-height: 44px; display: flex; align-items: center; color: white; border-bottom: 1px solid #3c3150; text-decoration: none; }
+      .opening { color: var(--white); background: var(--night); }
+      .opening-inner { display: grid; grid-template-columns: 5fr 7fr; gap: 56px; padding-block: clamp(54px, 7vw, 94px) 72px; }
+      .promise { align-self: center; }
+      .eyebrow { margin: 0 0 16px; color: var(--lavender); font-size: 13px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+      .promise h1 { max-width: 620px; margin: 0; font-size: clamp(3rem, 5.5vw, 5.5rem); line-height: .99; letter-spacing: -.055em; }
+      .promise p { max-width: 540px; margin: 24px 0 0; color: var(--muted-dark); font-size: 20px; line-height: 1.5; }
+      .lead { overflow: hidden; align-self: start; border: 1px solid #4a3a64; border-radius: 16px; background: var(--deep); box-shadow: 0 18px 50px rgba(0,0,0,.22); }
+      .lead-visual { position: relative; min-height: 250px; padding: 26px; background: radial-gradient(circle at 80% 10%, rgba(217,70,239,.3), transparent 31%), linear-gradient(145deg,#24143d,#17102a); }
+      .lead-visual::before, .lead-visual::after { content: ""; position: absolute; border: 1px solid #8b69ba; border-radius: 12px; }
+      .lead-visual::before { inset: 42px 25% 56px 8%; }
+      .lead-visual::after { inset: 76px 8% 24px 42%; background: linear-gradient(135deg,rgba(124,58,237,.25),rgba(217,70,239,.16)); }
+      .node { position: absolute; z-index: 2; display: grid; place-items: center; min-width: 108px; min-height: 48px; padding: 10px; border: 1px solid var(--lavender); border-radius: 8px; background: var(--night); font-size: 13px; font-weight: 750; }
+      .node.one { left: 12%; top: 30%; } .node.two { right: 10%; top: 23%; } .node.three { right: 18%; bottom: 16%; border-color: var(--magenta); }
+      .lead-copy { padding: 28px; }
+      .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 12px; color: var(--lavender); font-size: 13px; font-weight: 750; text-transform: uppercase; letter-spacing: .06em; }
+      .lead h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.1rem, 3vw, 3.35rem); line-height: 1.04; letter-spacing: -.035em; }
+      .lead-copy > p { margin: 16px 0; color: var(--muted-dark); font-size: 18px; line-height: 1.5; }
+      .produce { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding-top: 15px; border-top: 1px solid var(--rule-dark); color: white; font-size: 14px; }
+      .produce strong { color: var(--lavender); }
+      .read { display: inline-flex; min-height: 44px; align-items: center; margin-top: 20px; color: #fff; font-weight: 800; text-underline-offset: 5px; }
+      .editorial { background: var(--paper); }
+      .editorial-inner { padding-block: 56px 72px; }
+      .section-head { display: flex; align-items: end; gap: 20px; margin-bottom: 26px; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
+      .section-head h2 { margin: 0; font-family: var(--font-serif); font-size: 38px; letter-spacing: -.03em; }
+      .section-head span { margin-left: auto; color: var(--muted-light); }
+      .latest-row { display: grid; grid-template-columns: 160px 1fr 130px; gap: 24px; align-items: center; padding: 22px 0; border-bottom: 1px solid #d8d1e6; }
+      .latest-row .date { color: var(--violet-dark); font-weight: 750; }
+      .latest-row h3 { margin: 0 0 6px; font-size: 24px; letter-spacing: -.02em; }
+      .latest-row p { margin: 0; color: var(--muted-light); line-height: 1.45; }
+      .latest-row .time { text-align: right; color: var(--muted-light); }
+      /* Variant-specific balance */
+      .night-edition .opening { background: radial-gradient(circle at 90% 0, #32144c 0, var(--night) 42%); }
+      .night-edition .editorial { color: white; background: var(--deep); }
+      .night-edition .section-head { border-color: var(--lavender); }
+      .night-edition .latest-row { border-color: var(--rule-dark); }
+      .night-edition .latest-row p, .night-edition .latest-row .time, .night-edition .section-head span { color: var(--muted-dark); }
+      .quiet-violet .masthead { color: var(--ink); background: var(--paper); }
+      .quiet-violet .tile { background: var(--night); }
+      .quiet-violet .utility a { color: var(--ink); }
+      .quiet-violet .topic-surface { border-color: var(--rule-light); background: var(--mist); }
+      .quiet-violet .topic-row a { color: var(--muted-light); }
+      .quiet-violet .topic-row a:first-child { color: var(--violet-dark); }
+      .quiet-violet .opening { color: var(--ink); background: var(--paper); border-bottom: 1px solid var(--rule-light); }
+      .quiet-violet .opening-inner { grid-template-columns: 6fr 6fr; }
+      .quiet-violet .promise .eyebrow { color: var(--violet-dark); }
+      .quiet-violet .promise p { color: var(--muted-light); }
+      .quiet-violet .lead { color: white; }
+      .quiet-violet .menu { color: var(--ink); border-color: #b5a7cf; }
+      .sketch-tools { position: fixed; right: 12px; bottom: 12px; z-index: 30; display: flex; gap: 5px; align-items: center; padding: 8px 10px; border-radius: 8px; color: white; background: rgba(0,0,0,.78); font: 12px system-ui; opacity: .45; transition: opacity .2s; }
+      .sketch-tools:hover { opacity: 1; }
+      .sketch-tools button, .sketch-tools select { min-height: 30px; border: 1px solid #777; border-radius: 5px; color: white; background: #252525; }
+      .toast { position: fixed; left: 50%; bottom: 22px; z-index: 40; translate: -50% 20px; padding: 10px 15px; border-radius: 8px; color: white; background: var(--violet-dark); opacity: 0; pointer-events: none; transition: .2s; }
+      .toast.show { opacity: 1; translate: -50% 0; }
+      .annotate *:hover { outline: 1px dashed var(--magenta); }
+      @media (max-width: 780px) {
+        .variant-nav { align-items: stretch; overflow-x: auto; }
+        .variant-nav strong { display: none; }
+        .variant-tab { white-space: nowrap; }
+        .identity-row { min-height: 68px; }
+        .brand-name { font-size: 18px; }
+        .utility, .topic-surface { display: none; }
+        .menu { display: inline-grid; place-items: center; }
+        .opening-inner, .quiet-violet .opening-inner { grid-template-columns: 1fr; gap: 38px; padding-block: 44px 52px; }
+        .promise h1 { font-size: clamp(2.45rem, 11vw, 3.6rem); }
+        .promise p { font-size: 18px; }
+        .lead-visual { min-height: 210px; }
+        .latest-row { grid-template-columns: 1fr; gap: 7px; }
+        .latest-row .time { text-align: left; }
+        .sketch-tools { max-width: calc(100% - 24px); overflow-x: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="variant-nav" aria-label="Sketch variants">
+      <strong>001 · Publication shell</strong>
+      <button class="variant-tab active" data-target="a">A: Balanced Signal ★</button>
+      <button class="variant-tab" data-target="b">B: Night Edition</button>
+      <button class="variant-tab" data-target="c">C: Quiet Violet</button>
+    </nav>
+    <main id="viewport" class="viewport">
+      <section id="variant-a" class="variant active"></section>
+      <section id="variant-b" class="variant night-edition"></section>
+      <section id="variant-c" class="variant quiet-violet"></section>
+    </main>
+    <div class="sketch-tools" aria-label="Sketch tools">
+      <select aria-label="Theme"><option>default</option></select>
+      <button data-width="375px">Phone</button><button data-width="768px">Tablet</button><button data-width="100%">Desktop</button>
+      <button id="annotations">Inspect</button>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite">Interactive sketch only</div>
+    <template id="shell-template">
+      <div class="gradient-rule"></div>
+      <header class="masthead">
+        <div class="identity-row">
+          <a class="mark" href="#" aria-label="Everyday Tech Insight home"><span class="tile">ETI</span><span class="brand-name">Everyday Tech Insight</span></a>
+          <nav class="utility" aria-label="Primary"><a href="#">Guides</a><a href="#">Toolkit</a><a href="#">About</a></nav>
+          <button class="menu" aria-expanded="false">Menu</button>
+        </div>
+        <div class="mobile-panel"><a href="#">Guides</a><a href="#">Toolkit</a><a href="#">AI &amp; Automation</a><a href="#">Cybersecurity</a><a href="#">About</a></div>
+        <div class="topic-surface"><nav class="topic-row" aria-label="Topics"><a href="#">AI &amp; Automation</a><a href="#">Business Software &amp; SaaS</a><a href="#">Cybersecurity &amp; Data Protection</a><a href="#">Digital Operations</a><a href="#">Technology Strategy</a></nav></div>
+      </header>
+      <section class="opening">
+        <div class="opening-inner">
+          <div class="promise"><p class="eyebrow">Practical business technology</p><h1>Make technology decisions you can explain.</h1><p>Independent, source-backed guides for choosing, securing, and governing the tools your business relies on.</p></div>
+          <article class="lead">
+            <div class="lead-visual" role="img" aria-label="Decision funnel that screens repeatability, exceptions, and risk before selecting an automation candidate"><span class="node one">Recurring work</span><span class="node two">Risk screen</span><span class="node three">Bounded pilot</span></div>
+            <div class="lead-copy"><div class="meta"><span>AI &amp; Automation</span><span>Framework</span><span>9 min</span></div><h2>How to identify business tasks for automation</h2><p>Inventory recurring work, screen repeatability and risk, and select one bounded automation candidate with a human-owned fallback.</p><div class="produce"><strong>What you will produce</strong><span>Ranked automation-candidate shortlist and one-page pilot brief.</span></div><a class="read" href="#">Read guide →</a></div>
+          </article>
+        </div>
+      </section>
+      <section class="editorial"><div class="editorial-inner"><div class="section-head"><h2>Latest Guides</h2><span>Clear methods, not trend claims</span></div>
+        <article class="latest-row"><div class="date">Cybersecurity<br />Aug 21</div><div><h3>How to respond to a suspected phishing message</h3><p>Verify through a known channel and escalate based on what was clicked, disclosed, or paid.</p></div><div class="time">8 min<br />Read →</div></article>
+        <article class="latest-row"><div class="date">Strategy<br />Aug 21</div><div><h3>How to calculate the total cost of business software</h3><p>Compare implementation, labor, operation, change, and exit—not subscription price alone.</p></div><div class="time">11 min<br />Read →</div></article>
+      </div></section>
+    </template>
+    <script>
+      const tpl = document.querySelector('#shell-template');
+      document.querySelectorAll('.variant').forEach((node) => node.append(tpl.content.cloneNode(true)));
+      const toast = document.querySelector('#toast');
+      const showToast = (message) => { toast.textContent = message; toast.classList.add('show'); clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => toast.classList.remove('show'), 1500); };
+      document.querySelectorAll('.variant-tab').forEach((tab) => tab.addEventListener('click', () => {
+        document.querySelectorAll('.variant-tab').forEach((item) => item.classList.remove('active'));
+        document.querySelectorAll('.variant').forEach((item) => item.classList.remove('active'));
+        tab.classList.add('active'); document.querySelector('#variant-' + tab.dataset.target).classList.add('active');
+      }));
+      document.addEventListener('click', (event) => {
+        const menu = event.target.closest('.menu');
+        if (menu) { const panel = menu.closest('.masthead').querySelector('.mobile-panel'); const open = panel.classList.toggle('open'); menu.textContent = open ? 'Close' : 'Menu'; menu.setAttribute('aria-expanded', String(open)); }
+        const link = event.target.closest('a'); if (link) { event.preventDefault(); showToast('Navigation response previewed'); }
+      });
+      document.querySelectorAll('[data-width]').forEach((button) => button.addEventListener('click', () => { document.querySelector('#viewport').style.maxWidth = button.dataset.width; showToast(button.textContent + ' viewport'); }));
+      document.querySelector('#annotations').addEventListener('click', () => { document.body.classList.toggle('annotate'); showToast(document.body.classList.contains('annotate') ? 'Annotation mode on' : 'Annotation mode off'); });
+    </script>
+  </body>
+</html>
