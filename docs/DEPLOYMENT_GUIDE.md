@@ -31,8 +31,13 @@ Use an authenticated current Vercel CLI only after the GitHub push:
 ```text
 npx vercel@latest link --yes --project everyday-tech-insight
 npx vercel@latest git connect https://github.com/danielko7188-hue/everyday-tech-insight
-npx vercel@latest deploy --prod --yes
+$expectedSha = (git rev-parse HEAD).Trim()
+$deploymentUrl = npx vercel@latest deploy --prod --yes --meta "githubCommitSha=$expectedSha"
+npx vercel@latest inspect $deploymentUrl --json | Set-Content -LiteralPath .vercel\deployment-metadata.json -Encoding utf8NoBOM
+npm run check:production -- --origin https://everyday-tech-insight.vercel.app --expected-sha $expectedSha --deployment-metadata .vercel\deployment-metadata.json
 ```
+
+The explicit metadata value is taken from the already-pushed local `HEAD`; the production verifier requires Vercel to report that same full SHA together with `READY`, production target, deployment ID, and canonical alias evidence. A missing or conflicting SHA fails closed. The ignored `.vercel/deployment-metadata.json` file is runtime evidence and is not committed.
 
 CLI syntax can change. Check `npx vercel@latest --help` before a live action. The ignored `.vercel/` folder stores local project linkage and must not be committed.
 

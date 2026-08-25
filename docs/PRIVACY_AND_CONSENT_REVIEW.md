@@ -1,6 +1,6 @@
 # Privacy and Consent Review
 
-**Review date:** 2026-08-22
+**Review date:** 2026-08-25
 
 **Scope:** Source code and locally built release candidate, informed by inspection of the currently live Vercel-hosted baseline
 
@@ -12,6 +12,7 @@
 The site’s own code currently has:
 
 - no advertising or AdSense code;
+- no dormant verification/live advertising mode or unused ad-slot component;
 - no publisher identifier or `ads.txt` record;
 - no analytics provider;
 - no tag manager;
@@ -57,7 +58,8 @@ Before enabling ads, analytics, a tag manager, embeds, a form, comments, a newsl
 - [ ] Recheck current Google AdSense eligibility, program, privacy, consent, and site-ownership requirements.
 - [ ] Decide whether and where ads may appear without undermining reading or navigation.
 - [ ] Configure required consent controls for relevant visitors; do not equate a banner with compliance.
-- [ ] Add only genuine account code and a valid `ads.txt` record when supplied.
+- [ ] Implement only the exact owner-authorized verification or advertising path as a separately reviewed release; do not activate it by adding one flag or identifier.
+- [ ] Add only genuine account code and a valid `ads.txt` record when supplied and required by that reviewed implementation.
 - [ ] Update the Advertising disclosure and Privacy page to match the exact active code and providers.
 - [ ] Verify production behavior before requesting review.
 
