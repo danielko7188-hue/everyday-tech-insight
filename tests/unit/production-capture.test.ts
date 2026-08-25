@@ -179,6 +179,41 @@ describe("production screenshot capture contract", () => {
     expect(runtimePlan).toHaveLength(97);
   });
 
+  it("omits nullable representative routes instead of generating /null captures", () => {
+    const representativeArticlePaths = {
+      backup: null,
+      operationsArchitecture: null,
+      primary: null,
+      saasEvaluation: null,
+      securityWorkflow: null,
+      strategyCost: null,
+      table: null,
+    };
+    const beforePlan = buildCapturePlan({
+      origin: "https://publication.example",
+      phase: "before",
+      representativeArticlePaths,
+    });
+    const afterPlan = buildCapturePlan({
+      origin: "https://publication.example",
+      phase: "after-production",
+      representativeArticlePaths,
+    });
+
+    expect(beforePlan).toHaveLength(35);
+    expect(afterPlan).toHaveLength(72);
+    expect(
+      [...beforePlan, ...afterPlan].filter(({ alias }) =>
+        alias.startsWith("article-"),
+      ),
+    ).toEqual([]);
+    expect(
+      [...beforePlan, ...afterPlan].some(
+        ({ url }) => new URL(url).pathname === "/null",
+      ),
+    ).toBe(false);
+  });
+
   it.each(["before", "after-production", "runtime-verification"] as const)(
     "accepts only an explicit canonical HTTPS origin for %s",
     (phase) => {

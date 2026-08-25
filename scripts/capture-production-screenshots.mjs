@@ -27,11 +27,15 @@ export const BEFORE_CAPTURE_ROUTES = Object.freeze([
     path: "/categories/cybersecurity-data-protection/",
     status: 200,
   }),
-  Object.freeze({
-    alias: "article-ai-automation",
-    path: REPRESENTATIVE_ARTICLE_PATHS.primary,
-    status: 200,
-  }),
+  ...(REPRESENTATIVE_ARTICLE_PATHS.primary
+    ? [
+        Object.freeze({
+          alias: "article-ai-automation",
+          path: REPRESENTATIVE_ARTICLE_PATHS.primary,
+          status: 200,
+        }),
+      ]
+    : []),
   Object.freeze({ alias: "toolkit", path: "/toolkit/", status: 200 }),
   Object.freeze({ alias: "about", path: "/about/", status: 200 }),
   Object.freeze({
@@ -54,31 +58,51 @@ export const AFTER_CAPTURE_ROUTES = Object.freeze([
     path: "/categories/cybersecurity-data-protection/",
     status: 200,
   }),
-  Object.freeze({
-    alias: "article-ai-automation",
-    path: REPRESENTATIVE_ARTICLE_PATHS.primary,
-    status: 200,
-  }),
-  Object.freeze({
-    alias: "article-saas-evaluation",
-    path: REPRESENTATIVE_ARTICLE_PATHS.saasEvaluation,
-    status: 200,
-  }),
-  Object.freeze({
-    alias: "article-phishing-response",
-    path: REPRESENTATIVE_ARTICLE_PATHS.securityWorkflow,
-    status: 200,
-  }),
-  Object.freeze({
-    alias: "article-shared-files",
-    path: REPRESENTATIVE_ARTICLE_PATHS.operationsArchitecture,
-    status: 200,
-  }),
-  Object.freeze({
-    alias: "article-software-tco",
-    path: REPRESENTATIVE_ARTICLE_PATHS.strategyCost,
-    status: 200,
-  }),
+  ...(REPRESENTATIVE_ARTICLE_PATHS.primary
+    ? [
+        Object.freeze({
+          alias: "article-ai-automation",
+          path: REPRESENTATIVE_ARTICLE_PATHS.primary,
+          status: 200,
+        }),
+      ]
+    : []),
+  ...(REPRESENTATIVE_ARTICLE_PATHS.saasEvaluation
+    ? [
+        Object.freeze({
+          alias: "article-saas-evaluation",
+          path: REPRESENTATIVE_ARTICLE_PATHS.saasEvaluation,
+          status: 200,
+        }),
+      ]
+    : []),
+  ...(REPRESENTATIVE_ARTICLE_PATHS.securityWorkflow
+    ? [
+        Object.freeze({
+          alias: "article-phishing-response",
+          path: REPRESENTATIVE_ARTICLE_PATHS.securityWorkflow,
+          status: 200,
+        }),
+      ]
+    : []),
+  ...(REPRESENTATIVE_ARTICLE_PATHS.operationsArchitecture
+    ? [
+        Object.freeze({
+          alias: "article-shared-files",
+          path: REPRESENTATIVE_ARTICLE_PATHS.operationsArchitecture,
+          status: 200,
+        }),
+      ]
+    : []),
+  ...(REPRESENTATIVE_ARTICLE_PATHS.strategyCost
+    ? [
+        Object.freeze({
+          alias: "article-software-tco",
+          path: REPRESENTATIVE_ARTICLE_PATHS.strategyCost,
+          status: 200,
+        }),
+      ]
+    : []),
   Object.freeze({ alias: "toolkit", path: "/toolkit/", status: 200 }),
   Object.freeze({
     alias: "toolkit-risk-register",
@@ -554,19 +578,41 @@ function plannedCapture(route, width, state, origin) {
   });
 }
 
+const representativeCaptureRouteSlots = Object.freeze({
+  "article-ai-automation": "primary",
+  "article-phishing-response": "securityWorkflow",
+  "article-saas-evaluation": "saasEvaluation",
+  "article-shared-files": "operationsArchitecture",
+  "article-software-tco": "strategyCost",
+});
+
+function captureRoutesForRepresentativePaths(routes, representativePaths) {
+  return routes.flatMap((route) => {
+    const slot = representativeCaptureRouteSlots[route.alias];
+    if (!slot) return [route];
+    const representativePath = representativePaths[slot];
+    return representativePath
+      ? [Object.freeze({ ...route, path: representativePath })]
+      : [];
+  });
+}
+
 export function buildCapturePlan({
   origin: originCandidate,
   phase: phaseCandidate,
+  representativeArticlePaths = REPRESENTATIVE_ARTICLE_PATHS,
 }) {
   const phase = assertCapturePhase(phaseCandidate);
   const origin = normalizeCaptureOrigin(originCandidate, phase);
-  const routes =
-    phase === "before" ? BEFORE_CAPTURE_ROUTES : AFTER_CAPTURE_ROUTES;
+  const routes = captureRoutesForRepresentativePaths(
+    phase === "before" ? BEFORE_CAPTURE_ROUTES : AFTER_CAPTURE_ROUTES,
+    representativeArticlePaths,
+  );
   const plan = CAPTURE_WIDTHS.flatMap((width) =>
     routes.map((route) => plannedCapture(route, width, "full-page", origin)),
   );
   if (phase !== "before") {
-    const home = AFTER_CAPTURE_ROUTES[0];
+    const home = routes.find(({ alias }) => alias === "home");
     plan.push(
       ...[390, 768].map((width) =>
         plannedCapture(home, width, "menu-open", origin),

@@ -108,11 +108,13 @@ function publishedSlugsFromRecords(records) {
 }
 
 function createCmsLifecycleFixturesFromRecords(records) {
-  const published = records.find(
-    (record) => record.data.status === "published",
-  );
-  if (!published) {
-    throw new Error("A published article is required to derive CMS fixtures.");
+  const template =
+    records.find((record) => record.data.status === "published") ??
+    records.find((record) => record.data.status === "archived");
+  if (!template) {
+    throw new Error(
+      "A published or archived article is required to derive CMS fixtures.",
+    );
   }
 
   const [draftSlug, reviewSlug, archivedSlug] = CMS_FIXTURE_SLUGS;
@@ -123,8 +125,10 @@ function createCmsLifecycleFixturesFromRecords(records) {
     title: draftTitle,
     slug: draftSlug,
   });
+  const reviewTemplateData = { ...template.data };
+  delete reviewTemplateData.dateArchived;
   const reviewData = {
-    ...published.data,
+    ...reviewTemplateData,
     title: reviewTitle,
     slug: reviewSlug,
     status: "review",
@@ -133,12 +137,13 @@ function createCmsLifecycleFixturesFromRecords(records) {
     noindex: true,
   };
   const precedingDates = [
-    published.data.datePublished,
-    published.data.dateModified,
-    published.data.lastReviewed,
+    template.data.datePublished,
+    template.data.dateModified,
+    template.data.lastReviewed,
+    template.data.dateArchived,
   ].filter((value) => typeof value === "string");
   const archivedData = {
-    ...published.data,
+    ...template.data,
     title: archivedTitle,
     slug: archivedSlug,
     status: "archived",
@@ -160,14 +165,14 @@ function createCmsLifecycleFixturesFromRecords(records) {
       slug: reviewSlug,
       title: reviewTitle,
       status: "review",
-      source: serializeArticle(reviewData, published.body),
+      source: serializeArticle(reviewData, template.body),
     },
     {
       fileName: `${archivedSlug}.md`,
       slug: archivedSlug,
       title: archivedTitle,
       status: "archived",
-      source: serializeArticle(archivedData, published.body),
+      source: serializeArticle(archivedData, template.body),
     },
   ];
 }

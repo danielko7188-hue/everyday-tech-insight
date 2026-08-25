@@ -35,10 +35,14 @@ export const LIGHTHOUSE_PAGES = Object.freeze([
     name: "cybersecurity-category",
     path: "/categories/cybersecurity-data-protection/",
   }),
-  Object.freeze({
-    name: "automation-candidates-article",
-    path: REPRESENTATIVE_ARTICLE_PATHS.primary,
-  }),
+  ...(REPRESENTATIVE_ARTICLE_PATHS.primary
+    ? [
+        Object.freeze({
+          name: "automation-candidates-article",
+          path: REPRESENTATIVE_ARTICLE_PATHS.primary,
+        }),
+      ]
+    : []),
   Object.freeze({ name: "toolkit", path: "/toolkit/" }),
 ]);
 
@@ -69,8 +73,15 @@ export const LIGHTHOUSE_DEVICES = Object.freeze([
   }),
 ]);
 
-export function buildLighthouseAuditPlan() {
-  return LIGHTHOUSE_PAGES.flatMap((page) =>
+export function buildLighthouseAuditPlan({
+  representativeArticlePaths = REPRESENTATIVE_ARTICLE_PATHS,
+} = {}) {
+  const pages = representativeArticlePaths.primary
+    ? LIGHTHOUSE_PAGES
+    : LIGHTHOUSE_PAGES.filter(
+        ({ name }) => name !== "automation-candidates-article",
+      );
+  return pages.flatMap((page) =>
     LIGHTHOUSE_DEVICES.map((device) => ({ device, page })),
   );
 }
@@ -170,7 +181,10 @@ export function aggregateLighthouseScores(runScores) {
   return { scores, representativeRunIndex };
 }
 
-export function createLighthouseSummary(pages) {
+export function createLighthouseSummary(
+  pages,
+  { auditPlan = buildLighthouseAuditPlan() } = {},
+) {
   const usesDeviceMatrix = pages.some(({ device }) => device !== undefined);
   if (!usesDeviceMatrix) {
     return {
@@ -184,7 +198,7 @@ export function createLighthouseSummary(pages) {
     };
   }
 
-  const expectedAuditKeys = buildLighthouseAuditPlan().map(
+  const expectedAuditKeys = auditPlan.map(
     ({ device, page }) => `${page.name}:${device.name}`,
   );
   const actualAuditKeys = pages.map(({ device, name }) => `${name}:${device}`);

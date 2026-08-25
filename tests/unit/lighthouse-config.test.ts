@@ -56,6 +56,33 @@ describe("Lighthouse production QA matrix", () => {
     ]);
   });
 
+  it("omits article audits when no current published representative exists", () => {
+    const auditPlan = buildLighthouseAuditPlan({
+      representativeArticlePaths: {
+        backup: null,
+        operationsArchitecture: null,
+        primary: null,
+        saasEvaluation: null,
+        securityWorkflow: null,
+        strategyCost: null,
+        table: null,
+      },
+    });
+
+    expect(auditPlan).toHaveLength(6);
+    expect(
+      auditPlan.map(({ device, page }) => `${page.name}:${device.name}`),
+    ).toEqual([
+      "home:mobile",
+      "home:desktop",
+      "cybersecurity-category:mobile",
+      "cybersecurity-category:desktop",
+      "toolkit:mobile",
+      "toolkit:desktop",
+    ]);
+    expect(auditPlan.every(({ page }) => page.path !== null)).toBe(true);
+  });
+
   it("uses the release thresholds and distinct Lighthouse emulation settings", () => {
     expect(LIGHTHOUSE_THRESHOLDS).toEqual({
       performance: 0.9,
@@ -130,6 +157,28 @@ describe("Lighthouse production QA matrix", () => {
       deviceTypes: ["mobile", "desktop"],
       missingAudits: [],
       runsPerPageDevice: 3,
+    });
+  });
+
+  it("judges completeness against the valid article-less audit plan", () => {
+    const auditPlan = buildLighthouseAuditPlan().filter(
+      ({ page }) => page.name !== "automation-candidates-article",
+    );
+    const results = auditPlan.map(({ device, page }) => ({
+      device: device.name,
+      failures: [],
+      name: page.name,
+      path: page.path,
+      representativeRun: 1,
+      runScores: [passingScores, passingScores, passingScores],
+      scores: passingScores,
+    }));
+
+    expect(createLighthouseSummary(results, { auditPlan })).toMatchObject({
+      status: "PASS",
+      auditCount: 6,
+      missingAudits: [],
+      unexpectedAudits: [],
     });
   });
 

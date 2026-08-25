@@ -10,6 +10,7 @@ import {
   createCmsLifecycleFixtures,
   reemitCmsFixtureSignal,
   resolveNpmBuildInvocation,
+  runCmsLifecycleFixture,
   validateCmsBuildOutput,
   withTemporaryArticleFixtures,
 } from "../../scripts/check-cms-fixture.mjs";
@@ -150,6 +151,104 @@ describe("CMS lifecycle build fixture", () => {
         ),
     );
     expect(validateContentPortfolio([...existing, ...records])).toEqual([]);
+  });
+
+  it("passes an all-archived lifecycle build with zero public article routes", async () => {
+    const projectRoot = temporaryRoot("eti-cms-zero-published-");
+    const articlesDirectory = path.join(
+      projectRoot,
+      "src",
+      "content",
+      "articles",
+    );
+    await mkdir(articlesDirectory, { recursive: true });
+
+    const seedFixtures = await createCmsLifecycleFixtures({
+      articlesDirectory: path.join(
+        repositoryRoot,
+        "src",
+        "content",
+        "articles",
+      ),
+    });
+    const seedArchived = seedFixtures.find(
+      ({ status }) => status === "archived",
+    );
+    if (!seedArchived?.slug || !seedArchived.title) {
+      throw new Error("Expected a complete archived seed fixture.");
+    }
+    const withdrawnSlug = "withdrawn-guide";
+    const withdrawnTitle = "Withdrawn guide";
+    await writeFile(
+      path.join(articlesDirectory, `${withdrawnSlug}.md`),
+      seedArchived.source
+        .replaceAll(seedArchived.slug, withdrawnSlug)
+        .replace(seedArchived.title, withdrawnTitle),
+      "utf8",
+    );
+
+    const result = await runCmsLifecycleFixture({
+      projectRoot,
+      runBuild: async () => {
+        const fixtureFiles = (await readdir(articlesDirectory)).filter((name) =>
+          name.startsWith("cms-fixture-"),
+        );
+        expect(fixtureFiles).toHaveLength(3);
+        for (const fileName of fixtureFiles) {
+          const record = parseArticleMarkdown(
+            await readFile(path.join(articlesDirectory, fileName), "utf8"),
+            fileName,
+          );
+          expect(articleFrontmatterSchema.safeParse(record.data).success).toBe(
+            true,
+          );
+        }
+
+        const distDirectory = path.join(projectRoot, "dist");
+        await mkdir(path.join(distDirectory, "articles"), { recursive: true });
+        await mkdir(path.join(projectRoot, "public", "social"), {
+          recursive: true,
+        });
+        for (const categorySlug of [
+          "ai-automation",
+          "business-software",
+          "cybersecurity-data-protection",
+          "digital-operations",
+          "technology-strategy",
+        ]) {
+          await mkdir(path.join(distDirectory, "categories", categorySlug), {
+            recursive: true,
+          });
+          await writeFile(
+            path.join(distDirectory, "categories", categorySlug, "index.html"),
+            "Empty category",
+            "utf8",
+          );
+        }
+        for (const [relativePath, contents] of [
+          ["index.html", "No current guides"],
+          ["articles/index.html", "No current guides"],
+          ["publisher/index.html", "No published work"],
+          ["sitemap/index.html", "No article routes"],
+          ["sitemap-0.xml", "<urlset></urlset>"],
+          ["rss.xml", "<rss></rss>"],
+        ] as const) {
+          const target = path.join(distDirectory, relativePath);
+          await mkdir(path.dirname(target), { recursive: true });
+          await writeFile(target, contents, "utf8");
+        }
+      },
+    });
+
+    expect(result).toEqual({
+      checkedFixtures: 3,
+      publicArticleRoutes: 0,
+      publicArticleSocialImages: 0,
+    });
+    expect(await readdir(path.join(projectRoot, "dist", "articles"))).toEqual([
+      "index.html",
+    ]);
+    expect(await readdir(articlesDirectory)).toEqual([`${withdrawnSlug}.md`]);
   });
 
   it("writes all fixtures for the operation and cleans them after an injected failure", async () => {
