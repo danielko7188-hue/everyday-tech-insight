@@ -1,14 +1,14 @@
 # Owner Inputs Required
 
-This is an internal, nonpublic record. It identifies owner-controlled evidence that the repository cannot create or verify for itself. Missing values must not be copied into public placeholders, inferred from a username, or marked complete because a software check passed.
+This is repository-tracked, non-deployed source in a public GitHub repository. Every committed file and branch is publicly visible. Commit only the nonsecret status and reference fields defined here. Confidential identity, account, legal, authorization, and rights evidence must remain outside Git in an owner-approved system.
 
-The two permitted status values are `OWNER ACTION REQUIRED` and `UNKNOWN`. Neither value is an error in the ads-off static build. A public claim that depends on an unresolved gate must remain absent.
+Unresolved gates use `OWNER ACTION REQUIRED` or `UNKNOWN`; neither is an error in the ads-off static build. A `VERIFIED` transition is valid only with a nonsecret evidence reference, the real verifier, and the real verification date. A public claim that depends on an unresolved gate must remain absent.
 
 ## Gate 01: Legal owner or publisher identity
 
 - `status`: UNKNOWN
 - `reason`: The repository does not contain owner-approved evidence naming a legal owner, publisher, or operating entity.
-- `accepted evidence`: A private owner instruction supported by an appropriate identity or entity record, with an explicit decision about what may be disclosed publicly.
+- `accepted evidence`: A nonsecret evidence reference to confidential owner material held outside Git, supported by an appropriate identity or entity record and an explicit public-disclosure decision.
 - `public effect`: No legal-person, company, publisher-entity, copyright-owner, Person, or Organization claim may be added.
 - `next action`: The owner must supply and approve the exact identity evidence before any dependent public wording or structured data is changed.
 

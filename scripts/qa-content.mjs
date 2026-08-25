@@ -287,11 +287,15 @@ function containsRawMarkdownHtml(markdown) {
   return containsRawHtml;
 }
 
-function visibleMarkdownProse(markdown) {
+export function visibleMarkdownProse(markdown) {
   const tree = fromMarkdown(markdown);
   const visibleText = [];
   collectVisibleMarkdownText(tree, visibleText);
   return visibleText.join(" ");
+}
+
+export function countReaderVisibleWords(markdown) {
+  return wordCount(visibleMarkdownProse(markdown));
 }
 
 function validatePublishedExplanations(publishedArticles) {
@@ -1044,7 +1048,7 @@ function validateArticle(
   }
 
   if (requiresPublicationMetadata) {
-    if (wordCount(body) < 650) {
+    if (countReaderVisibleWords(body) < 650) {
       issues.push(
         finding(
           "body-word-count",

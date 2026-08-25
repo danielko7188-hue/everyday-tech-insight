@@ -185,17 +185,18 @@ npm run setup:browsers
 npm run format:check
 npm run lint
 npm run typecheck
-npm test -- --run
-npm run check:cms
-npm run check:cms-fixture
-npm run check:images
+npm run test -- --run
 npm run build
 npm run check:content
+npm run check:editorial
+npm run check:cms
+npm run check:images
+npm run check:cms-fixture
 npm run check:seo
 npm run check:links
 npm run test:e2e
-npm run test:visual
 npm run lighthouse
+npm run test:visual
 ```
 
 - [ ] **Step 2: Request independent code and visual review**
@@ -209,8 +210,13 @@ Expected: PASS with measured output recorded. Then run `git status --short`; onl
 
 - [ ] **Step 4: Commit final fixes/results**
 
+Inspect `git status --short`, `git diff --name-status`, and `git diff --cached --name-status`. Stage each reviewed intended literal path individually, using the path inventory from the finding that authorized the change. Never use `git add -A`, a workspace-wide path, or a glob in a dirty or public-repository worktree. Reinspect the staged name/status and full staged diff; if no intended fixes remain, do not create an empty release commit.
+
 ```text
-git add -A
+git status --short
+git diff --name-status
+git diff --cached --name-status
+git diff --cached --check
 git commit -m "chore(release): prepare Purple Signal production candidate"
 ```
 

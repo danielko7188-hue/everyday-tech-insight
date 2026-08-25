@@ -247,7 +247,7 @@ Pages CMS -> GitHub Markdown/media -> Astro validation/build -> Vercel preview/p
 - Rich-text Markdown body.
 - Repeatable collapsible sources.
 - Slug-storing related-guide references.
-- Flat private source media in `src/content-assets/articles/` with slug-prefixed filenames; the validated build publishes referenced files to `/images/articles/` URLs only.
+- Flat repository-tracked, non-deployed source media in `src/content-assets/articles/` with slug-prefixed filenames; every committed file and branch is publicly visible, and the validated build publishes referenced files to `/images/articles/` URLs only.
 - `delete: false` and `rename: false`.
 - `settings.content.merge: true` and app commit identity.
 - Empty date defaults so a CMS action does not manufacture publication or review dates.
@@ -262,7 +262,7 @@ No public CMS link, script, route, token, credential, or configuration is render
 
 ## 10. Media architecture
 
-CMS-managed raster source media is stored privately in:
+CMS-managed raster media is stored as repository-tracked, non-deployed source in:
 
 ```text
 src/content-assets/articles/
@@ -318,7 +318,11 @@ interface VerifiedAuthorRecord {
 
 `authors.ts` initially exports an empty, typed registry. A future `authorId` may be accepted only when it resolves to that registry and the matching public author page exists. Until both are true, frontmatter remains the literal publication byline. `Person` structured data is emitted only from an owner-verified record and only for fields visible on the author page. No `Organization` structured data is emitted until a legal organization identity is owner-provided and publicly disclosed.
 
-`docs/OWNER_INPUTS_REQUIRED.md` contains 18 numbered gates with status, reason, accepted evidence, public effect, and next action:
+`docs/editorial-operations.yml` is the strict structured source for `docs/OWNER_INPUTS_REQUIRED.md` and `docs/CONTENT_QUALITY_REVIEW_QUEUE.md`; deterministic generation makes both finished Markdown documents byte-checkable and rejects duplicate keys, unknown fields, unparsed text, missing fields, and invalid types or transitions.
+
+The public-safety scan runs before either generated Markdown document is written. Its finite checks are a repository safeguard, not proof that a file is free of every possible confidential value; human review and the outside-Git evidence boundary remain required.
+
+`docs/OWNER_INPUTS_REQUIRED.md` contains 18 numbered gates with status, reason, accepted evidence, public effect, and next action. Current gates remain `UNKNOWN` or `OWNER ACTION REQUIRED`; a future `VERIFIED` transition additionally requires a nonsecret evidence reference, `verifiedBy`, and `verifiedAt`, while confidential evidence stays outside Git:
 
 1. legal owner or publisher identity;
 2. approved public publisher wording;
@@ -341,11 +345,13 @@ interface VerifiedAuthorRecord {
 
 ## 12. Content-quality control
 
-`docs/CONTENT_QUALITY_REVIEW_QUEUE.md` records the 15 guides’ purpose, reader, promise, deliverable, primary sources, original method/visual/worksheet contribution, unsupported claims, repetition, evidence limits, recommendation, owner action, and expert-review need.
+`docs/CONTENT_QUALITY_REVIEW_QUEUE.md` records the launch 15 as a required subset plus every currently published guide; the minimum remains at least 15, and a valid sixteenth or later published guide requires a corresponding record rather than a hardcoded-count change. It records purpose, reader, promise, deliverable, sources, original method/visual/worksheet contribution, unsupported claims, repetition, evidence limits, recommendation, owner action, and expert-review need.
 
 Each row has these exact fields: `slug`, `title`, `category`, `publicationStatus`, `wordCount`, `reader`, `businessNeed`, `guidePromise`, `deliverable`, `whenToUse`, `sourceUrls`, `sourceSuitability`, `sourceLastChecked`, `originalMethod`, `originalVisual`, `toolkitContribution`, `claimRisks`, `repetitionRisks`, `evidenceLimits`, `mediaRights`, `automationReview`, `humanEditorialReview`, `expertReviewNeeded`, `recommendation`, `ownerAction`, `reviewedBy`, `reviewedAt`, and `releaseGate`.
 
-`automationReview` can prove only repository-observable checks. `humanEditorialReview` starts as `OWNER REVIEW REQUIRED`; it is never auto-completed. `sourceSuitability` records a reasoned editorial classification but does not turn an external page into a primary source by assertion. `reviewedBy` and `reviewedAt` stay empty until a real reviewer supplies them.
+`automationReview` can prove only repository-observable checks. `wordCount` counts reader-visible prose through the iterative Markdown AST, excluding markup-only URLs, code, images, and raw HTML. `sourceLastChecked` starts unknown but may become a real nonfuture `YYYY-MM-DD` date. `humanEditorialReview` starts as `OWNER REVIEW REQUIRED`; it may become `COMPLETE` only with real `reviewedBy` and `reviewedAt` values and is never auto-completed. `sourceSuitability` records a reasoned editorial classification but does not turn an external page into a primary source by assertion.
+
+Every `releaseGate` stores one allowed status together with a guide-specific rationale and nonsecret evidence reference; missing rationale or evidence, an unknown enum, or a contradiction between `clear` and unresolved review/source/rights state is invalid. A `clear` state is rejected until expert review need is resolved. With the current exact field set, `clear` is allowed only when `expertReviewNeeded` begins `NO`; `YES` and `CONDITIONAL` remain blocked because free-text completion wording cannot prove an expert review. A clear record also requires `mediaRights` to begin `CLEARED —` and the release gate to carry a concrete, nonnegative evidence reference; prose containing words such as “complete” cannot substitute for those state contracts.
 
 Release-gate values are:
 

@@ -4,7 +4,7 @@
 
 **Goal:** Add an external Pages CMS editing layer and a lifecycle-safe Git/Markdown publishing workflow that lets incomplete drafts exist without leaking into the public publication or breaking Astro.
 
-**Architecture:** Pages CMS edits `src/content/articles/*.md` and flat, slug-prefixed private source media under `src/content-assets/articles/`. Astro remains static and validates every matched file with a status-aware Zod schema; repository QA enforces rules the CMS cannot express and projects only referenced media to published `/images/articles/` URLs. Public consumers continue to select only `published` entries.
+**Architecture:** Pages CMS edits `src/content/articles/*.md` and flat, slug-prefixed repository-tracked, non-deployed source media under `src/content-assets/articles/`. Every committed file and branch is publicly visible, so confidential evidence remains outside Git. Astro remains static and validates every matched file with a status-aware Zod schema; repository QA enforces rules the CMS cannot express and projects only referenced media to published `/images/articles/` URLs. Public consumers continue to select only `published` entries.
 
 **Tech Stack:** Astro 7, TypeScript 6, Zod 4, Pages CMS YAML, Vitest, Node.js ESM, Sharp, Markdown/YAML frontmatter.
 
@@ -22,7 +22,7 @@
 - `src/content/article-template.md.example`: human-readable draft example.
 - `src/data/authors.ts`: dormant verified-author data shape; renders no unapproved person.
 - `docs/PUBLISHING_GUIDE.md`: nondeveloper operating guide and external owner steps.
-- `docs/OWNER_INPUTS_REQUIRED.md`: private/owner-dependent facts that must not become placeholders.
+- `docs/OWNER_INPUTS_REQUIRED.md`: repository-tracked nonsecret status/reference fields for owner-dependent facts; confidential evidence stays outside Git and must not become a placeholder.
 - `docs/CONTENT_QUALITY_REVIEW_QUEUE.md`: evidence-bounded review of all 15 launch guides.
 - `tests/unit/content-contract.test.ts`: lifecycle and field-level behavior.
 - `tests/unit/content-portfolio.test.ts`: published portfolio and cross-entry contracts.
@@ -342,14 +342,18 @@ git commit -m "feat(content): generate safe article drafts"
 
 - Create: `src/data/authors.ts`
 - Create: `tests/unit/authors.test.ts`
+- Create: `docs/editorial-operations.yml`
 - Create: `docs/OWNER_INPUTS_REQUIRED.md`
 - Create: `docs/CONTENT_QUALITY_REVIEW_QUEUE.md`
+- Create: `scripts/qa-editorial.mjs`
+- Modify: `scripts/qa-content.mjs`
+- Create: `tests/unit/editorial-operations.test.ts`
 
 - [ ] **Step 1: Write the author-boundary test**
 
-Assert the module exports the exact `VerifiedAuthor` contract, a typed empty approved-author list, a resolver that returns `undefined` for every current ID, and the publication byline separately, with no Person/Organization claims or placeholder values. Add invalid-record tests for nonperson kind, unsafe profile/photo paths, missing photo rights fields, non-HTTPS credential evidence, invalid same-as URLs, and a non-date owner verification value.
+Assert the module exports the exact `VerifiedAuthorRecord` contract, a frozen empty null-prototype registry, a resolver that returns `undefined` for every current ID, and the publication byline separately, with no Person/Organization claims. Add adversarial invalid-record tests for a nonperson kind; publication-name identity; unsafe profile/photo paths; incomplete photo-rights fields; placeholder, control, email, credential-like, or token-like public text; non-HTTPS, reserved-host, secret-query, or noncanonical duplicate URLs; inherited, accessor, proxy-like, extra-key, or sparse data; duplicates; impossible dates; and any owner-verification date later than the actual UTC date.
 
-- [ ] **Step 2: Implement the dormant type**
+- [ ] **Step 2: Implement the strict dormant validator and empty registry**
 
 ```ts
 export interface VerifiedAuthorRecord {
@@ -373,27 +377,40 @@ export interface VerifiedAuthorRecord {
   ownerVerifiedAt: string;
 }
 
-export const verifiedAuthors: Readonly<Record<string, VerifiedAuthorRecord>> =
-  {};
+export function validateVerifiedAuthorRecord(
+  input: unknown,
+): VerifiedAuthorRecord;
+
+export function createVerifiedAuthorRegistry(
+  inputs: readonly unknown[],
+): Readonly<Record<string, VerifiedAuthorRecord>>;
+
+export const verifiedAuthors = createVerifiedAuthorRegistry([]);
 
 export function getVerifiedAuthor(id: string): VerifiedAuthorRecord | undefined;
 ```
 
-- [ ] **Step 3: Record exact owner inputs**
+Accept only exact own-data plain records and arrays. Reserve the normalized publication byline, reject placeholder/control/sensitive public text across every string, validate public nonreserved HTTPS values and canonical duplicates, freeze every returned object, and compare `ownerVerifiedAt` with the actual UTC clock without a caller-controlled future-date override.
 
-Create the 18-item owner-input inventory from the design spec. State that it is not public content and that no missing value should be committed as a public placeholder.
+- [ ] **Step 3: Create and validate the structured editorial source**
+
+Create `docs/editorial-operations.yml` as the only editable source for the owner-input inventory and content-quality queue. Add a strict duplicate-safe parser and validator in `scripts/qa-editorial.mjs`; reject missing, duplicate, unexpected, unparsed, wrongly typed, contradictory, future-dated, placeholder, or secret-like values. Derive reader-visible word counts through the iterative Markdown AST in `scripts/qa-content.mjs`. Run the public-repository safety scan before `npm run generate:editorial` writes either Markdown document.
+
+Record the exact 18-item owner-input inventory from the design spec. State that it is repository-tracked, non-deployed source in a public repository, every committed file and branch is publicly visible, confidential evidence stays outside Git, and no missing value should be committed as a public placeholder. Permit a future `VERIFIED` transition only with its nonsecret evidence reference, real verifier, and real date.
 
 - [ ] **Step 4: Complete the 15-row content-quality queue**
 
 For every launch guide, record every exact design-spec field: slug, title, category, publication status, word count, reader, business need, promise, deliverable, when-to-use, source URLs/suitability/last-checked state, original method/visual/Toolkit contribution, claim and repetition risks, evidence limits, media rights, automation review, human editorial review, expert-review need, recommendation, owner action, reviewer/date, and release gate. Give an evidence-bounded keep/revise/archive recommendation without inventing human, rights, firsthand, product-testing, or expert-review completion.
 
+Generate `docs/OWNER_INPUTS_REQUIRED.md` and `docs/CONTENT_QUALITY_REVIEW_QUEUE.md` deterministically with `npm run generate:editorial`; `npm run check:editorial` must byte-check them and validate every current published guide while retaining the launch 15 as the minimum required subset.
+
 - [ ] **Step 5: Verify and commit**
 
-Run: `npm test -- --run tests/unit/authors.test.ts && npm run format:check`  
+Run: `npm test -- --run tests/unit/authors.test.ts tests/unit/editorial-operations.test.ts && npm run generate:editorial && npm run check:editorial && npm run format:check`
 Expected: PASS.
 
 ```text
-git add src/data/authors.ts tests/unit/authors.test.ts docs/OWNER_INPUTS_REQUIRED.md docs/CONTENT_QUALITY_REVIEW_QUEUE.md
+git add src/data/authors.ts tests/unit/authors.test.ts docs/editorial-operations.yml scripts/qa-content.mjs scripts/qa-editorial.mjs tests/unit/editorial-operations.test.ts docs/OWNER_INPUTS_REQUIRED.md docs/CONTENT_QUALITY_REVIEW_QUEUE.md
 git commit -m "docs(editorial): record identity and review gates"
 ```
 
@@ -405,10 +422,14 @@ git commit -m "docs(editorial): record identity and review gates"
 - Modify: `README.md`
 - Modify: `package.json`
 - Modify: `tests/unit/qa-rules.test.ts`
+- Modify: `tests/unit/editorial-operations.test.ts`
+- Modify: `docs/CMS_BRAND_ADSENSE_SOURCE_LOG.md`
+- Modify: `docs/superpowers/specs/2026-08-25-cms-purple-signal-publication-maturity-design.md`
+- Modify: `docs/superpowers/plans/2026-08-25-publication-maturity-release.md`
 
 - [ ] **Step 1: Write documentation-contract tests**
 
-Require the guide to cover sign-in, repository selection, create, draft, review, publish, archive, permanent deletion, hero and body images, alt/caption/credit, sources, related guides, truthful dates, Vercel previews, GitHub commits, rollback, and local validation. Require an explicit statement that GitHub App installation and hosted CMS validation are owner actions.
+Require the guide to cover sign-in, repository selection, create, draft, review, publish, archive, permanent deletion, hero and body images, alt/caption/credit, sources, related guides, truthful dates, Vercel previews, GitHub commits, rollback, sensitive-data incident response, and local validation. Require an explicit statement that GitHub App installation and hosted CMS validation are owner actions. Assert the exact once-only ordered `qa` command list, including `check:editorial` after `check:content`, without filtering away extra commands.
 
 - [ ] **Step 2: Confirm failure**
 
@@ -421,19 +442,19 @@ Describe Pages CMS status as `configured and locally tested`, not externally aut
 
 - [ ] **Step 4: Integrate focused checks into `qa`**
 
-Place `check:cms` and `check:images` after the production build/content check and before E2E:
+Place `check:editorial`, `check:cms`, and `check:images` after the production build/content check and before SEO and E2E:
 
 ```json
-"qa": "npm run format:check && npm run lint && npm run typecheck && npm run test -- --run && npm run build && npm run check:content && npm run check:cms && npm run check:images && npm run check:cms-fixture && npm run check:seo && npm run check:links && npm run test:e2e && npm run lighthouse"
+"qa": "npm run format:check && npm run lint && npm run typecheck && npm run test -- --run && npm run build && npm run check:content && npm run check:editorial && npm run check:cms && npm run check:images && npm run check:cms-fixture && npm run check:seo && npm run check:links && npm run test:e2e && npm run lighthouse"
 ```
 
 - [ ] **Step 5: Verify and commit**
 
-Run: `npm run format:check && npm test -- --run tests/unit/qa-rules.test.ts && npm run check:cms && npm run check:images`  
+Run: `npm run format:check && npm test -- --run tests/unit/qa-rules.test.ts tests/unit/editorial-operations.test.ts && npm run check:editorial && npm run check:cms && npm run check:images`
 Expected: PASS.
 
 ```text
-git add docs/PUBLISHING_GUIDE.md README.md package.json tests/unit/qa-rules.test.ts
+git add docs/PUBLISHING_GUIDE.md README.md package.json tests/unit/qa-rules.test.ts tests/unit/editorial-operations.test.ts docs/CMS_BRAND_ADSENSE_SOURCE_LOG.md docs/superpowers/specs/2026-08-25-cms-purple-signal-publication-maturity-design.md docs/superpowers/plans/2026-08-25-publication-maturity-release.md
 git commit -m "docs(cms): document the publishing workflow"
 ```
 

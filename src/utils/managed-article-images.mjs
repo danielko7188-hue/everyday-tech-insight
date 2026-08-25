@@ -1084,7 +1084,7 @@ export async function auditManagedArticleImageBuildFilesystem({
           finding(
             "managed-image-source-changed",
             fileName,
-            "Private source bytes changed after the lifecycle audit.",
+            "Repository-tracked source bytes changed after the lifecycle audit.",
           ),
         );
       }
@@ -1247,7 +1247,7 @@ export async function auditManagedArticleImageBuildFilesystem({
           finding(
             "managed-image-output-bytes",
             relativePath,
-            "Built managed image bytes do not match the validated private source.",
+            "Built managed image bytes do not match the validated repository-tracked source.",
           ),
         );
       }

@@ -874,7 +874,7 @@ describe("managed article image inventory", () => {
     );
   });
 
-  it("rejects a public shadow of a valid private managed image", async () => {
+  it("rejects a public shadow of a valid repository-tracked managed image", async () => {
     const { repositoryRoot, sourceRoot } = await makeRepository();
     const filename = "published-guide-decision-flow.png";
     const bytes = await rasterBuffer("png");

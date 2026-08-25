@@ -97,7 +97,7 @@ describe("managed image built-output filesystem boundary", () => {
     ).resolves.toEqual([]);
   });
 
-  it("rejects output whose bytes or hash differ from the validated private source", async () => {
+  it("rejects output whose bytes or hash differ from the validated repository-tracked source", async () => {
     const fixture = await sourceFixture();
     const managedRoot = await writeExpectedOutput(fixture);
     const alteredBytes = Buffer.from(fixture.bytes);
@@ -124,7 +124,7 @@ describe("managed image built-output filesystem boundary", () => {
     ).toContain("managed-image-output-set");
   });
 
-  it("rejects a private source that changes after the lifecycle audit", async () => {
+  it("rejects a repository-tracked source that changes after the lifecycle audit", async () => {
     const fixture = await sourceFixture();
     await writeExpectedOutput(fixture);
     await writeFile(

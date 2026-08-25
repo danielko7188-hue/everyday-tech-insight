@@ -10,6 +10,12 @@ Hosted Pages CMS sign-in, GitHub App authorization, and repository selection are
 
 Pages CMS is a Git-backed editor, not a native editorial approval engine. The repository lifecycle, branch protections, pull request, automated checks, human review, and owner acceptance provide the controls; the CMS must not be described as enforcing approvals it does not enforce.
 
+This is a public GitHub repository. Every committed file and branch is publicly visible, including non-`main` content branches and later-deleted files retained in history. Repository-tracked editorial records and managed media are non-deployed source, not confidential storage. Keep confidential owner, account, legal, review, and rights evidence outside Git; commit only a nonsecret evidence reference and truthful status.
+
+`docs/editorial-operations.yml` is the source of truth for owner gates and the content-quality queue. Edit that strict structured record, then run `npm run generate:editorial` to regenerate the two finished Markdown documents. Review their diff and run `npm run check:editorial`; do not hand-edit generated records because the check requires an exact byte match.
+
+A guide-level `clear` release gate requires a real source-check date, named and dated human review, `expertReviewNeeded` beginning `NO`, `mediaRights` beginning `CLEARED —`, and a concrete nonsecret release-evidence reference. Keep `YES` or `CONDITIONAL` expert needs and unresolved rights on a blocking or owner-action gate. Free-text words such as “complete” do not prove expert or rights review.
+
 ## One-time owner setup
 
 1. Sign in to Pages CMS using the owner's authorized GitHub identity.
@@ -17,7 +23,7 @@ Pages CMS is a Git-backed editor, not a native editorial approval engine. The re
 3. Select the exact repository, then select a dedicated non-main content branch (`main` remains the protected release branch). Do not make routine editorial saves directly to `main`.
 4. Confirm that live GitHub settings protect `main`, require a pull request and required checks, limit bypass access, and name real reviewers. Repository documentation cannot prove those hosted settings.
 5. Make one reversible test edit on the content branch. Inspect the resulting GitHub commit, author identity, changed paths, and diff; then revert or close that test cleanly.
-6. Record the observed authorization and save round-trip privately. Until that evidence exists, keep the hosted status recorded as unverified.
+6. Keep confidential authorization evidence outside Git. Commit only a nonsecret evidence reference and truthful status after the owner observes the save round-trip. Until then, keep the hosted status recorded as unverified.
 
 ## Create a guide
 
@@ -47,6 +53,14 @@ Use Markdown headings, paragraphs, lists, links, tables, block quotes, code fenc
 
 Safe Markdown is required in source mode, and raw HTML remains prohibited.
 
+## If sensitive data is committed
+
+Stop publication work and do not add, copy, or discuss the sensitive value in another commit, issue, pull request, build log, or chat. Revoke or rotate the exposed credential first; deleting a file is not containment. Coordinate the response with the owner and the relevant repository, organization, service, or security administrator.
+
+After containment, use GitHub's approved sensitive-data-removal process and `git-filter-repo` only under an administrator-reviewed incident plan. That plan must identify every affected branch, tag, fork or clone, pull-request reference, build artifact, and deployment. Invalidate affected Vercel previews or production deployments, caches, logs, and other copies as applicable, then verify the replacement credential and repository state without republishing the secret.
+
+An ordinary Git revert does not erase a secret or remove it from Git history. History rewriting is an exceptional incident operation, not the normal rollback workflow; follow the approved GitHub process and coordinate required force-pushes and downstream cleanup with the owner and administrators.
+
 Keep the promise fields distinct:
 
 - `guidePromise` says what the guide enables.
@@ -75,7 +89,7 @@ No date may be impossible, earlier than the confirmed launch where prohibited, l
 
 ## Manage hero and body images
 
-Managed source media belongs under private source path `src/content-assets/articles`. The build validates and publishes only referenced approved files to public URLs under `/images/articles/`; there is no editable managed-media source collection inside `public/`.
+Managed source media belongs under repository-tracked, non-deployed source path `src/content-assets/articles`. Those committed bytes are publicly visible in Git. The build validates and publishes only referenced approved files to public URLs under `/images/articles/`; there is no editable managed-media source collection inside `public/`.
 
 Use lowercase raster filenames prefixed by the article slug, for example a slug followed by a descriptive suffix and `.webp`, `.png`, `.jpg`, or `.jpeg`. Keep the source file within the validated size and dimension limits. Do not use symlinks, hidden files, traversal, duplicate bytes, executable formats, SVG uploads, or unreferenced media.
 
@@ -113,9 +127,10 @@ npm run setup:browsers
 npm run format:check
 npm run lint
 npm run typecheck
-npm test -- --run
+npm run test -- --run
 npm run build
 npm run check:content
+npm run check:editorial
 npm run check:cms
 npm run check:images
 npm run check:cms-fixture

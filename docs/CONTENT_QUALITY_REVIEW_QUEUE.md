@@ -1,8 +1,8 @@
 # Content Quality Review Queue
 
-This is an internal, nonpublic review record for the 15 published launch guides. Repository-derived fields are checked against the Markdown source by automated tests. Editorial judgments below are bounded risk notes, not proof of originality, rights, firsthand use, expertise, human acceptance, legal sufficiency, or Google approval.
+This is repository-tracked, non-deployed source for the 15-guide launch subset and every currently published guide. Every committed file and branch is publicly visible. Confidential review or rights evidence must remain outside Git; commit only a nonsecret evidence reference and truthful status. Repository-derived fields are validated against article source by automation. Editorial judgments remain bounded risk notes, not proof of originality, rights, firsthand use, expertise, human acceptance, legal sufficiency, or Google approval.
 
-`sourceLastChecked` remains `UNKNOWN`; `reviewedBy` and `reviewedAt` remain empty until a real review supplies evidence. Every guide remains `OWNER REVIEW REQUIRED`. The `owner-action` gate means the truthful ads-off software release can proceed only while unresolved external facts remain disclosed and no public claim depends on them; it does not certify the content.
+An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt` stay empty until a real review supplies evidence. A guide stays `OWNER REVIEW REQUIRED` until a completed review records its real reviewer and date. Every `releaseGate` includes one of the four documented statuses plus a guide-specific rationale and nonsecret evidence reference.
 
 ## Guide 01: `back-up-business-files-with-the-3-2-1-method`
 
@@ -10,7 +10,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to back up business files with the 3-2-1 method
 - `category`: cybersecurity-data-protection
 - `publicationStatus`: published
-- `wordCount`: 1192
+- `wordCount`: 1157
 - `reader`: Small-business owners and administrators responsible for recovering shared files, SaaS exports, device data, and operational records after loss or attack.
 - `businessNeed`: A business may believe files are protected because they sync to the cloud, yet have no independent copy, tested restoration, or recovery priority.
 - `guidePromise`: Separate live data from independent backup copies and prove that representative files can be restored before an incident.
@@ -26,14 +26,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Backup inventory and evidence-log language overlaps the risk-register and SaaS-exit guides; this article must remain centered on recoverability rather than generic governance.
 - `evidenceLimits`: Cited guidance supports principles, not the reader's actual restore success, media independence, recovery time, data completeness, or provider behavior.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the three-two-one-topology tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1192 whitespace-delimited Markdown words, three HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove substance, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1157 reader-visible Markdown prose words, three HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove substance, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — a backup or security practitioner should review recovery, ransomware-isolation, encryption, retention, and restore-test claims for the intended operating environment.
 - `recommendation`: KEEP WITH REVISION IF NEEDED — retain the recovery-focused method, but revise any wording a human or expert finds overbroad before relying on it operationally.
 - `ownerAction`: Run one scoped editorial and recovery-practitioner review, confirm every source still supports the cited passage, and document whether the visual and worksheet may be published.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 02: `calculate-the-total-cost-of-business-software`
 
@@ -41,7 +41,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to calculate the total cost of business software
 - `category`: technology-strategy
 - `publicationStatus`: published
-- `wordCount`: 1354
+- `wordCount`: 1314
 - `reader`: Small-business decision makers comparing software options or deciding whether to renew, replace, consolidate, build, or keep a current process.
 - `businessNeed`: Subscription price can look affordable while implementation, internal labor, required add-ons, administration, change, downtime, and exit remain uncounted.
 - `guidePromise`: Compare software using the full cost of implementation, labor, operation, change, and exit—not subscription price alone.
@@ -57,14 +57,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Assumption-register language overlaps pilot and SaaS-evaluation guidance; this guide must preserve its defined horizon and quantified cost focus.
 - `evidenceLimits`: The sources justify considering burden and cloud lifecycle factors but provide no measured cost inputs for a reader's product, staff, implementation, or exit.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the software-cost-stack tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1354 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove financial accuracy, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1314 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove financial accuracy, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: CONDITIONAL — a finance, procurement, tax, or accounting reviewer is needed before using the method for consequential budgeting, reporting, or contract decisions.
 - `recommendation`: KEEP AS A PLANNING FRAMEWORK — retain the range-based comparison, but do not present it as an accounting, tax, or investment calculation without qualified review.
 - `ownerAction`: Verify every cost-category claim against the body, obtain finance review for intended high-value use, and confirm the cost-stack visual's publication rights.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 03: `create-a-shared-file-and-folder-system`
 
@@ -72,7 +72,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to create a shared file and folder system
 - `category`: digital-operations
 - `publicationStatus`: published
-- `wordCount`: 1055
+- `wordCount`: 1022
 - `reader`: Small-business teams replacing informal personal storage with a shared system that other authorized people can understand and maintain.
 - `businessNeed`: Teams lose time and control when important files are spread across personal drives, duplicate folders, inboxes, and names that do not reveal ownership or status.
 - `guidePromise`: Organize shared files by durable business function, consistent naming, ownership, permissions, and lifecycle.
@@ -88,14 +88,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Ownership, access, and lifecycle language overlaps onboarding and SaaS-portability content; this guide must remain specific to shared information architecture.
 - `evidenceLimits`: Federal naming and file-plan sources do not establish the reader's legal retention duties, access model, collaboration-platform behavior, or successful migration.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the shared-file-architecture tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1055 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove legal fit, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1022 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove legal fit, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: CONDITIONAL — privacy, records, legal, or information-governance review is needed when regulated, contractual, tax, employment, health, or customer records are in scope.
 - `recommendation`: KEEP WITH JURISDICTIONAL LIMITS — retain the operating method while strengthening any passage that could be read as a retention or disposal mandate.
 - `ownerAction`: Review the proposed hierarchy and lifecycle language with the actual record owner, identify regulated data, and verify the shared-file visual's rights basis.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 04: `create-a-simple-technology-risk-register`
 
@@ -103,7 +103,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to create a simple technology risk register
 - `category`: technology-strategy
 - `publicationStatus`: published
-- `wordCount`: 1182
+- `wordCount`: 1142
 - `reader`: Small-business owners and technology decision makers who need a lightweight governance record rather than a complex enterprise risk platform.
 - `businessNeed`: Technology concerns remain vague or all appear urgent when a business has no shared record of events, consequences, evidence, ownership, and treatment.
 - `guidePromise`: Turn vague technology concerns into prioritized event-to-consequence risks with evidence, ownership, treatment, and review.
@@ -119,14 +119,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Evidence, owner, review-date, and treatment language recurs across multiple guides; this one must retain a specific event-to-consequence risk record.
 - `evidenceLimits`: NIST frameworks support risk-governance concepts but do not validate the article's likelihood ranges, business impact estimates, risk appetite, or treatment decision.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the technology-risk-matrix tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1182 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove risk accuracy, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1142 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove risk accuracy, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: CONDITIONAL — security, privacy, finance, safety, legal, or operations expertise is needed for consequential risks and acceptance decisions.
 - `recommendation`: KEEP WITH ANTI-PRECISION GUARDRAILS — retain the lightweight register but revise any scoring language that a reviewer finds more certain than the evidence.
 - `ownerAction`: Have the accountable business and relevant domain owners review risk wording, escalation thresholds, and the matrix visual before operational use.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 05: `crm-vs-project-management-software`
 
@@ -134,7 +134,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: CRM vs. project-management software: choose by work object
 - `category`: business-software
 - `publicationStatus`: published
-- `wordCount`: 1030
+- `wordCount`: 992
 - `reader`: Small-business leaders deciding whether the next system should organize customer relationships, time-bounded delivery work, or a controlled connection between both.
 - `businessNeed`: Small teams can buy overlapping software because sales relationships and delivery work both contain tasks, notes, owners, dates, and reports.
 - `guidePromise`: Choose software by whether the durable record is the customer relationship or the coordinated delivery of project work.
@@ -150,14 +150,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Requirement, scenario, source-of-truth, and exit checks overlap the SaaS evaluation guide; this article must remain a category-selection decision.
 - `evidenceLimits`: Vendor definitions cannot establish impartial category boundaries or current product capabilities, and CISA guidance does not evaluate any named CRM or project product.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the work-object-comparison tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1030 whitespace-delimited Markdown words, three HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove vendor fit, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 992 reader-visible Markdown prose words, three HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove vendor fit, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: CONDITIONAL — architecture, security, privacy, sales-operations, or delivery-operations review is needed when integrations or sensitive records drive the choice.
 - `recommendation`: KEEP AS A CATEGORY SCREEN — retain the work-object heuristic, but require product-specific evidence before any purchasing conclusion.
 - `ownerAction`: Review the comparison for vendor neutrality and current terminology, then confirm the handoff visual's rights and the intended reader's real record boundaries.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 06: `document-a-repetitive-workflow-before-automating`
 
@@ -165,7 +165,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: Document a repetitive workflow before automating it
 - `category`: digital-operations
 - `publicationStatus`: published
-- `wordCount`: 1050
+- `wordCount`: 1013
 - `reader`: Small-business process owners preparing to improve or automate a recurring administrative, service, finance, sales, or operations workflow.
 - `businessNeed`: Automating an undocumented process can make unclear decisions, duplicate work, hidden exceptions, and weak controls happen faster and less visibly.
 - `guidePromise`: Map the real workflow, including decisions and exceptions, before choosing what should be improved or automated.
@@ -181,14 +181,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: This method overlaps the automation-candidate guide, but must stay focused on current-state truth and exception discovery before candidate scoring.
 - `evidenceLimits`: EPA mapping guidance supports method concepts but does not validate the reader's observed steps, exception frequency, control requirements, or automation boundary.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the workflow-exception-lane tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1050 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove process truth, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1013 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove process truth, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: CONDITIONAL — the actual process owner and specialists for privacy, finance, HR, safety, security, or regulation must review sensitive workflow boundaries.
 - `recommendation`: KEEP AS A DISCOVERY METHOD — retain the current-state emphasis and revise only after participants or specialists identify missing decisions, exceptions, or controls.
 - `ownerAction`: Validate the method with a real process owner, review consequential decision points, and confirm rights for the workflow-lane visual.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 07: `evaluate-ai-output-quality-in-a-small-team-pilot`
 
@@ -196,7 +196,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to evaluate AI output quality in a small-team pilot
 - `category`: ai-automation
 - `publicationStatus`: published
-- `wordCount`: 1197
+- `wordCount`: 1160
 - `reader`: Small-business teams evaluating a bounded AI drafting, classification, extraction, or summarization use before operational rollout.
 - `businessNeed`: A small team can mistake a few impressive AI examples for dependable performance because it has no defined cases, rubric, baseline, or stop rule.
 - `guidePromise`: Test AI output against representative cases, a defined rubric, a baseline, and the real time required for human correction.
@@ -212,14 +212,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Pilot controls overlap the 30-day pilot and automation-candidate guides; this article must remain specific to output-quality measurement and correction effort.
 - `evidenceLimits`: NIST guidance supports evaluation discipline but supplies no evidence that a model, prompt, dataset, rubric, baseline, or observed score is adequate for the reader's use.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the ai-quality-scorecard tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1197 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove AI performance, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1160 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove AI performance, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — an AI evaluation and use-case domain expert should review sampling, rubric validity, harmful-error treatment, privacy, and the decision threshold.
 - `recommendation`: KEEP WITH MEASUREMENT CAVEATS — retain the baseline-and-correction method while refusing any generalized quality claim not supported by a real, reviewed pilot.
 - `ownerAction`: Have a domain expert inspect the proposed cases and rubric, verify source interpretation, and review the scorecard visual's rights before operational use.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 08: `evaluate-saas-with-a-practical-checklist`
 
@@ -227,7 +227,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to evaluate SaaS with a practical checklist
 - `category`: business-software
 - `publicationStatus`: published
-- `wordCount`: 1119
+- `wordCount`: 1085
 - `reader`: Small-business owners and operations leaders comparing a SaaS purchase that will hold important work or business data.
 - `businessNeed`: A polished software demonstration can hide workflow gaps, weak controls, administrative burden, plan restrictions, and a costly exit path.
 - `guidePromise`: Turn business requirements into test scenarios and verify workflow, security, data, administration, and exit claims before buying.
@@ -243,14 +243,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Data exit overlaps the lock-in guide and cost overlaps total-cost guidance; this article must stay a cross-functional acquisition evidence gate.
 - `evidenceLimits`: CISA guidance supports buyer diligence but does not prove any vendor claim, service level, privacy term, control operation, integration, support quality, or portability result.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the saas-evidence-checklist tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1119 whitespace-delimited Markdown words, three HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove vendor assurance, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1085 reader-visible Markdown prose words, three HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove vendor assurance, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — security, privacy, legal, procurement, data, and operations specialists should review consequential evidence and contract-dependent claims.
 - `recommendation`: KEEP AS A DUE-DILIGENCE SHELL — retain the evidence-first sequence, but never convert checklist completion into a product endorsement or assurance conclusion.
 - `ownerAction`: Review the sheet with the actual buyer and relevant specialists, test a real plan and configuration, and clear visual and worksheet rights before use.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 09: `how-to-identify-business-tasks-for-automation`
 
@@ -258,7 +258,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to identify business tasks for automation
 - `category`: ai-automation
 - `publicationStatus`: published
-- `wordCount`: 1670
+- `wordCount`: 1597
 - `reader`: Small-business decision makers selecting a first or next workflow to automate without a dedicated automation team.
 - `businessNeed`: Small businesses can waste time automating visible annoyances before defining the task, exceptions, risks, or result that matters.
 - `guidePromise`: Inventory recurring work, screen repeatability and risk, and select one bounded automation candidate with a human-owned fallback.
@@ -274,14 +274,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Workflow mapping and pilot controls recur elsewhere; this guide must remain the portfolio-level candidate screen that precedes detailed mapping and testing.
 - `evidenceLimits`: NIST frameworks support oversight principles but offer no measured task frequency, error rate, exception rate, feasibility, benefit, product performance, or workforce impact for the reader.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the automation-candidate-screen tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1670 whitespace-delimited Markdown words, three HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove automation value, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1597 reader-visible Markdown prose words, three HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove automation value, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: CONDITIONAL — process, security, privacy, accessibility, labor, or domain expertise is needed when a candidate affects people, sensitive data, money, rights, or critical operations.
 - `recommendation`: KEEP AS A PRE-PILOT FILTER — retain the reject-first discipline while requiring real workflow evidence before ranking or selecting a candidate.
 - `ownerAction`: Validate the screen against real task data and affected participants, review consequential candidates with specialists, and clear the decision-tree and worksheet rights.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 10: `onboard-employees-and-contractors-to-business-technology`
 
@@ -289,7 +289,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to onboard employees and contractors to business technology
 - `category`: digital-operations
 - `publicationStatus`: published
-- `wordCount`: 1095
+- `wordCount`: 1060
 - `reader`: Small-business managers and administrators who provision technology for employees, contractors, temporary workers, or service providers.
 - `businessNeed`: Rushed onboarding can create shared accounts, excessive access, unmanaged devices, undocumented exceptions, and no reliable way to remove access later.
 - `guidePromise`: Provision role-based accounts, devices, access, and training while preserving the records needed for later changes or departure.
@@ -305,14 +305,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Account ownership and access review overlap MFA and shared-file guidance; this article must stay centered on the end-to-end joiner record.
 - `evidenceLimits`: FTC and NIST materials support control principles but do not prove actual identity, role approval, device posture, completed training, access correctness, or employment compliance.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the access-onboarding-checklist tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1095 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove access correctness, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1060 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove access correctness, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — security, privacy, HR, accessibility, legal, and contracting review is needed where onboarding affects worker rights, regulated data, or managed devices.
 - `recommendation`: KEEP AS A CONTROL CHECKLIST — retain the role-to-record sequence, but route employment, privacy, and legal decisions outside the article.
 - `ownerAction`: Review the checklist with security and the actual people-process owner, test it against one role without real provisioning, and clear the visual's rights.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 11: `respond-to-a-suspected-phishing-message`
 
@@ -320,7 +320,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to respond to a suspected phishing message
 - `category`: cybersecurity-data-protection
 - `publicationStatus`: published
-- `wordCount`: 1108
+- `wordCount`: 1092
 - `reader`: Small-business employees, owners, and administrators who need an immediate, plain-language response to a suspicious email, text, call, or login page.
 - `businessNeed`: Employees may act on urgency, verify through attacker-controlled contact details, or hide a mistake when the business lacks a clear phishing response route.
 - `guidePromise`: Verify a suspicious request through a known channel and escalate containment based on clicks, credentials, payments, or exposed data.
@@ -336,14 +336,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Verification and access-control language overlaps MFA guidance; this article must remain a time-sensitive message-to-incident triage flow.
 - `evidenceLimits`: FTC guidance supports protective principles but cannot determine whether a message is malicious, what was exposed, whether containment succeeded, or which legal and contractual notices apply.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the phishing-response-workflow tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1108 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove incident outcomes, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1092 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove incident outcomes, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — a security incident responder and, when data, money, people, or notice duties are implicated, legal, privacy, finance, or insurance specialists should review actions.
 - `recommendation`: KEEP WITH INCIDENT ESCALATION EMPHASIS — retain the calm first-response flow while making every consequential action subordinate to the actual incident owner and specialist advice.
 - `ownerAction`: Conduct a tabletop editorial review without using real incident data, confirm escalation language, and verify rights for the response-workflow visual.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 12: `roll-out-mfa-across-a-small-business`
 
@@ -351,7 +351,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to roll out MFA across a small business
 - `category`: cybersecurity-data-protection
 - `publicationStatus`: published
-- `wordCount`: 1050
+- `wordCount`: 1008
 - `reader`: Small-business owners and administrators improving sign-in security across email, file storage, finance, remote access, and other important services.
 - `businessNeed`: A business can enable MFA unevenly, leave privileged accounts exposed, or create unsafe recovery shortcuts when enrollment is rushed.
 - `guidePromise`: Prioritize critical accounts, protect recovery paths, stage enrollment, and verify that MFA is actually enforced.
@@ -367,14 +367,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Account inventory and recovery controls overlap onboarding and phishing response; this guide must remain a staged authentication-control rollout.
 - `evidenceLimits`: CISA and NIST support MFA principles but do not prove the reader's providers support desired methods, that every account is enrolled, or that recovery and enforcement work.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the mfa-rollout-boundary tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1050 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove MFA enforcement, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1008 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove MFA enforcement, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — an identity and access specialist should review authenticator choices, privileged accounts, recovery, break-glass access, provider limits, and enforcement evidence.
 - `recommendation`: KEEP WITH AUTHENTICATOR NUANCE — retain the staged rollout while revising any statement that treats all MFA or recovery methods as equivalent.
 - `ownerAction`: Review the sequence against the actual provider inventory, perform a controlled recovery test with authorized accounts, and clear the boundary visual's rights.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 13: `run-a-30-day-business-technology-pilot`
 
@@ -382,7 +382,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to run a 30-day business technology pilot
 - `category`: technology-strategy
 - `publicationStatus`: published
-- `wordCount`: 1085
+- `wordCount`: 1036
 - `reader`: Small-business decision makers evaluating a SaaS, automation, collaboration, security, or operations tool before a broader commitment.
 - `businessNeed`: A trial can become an informal rollout when scope, users, data, measures, permissions, support, stop conditions, and ownership are left undefined.
 - `guidePromise`: Run a controlled four-week technology test without allowing a trial to become production by default.
@@ -398,14 +398,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Evidence logs and stop rules overlap AI evaluation and SaaS selection; this guide must remain the general time-bounded experiment wrapper.
 - `evidenceLimits`: CISA guidance supports acquisition discipline but provides no evidence that four weeks, the proposed sample, measures, participants, data, or decision threshold are adequate.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the thirty-day-pilot-timeline tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1085 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove pilot validity, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1036 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove pilot validity, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: CONDITIONAL — procurement, security, privacy, accessibility, data, finance, and use-case experts should review a consequential pilot's scope and evidence.
 - `recommendation`: KEEP AS A CONTROLLED-TRIAL TEMPLATE — retain the no-default-production rule while treating duration, sample, and decision criteria as context-dependent.
 - `ownerAction`: Review the timeline with the real sponsor and affected users, verify measures and stop conditions, and confirm rights for the pilot visual.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 14: `test-data-export-and-integrations-before-saas-lock-in`
 
@@ -413,7 +413,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: Test data export and integrations before SaaS lock-in
 - `category`: business-software
 - `publicationStatus`: published
-- `wordCount`: 1149
+- `wordCount`: 1113
 - `reader`: Small-business owners and technical operators evaluating a new SaaS service or reducing dependence on an existing one.
 - `businessNeed`: A business can discover too late that its SaaS data is incomplete outside the product, difficult to migrate, or tied to fragile integrations.
 - `guidePromise`: Export representative data and test critical integrations before dependence grows and migration becomes expensive.
@@ -429,14 +429,14 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Exit checks overlap SaaS evaluation and total-cost guidance; this article must stay focused on technically exercising data and integration dependence.
 - `evidenceLimits`: NIST cloud materials establish interoperability concerns but do not test a current service, export format, API, integration, contract, migration tool, or deletion process.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the saas-exit-data-flow tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1149 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove portability, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1113 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove portability, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — data architecture, security, privacy, legal, integration, and records specialists should review critical exports, credentials, dependencies, deletion, and migration evidence.
 - `recommendation`: KEEP WITH SAMPLE-TO-SCOPE DISCIPLINE — retain the hands-on portability method but never generalize one representative export beyond the records and integrations tested.
 - `ownerAction`: Have a technical owner inspect the test design without exposing private data, review dated source relevance, and verify rights for the data-flow visual.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
 
 ## Guide 15: `write-a-practical-ai-acceptable-use-policy`
 
@@ -444,7 +444,7 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `title`: How to write a practical AI acceptable-use policy
 - `category`: ai-automation
 - `publicationStatus`: published
-- `wordCount`: 1152
+- `wordCount`: 1126
 - `reader`: Small-business owners and operations leaders creating a first internal AI policy without a dedicated AI governance department.
 - `businessNeed`: Employees may use generative AI before the business has defined approved data, review duties, prohibited decisions, or incident reporting.
 - `guidePromise`: Define which AI tools, data, and use cases are allowed, restricted, or prohibited before employees begin using them.
@@ -460,11 +460,11 @@ This is an internal, nonpublic review record for the 15 published launch guides.
 - `repetitionRisks`: Data limits, human review, stop authority, and evidence recur in AI evaluation and automation guidance; this article must remain an internal governance document.
 - `evidenceLimits`: NIST resources support governance concepts but do not determine applicable law, contract terms, approved tools, data classification, worker duties, enforcement, or policy effectiveness.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the ai-use-governance tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1152 whitespace-delimited Markdown words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove policy sufficiency, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1126 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove policy sufficiency, rights, or human acceptance.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — AI governance, privacy, security, employment, intellectual-property, records, accessibility, and sector specialists should review policy terms applicable to the operator.
 - `recommendation`: KEEP ONLY AS A DRAFTING FRAMEWORK — retain the practical structure while stating clearly that qualified review and owner approval are required before adoption.
 - `ownerAction`: Route the draft through the actual policy owner and relevant specialists, verify each source interpretation, and clear the governance visual's publication rights.
 - `reviewedBy`:
 - `reviewedAt`:
-- `releaseGate`: owner-action
+- `releaseGate`: owner-action — Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide. Evidence: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.

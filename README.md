@@ -19,6 +19,8 @@ Google alone decides AdSense eligibility and approval.
 
 Pages CMS is configured and locally tested as a Git-backed editor through `.pages.yml`. Hosted Pages CMS sign-in, GitHub App authorization, repository selection, and a real save/commit round-trip are owner actions and remain unverified. There is no public CMS or admin route.
 
+This GitHub repository is public: every committed file and branch is publicly visible. Repository-tracked editorial records and managed media are non-deployed source, not confidential storage. Confidential owner, account, legal, review, and rights evidence must stay outside Git; commit only a nonsecret evidence reference and truthful status.
+
 Editorial records move through `draft -> review -> published -> archived`. Only published records enter public routes, navigation, feeds, sitemaps, related guides, or social images. Routine work happens on a non-`main` branch and reaches `main` through a reviewed pull request; Vercel previews do not make review-status articles routable.
 
 See the [Publishing Guide](docs/PUBLISHING_GUIDE.md) for the complete workflow, [Owner Inputs Required](docs/OWNER_INPUTS_REQUIRED.md) for unresolved external facts, and [Content Quality Review Queue](docs/CONTENT_QUALITY_REVIEW_QUEUE.md) for the evidence-bounded 15-guide review record.
@@ -54,8 +56,9 @@ Focused checks:
 npm run format:check
 npm run lint
 npm run typecheck
-npm test -- --run
+npm run test -- --run
 npm run check:content
+npm run check:editorial
 npm run check:cms
 npm run check:images
 npm run check:cms-fixture
@@ -81,8 +84,9 @@ That command validates the origin and captures the established eight-route audit
 ## Repository map
 
 - `src/content/articles/`: article source files and source records.
-- `src/content-assets/articles/`: private managed-media source files. The build publishes only validated, referenced files to public URLs under `/images/articles/`.
-- `.pages.yml`: Pages CMS collection, lifecycle fields, and private-source media configuration; it does not prove hosted authorization.
+- `src/content-assets/articles/`: repository-tracked, non-deployed source media. The build publishes only validated, referenced files to public URLs under `/images/articles/`.
+- `docs/editorial-operations.yml`: strict source of truth for owner gates and guide-quality records; `npm run generate:editorial` produces the two finished Markdown documents, and `npm run check:editorial` rejects drift plus its defined secret-like, placeholder, and state-contract hazards. Human review remains required.
+- `.pages.yml`: Pages CMS collection, lifecycle fields, and repository-tracked source-media configuration; it does not prove hosted authorization.
 - `public/toolkit/`: blank first-party CSV worksheets linked from the Toolkit page.
 - `src/data/toolkit.ts`: four typed Toolkit records, their detail-page guidance, unchanged CSV contracts, and related-guide mappings.
 - `src/pages/`: generated public route templates.
