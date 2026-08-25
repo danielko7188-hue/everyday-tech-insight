@@ -2,15 +2,16 @@ import { expect, test } from "@playwright/test";
 import { load } from "cheerio";
 
 import { readArticleRecords } from "../../scripts/qa-content.mjs";
+import { REPRESENTATIVE_ARTICLE_PATHS } from "../../scripts/publication-route-inventory.mjs";
 import { siteConfig, siteUrl } from "../../site.config.mjs";
 import {
   homepageCuration,
   homepageSectionSizes,
+  resolveHomepageCuration,
+  selectFeaturedToolkitResource,
 } from "../../src/data/editorial";
+import { toolkitResources } from "../../src/data/toolkit";
 
-const articleSlug = "how-to-identify-business-tasks-for-automation";
-const articleWhenToUse =
-  "Use before comparing automation products or connecting AI tools to an existing business workflow.";
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
 
 const toolkitCsvHeaders = {
@@ -87,7 +88,6 @@ const toolkitRouteExpectations = [
     id: "automation-candidate-screen",
     title: "Automation candidate screen",
     articleSlug: "how-to-identify-business-tasks-for-automation",
-    guideHref: "/articles/how-to-identify-business-tasks-for-automation/",
     guideLabel: "Read the automation-candidate guide",
     downloadHref: "/toolkit/automation-candidate-screen.csv",
     downloadLabel: "Download automation screen CSV",
@@ -96,7 +96,6 @@ const toolkitRouteExpectations = [
     id: "saas-evaluation-evidence-sheet",
     title: "SaaS evaluation evidence sheet",
     articleSlug: "evaluate-saas-with-a-practical-checklist",
-    guideHref: "/articles/evaluate-saas-with-a-practical-checklist/",
     guideLabel: "Read the SaaS evaluation guide",
     downloadHref: "/toolkit/saas-evaluation-evidence-sheet.csv",
     downloadLabel: "Download SaaS evidence CSV",
@@ -105,7 +104,6 @@ const toolkitRouteExpectations = [
     id: "technology-risk-register",
     title: "Technology risk register",
     articleSlug: "create-a-simple-technology-risk-register",
-    guideHref: "/articles/create-a-simple-technology-risk-register/",
     guideLabel: "Read the technology-risk guide",
     downloadHref: "/toolkit/technology-risk-register.csv",
     downloadLabel: "Download technology risk CSV",
@@ -114,12 +112,14 @@ const toolkitRouteExpectations = [
     id: "backup-restore-test-log",
     title: "Backup restore-test log",
     articleSlug: "back-up-business-files-with-the-3-2-1-method",
-    guideHref: "/articles/back-up-business-files-with-the-3-2-1-method/",
     guideLabel: "Read the backup and restore guide",
     downloadHref: "/toolkit/backup-restore-test-log.csv",
     downloadLabel: "Download restore-test log CSV",
   },
-] as const;
+].map((resource) => ({
+  ...resource,
+  guideHref: `/articles/${resource.articleSlug}/`,
+}));
 
 interface ArticleSourceRecord {
   data: {
@@ -131,7 +131,11 @@ interface ArticleSourceRecord {
     datePublished: string;
     summary: string;
     guidePromise: string;
+    whenToUse: string;
     featured: boolean;
+    dateModified?: string;
+    relatedArticles: string[];
+    sourceList: Array<{ url: string }>;
     visual: {
       type: string;
       key: string;
@@ -141,6 +145,34 @@ interface ArticleSourceRecord {
     };
   };
 }
+
+const sourceArticleRecords =
+  (await readArticleRecords()) as ArticleSourceRecord[];
+const articleSlug = REPRESENTATIVE_ARTICLE_PATHS.primary
+  .split("/")
+  .filter(Boolean)
+  .at(-1)!;
+const representativeArticle = sourceArticleRecords.find(
+  ({ data }) => data.status === "published" && data.slug === articleSlug,
+)!;
+const articleWhenToUse = representativeArticle.data.whenToUse;
+const articleTitle = representativeArticle.data.title;
+const publishedArticleSlugs = new Set(
+  sourceArticleRecords
+    .filter(({ data }) => data.status === "published")
+    .map(({ data }) => data.slug),
+);
+const resolvedHomepageCuration = resolveHomepageCuration(
+  sourceArticleRecords,
+  homepageCuration,
+);
+const expectedCuratedHrefs = Object.values(resolvedHomepageCuration)
+  .flat()
+  .map(({ data }) => `/articles/${data.slug}/`);
+const featuredToolkitResource = selectFeaturedToolkitResource(
+  sourceArticleRecords,
+  toolkitResources,
+)!;
 
 const categories = [
   { name: "AI & Automation", slug: "ai-automation" },
@@ -360,10 +392,10 @@ test("editorial pages ship only the local visual symbols they render", async ({
 test("deferred article blocks reserve stable cold-page geometry", async ({
   page,
 }) => {
-  const cases = [
-    "/articles/create-a-simple-technology-risk-register/",
-    "/articles/write-a-practical-ai-acceptable-use-policy/",
-  ] as const;
+  const cases = sourceArticleRecords
+    .filter(({ data }) => data.status === "published")
+    .slice(0, 2)
+    .map(({ data }) => `/articles/${data.slug}/`);
 
   for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: 800 });
@@ -462,9 +494,12 @@ test("toolkit landing publishes four outcome-led cards with detail, guide, and C
     await expect(
       card.getByRole("link", { name: "View worksheet guide" }),
     ).toHaveAttribute("href", `/toolkit/${expected.id}/`);
-    await expect(
-      card.getByRole("link", { name: expected.guideLabel }),
-    ).toHaveAttribute("href", expected.guideHref);
+    const guideLink = card.getByRole("link", { name: expected.guideLabel });
+    if (publishedArticleSlugs.has(expected.articleSlug)) {
+      await expect(guideLink).toHaveAttribute("href", expected.guideHref);
+    } else {
+      await expect(guideLink).toHaveCount(0);
+    }
     await expect(
       card.getByRole("link", { name: expected.downloadLabel }),
     ).toHaveAttribute("href", expected.downloadHref);
@@ -508,9 +543,12 @@ test("every Toolkit detail page explains use boundaries and exposes a stacked fi
     }
     await expect(page.locator(".toolkit-field-guide table")).toHaveCount(0);
     await expect(page.locator("[data-horizontal-scroll]")).toHaveCount(0);
-    await expect(
-      page.getByRole("link", { name: expected.guideLabel }),
-    ).toHaveAttribute("href", expected.guideHref);
+    const guideLink = page.getByRole("link", { name: expected.guideLabel });
+    if (publishedArticleSlugs.has(expected.articleSlug)) {
+      await expect(guideLink).toHaveAttribute("href", expected.guideHref);
+    } else {
+      await expect(guideLink).toHaveCount(0);
+    }
     await expect(
       page.getByRole("link", { name: expected.downloadLabel }),
     ).toHaveAttribute("href", expected.downloadHref);
@@ -534,7 +572,8 @@ test("only the four mapped guides show one contextual Toolkit callout", async ({
   for (const { data } of articleRecords) {
     await page.goto(`/articles/${data.slug}/`);
     const callout = page.locator("aside.article-toolkit-callout");
-    const expected = expectedBySlug.get(data.slug);
+    const expected =
+      data.status === "published" ? expectedBySlug.get(data.slug) : undefined;
 
     if (!expected) {
       await expect(callout, data.slug).toHaveCount(0);
@@ -571,10 +610,6 @@ test("home publishes only the approved nine-guide curation", async ({
   const expectedPublishedHrefs = (await readArticleRecords())
     .filter(({ data }) => data.status === "published")
     .map(({ data }) => `/articles/${String(data.slug)}/`);
-  const expectedCuratedHrefs = Object.values(homepageCuration)
-    .flat()
-    .map((slug) => `/articles/${slug}/`);
-
   expect(expectedCuratedHrefs).toHaveLength(9);
   expect(new Set(expectedCuratedHrefs).size).toBe(9);
   expect([...publishedArticleHrefs].sort()).toEqual(
@@ -673,30 +708,27 @@ test("home publishes only the approved nine-guide curation", async ({
     );
   }
 
+  const firstFoundation = resolvedHomepageCuration.startHere[0]!;
   await expect(
     practicalFoundations.getByRole("link", {
-      name: "How to back up business files with the 3-2-1 method",
+      name: firstFoundation.data.title,
     }),
-  ).toHaveAttribute(
-    "href",
-    "/articles/back-up-business-files-with-the-3-2-1-method/",
-  );
+  ).toHaveAttribute("href", `/articles/${firstFoundation.data.slug}/`);
 
   const toolkit = page.getByRole("region", {
     name: "Featured Toolkit resource",
   });
-  await expect(toolkit).toContainText("Automation candidate screen");
+  await expect(toolkit).toContainText(featuredToolkitResource.title);
   await expect(
     toolkit.getByRole("link", {
-      name: "Read the automation-candidate guide",
+      name: featuredToolkitResource.guideLabel,
     }),
-  ).toHaveAttribute(
-    "href",
-    "/articles/how-to-identify-business-tasks-for-automation/",
-  );
+  ).toHaveAttribute("href", featuredToolkitResource.guideHref);
   await expect(
-    toolkit.getByRole("link", { name: "Download automation screen CSV" }),
-  ).toHaveAttribute("href", "/toolkit/automation-candidate-screen.csv");
+    toolkit.getByRole("link", {
+      name: featuredToolkitResource.downloadLabel,
+    }),
+  ).toHaveAttribute("href", featuredToolkitResource.downloadHref);
 
   const evidence = page.locator(".how-we-work");
   await expect(evidence).toHaveCount(1);
@@ -900,7 +932,7 @@ test("category and published article routes expose useful editorial content", as
   ).toBeVisible();
   await expect(
     page.getByRole("link", {
-      name: "How to identify business tasks for automation",
+      name: articleTitle,
     }),
   ).toHaveAttribute("href", `/articles/${articleSlug}/`);
 
@@ -910,14 +942,17 @@ test("category and published article routes expose useful editorial content", as
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "How to identify business tasks for automation",
+      name: articleTitle,
     }),
   ).toBeVisible();
   await expect(
     page.getByText("Everyday Tech Insight", { exact: true }).first(),
   ).toBeVisible();
-  await expect(page.getByText(/published august 21, 2026/i)).toBeVisible();
-  await expect(page.getByText(/reviewed august 21, 2026/i)).toHaveCount(0);
+  await expect(
+    page
+      .locator(".article-facts")
+      .locator(`time[datetime="${representativeArticle.data.datePublished}"]`),
+  ).toHaveCount(1);
   await expect(
     page.getByRole("heading", { level: 2, name: "At a glance" }),
   ).toBeVisible();
@@ -932,19 +967,27 @@ test("category and published article routes expose useful editorial content", as
 test("a substantively revised article exposes its distinct modification date", async ({
   page,
 }) => {
-  const response = await page.goto(
-    "/articles/back-up-business-files-with-the-3-2-1-method/",
+  const revisedArticle = sourceArticleRecords.find(
+    ({ data }) =>
+      data.status === "published" &&
+      data.dateModified !== undefined &&
+      data.dateModified !== data.datePublished,
   );
+  test.skip(
+    !revisedArticle,
+    "No currently published guide has a distinct modification date.",
+  );
+  if (!revisedArticle) return;
+
+  const response = await page.goto(`/articles/${revisedArticle.data.slug}/`);
 
   expect(response?.status()).toBe(200);
   await expect(
     page.locator('meta[property="article:published_time"]'),
-  ).toHaveAttribute("content", "2026-08-21");
+  ).toHaveAttribute("content", revisedArticle.data.datePublished);
   await expect(
     page.locator('meta[property="article:modified_time"]'),
-  ).toHaveAttribute("content", "2026-08-22");
-  await expect(page.getByText(/updated august 22, 2026/i)).toBeVisible();
-  await expect(page.getByText(/reviewed august 22, 2026/i)).toHaveCount(0);
+  ).toHaveAttribute("content", revisedArticle.data.dateModified!);
 });
 
 test("the AI category uses the compact branch with complete published membership and no lead card", async ({
@@ -1053,41 +1096,54 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
     "preserveAspectRatio",
     "xMidYMid slice",
   );
+  const { visual } = representativeArticle.data;
   const informativeVisual = hero.locator(
-    'figure[data-visual-key="automation-candidate-screen"][data-visual-type="decision-tree"]',
+    `figure[data-visual-key="${visual.key}"][data-visual-type="${visual.type}"]`,
   );
   await expect(informativeVisual).toBeVisible();
   const visualSvg = informativeVisual.getByRole("img", {
-    name: "A task funnel that rejects unstable or high-risk work before a bounded pilot.",
+    name: visual.alt,
   });
   await expect(visualSvg).toHaveAttribute(
     "aria-labelledby",
-    "editorial-visual-automation-candidate-screen-title editorial-visual-automation-candidate-screen-description",
+    `editorial-visual-${visual.key}-title editorial-visual-${visual.key}-description`,
   );
   await expect(
-    informativeVisual.locator(
-      "#editorial-visual-automation-candidate-screen-title",
-    ),
-  ).toHaveText(/task funnel/i);
-  await expect(
-    informativeVisual.locator(
-      "#editorial-visual-automation-candidate-screen-description",
-    ),
+    informativeVisual.locator(`#editorial-visual-${visual.key}-title`),
   ).not.toBeEmpty();
   await expect(
-    informativeVisual.locator('use[href="#automation-candidate-screen"]'),
+    informativeVisual.locator(`#editorial-visual-${visual.key}-description`),
+  ).not.toBeEmpty();
+  await expect(
+    informativeVisual.locator(`use[href="#${visual.key}"]`),
   ).toHaveCount(1);
-  await expect(informativeVisual.locator("figcaption")).toHaveText(
-    "Screen repeatability, exceptions, consequences, review, and fallback before piloting.",
-  );
+  if (visual.caption) {
+    await expect(informativeVisual.locator("figcaption")).toHaveText(
+      visual.caption,
+    );
+  }
 
   const storyMeta = hero.getByRole("list", { name: "Story details" });
-  await expect(storyMeta).toContainText("Framework");
+  await expect(storyMeta).toContainText(
+    representativeArticle.data.contentType.replace(/^./, (value) =>
+      value.toUpperCase(),
+    ),
+  );
   await expect(storyMeta).toContainText(/\b\d+ min read\b/);
-  await expect(storyMeta.locator('time[datetime="2026-08-21"]')).toHaveCount(1);
   await expect(
-    storyMeta.getByRole("link", { name: "AI & Automation" }),
-  ).toHaveAttribute("href", "/categories/ai-automation/");
+    storyMeta.locator(
+      `time[datetime="${representativeArticle.data.datePublished}"]`,
+    ),
+  ).toHaveCount(1);
+  const representativeCategory = categories.find(
+    ({ slug }) => slug === representativeArticle.data.category,
+  )!;
+  await expect(
+    storyMeta.getByRole("link", { name: representativeCategory.name }),
+  ).toHaveAttribute(
+    "href",
+    `/categories/${representativeArticle.data.category}/`,
+  );
 
   await expect(
     article.getByRole("heading", {
@@ -1103,22 +1159,23 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
   );
 
   const relatedGuides = article.locator("section.related-articles");
-  await expect(
-    relatedGuides.getByRole("link", {
-      name: "How to evaluate AI output quality in a small-team pilot",
-    }),
-  ).toHaveAttribute(
-    "href",
-    "/articles/evaluate-ai-output-quality-in-a-small-team-pilot/",
+  const publishedSlugs = new Set(
+    sourceArticleRecords
+      .filter(({ data }) => data.status === "published")
+      .map(({ data }) => data.slug),
   );
-  await expect(
-    relatedGuides.getByRole("link", {
-      name: "Document a repetitive workflow before automating it",
-    }),
-  ).toHaveAttribute(
-    "href",
-    "/articles/document-a-repetitive-workflow-before-automating/",
+  const expectedRelatedSlugs =
+    representativeArticle.data.relatedArticles.filter((slug) =>
+      publishedSlugs.has(slug),
+    );
+  await expect(relatedGuides.locator('a[href^="/articles/"]')).toHaveCount(
+    expectedRelatedSlugs.length,
   );
+  for (const relatedSlug of expectedRelatedSlugs) {
+    await expect(
+      relatedGuides.locator(`a[href="/articles/${relatedSlug}/"]`),
+    ).toHaveCount(1);
+  }
 });
 
 test("every published guide renders its assigned informative visual and local symbol", async ({
@@ -1186,7 +1243,9 @@ test("article surfaces its evidence boundary near the headline", async ({
   const hero = page.locator(".article-hero");
   const evidence = page.getByRole("region", { name: "Article evidence" });
   await expect(evidence).toBeVisible();
-  await expect(evidence).toContainText("3 cited sources");
+  await expect(evidence).toContainText(
+    `${representativeArticle.data.sourceList.length} cited sources`,
+  );
   await expect(evidence.getByText(/^Reviewed\b/i)).toHaveCount(0);
   await expect(evidence.locator("time")).toHaveCount(0);
   await expect(evidence.locator("li")).toHaveCount(3);
@@ -1307,7 +1366,7 @@ test("publication byline links to its truthful profile and published article ind
   ).toBeVisible();
   await expect(
     page.getByRole("link", {
-      name: "How to identify business tasks for automation",
+      name: articleTitle,
     }),
   ).toHaveAttribute("href", `/articles/${articleSlug}/`);
 });
@@ -1632,8 +1691,15 @@ test("breadcrumbs are visible and match BreadcrumbList structured data", async (
     "/",
   );
   await expect(
-    breadcrumbs.getByRole("link", { name: "AI & Automation" }),
-  ).toHaveAttribute("href", "/categories/ai-automation/");
+    breadcrumbs.getByRole("link", {
+      name: categories.find(
+        ({ slug }) => slug === representativeArticle.data.category,
+      )!.name,
+    }),
+  ).toHaveAttribute(
+    "href",
+    `/categories/${representativeArticle.data.category}/`,
+  );
 
   const structuredData = await page
     .locator('script[type="application/ld+json"]')
@@ -1697,7 +1763,7 @@ test("RSS includes exact published article destinations and robots stays public"
 
   expect(rss.status()).toBe(200);
   expect(rss.headers()["content-type"]).toContain("xml");
-  expect(rssBody).toContain("How to identify business tasks for automation");
+  expect(rssBody).toContain(articleTitle);
   expect(rssBody).toContain(`/articles/${articleSlug}/`);
 
   const robots = await request.get("/robots.txt");

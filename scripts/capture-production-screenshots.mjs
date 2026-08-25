@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { chromium } from "@playwright/test";
 
+import { REPRESENTATIVE_ARTICLE_PATHS } from "./publication-route-inventory.mjs";
 import {
   normalizeAuditOrigin,
   writeAuditManifest,
@@ -28,7 +29,7 @@ export const BEFORE_CAPTURE_ROUTES = Object.freeze([
   }),
   Object.freeze({
     alias: "article-ai-automation",
-    path: "/articles/how-to-identify-business-tasks-for-automation/",
+    path: REPRESENTATIVE_ARTICLE_PATHS.primary,
     status: 200,
   }),
   Object.freeze({ alias: "toolkit", path: "/toolkit/", status: 200 }),
@@ -55,27 +56,27 @@ export const AFTER_CAPTURE_ROUTES = Object.freeze([
   }),
   Object.freeze({
     alias: "article-ai-automation",
-    path: "/articles/how-to-identify-business-tasks-for-automation/",
+    path: REPRESENTATIVE_ARTICLE_PATHS.primary,
     status: 200,
   }),
   Object.freeze({
     alias: "article-saas-evaluation",
-    path: "/articles/evaluate-saas-with-a-practical-checklist/",
+    path: REPRESENTATIVE_ARTICLE_PATHS.saasEvaluation,
     status: 200,
   }),
   Object.freeze({
     alias: "article-phishing-response",
-    path: "/articles/respond-to-a-suspected-phishing-message/",
+    path: REPRESENTATIVE_ARTICLE_PATHS.securityWorkflow,
     status: 200,
   }),
   Object.freeze({
     alias: "article-shared-files",
-    path: "/articles/create-a-shared-file-and-folder-system/",
+    path: REPRESENTATIVE_ARTICLE_PATHS.operationsArchitecture,
     status: 200,
   }),
   Object.freeze({
     alias: "article-software-tco",
-    path: "/articles/calculate-the-total-cost-of-business-software/",
+    path: REPRESENTATIVE_ARTICLE_PATHS.strategyCost,
     status: 200,
   }),
   Object.freeze({ alias: "toolkit", path: "/toolkit/", status: 200 }),

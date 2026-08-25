@@ -1,6 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { readArticleRecords } from "../../scripts/qa-content.mjs";
+import { REPRESENTATIVE_ARTICLE_PATHS } from "../../scripts/publication-route-inventory.mjs";
+
+const representativeArticlePath = REPRESENTATIVE_ARTICLE_PATHS.primary;
 
 const representativeRoutes = [
   {
@@ -35,7 +38,7 @@ const representativeRoutes = [
   },
   {
     name: "article",
-    path: "/articles/how-to-identify-business-tasks-for-automation/",
+    path: representativeArticlePath,
     keySelectors: [
       "header.site-header",
       "main",
@@ -361,7 +364,7 @@ test("tablet article evidence keeps each supported label on one line", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 768, height: 1024 });
-  await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+  await page.goto(representativeArticlePath);
   await page.evaluate(async () => {
     await document.fonts.ready;
   });
@@ -414,7 +417,7 @@ test("At a glance uses one mobile column, two tablet columns, and four wide colu
     { width: 1440, columns: 4 },
   ]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+    await page.goto(representativeArticlePath);
 
     const renderedColumns = await page
       .locator(".fit-summary dl")
@@ -544,7 +547,7 @@ test("mobile article keeps its informative visual and one compact fit summary be
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+  await page.goto(representativeArticlePath);
   await page.evaluate(async () => {
     await document.fonts.ready;
   });
@@ -583,7 +586,7 @@ test("mobile article breadcrumb hides only its current page and orphaned separat
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+  await page.goto(representativeArticlePath);
 
   const breadcrumbs = page.getByRole("navigation", { name: "Breadcrumb" });
   await expect(breadcrumbs.getByRole("link", { name: "Home" })).toBeVisible();
@@ -601,7 +604,7 @@ test("mobile article breadcrumb hides only its current page and orphaned separat
 test("wide article headline wrapping is stable", async ({ page }) => {
   const countHeadlineLines = async (width: number): Promise<number> => {
     await page.setViewportSize({ width, height: 1080 });
-    await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+    await page.goto(representativeArticlePath);
     await page.evaluate(async () => {
       await document.fonts.ready;
     });
@@ -783,7 +786,7 @@ test("mobile tables use a readable contained horizontal region", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+  await page.goto(representativeArticlePath);
 
   const region = page.getByRole("region", { name: "Scrollable data table" });
   await expect(region).toHaveCount(1);
@@ -821,7 +824,7 @@ test("200 percent zoom equivalent reflows header, article navigation, table, and
   // A 640 CSS-pixel viewport is the reflow equivalent of a 1280px desktop
   // viewport viewed at 200% browser zoom.
   await page.setViewportSize({ width: 640, height: 900 });
-  await page.goto("/articles/how-to-identify-business-tasks-for-automation/");
+  await page.goto(representativeArticlePath);
   await page.evaluate(async () => {
     await document.fonts.ready;
   });

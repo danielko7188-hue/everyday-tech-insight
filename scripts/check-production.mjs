@@ -6,7 +6,12 @@ import { SaxesParser } from "saxes";
 import sharp from "sharp";
 
 import { siteConfig } from "../site.config.mjs";
-import { readArticleRecords } from "./qa-content.mjs";
+import { derivePublicationRouteInventory } from "./publication-route-inventory.mjs";
+
+export {
+  derivePublicationRouteInventory,
+  derivePublishedArticlePaths,
+} from "./publication-route-inventory.mjs";
 
 export const PRODUCTION_SECURITY_HEADERS = Object.freeze({
   "content-security-policy":
@@ -67,57 +72,18 @@ export const LAUNCH_ARTICLE_PATHS = Object.freeze([
   "/articles/write-a-practical-ai-acceptable-use-policy/",
 ]);
 
-const CANONICAL_ARTICLE_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
 
-export async function derivePublishedArticlePaths(
-  articlesDirectory = path.join(repositoryRoot, "src", "content", "articles"),
-  { requiredHistoricalPaths = [] } = {},
-) {
-  const articleRecords = (await readArticleRecords(articlesDirectory)).map(
-    ({ data, fileName }) => {
-      if (
-        typeof data.slug !== "string" ||
-        !CANONICAL_ARTICLE_SLUG_PATTERN.test(data.slug)
-      ) {
-        throw new Error(
-          `Article ${fileName} must have a canonical article slug.`,
-        );
-      }
-      return { path: `/articles/${data.slug}/`, status: data.status };
-    },
+export const PUBLICATION_ROUTE_INVENTORY =
+  await derivePublicationRouteInventory(
+    path.join(repositoryRoot, "src", "content", "articles"),
+    { requiredHistoricalPaths: LAUNCH_ARTICLE_PATHS },
   );
-  const historicalPaths = articleRecords.map(
-    ({ path: articlePath }) => articlePath,
-  );
-  if (new Set(historicalPaths).size !== historicalPaths.length) {
-    throw new Error("Article source-history routes must be unique.");
-  }
-  const historicalPathSet = new Set(historicalPaths);
-  const missingHistoricalPaths = requiredHistoricalPaths.filter(
-    (articlePath) => !historicalPathSet.has(articlePath),
-  );
-  if (missingHistoricalPaths.length > 0) {
-    throw new Error(
-      `Article source is missing historical article routes: ${missingHistoricalPaths.join(", ")}.`,
-    );
-  }
-
-  const paths = articleRecords
-    .filter(({ status }) => status === "published")
-    .map(({ path: articlePath }) => articlePath)
-    .sort((left, right) => left.localeCompare(right, "en"));
-
-  return paths;
-}
-
-const discoveredArticlePaths = await derivePublishedArticlePaths(
-  path.join(repositoryRoot, "src", "content", "articles"),
-  { requiredHistoricalPaths: LAUNCH_ARTICLE_PATHS },
-);
+const discoveredArticlePaths =
+  PUBLICATION_ROUTE_INVENTORY.publishedArticlePaths;
 const discoveredArticlePathSet = new Set(discoveredArticlePaths);
 const launchArticlePathSet = new Set(LAUNCH_ARTICLE_PATHS);
 export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
@@ -128,6 +94,12 @@ export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
     (articlePath) => !launchArticlePathSet.has(articlePath),
   ),
 ]);
+export const ARCHIVED_ARTICLE_PATHS =
+  PUBLICATION_ROUTE_INVENTORY.archivedArticlePaths;
+export const ARCHIVED_ONLY_MANAGED_IMAGE_PATHS =
+  PUBLICATION_ROUTE_INVENTORY.archivedOnlyManagedImagePaths;
+export const REPRESENTATIVE_ARTICLE_PATHS =
+  PUBLICATION_ROUTE_INVENTORY.representativeArticlePaths;
 
 export const TOOLKIT_DETAIL_PATHS = Object.freeze([
   "/toolkit/automation-candidate-screen/",
@@ -136,82 +108,100 @@ export const TOOLKIT_DETAIL_PATHS = Object.freeze([
   "/toolkit/backup-restore-test-log/",
 ]);
 
-export const PRODUCTION_ROUTES = Object.freeze([
-  { path: "/", expectedStatus: 200, kind: "html" },
-  { path: "/categories/", expectedStatus: 200, kind: "html" },
-  { path: "/articles/", expectedStatus: 200, kind: "html" },
-  {
-    path: "/categories/ai-automation/",
-    expectedStatus: 200,
-    kind: "html",
-  },
-  {
-    path: "/categories/business-software/",
-    expectedStatus: 200,
-    kind: "html",
-  },
-  {
-    path: "/categories/cybersecurity-data-protection/",
-    expectedStatus: 200,
-    kind: "html",
-  },
-  {
-    path: "/categories/digital-operations/",
-    expectedStatus: 200,
-    kind: "html",
-  },
-  {
-    path: "/categories/technology-strategy/",
-    expectedStatus: 200,
-    kind: "html",
-  },
-  ...PUBLISHED_ARTICLE_PATHS.map((articlePath) => ({
-    path: articlePath,
-    expectedStatus: 200,
-    kind: "html",
-  })),
-  { path: "/toolkit/", expectedStatus: 200, kind: "html" },
-  ...TOOLKIT_DETAIL_PATHS.map((toolkitPath) => ({
-    path: toolkitPath,
-    expectedStatus: 200,
-    kind: "html",
-  })),
-  { path: "/about/", expectedStatus: 200, kind: "html" },
-  { path: "/publisher/", expectedStatus: 200, kind: "html" },
-  {
-    path: "/editorial-standards/",
-    expectedStatus: 200,
-    kind: "html",
-  },
-  { path: "/corrections/", expectedStatus: 200, kind: "html" },
-  { path: "/contact/", expectedStatus: 200, kind: "html" },
-  { path: "/privacy/", expectedStatus: 200, kind: "html" },
-  {
-    path: "/advertising-disclosure/",
-    expectedStatus: 200,
-    kind: "html",
-  },
-  { path: "/sitemap/", expectedStatus: 200, kind: "html" },
-  { path: "/sitemap-index.xml", expectedStatus: 200, kind: "text" },
-  { path: "/sitemap-0.xml", expectedStatus: 200, kind: "text" },
-  { path: "/rss.xml", expectedStatus: 200, kind: "text" },
-  { path: "/robots.txt", expectedStatus: 200, kind: "text" },
-  { path: "/admin/", expectedStatus: 404, kind: "absent" },
-  { path: "/keystatic/", expectedStatus: 404, kind: "absent" },
-  { path: "/.pages.yml", expectedStatus: 404, kind: "absent" },
-  {
-    path: "/articles/cms-fixture-minimum-draft/",
-    expectedStatus: 404,
-    kind: "absent",
-  },
-  { path: "/ads.txt", expectedStatus: 404, kind: "absent" },
-  {
-    path: "/production-smoke-route-that-must-not-exist/",
-    expectedStatus: 404,
-    kind: "html",
-    canonicalPath: "/404.html",
-  },
-]);
+export function createProductionRoutes({
+  archivedArticlePaths = ARCHIVED_ARTICLE_PATHS,
+  archivedOnlyManagedImagePaths = ARCHIVED_ONLY_MANAGED_IMAGE_PATHS,
+  publishedArticlePaths = PUBLISHED_ARTICLE_PATHS,
+} = {}) {
+  return [
+    { path: "/", expectedStatus: 200, kind: "html" },
+    { path: "/categories/", expectedStatus: 200, kind: "html" },
+    { path: "/articles/", expectedStatus: 200, kind: "html" },
+    {
+      path: "/categories/ai-automation/",
+      expectedStatus: 200,
+      kind: "html",
+    },
+    {
+      path: "/categories/business-software/",
+      expectedStatus: 200,
+      kind: "html",
+    },
+    {
+      path: "/categories/cybersecurity-data-protection/",
+      expectedStatus: 200,
+      kind: "html",
+    },
+    {
+      path: "/categories/digital-operations/",
+      expectedStatus: 200,
+      kind: "html",
+    },
+    {
+      path: "/categories/technology-strategy/",
+      expectedStatus: 200,
+      kind: "html",
+    },
+    ...publishedArticlePaths.map((articlePath) => ({
+      path: articlePath,
+      expectedStatus: 200,
+      kind: "html",
+    })),
+    { path: "/toolkit/", expectedStatus: 200, kind: "html" },
+    ...TOOLKIT_DETAIL_PATHS.map((toolkitPath) => ({
+      path: toolkitPath,
+      expectedStatus: 200,
+      kind: "html",
+    })),
+    { path: "/about/", expectedStatus: 200, kind: "html" },
+    { path: "/publisher/", expectedStatus: 200, kind: "html" },
+    {
+      path: "/editorial-standards/",
+      expectedStatus: 200,
+      kind: "html",
+    },
+    { path: "/corrections/", expectedStatus: 200, kind: "html" },
+    { path: "/contact/", expectedStatus: 200, kind: "html" },
+    { path: "/privacy/", expectedStatus: 200, kind: "html" },
+    {
+      path: "/advertising-disclosure/",
+      expectedStatus: 200,
+      kind: "html",
+    },
+    { path: "/sitemap/", expectedStatus: 200, kind: "html" },
+    { path: "/sitemap-index.xml", expectedStatus: 200, kind: "text" },
+    { path: "/sitemap-0.xml", expectedStatus: 200, kind: "text" },
+    { path: "/rss.xml", expectedStatus: 200, kind: "text" },
+    { path: "/robots.txt", expectedStatus: 200, kind: "text" },
+    { path: "/admin/", expectedStatus: 404, kind: "absent" },
+    { path: "/keystatic/", expectedStatus: 404, kind: "absent" },
+    { path: "/.pages.yml", expectedStatus: 404, kind: "absent" },
+    {
+      path: "/articles/cms-fixture-minimum-draft/",
+      expectedStatus: 404,
+      kind: "absent",
+    },
+    { path: "/ads.txt", expectedStatus: 404, kind: "absent" },
+    ...archivedArticlePaths.map((articlePath) => ({
+      path: articlePath,
+      expectedStatus: 404,
+      kind: "absent",
+    })),
+    ...archivedOnlyManagedImagePaths.map((imagePath) => ({
+      path: imagePath,
+      expectedStatus: 404,
+      kind: "absent",
+    })),
+    {
+      path: "/production-smoke-route-that-must-not-exist/",
+      expectedStatus: 404,
+      kind: "html",
+      canonicalPath: "/404.html",
+    },
+  ];
+}
+
+export const PRODUCTION_ROUTES = Object.freeze(createProductionRoutes());
 
 export function normalizeOrigin(value) {
   if (typeof value !== "string" || value.trim().length === 0) {

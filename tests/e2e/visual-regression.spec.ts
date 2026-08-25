@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { REPRESENTATIVE_ARTICLE_PATHS } from "../../scripts/publication-route-inventory.mjs";
+
 const localOrigin = "http://127.0.0.1:4321";
 const viewportHeight = 900;
 const viewportWidths = [390, 768, 1440] as const;
@@ -12,7 +14,7 @@ const routes = [
   },
   {
     alias: "article",
-    path: "/articles/back-up-business-files-with-the-3-2-1-method/",
+    path: REPRESENTATIVE_ARTICLE_PATHS.backup,
     status: 200,
   },
   { alias: "toolkit", path: "/toolkit/", status: 200 },

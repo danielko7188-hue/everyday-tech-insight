@@ -1,7 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-const articlePath = "/articles/how-to-identify-business-tasks-for-automation/";
+import { REPRESENTATIVE_ARTICLE_PATHS } from "../../scripts/publication-route-inventory.mjs";
+
+const articlePath = REPRESENTATIVE_ARTICLE_PATHS.primary;
 const categoryPath = "/categories/ai-automation/";
 const toolkitDetailPath = "/toolkit/automation-candidate-screen/";
 const wcagTags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];

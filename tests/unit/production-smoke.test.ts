@@ -1163,6 +1163,83 @@ describe("production route smoke", () => {
     }
   });
 
+  it("derives archived article routes and archived-only managed images as absent production checks", async () => {
+    const productionSmoke = await import("../../scripts/check-production.mjs");
+
+    expect(productionSmoke).toHaveProperty("derivePublicationRouteInventory");
+    expect(productionSmoke).toHaveProperty("createProductionRoutes");
+    if (
+      !("derivePublicationRouteInventory" in productionSmoke) ||
+      !("createProductionRoutes" in productionSmoke)
+    )
+      return;
+
+    const fixtureRoot = mkdtempSync(
+      path.join(tmpdir(), "eti-production-archive-inventory-"),
+    );
+    writeFileSync(
+      path.join(fixtureRoot, "current.md"),
+      [
+        "---",
+        "status: published",
+        "slug: current-guide",
+        "category: digital-operations",
+        "visual:",
+        "  type: workflow",
+        "---",
+        "Current.",
+        "",
+      ].join("\n"),
+    );
+    writeFileSync(
+      path.join(fixtureRoot, "former.md"),
+      [
+        "---",
+        "status: archived",
+        "slug: former-guide",
+        'heroImage: "/images/articles/former-guide-evidence.webp"',
+        "---",
+        "Archived. ![Archived evidence overview](/images/articles/former-guide-body.webp)",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const inventory = await productionSmoke.derivePublicationRouteInventory(
+        fixtureRoot,
+        { requiredHistoricalPaths: ["/articles/former-guide/"] },
+      );
+      expect(inventory).toMatchObject({
+        archivedArticlePaths: ["/articles/former-guide/"],
+        archivedOnlyManagedImagePaths: [
+          "/images/articles/former-guide-body.webp",
+          "/images/articles/former-guide-evidence.webp",
+        ],
+        publishedArticlePaths: ["/articles/current-guide/"],
+      });
+
+      const routes = productionSmoke.createProductionRoutes(inventory);
+      for (const absentPath of [
+        "/articles/former-guide/",
+        "/images/articles/former-guide-body.webp",
+        "/images/articles/former-guide-evidence.webp",
+      ]) {
+        expect(routes).toContainEqual({
+          expectedStatus: 404,
+          kind: "absent",
+          path: absentPath,
+        });
+      }
+      expect(routes).toContainEqual({
+        expectedStatus: 200,
+        kind: "html",
+        path: "/articles/current-guide/",
+      });
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
   function makeFetch(
     routes: ReadonlyArray<ProductionRoute>,
     overrides: Record<string, FetchOverride> = {},

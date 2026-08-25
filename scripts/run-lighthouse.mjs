@@ -16,6 +16,8 @@ import { chromium } from "@playwright/test";
 import * as chromeLauncher from "chrome-launcher";
 import lighthouse from "lighthouse";
 
+import { REPRESENTATIVE_ARTICLE_PATHS } from "./publication-route-inventory.mjs";
+
 export const LIGHTHOUSE_THRESHOLDS = Object.freeze({
   performance: 0.9,
   accessibility: 0.95,
@@ -35,7 +37,7 @@ export const LIGHTHOUSE_PAGES = Object.freeze([
   }),
   Object.freeze({
     name: "automation-candidates-article",
-    path: "/articles/how-to-identify-business-tasks-for-automation/",
+    path: REPRESENTATIVE_ARTICLE_PATHS.primary,
   }),
   Object.freeze({ name: "toolkit", path: "/toolkit/" }),
 ]);
