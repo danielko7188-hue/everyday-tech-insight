@@ -363,7 +363,125 @@ describe("Pages CMS configuration", () => {
         ({ code }) => code === "false-hosted-claim",
       ),
     ).toEqual([]);
+
+    for (const boundary of [
+      "Hosted CMS authentication is unverified, while browser saving is tested in its own unit suite",
+      "Hosted CMS authentication is unverified, but the browser saving is tested",
+      "Browser saving is tested and the hosted CMS authentication is unverified",
+      "Hosted CMS saving remains to be tested before use",
+      "Hosted CMS authentication is unverified, but local round-trip is verified by its unit suite",
+      "Hosted CMS saving has yet to be tested before use",
+      "Hosted CMS saving is yet to be tested before use",
+      "Hosted CMS saving is pending review before it is tested",
+      "Hosted CMS saving is awaiting independent review before being tested",
+      "Hosted CMS saving is pending and browser authentication is verified in its unit suite",
+    ]) {
+      const localOrPendingBoundary = structuredClone(await validConfig());
+      field(localOrPendingBoundary, "title").label = boundary;
+      expect(
+        validatePagesCmsConfig(localOrPendingBoundary).filter(
+          ({ code }) => code === "false-hosted-claim",
+        ),
+        boundary,
+      ).toEqual([]);
+    }
+
+    const hostedCoordinatedClaim = structuredClone(await validConfig());
+    field(hostedCoordinatedClaim, "title").label =
+      "Hosted CMS authentication is unverified, while CMS saving is tested";
+    expect(validatePagesCmsConfig(hostedCoordinatedClaim)).toContainEqual(
+      expect.objectContaining({
+        code: "false-hosted-claim",
+        location: "content[0].fields[0].label",
+      }),
+    );
+
+    const elidedHostedSubject = structuredClone(await validConfig());
+    field(elidedHostedSubject, "title").label =
+      "Hosted CMS authentication is unverified, while saving is tested";
+    expect(validatePagesCmsConfig(elidedHostedSubject)).toContainEqual(
+      expect.objectContaining({
+        code: "false-hosted-claim",
+        location: "content[0].fields[0].label",
+      }),
+    );
   });
+
+  it.each([
+    [
+      "source child hidden",
+      (config: CmsConfig) =>
+        (field(field(config, "sourceList"), "title").hidden = true),
+      "source-child-contract",
+      "fields.sourceList.title",
+    ],
+    [
+      "source child list",
+      (config: CmsConfig) =>
+        (field(field(config, "sourceList"), "publisher").list = true),
+      "source-child-contract",
+      "fields.sourceList.publisher",
+    ],
+    [
+      "source child component",
+      (config: CmsConfig) =>
+        (field(field(config, "sourceList"), "url").component = "textarea"),
+      "source-child-contract",
+      "fields.sourceList.url",
+    ],
+    [
+      "visual child readonly",
+      (config: CmsConfig) =>
+        (field(field(config, "visual"), "alt").readonly = true),
+      "visual-child-contract",
+      "fields.visual.alt",
+    ],
+    [
+      "visual object component",
+      (config: CmsConfig) => (field(config, "visual").component = "custom"),
+      "visual-object-contract",
+      "fields.visual",
+    ],
+    [
+      "visual child unknown key",
+      (config: CmsConfig) =>
+        (field(field(config, "visual"), "caption").inventedConstraint = true),
+      "visual-child-contract",
+      "fields.visual.caption",
+    ],
+    [
+      "hero component",
+      (config: CmsConfig) => (field(config, "heroImage").component = "file"),
+      "hero-media",
+      "fields.heroImage",
+    ],
+    [
+      "canonical readonly",
+      (config: CmsConfig) =>
+        (field(config, "canonicalOverride").readonly = true),
+      "hero-seo-contract",
+      "fields.canonicalOverride",
+    ],
+    [
+      "noindex hidden",
+      (config: CmsConfig) => (field(config, "noindex").hidden = true),
+      "hero-seo-contract",
+      "fields.noindex",
+    ],
+  ])(
+    "rejects semantic or unknown nested field drift for %s",
+    async (_label, mutate, expectedCode, expectedLocation) => {
+      const config = structuredClone(await validConfig());
+      mutate(config);
+
+      expect(validatePagesCmsConfig(config)).toContainEqual(
+        expect.objectContaining({
+          code: expectedCode,
+          location: expectedLocation,
+        }),
+      );
+    },
+  );
 
   it.each([
     [
