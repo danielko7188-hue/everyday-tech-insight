@@ -253,6 +253,23 @@ export function validateManagedArticleImageMetadata(
 ) {
   validateManagedArticleImageByteLength(byteLength);
 
+  const privacyBearingMetadata = [
+    ["EXIF", metadata?.exif],
+    ["IPTC", metadata?.iptc],
+    ["XMP", metadata?.xmp],
+    ["XMP", metadata?.xmpAsString],
+    ["Photoshop", metadata?.tifftagPhotoshop],
+    ["PNG text comment", metadata?.comments],
+  ];
+  const detectedMetadata = privacyBearingMetadata.find(
+    ([, value]) => value !== undefined && value !== null,
+  );
+  if (detectedMetadata) {
+    throw new Error(
+      `Managed images cannot contain embedded ${detectedMetadata[0]} metadata; remove ancillary metadata before committing public image bytes.`,
+    );
+  }
+
   const expectedFormat = extension === "jpg" ? "jpeg" : extension;
   if (metadata?.format !== expectedFormat) {
     throw new Error(

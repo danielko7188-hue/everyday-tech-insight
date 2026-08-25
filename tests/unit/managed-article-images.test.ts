@@ -81,6 +81,43 @@ function corruptPngIdat(bytes: Buffer) {
   throw new Error("PNG fixture did not contain an IDAT chunk.");
 }
 
+function crc32(bytes: Buffer) {
+  let checksum = 0xffffffff;
+  for (const byte of bytes) {
+    checksum ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      checksum = (checksum >>> 1) ^ (checksum & 1 ? 0xedb88320 : 0x00000000);
+    }
+  }
+  return (checksum ^ 0xffffffff) >>> 0;
+}
+
+function pngChunk(type: string, data: Buffer) {
+  const typeBytes = Buffer.from(type, "ascii");
+  const chunk = Buffer.alloc(data.byteLength + 12);
+  chunk.writeUInt32BE(data.byteLength, 0);
+  typeBytes.copy(chunk, 4);
+  data.copy(chunk, 8);
+  chunk.writeUInt32BE(
+    crc32(Buffer.concat([typeBytes, data])),
+    data.byteLength + 8,
+  );
+  return chunk;
+}
+
+function addPngTextComment(bytes: Buffer, keyword: string, text: string) {
+  const ihdrEnd = 8 + 12 + bytes.readUInt32BE(8);
+  const comment = pngChunk(
+    "tEXt",
+    Buffer.from(`${keyword}\0${text}`, "latin1"),
+  );
+  return Buffer.concat([
+    bytes.subarray(0, ihdrEnd),
+    comment,
+    bytes.subarray(ihdrEnd),
+  ]);
+}
+
 afterEach(async () => {
   await Promise.all(
     temporaryDirectories
@@ -259,9 +296,19 @@ describe("managed article image inspection", () => {
     expect(maximumObservedRead).toBeLessThanOrEqual(observedReadLimit);
   });
 
-  it("uses orientation-aware dimensions", async () => {
+  it("uses orientation-aware dimensions", () => {
+    expect(
+      validateManagedArticleImageMetadata(
+        { format: "jpeg", width: 12, height: 8, orientation: 6 },
+        "jpg",
+        100,
+      ),
+    ).toEqual({ format: "jpeg", width: 8, height: 12 });
+  });
+
+  it("rejects a JPEG containing EXIF author metadata", async () => {
     const { repositoryRoot, sourceRoot } = await makeRepository();
-    const filename = "a-practical-guide-oriented-photo.jpg";
+    const filename = "a-practical-guide-private-author.jpg";
     const bytes = await sharp({
       create: {
         width: 12,
@@ -271,8 +318,11 @@ describe("managed article image inspection", () => {
       },
     })
       .jpeg()
-      .withMetadata({ orientation: 6 })
+      .withExif({ IFD0: { Artist: "Private Author" } })
       .toBuffer();
+    await expect(sharp(bytes).metadata()).resolves.toMatchObject({
+      exif: expect.any(Buffer),
+    });
     await writeFile(path.join(sourceRoot, filename), bytes);
 
     await expect(
@@ -281,7 +331,34 @@ describe("managed article image inspection", () => {
         publicUrl: `/images/articles/${filename}`,
         repositoryRoot,
       }),
-    ).resolves.toMatchObject({ width: 8, height: 12 });
+    ).rejects.toThrow(/EXIF|metadata/i);
+  });
+
+  it("rejects a PNG containing a text comment", async () => {
+    const { repositoryRoot, sourceRoot } = await makeRepository();
+    const filename = "a-practical-guide-private-comment.png";
+    const bytes = addPngTextComment(
+      await rasterBuffer("png"),
+      "Comment",
+      "Private author and device details",
+    );
+    await expect(sharp(bytes).metadata()).resolves.toMatchObject({
+      comments: [
+        {
+          keyword: "Comment",
+          text: "Private author and device details",
+        },
+      ],
+    });
+    await writeFile(path.join(sourceRoot, filename), bytes);
+
+    await expect(
+      inspectManagedArticleImage({
+        articleSlug: "a-practical-guide",
+        publicUrl: `/images/articles/${filename}`,
+        repositoryRoot,
+      }),
+    ).rejects.toThrow(/comment|metadata/i);
   });
 
   it("accepts exact size and dimension boundaries", () => {
@@ -295,6 +372,78 @@ describe("managed article image inspection", () => {
   });
 
   it.each([
+    [
+      "EXIF metadata",
+      {
+        format: "jpeg",
+        width: 10,
+        height: 10,
+        exif: Buffer.from("private EXIF"),
+      },
+      "jpg",
+      100,
+      /embedded EXIF metadata/,
+    ],
+    [
+      "IPTC metadata",
+      {
+        format: "jpeg",
+        width: 10,
+        height: 10,
+        iptc: Buffer.from("private IPTC"),
+      },
+      "jpg",
+      100,
+      /embedded IPTC metadata/,
+    ],
+    [
+      "XMP metadata",
+      {
+        format: "png",
+        width: 10,
+        height: 10,
+        xmp: Buffer.from("private XMP"),
+      },
+      "png",
+      100,
+      /embedded XMP metadata/,
+    ],
+    [
+      "decoded XMP text",
+      {
+        format: "png",
+        width: 10,
+        height: 10,
+        xmpAsString: "private XMP",
+      },
+      "png",
+      100,
+      /embedded XMP metadata/,
+    ],
+    [
+      "Photoshop metadata",
+      {
+        format: "jpeg",
+        width: 10,
+        height: 10,
+        tifftagPhotoshop: Buffer.from("private Photoshop metadata"),
+      },
+      "jpg",
+      100,
+      /embedded Photoshop metadata/,
+    ],
+    [
+      "PNG comments",
+      {
+        format: "png",
+        width: 10,
+        height: 10,
+        comments: [{ keyword: "Author", text: "Private name" }],
+      },
+      "png",
+      100,
+      /embedded PNG text comment metadata/,
+    ],
     [
       "oversized bytes",
       { format: "png", width: 10, height: 10 },
