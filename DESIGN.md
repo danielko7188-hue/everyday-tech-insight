@@ -153,11 +153,9 @@ The article metadata selects one of thirteen supported visual families and a sta
 
 ## Advertising boundary
 
-`site.integrations.monetization.mode` is currently `off`. In this state the reusable ad-slot component renders no element, text, script, publisher identifier, empty box, or layout gap.
+`site.integrations.monetization` accepts exactly `{ mode: "off" }` in this release. It rejects every provider, publisher/account value, verification method, `ads.txt` value, display unit, placement, advertising CMP value, or other extra field. The site renders no verification marker, ad script, request, slot, label, empty box, or layout gap, and no dormant ad component is shipped.
 
-`verification` is a separate owner-authorized state. It may emit exactly one validated AdSense site-verification artifact (`meta` or `ads.txt`) and never emits an advertising script, display unit, or reserved gap.
-
-`live` is accepted only after the complete owner evidence tuple passes validation: the provider and publisher ID, AdSense site status, owner authorization, reviewed disclosure, matching authorized `ads.txt` record, a recorded consent/CMP decision, and unique allowlisted placements. Eligible units are limited to published guides of at least 800 words at `article-after-intro` or `article-before-sources`; every rendered region has reserved dimensions and the visible label **Advertisement**. The current release remains `off` and renders none.
+`verification` and `live` are deliberately not implemented states. A future owner-authorized release must design and test the exact account verification artifact, `ads.txt` output, route eligibility, provider initialization, production CSP, account-side ad settings, consent/CMP behavior where applicable, privacy/disclosure copy, and production requests as one end-to-end change. Supplying a value or changing one flag can never activate advertising in the current code.
 
 ## Asset, performance, and accessibility rules
 

@@ -51,11 +51,11 @@ For relevant ad traffic in the EEA, the UK, or Switzerland, Google documents cer
 
 ## Engineering controls before any future monetization
 
-1. Keep the exact discriminated mode `off | verification | live` as the only monetization state source.
-2. `off` must reject every provider, publisher/account value, verification method, display unit, placement, CMP value, and `ads.txt` value.
-3. `verification` may contain only one complete, genuine owner-authorized site-verification tuple and must not render display ads.
-4. `live` must fail closed unless the genuine provider/account tuple, site status, explicit authorization, disclosure state, applicable CMP decision, approved placement allowlist, and account-authorized `ads.txt` line are complete.
-5. Any future change must update Privacy and Advertising disclosure copy from the same configuration, run the full local gate, deploy the exact pushed commit, and receive direct production verification.
+1. Keep the current integration exact and off-only: `{ mode: "off" }` is the sole accepted monetization configuration.
+2. Reject every provider, publisher/account value, verification method, display unit, placement, CMP value, `ads.txt` value, and unknown extra field.
+3. Do not add a verification state until the genuine owner-authorized artifact is available and its exact deployed output can be tested without loading advertising.
+4. Do not add a live state until provider initialization, route eligibility, account-side settings, production CSP, authorized `ads.txt`, and the applicable consent/CMP behavior are implemented and tested together from genuine owner evidence.
+5. Any future change must derive Privacy and Advertising disclosure copy from the complete validated integration state, run the full local gate, deploy the exact pushed commit, and receive direct production verification.
 
 ## Release boundary
 

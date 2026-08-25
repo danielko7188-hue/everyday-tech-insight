@@ -4,19 +4,19 @@
 
 **Goal:** Add fail-closed monetization readiness, reproducible release evidence, expanded mobile/desktop quality gates, and a GitHub-first Vercel production release whose exact live state is verified.
 
-**Architecture:** One discriminated monetization configuration drives code, disclosure copy, and production assertions. One capture manifest records immutable screenshot hashes and observed HTTP/runtime facts. `npm run qa` remains the local release gate; GitHub `main` is pushed and SHA-verified before Vercel deployment. External owner, Pages CMS, AdSense, legal, rights, and human-review gates remain explicitly open.
+**Architecture:** One strict off-only monetization configuration drives code, disclosure copy, and production assertions. Verification/live support is intentionally deferred until genuine owner evidence and an end-to-end provider, CSP, consent, route, and `ads.txt` implementation can be tested together. One capture manifest records immutable screenshot hashes and observed HTTP/runtime facts. `npm run qa` remains the local release gate; GitHub `main` is pushed and SHA-verified before Vercel deployment. External owner, Pages CMS, AdSense, legal, rights, and human-review gates remain explicitly open.
 
 **Tech stack:** Astro 7 static output, Node.js ESM, Zod, Vitest, Playwright, axe, Lighthouse, Sharp, GitHub, Vercel CLI.
 
 ---
 
-### Task 1: Encode fail-closed monetization modes without enabling ads
+### Task 1: Encode a complete fail-closed advertising-off release
 
 **Files:**
 
 - Modify: `site.config.mjs`
 - Create: `src/utils/monetization.ts`
-- Modify: `src/components/AdSlot.astro`
+- Delete: `src/components/AdSlot.astro`
 - Modify: `src/layouts/BaseLayout.astro`
 - Modify: `src/pages/privacy.astro`
 - Modify: `src/pages/advertising-disclosure.astro`
@@ -27,20 +27,20 @@
 - Modify: `scripts/qa-build.mjs`
 - Modify: `scripts/check-production.mjs`
 
-- [ ] **Step 1: Write failing discriminated-union tests**
+- [x] **Step 1: Write failing exact-state tests**
 
-Require exact `off | verification | live` modes. Off rejects provider/ID/meta/ads.txt/CMP/placement values. Verification requires a complete exact `meta` or `ads-txt` tuple and forbids display units. Live requires the exact owner-provided public tuple, site-status evidence, authorization, disclosure state, authorized ads.txt line, and applicable certified-CMP decision. Partial tuples fail closed.
+Require exactly `{ mode: "off" }`. Reject provider/ID/meta/`ads.txt`/CMP/placement values, unknown fields, and the unimplemented `verification` and `live` labels. Scan production source for literal owner identifiers and dormant ad integration markers.
 
-Also require a pure placement allowlist containing only `article-after-intro` and `article-before-sources`; exclude unpublished, Toolkit/download, trust/legal, 404, feed/sitemap, CMS, navigation-adjacent, and short-content contexts.
+Independent review rejected the earlier dormant three-state implementation because alternate states were not end-to-end compatible with provider initialization, CSP, consent, route eligibility, account settings, and `ads.txt` output. This release removes that incomplete surface instead of presenting it as readiness.
 
 - [ ] **Step 2: Run red tests**
 
 Run: `npm test -- --run tests/unit/monetization.test.ts tests/unit/site-config.test.ts tests/unit/qa-rules.test.ts tests/unit/production-smoke.test.ts`  
 Expected: FAIL because the current config is a boolean.
 
-- [ ] **Step 3: Implement only the off configuration**
+- [x] **Step 3: Implement only the off configuration**
 
-Code the dormant validation and conditional interfaces without sample publisher IDs or verification values. Current output must contain no ad script, meta identifier, ad request, slot, label, gap, CMP, analytics, tracking, or `ads.txt`. Disclosure/privacy wording derives from the active off mode.
+Implement no dormant alternate-mode interface and use no sample publisher IDs or verification values. Current output must contain no ad script, meta identifier, ad request, slot, label, gap, CMP, analytics, tracking, or `ads.txt`. Disclosure/privacy wording derives from the complete validated integration state.
 
 - [ ] **Step 4: Verify and commit**
 
@@ -48,7 +48,7 @@ Run focused unit tests plus `npm run build && npm run check:seo`. Confirm `/ads.
 
 ```text
 git add site.config.mjs src scripts/qa-build.mjs scripts/check-production.mjs tests/unit
-git commit -m "feat(monetization): enforce advertising-off safety modes"
+git commit -m "refactor(monetization): ship advertising-off only"
 ```
 
 ### Task 2: Build a versioned evidence capture and manifest harness

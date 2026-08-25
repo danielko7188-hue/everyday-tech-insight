@@ -122,7 +122,7 @@ Unresolved gates use `OWNER ACTION REQUIRED` or `UNKNOWN`; neither is an error i
 - `reason`: No authenticated AdSense account state, site state, approved publisher identifier, or authorization to enable advertising exists in the repository.
 - `accepted evidence`: Owner-observed account and site status plus the exact platform-issued values, accompanied by explicit approval for their intended public use.
 - `public effect`: Monetization remains off with no publisher identifier, ad code, ad request, slot, blank ad gap, or approval claim.
-- `next action`: Keep advertising disabled unless the owner supplies exact values and separately authorizes the verification or live configuration.
+- `next action`: Keep advertising disabled unless the owner supplies exact values and separately authorizes a fully implemented and reviewed verification or live release.
 
 ## Gate 16: Approved verification method and exact value
 
@@ -130,7 +130,7 @@ Unresolved gates use `OWNER ACTION REQUIRED` or `UNKNOWN`; neither is an error i
 - `reason`: No AdSense site-verification method or exact owner-provided value has been selected or supplied.
 - `accepted evidence`: The platform-presented verification method and exact value, copied by the owner from the authenticated account and approved for insertion.
 - `public effect`: No verification meta tag, script, file, or `ads.txt` value is emitted.
-- `next action`: Choose one supported method only after Gate 15 is evidenced, validate it through the fail-closed configuration, and verify the deployed response.
+- `next action`: Choose one supported method only after Gate 15 is evidenced, implement that exact method in a separate fail-closed release, and verify the deployed response.
 
 ## Gate 17: Authorized ads.txt line and certified CMP decision where applicable
 
@@ -138,7 +138,7 @@ Unresolved gates use `OWNER ACTION REQUIRED` or `UNKNOWN`; neither is an error i
 - `reason`: No platform-authorized `ads.txt` line has been supplied to the repository, and applicability or selection of a certified consent-management platform cannot be determined from the static repository.
 - `accepted evidence`: The exact account-issued `ads.txt` line plus a documented jurisdiction and consent assessment identifying whether a certified CMP is required and, if so, the approved configuration.
 - `public effect`: `/ads.txt` remains absent and no advertising CMP, consent banner, tracking request, or vendor claim is added.
-- `next action`: Obtain the exact values and qualified applicability decision before any live advertising mode is considered.
+- `next action`: Obtain the exact values and qualified applicability decision before a separate end-to-end live advertising implementation is considered.
 
 ## Gate 18: Final owner acceptance of content, disclosures, placements, and production release
 

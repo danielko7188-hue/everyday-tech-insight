@@ -364,30 +364,21 @@ Automated word/source/route checks remain necessary but cannot prove originality
 
 ## 13. Monetization architecture
 
-The three internal safety modes are:
+The release implementation accepts exactly one state:
 
 ```text
-off | verification | live
+{ mode: "off" }
 ```
 
-`off` is the only configured mode in this implementation.
+- Provider, publisher/account, verification, `ads.txt`, placement, advertising CMP, and unknown extra fields are rejected.
+- No AdSense script, publisher/meta ID, request, slot, label, blank gap, `ads.txt`, advertising CMP, or dormant ad component is emitted.
+- Privacy and disclosure pages derive their observable integration wording from the complete validated integration state. They do not claim legal sufficiency, owner identity, consent applicability, or Google approval.
 
-- No AdSense script, publisher/meta ID, request, slot, blank gap, ads.txt, or advertising CMP.
-- Privacy and disclosure pages describe the inactive factual state.
+The earlier three-state proposal was retracted for this release after independent review found that accepting dormant `verification` and `live` configurations would not prove end-to-end output, provider initialization, CSP compatibility, consent ordering, route eligibility, account-side Auto Ads settings, or exact `ads.txt` publication. A configuration that validates but cannot be safely executed is not a readiness feature.
 
-The typed configuration is validated as a discriminated union:
+`verification` and `live` are therefore future workflow labels only. They may be implemented in a separately reviewed release after genuine owner/account evidence exists. That release must test the selected verification artifact, exact `ads.txt` bytes where applicable, provider initialization, eligible and excluded routes, production CSP and requests, account-side settings, the actual consent/CMP implementation where required, and synchronized privacy/disclosure copy. Changing one flag or adding one identifier can never activate advertising in the current code.
 
-- `off`: provider, publisher ID, verification value, ads.txt line, CMP, and placements must all be absent or disabled.
-- `verification`: provider is `google-adsense`; an explicit method is either `meta` or `ads-txt`; one exact owner-provided public value is required; ad script and display placements remain disabled. The `meta` method may render only the exact verification meta value. The `ads-txt` method requires a reviewed generated file. Neither method implies approval.
-- `live`: provider is `google-adsense`; exact owner-provided publisher ID, confirmed AdSense site status, explicit owner authorization, reviewed disclosure copy, an authorized ads.txt line, and the applicable certified-CMP decision are required. A non-applicable CMP decision requires recorded jurisdiction/legal reasoning rather than an automated guess.
-
-The production environment must not be able to enter `verification` or `live` by setting only one flag. Validation fails closed when the mode and its complete evidence/configuration tuple disagree. Secrets are never placed in public config; AdSense publisher and verification values are public only after the owner deliberately supplies and authorizes them.
-
-`verification` renders no display units. `live` can render only explicitly eligible placements, never a generic blank slot. Initial eligibility is limited to `article-after-intro` and `article-before-sources` on a published guide whose body clears the documented length threshold. Every rendered unit has a visible `Advertisement` label, fixed responsive geometry to prevent layout shift, and a programmatic label. The current release renders none.
-
-Conservative future placement eligibility is encoded but inactive. Toolkit/download, trust/legal, 404, sitemap/RSS, CMS, unpublished content, and other noneditorial surfaces are excluded. No approval or compliance guarantee is made.
-
-`ads.txt` is absent in `off` mode and therefore returns 404. It is generated only for an owner-authorized `ads-txt` verification or `live` configuration, and its line must round-trip exactly through validation. Privacy and advertising-disclosure pages derive their factual integration-state wording from the same mode so copy cannot claim active ads, cookies, or consent tooling while code is off.
+`/ads.txt` is absent and returns 404. Toolkit/download, trust/legal, 404, sitemap/RSS, CMS, unpublished content, and every other route remain ad-free. No approval or compliance guarantee is made.
 
 ## 14. SEO, structured data, performance, and security
 

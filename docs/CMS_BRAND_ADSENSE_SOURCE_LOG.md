@@ -92,10 +92,8 @@ Select **Signal Rail**, implemented as Balanced Purple Signal / Editorial Rail /
 
 ### Internal monetization controls
 
-`off`, `verification`, and `live` are internal safety modes, not Google product terminology.
+Only `off` is an implemented internal mode in this release; it is not Google product terminology. It permits no script, publisher/meta ID, request, slot, blank gap, `ads.txt`, or advertising CMP.
 
-- `off` remains default: no script, publisher/meta ID, request, slot, blank gap, ads.txt, or advertising CMP.
-- `verification` permits exactly one authenticated owner-provided verification method. The meta-tag method is preferred when no ad-serving script is desired. It renders no display unit.
-- `live` requires explicit owner authorization, exact IDs, confirmed AdSense site status, updated disclosures, reviewed placements, and the required owner-selected CMP.
+`verification` and `live` remain future workflow labels, not accepted code states. They require a separately reviewed end-to-end implementation after the owner supplies genuine account evidence and explicitly authorizes the exact change. This avoids shipping dormant advertising code or accepting a configuration that the build, CSP, consent model, and production checks cannot fully execute.
 
 The site design, article count, CMS, custom domain, metadata, or QA results cannot guarantee AdSense approval. Google alone decides.
