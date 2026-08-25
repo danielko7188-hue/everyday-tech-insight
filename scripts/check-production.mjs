@@ -1,10 +1,52 @@
 import { load } from "cheerio";
+import { lstat, readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { SaxesParser } from "saxes";
 import sharp from "sharp";
 
 import { siteConfig } from "../site.config.mjs";
+
+export const PRODUCTION_SECURITY_HEADERS = Object.freeze({
+  "content-security-policy":
+    "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; frame-src 'none'; img-src 'self' data:; manifest-src 'self'; media-src 'self'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; worker-src 'self'; upgrade-insecure-requests",
+  "cross-origin-opener-policy": "same-origin",
+  "permissions-policy":
+    "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
+});
+
+const GIT_SHA_PATTERN = /^[a-f\d]{40}$/;
+const MAX_DEPLOYMENT_METADATA_BYTES = 1024 * 1024;
+const METADATA_PARITY_CODES = new Set([
+  "canonical-origin",
+  "description",
+  "og-description",
+  "og-title",
+  "og-type",
+  "og-url",
+  "social-image",
+  "social-image-alt",
+  "social-image-height",
+  "social-image-type",
+  "social-image-width",
+  "title",
+  "twitter-card",
+  "twitter-description",
+  "twitter-image",
+  "twitter-image-alt",
+  "twitter-title",
+]);
+const MONETIZATION_BOUNDARY_CODES = new Set([
+  "adsense-account-meta",
+  "ad-integration-marker",
+  "consent-integration-marker",
+  "monetization-mode",
+  "tracking-signature",
+]);
 
 export const PUBLISHED_ARTICLE_PATHS = Object.freeze([
   "/articles/how-to-identify-business-tasks-for-automation/",
@@ -91,6 +133,14 @@ export const PRODUCTION_ROUTES = Object.freeze([
   { path: "/sitemap-0.xml", expectedStatus: 200, kind: "text" },
   { path: "/rss.xml", expectedStatus: 200, kind: "text" },
   { path: "/robots.txt", expectedStatus: 200, kind: "text" },
+  { path: "/admin/", expectedStatus: 404, kind: "absent" },
+  { path: "/keystatic/", expectedStatus: 404, kind: "absent" },
+  { path: "/.pages.yml", expectedStatus: 404, kind: "absent" },
+  {
+    path: "/articles/cms-fixture-minimum-draft/",
+    expectedStatus: 404,
+    kind: "absent",
+  },
   { path: "/ads.txt", expectedStatus: 404, kind: "absent" },
   {
     path: "/production-smoke-route-that-must-not-exist/",
@@ -123,6 +173,198 @@ export function normalizeOrigin(value) {
   }
 
   return url.origin;
+}
+
+export function normalizeExpectedGitSha(value) {
+  if (typeof value !== "string" || !GIT_SHA_PATTERN.test(value)) {
+    throw new Error(
+      "Expected Git SHA must be a full lowercase 40-character SHA.",
+    );
+  }
+  return value;
+}
+
+function deploymentGitShaCandidates(metadata) {
+  return [
+    metadata?.meta?.githubCommitSha,
+    metadata?.meta?.gitCommitSha,
+    metadata?.gitSource?.sha,
+  ].filter((value) => typeof value === "string" && value.length > 0);
+}
+
+export function validateDeploymentMetadata(
+  deploymentMetadata,
+  { expectedGitSha, origin },
+) {
+  const issues = [];
+  const expected = expectedGitSha
+    ? normalizeExpectedGitSha(expectedGitSha)
+    : null;
+  const normalizedOrigin = normalizeOrigin(origin);
+  const summary = {
+    deploymentId: null,
+    gitShaStatus: expected ? "UNVERIFIED" : "NOT_CHECKED",
+    reportedGitSha: null,
+    status: expected || deploymentMetadata ? "FAIL" : "NOT_CHECKED",
+  };
+
+  if (!expected && !deploymentMetadata) return { issues, summary };
+  if (!expected) {
+    issues.push(
+      finding(
+        "expected-git-sha",
+        "deployment-metadata",
+        "deployment metadata requires an explicit expected Git SHA.",
+      ),
+    );
+  }
+  if (
+    !deploymentMetadata ||
+    typeof deploymentMetadata !== "object" ||
+    Array.isArray(deploymentMetadata)
+  ) {
+    issues.push(
+      finding(
+        "deployment-metadata",
+        "deployment-metadata",
+        "trusted Vercel deployment metadata is required.",
+      ),
+    );
+    return { issues, summary };
+  }
+
+  const deploymentId = deploymentMetadata.id;
+  if (
+    typeof deploymentId !== "string" ||
+    !/^dpl_[A-Za-z0-9]+$/.test(deploymentId)
+  ) {
+    issues.push(
+      finding(
+        "deployment-id",
+        "deployment-metadata",
+        "Vercel deployment metadata must contain a valid deployment ID.",
+      ),
+    );
+  } else {
+    summary.deploymentId = deploymentId;
+  }
+  if (deploymentMetadata.readyState !== "READY") {
+    issues.push(
+      finding(
+        "deployment-state",
+        "deployment-metadata",
+        "Vercel deployment must report readyState READY.",
+      ),
+    );
+  }
+  if (deploymentMetadata.target !== "production") {
+    issues.push(
+      finding(
+        "deployment-target",
+        "deployment-metadata",
+        "Vercel deployment must target production.",
+      ),
+    );
+  }
+
+  const expectedHost = new URL(normalizedOrigin).hostname.toLowerCase();
+  const aliases = [
+    ...(Array.isArray(deploymentMetadata.alias)
+      ? deploymentMetadata.alias
+      : []),
+    ...(Array.isArray(deploymentMetadata.aliases)
+      ? deploymentMetadata.aliases
+      : []),
+  ];
+  if (
+    !aliases.some(
+      (alias) =>
+        typeof alias === "string" && alias.toLowerCase() === expectedHost,
+    )
+  ) {
+    issues.push(
+      finding(
+        "deployment-alias",
+        "deployment-metadata",
+        `Vercel deployment aliases must include ${expectedHost}.`,
+      ),
+    );
+  }
+
+  const deploymentUrl = deploymentMetadata.url;
+  if (
+    typeof deploymentUrl !== "string" ||
+    !/^[a-z\d](?:[a-z\d-]*[a-z\d])?(?:\.[a-z\d](?:[a-z\d-]*[a-z\d])?)+$/i.test(
+      deploymentUrl,
+    )
+  ) {
+    issues.push(
+      finding(
+        "deployment-url",
+        "deployment-metadata",
+        "Vercel deployment metadata must contain a hostname-only deployment URL.",
+      ),
+    );
+  }
+
+  const candidates = deploymentGitShaCandidates(deploymentMetadata);
+  const uniqueCandidates = [...new Set(candidates)];
+  if (uniqueCandidates.length === 0) {
+    issues.push(
+      finding(
+        "deployment-git-sha-unavailable",
+        "deployment-metadata",
+        "Vercel metadata does not expose a documented Git commit SHA field.",
+      ),
+    );
+  } else if (
+    uniqueCandidates.length !== 1 ||
+    !GIT_SHA_PATTERN.test(uniqueCandidates[0]) ||
+    uniqueCandidates[0] !== expected
+  ) {
+    summary.reportedGitSha =
+      uniqueCandidates.length === 1 && GIT_SHA_PATTERN.test(uniqueCandidates[0])
+        ? uniqueCandidates[0]
+        : null;
+    issues.push(
+      finding(
+        "deployment-git-sha",
+        "deployment-metadata",
+        "Vercel deployment Git SHA does not exactly match the expected SHA.",
+      ),
+    );
+  } else {
+    summary.gitShaStatus = "MATCH";
+    summary.reportedGitSha = uniqueCandidates[0];
+  }
+
+  if (issues.length === 0) summary.status = "PASS";
+  return { issues, summary };
+}
+
+function inspectResponseContract(response, requestedUrl, route) {
+  const issues = [];
+  if (response.url !== requestedUrl.href) {
+    issues.push(
+      finding(
+        "response-url",
+        route,
+        `response URL must exactly equal ${requestedUrl.href}.`,
+      ),
+    );
+  }
+  for (const [name, expected] of Object.entries(PRODUCTION_SECURITY_HEADERS)) {
+    if (response.headers.get(name) !== expected) {
+      issues.push(
+        finding(
+          "security-header",
+          route,
+          `${name} must exactly equal the deployed security policy.`,
+        ),
+      );
+    }
+  }
+  return issues;
 }
 
 function rootRelativeAsset(value) {
@@ -1600,14 +1842,34 @@ async function isDecodableExpectedPng(bytes, expectation) {
 
 export async function runProductionCheck({
   origin,
+  canonicalOrigin = origin,
+  deploymentMetadata = null,
+  expectedGitSha = null,
   fetchImpl = fetch,
   routes = PRODUCTION_ROUTES,
 } = {}) {
   const normalizedOrigin = normalizeOrigin(origin);
+  const normalizedCanonicalOrigin = normalizeOrigin(canonicalOrigin);
   const issues = [];
   const assets = new Map();
   const failedAssetOwners = new Set();
   const inspectedPages = [];
+  let checkedSecurityResponses = 0;
+
+  if (normalizedOrigin !== normalizedCanonicalOrigin) {
+    issues.push(
+      finding(
+        "requested-origin",
+        "--origin",
+        `requested origin must exactly match canonical origin ${normalizedCanonicalOrigin}.`,
+      ),
+    );
+  }
+  const deploymentValidation = validateDeploymentMetadata(deploymentMetadata, {
+    expectedGitSha,
+    origin: normalizedOrigin,
+  });
+  issues.push(...deploymentValidation.issues);
 
   if (siteConfig.integrations.monetization.mode !== "off") {
     issues.push(
@@ -1634,6 +1896,9 @@ export async function runProductionCheck({
       );
       continue;
     }
+
+    checkedSecurityResponses += 1;
+    issues.push(...inspectResponseContract(response, url, route.path));
 
     if (isRedirect(response.status)) {
       const location = response.headers.get("location") ?? "[no Location]";
@@ -1763,6 +2028,14 @@ export async function runProductionCheck({
       );
       continue;
     }
+    checkedSecurityResponses += 1;
+    for (const responseIssue of inspectResponseContract(
+      response,
+      new URL(asset.url, `${normalizedOrigin}/`),
+      asset.url,
+    )) {
+      addAssetFinding(asset, responseIssue.code, responseIssue.message);
+    }
     if (isRedirect(response.status)) {
       addAssetFinding(
         asset,
@@ -1828,13 +2101,143 @@ export async function runProductionCheck({
     status: failedRoutes.has(route.path) ? "FAIL" : "PASS",
   }));
 
+  const metadataIssues = issues.filter(({ code }) =>
+    METADATA_PARITY_CODES.has(code),
+  );
+  const monetizationIssues = issues.filter(({ code }) =>
+    MONETIZATION_BOUNDARY_CODES.has(code),
+  );
+  const securityHeaderIssues = issues.filter(
+    ({ code }) => code === "security-header",
+  );
+  const expectedInspectedPages = routes.filter(
+    ({ kind }) => kind === "html",
+  ).length;
+  const missingPageInspections = Math.max(
+    0,
+    expectedInspectedPages - inspectedPages.length,
+  );
+  const expectedSecurityResponses = routes.length + assets.size;
+  const missingSecurityResponses = Math.max(
+    0,
+    expectedSecurityResponses - checkedSecurityResponses,
+  );
+
   return {
     checkedAssets: assets.size,
     checkedRoutes: routes.length,
+    canonicalOrigin: normalizedCanonicalOrigin,
+    deployment: deploymentValidation.summary,
     issues,
+    metadataParity: {
+      checkedPages: inspectedPages.length,
+      expectedPages: expectedInspectedPages,
+      failures: metadataIssues.length + missingPageInspections,
+      status:
+        metadataIssues.length === 0 && missingPageInspections === 0
+          ? "PASS"
+          : "FAIL",
+    },
+    monetization: {
+      checkedPages: inspectedPages.length,
+      expectedPages: expectedInspectedPages,
+      failures: monetizationIssues.length + missingPageInspections,
+      mode: siteConfig.integrations.monetization.mode,
+      status:
+        siteConfig.integrations.monetization.mode === "off" &&
+        monetizationIssues.length === 0 &&
+        missingPageInspections === 0
+          ? "PASS"
+          : "FAIL",
+    },
     monetizationMode: siteConfig.integrations.monetization.mode,
     routeResults,
+    securityHeaders: {
+      checkedResponses: checkedSecurityResponses,
+      expectedResponses: expectedSecurityResponses,
+      failures: securityHeaderIssues.length + missingSecurityResponses,
+      status:
+        securityHeaderIssues.length === 0 && missingSecurityResponses === 0
+          ? "PASS"
+          : "FAIL",
+    },
   };
+}
+
+export function parseProductionArguments(args = [], env = process.env) {
+  const optionNames = new Set([
+    "--origin",
+    "--expected-sha",
+    "--deployment-metadata",
+  ]);
+  const values = new Map();
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    const separatorIndex = argument.indexOf("=");
+    const option =
+      separatorIndex >= 0 ? argument.slice(0, separatorIndex) : argument;
+    if (!optionNames.has(option)) {
+      throw new Error(`Unknown argument: ${argument}`);
+    }
+    if (values.has(option)) {
+      throw new Error(`${option} may be supplied only once.`);
+    }
+    const inlineValue =
+      separatorIndex >= 0 ? argument.slice(separatorIndex + 1) : null;
+    const value = inlineValue ?? args[index + 1];
+    if (!value || value.startsWith("--")) {
+      throw new Error(`${option} requires a value.`);
+    }
+    values.set(option, value);
+    if (inlineValue === null) index += 1;
+  }
+
+  const origin = normalizeOrigin(
+    values.get("--origin") ?? env.PRODUCTION_ORIGIN,
+  );
+  const expectedGitSha = normalizeExpectedGitSha(
+    values.get("--expected-sha") ?? env.PRODUCTION_EXPECTED_GIT_SHA,
+  );
+  const deploymentMetadataPath =
+    values.get("--deployment-metadata") ?? env.VERCEL_DEPLOYMENT_METADATA_PATH;
+  if (
+    typeof deploymentMetadataPath !== "string" ||
+    deploymentMetadataPath.length === 0 ||
+    deploymentMetadataPath.trim() !== deploymentMetadataPath ||
+    deploymentMetadataPath.includes("\0")
+  ) {
+    throw new Error(
+      "Provide --deployment-metadata <trusted-json-file> or set VERCEL_DEPLOYMENT_METADATA_PATH.",
+    );
+  }
+  return { deploymentMetadataPath, expectedGitSha, origin };
+}
+
+export async function loadDeploymentMetadata(metadataPath) {
+  const resolvedPath = path.resolve(metadataPath);
+  const stats = await lstat(resolvedPath);
+  if (
+    stats.isSymbolicLink() ||
+    !stats.isFile() ||
+    stats.size <= 0 ||
+    stats.size > MAX_DEPLOYMENT_METADATA_BYTES
+  ) {
+    throw new Error(
+      "Deployment metadata must be a nonempty regular JSON file no larger than 1 MiB.",
+    );
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(await readFile(resolvedPath, "utf8"));
+  } catch (error) {
+    throw new Error("Deployment metadata file must contain valid JSON.", {
+      cause: error,
+    });
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Deployment metadata JSON must contain one object.");
+  }
+  return parsed;
 }
 
 export function resolveProductionOrigin(args = [], env = process.env) {
@@ -1875,7 +2278,7 @@ export function formatProductionReport(origin, result) {
   );
   if (result.issues.length === 0) {
     lines.push(
-      `Production smoke: PASS (${result.checkedRoutes} routes, ${result.checkedAssets} root-relative assets, monetization ${result.monetizationMode} at ${origin})`,
+      `Production smoke: PASS (${result.checkedRoutes} routes, ${result.checkedAssets} root-relative assets, security ${result.securityHeaders.status}, metadata parity ${result.metadataParity.status}, monetization ${result.monetization.mode}/${result.monetization.status}, deployment ${result.deployment.status}, Git SHA ${result.deployment.gitShaStatus} at ${origin})`,
     );
     return lines.join("\n");
   }
@@ -1883,7 +2286,7 @@ export function formatProductionReport(origin, result) {
   lines.push(
     `Production smoke: FAIL (${result.issues.length} finding${
       result.issues.length === 1 ? "" : "s"
-    })`,
+    }; security ${result.securityHeaders.status}, metadata parity ${result.metadataParity.status}, monetization ${result.monetization.mode}/${result.monetization.status}, deployment ${result.deployment.status}, Git SHA ${result.deployment.gitShaStatus})`,
   );
   for (const issue of result.issues) {
     lines.push(`- [${issue.code}] ${issue.route}: ${issue.message}`);
@@ -1898,8 +2301,17 @@ function printResult(origin, result) {
 }
 
 async function main() {
-  const origin = resolveProductionOrigin(process.argv.slice(2), process.env);
-  const result = await runProductionCheck({ origin });
+  const { deploymentMetadataPath, expectedGitSha, origin } =
+    parseProductionArguments(process.argv.slice(2), process.env);
+  const deploymentMetadata = await loadDeploymentMetadata(
+    deploymentMetadataPath,
+  );
+  const result = await runProductionCheck({
+    canonicalOrigin: siteConfig.url,
+    deploymentMetadata,
+    expectedGitSha,
+    origin,
+  });
   printResult(origin, result);
   if (result.issues.length > 0) process.exitCode = 1;
 }

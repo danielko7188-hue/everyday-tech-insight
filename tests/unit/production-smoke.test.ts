@@ -19,6 +19,8 @@ type FetchOverride = {
   description?: string;
   error?: Error;
   headers?: Record<string, string>;
+  omitSecurityHeaders?: string[];
+  responseUrl?: string;
   status?: number;
   title?: string;
 };
@@ -53,6 +55,9 @@ type FixtureProductionSmokeModule = Omit<
     },
   ) => ReturnType<ProductionSmokeModule["inspectHtml"]>;
   runProductionCheck: (options: {
+    canonicalOrigin?: string;
+    deploymentMetadata?: Record<string, unknown>;
+    expectedGitSha?: string;
     origin: string;
     fetchImpl?: FixtureFetch;
     routes?: ReadonlyArray<ProductionRoute>;
@@ -76,6 +81,52 @@ function fetchUrl(input: FetchInput) {
 }
 
 const fixtureOrigin = "https://host.example";
+const expectedGitSha = "0123456789abcdef0123456789abcdef01234567";
+const securityHeadersFixture = {
+  "content-security-policy":
+    "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; frame-src 'none'; img-src 'self' data:; manifest-src 'self'; media-src 'self'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; worker-src 'self'; upgrade-insecure-requests",
+  "cross-origin-opener-policy": "same-origin",
+  "permissions-policy":
+    "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
+} as const;
+
+function responseAt(response: Response, url: string): Response {
+  Object.defineProperty(response, "url", { configurable: true, value: url });
+  return response;
+}
+
+function fixtureHeaders(
+  override: FetchOverride,
+  defaults: Record<string, string> = {},
+) {
+  const headers: Record<string, string> = {
+    ...securityHeadersFixture,
+    ...defaults,
+    ...override.headers,
+  };
+  for (const name of override.omitSecurityHeaders ?? []) {
+    delete headers[name.toLowerCase()];
+  }
+  return headers;
+}
+
+function deploymentMetadataFixture(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    alias: ["host.example"],
+    id: "dpl_AbCdEf1234567890",
+    meta: { githubCommitSha: expectedGitSha },
+    readyState: "READY",
+    target: "production",
+    url: "everyday-tech-insight-unique.vercel.app",
+    ...overrides,
+  };
+}
 
 async function generatedPngFixture(width: number, height: number) {
   const buffer = await sharp({
@@ -1017,17 +1068,28 @@ describe("production route smoke", () => {
     "/sitemap-0.xml",
     "/rss.xml",
     "/robots.txt",
+    "/admin/",
+    "/keystatic/",
+    "/.pages.yml",
+    "/articles/cms-fixture-minimum-draft/",
     "/ads.txt",
     "/production-smoke-route-that-must-not-exist/",
   ];
-  const expectedArticlePaths = requiredPaths.filter((path) =>
-    /^\/articles\/[^/]+\/$/.test(path),
+  const absentPaths = new Set([
+    "/admin/",
+    "/keystatic/",
+    "/.pages.yml",
+    "/articles/cms-fixture-minimum-draft/",
+    "/ads.txt",
+  ]);
+  const expectedArticlePaths = requiredPaths.filter(
+    (path) => /^\/articles\/[^/]+\/$/.test(path) && !absentPaths.has(path),
   );
   const expectedIndexablePaths = requiredPaths.filter(
     (path) =>
       !path.endsWith(".xml") &&
       path !== "/robots.txt" &&
-      path !== "/ads.txt" &&
+      !absentPaths.has(path) &&
       path !== "/production-smoke-route-that-must-not-exist/",
   );
 
@@ -1060,43 +1122,59 @@ describe("production route smoke", () => {
             : url.pathname === "/apple-touch-icon.png"
               ? (await appleTouchPngFixture).slice(0)
               : (await socialPngFixture).slice(0);
-        return new Response(override.body ?? defaultBody, {
-          status: override.status ?? 200,
-          headers: {
-            "content-type": url.pathname.endsWith(".svg")
-              ? "image/svg+xml"
-              : "image/png",
-            ...override.headers,
-          },
-        });
+        return responseAt(
+          new Response(override.body ?? defaultBody, {
+            status: override.status ?? 200,
+            headers: fixtureHeaders(override, {
+              "content-type": url.pathname.endsWith(".svg")
+                ? "image/svg+xml"
+                : "image/png",
+            }),
+          }),
+          override.responseUrl ?? url.href,
+        );
       }
       if (url.pathname === "/manifest.webmanifest") {
-        return new Response(override.body ?? "{}", {
-          status: override.status ?? 200,
-          headers: {
-            "content-type": "application/manifest+json",
-            ...override.headers,
-          },
-        });
+        return responseAt(
+          new Response(override.body ?? "{}", {
+            status: override.status ?? 200,
+            headers: fixtureHeaders(override, {
+              "content-type": "application/manifest+json",
+            }),
+          }),
+          override.responseUrl ?? url.href,
+        );
       }
 
       const route = routes.find(({ path }) => path === url.pathname);
       if (!route) {
         if (Object.hasOwn(overrides, url.pathname)) {
-          return new Response(override.body ?? "asset fixture", {
-            status: override.status ?? 200,
-            headers: override.headers,
-          });
+          return responseAt(
+            new Response(override.body ?? "asset fixture", {
+              status: override.status ?? 200,
+              headers: fixtureHeaders(override),
+            }),
+            override.responseUrl ?? url.href,
+          );
         }
-        return new Response("missing fixture", { status: 404 });
+        return responseAt(
+          new Response("missing fixture", {
+            status: 404,
+            headers: fixtureHeaders(override),
+          }),
+          override.responseUrl ?? url.href,
+        );
       }
 
       const status = override.status ?? route.expectedStatus;
       if (status >= 300 && status < 400) {
-        return new Response(null, {
-          status,
-          headers: override.headers,
-        });
+        return responseAt(
+          new Response(null, {
+            status,
+            headers: fixtureHeaders(override),
+          }),
+          override.responseUrl ?? url.href,
+        );
       }
       if (route.kind === "text") {
         const indexablePaths = routes
@@ -1106,8 +1184,13 @@ describe("production route smoke", () => {
           )
           .map(({ path }) => path);
         const articlePaths = routes
-          .map(({ path }) => path)
-          .filter((path) => /^\/articles\/[^/]+\/$/.test(path));
+          .filter(
+            (candidate) =>
+              candidate.kind === "html" &&
+              candidate.expectedStatus === 200 &&
+              /^\/articles\/[^/]+\/$/.test(candidate.path),
+          )
+          .map(({ path }) => path);
         const contentType =
           route.path === "/rss.xml"
             ? "application/rss+xml; charset=utf-8"
@@ -1124,34 +1207,45 @@ describe("production route smoke", () => {
                 : route.path === "/sitemap-0.xml"
                   ? sitemapFixture(indexablePaths)
                   : "";
-        return new Response(override.body ?? fixtureBody, {
-          status,
-          headers: { "content-type": contentType, ...override.headers },
-        });
+        return responseAt(
+          new Response(override.body ?? fixtureBody, {
+            status,
+            headers: fixtureHeaders(override, {
+              "content-type": contentType,
+            }),
+          }),
+          override.responseUrl ?? url.href,
+        );
       }
 
       const routeKey = route.path.replaceAll("/", "-") || "home";
-      return new Response(
-        override.body ??
-          htmlFixture({
-            title: override.title ?? `Page ${routeKey} | Everyday Tech Insight`,
-            description:
-              override.description ??
-              `Production smoke description for the unique route ${route.path}`,
-            canonical: `${fixtureOrigin}${route.canonicalPath ?? route.path}`,
-            ogType: /^\/articles\/[^/]+\/$/.test(route.path)
-              ? "article"
-              : "website",
-            robots:
-              route.canonicalPath === "/404.html"
-                ? "noindex,follow"
-                : "index,follow",
-            socialImage: `${fixtureOrigin}${fixtureSocialImagePath(route.path)}`,
-          }),
-        {
-          status,
-          headers: { "content-type": "text/html", ...override.headers },
-        },
+      return responseAt(
+        new Response(
+          override.body ??
+            htmlFixture({
+              title:
+                override.title ?? `Page ${routeKey} | Everyday Tech Insight`,
+              description:
+                override.description ??
+                `Production smoke description for the unique route ${route.path}`,
+              canonical: `${fixtureOrigin}${route.canonicalPath ?? route.path}`,
+              ogType: /^\/articles\/[^/]+\/$/.test(route.path)
+                ? "article"
+                : "website",
+              robots:
+                route.canonicalPath === "/404.html"
+                  ? "noindex,follow"
+                  : "index,follow",
+              socialImage: `${fixtureOrigin}${fixtureSocialImagePath(route.path)}`,
+            }),
+          {
+            status,
+            headers: fixtureHeaders(override, {
+              "content-type": "text/html",
+            }),
+          },
+        ),
+        override.responseUrl ?? url.href,
       );
     });
   }
@@ -1171,6 +1265,13 @@ describe("production route smoke", () => {
       canonicalPath?: string;
     }>;
     expect(routes.map(({ path }) => path)).toEqual(requiredPaths);
+    for (const path of absentPaths) {
+      expect(routes.find((route) => route.path === path)).toEqual({
+        expectedStatus: 404,
+        kind: "absent",
+        path,
+      });
+    }
     expect(routes.at(-1)).toMatchObject({
       canonicalPath: "/404.html",
       expectedStatus: 404,
@@ -1179,6 +1280,9 @@ describe("production route smoke", () => {
 
     const fetchImpl = makeFetch(routes);
     const result = await productionSmoke.runProductionCheck({
+      canonicalOrigin: fixtureOrigin,
+      deploymentMetadata: deploymentMetadataFixture(),
+      expectedGitSha,
       origin: fixtureOrigin,
       fetchImpl,
     });
@@ -1186,9 +1290,21 @@ describe("production route smoke", () => {
     expect(result).toMatchObject({
       checkedAssets: 24,
       checkedRoutes: requiredPaths.length,
+      canonicalOrigin: fixtureOrigin,
+      deployment: {
+        deploymentId: "dpl_AbCdEf1234567890",
+        gitShaStatus: "MATCH",
+        status: "PASS",
+      },
       issues: [],
+      metadataParity: { status: "PASS" },
+      monetization: { mode: "off", status: "PASS" },
       monetizationMode: "off",
       routeResults: requiredPaths.map((path) => ({ path, status: "PASS" })),
+      securityHeaders: {
+        checkedResponses: requiredPaths.length + 24,
+        status: "PASS",
+      },
     });
     expect(fetchImpl).toHaveBeenCalledTimes(requiredPaths.length + 24);
     for (const [, options] of fetchImpl.mock.calls) {
@@ -1205,6 +1321,138 @@ describe("production route smoke", () => {
     );
     expect(lines).toHaveLength(requiredPaths.length + 1);
     expect(lines.at(-1)).toMatch(/^Production smoke: PASS /);
+  });
+
+  it("rejects a response URL that differs from the exact requested URL", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = [
+      { path: "/about/", expectedStatus: 200, kind: "html" as const },
+    ];
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      routes,
+      fetchImpl: makeFetch(routes, {
+        "/about/": { responseUrl: `${fixtureOrigin}/about` },
+      }),
+    });
+
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({ code: "response-url", route: "/about/" }),
+    );
+  });
+
+  it("fails when a deployed response omits or changes a required security header", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = [
+      { path: "/about/", expectedStatus: 200, kind: "html" as const },
+    ];
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      routes,
+      fetchImpl: makeFetch(routes, {
+        "/about/": {
+          headers: { "x-frame-options": "SAMEORIGIN" },
+          omitSecurityHeaders: ["strict-transport-security"],
+        },
+      }),
+    });
+
+    expect(
+      result.issues.filter(
+        (issue: { code: string; route: string }) =>
+          issue.code === "security-header" && issue.route === "/about/",
+      ),
+    ).toHaveLength(2);
+    expect(result.securityHeaders).toMatchObject({ status: "FAIL" });
+  });
+
+  it("rejects a requested origin that is not the configured canonical alias", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = [
+      { path: "/about/", expectedStatus: 200, kind: "html" as const },
+    ];
+    const result = await productionSmoke.runProductionCheck({
+      canonicalOrigin: "https://canonical.example",
+      origin: fixtureOrigin,
+      routes,
+      fetchImpl: makeFetch(routes),
+    });
+
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({ code: "requested-origin" }),
+    );
+  });
+
+  it("summarizes canonical, Open Graph, and Twitter shell parity", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = [
+      { path: "/about/", expectedStatus: 200, kind: "html" as const },
+    ];
+    const result = await productionSmoke.runProductionCheck({
+      origin: fixtureOrigin,
+      routes,
+      fetchImpl: makeFetch(routes, {
+        "/about/": {
+          body: htmlFixture({
+            canonical: `${fixtureOrigin}/about/`,
+            ogTitle: "Mismatched Open Graph title",
+          }),
+        },
+      }),
+    });
+
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({ code: "og-title", route: "/about/" }),
+    );
+    expect(result.metadataParity).toMatchObject({ status: "FAIL" });
+  });
+
+  it("validates trusted Vercel deployment identity and exact Git SHA metadata", async () => {
+    const productionSmoke = await loadRunner();
+    const routes = [
+      { path: "/about/", expectedStatus: 200, kind: "html" as const },
+    ];
+    const matching = await productionSmoke.runProductionCheck({
+      deploymentMetadata: deploymentMetadataFixture(),
+      expectedGitSha,
+      origin: fixtureOrigin,
+      routes,
+      fetchImpl: makeFetch(routes),
+    });
+    expect(matching.deployment).toMatchObject({
+      gitShaStatus: "MATCH",
+      status: "PASS",
+    });
+
+    for (const [metadata, code] of [
+      [
+        deploymentMetadataFixture({
+          meta: { githubCommitSha: "f".repeat(40) },
+        }),
+        "deployment-git-sha",
+      ],
+      [
+        deploymentMetadataFixture({ meta: {} }),
+        "deployment-git-sha-unavailable",
+      ],
+      [
+        deploymentMetadataFixture({ readyState: "BUILDING" }),
+        "deployment-state",
+      ],
+      [deploymentMetadataFixture({ alias: [] }), "deployment-alias"],
+    ] as const) {
+      const result = await productionSmoke.runProductionCheck({
+        deploymentMetadata: metadata,
+        expectedGitSha,
+        origin: fixtureOrigin,
+        routes,
+        fetchImpl: makeFetch(routes),
+      });
+      expect(
+        result.issues.map((issue: { code: string }) => issue.code),
+      ).toContain(code);
+      expect(result.deployment).toMatchObject({ status: "FAIL" });
+    }
   });
 
   const routeFailureCases: ReadonlyArray<{
@@ -1243,6 +1491,16 @@ describe("production route smoke", () => {
         "/about/": {
           status: 308,
           headers: { location: "https://host.example/about" },
+        },
+      },
+    },
+    {
+      name: "redirecting CMS admin route",
+      code: "unexpected-redirect",
+      overrides: {
+        "/admin/": {
+          status: 308,
+          headers: { location: `${fixtureOrigin}/login/` },
         },
       },
     },
@@ -1927,6 +2185,67 @@ describe("production CLI contract", () => {
     expect(() => productionSmoke.resolveProductionOrigin([], {})).toThrow(
       /--origin|PRODUCTION_ORIGIN/,
     );
+  });
+
+  it("requires explicit trusted SHA and deployment-metadata inputs for release orchestration", async () => {
+    const productionSmoke = await import("../../scripts/check-production.mjs");
+    expect(productionSmoke).toHaveProperty("parseProductionArguments");
+    if (!("parseProductionArguments" in productionSmoke)) return;
+
+    expect(
+      productionSmoke.parseProductionArguments(
+        [
+          "--origin",
+          "https://publication.example",
+          "--expected-sha",
+          expectedGitSha,
+          "--deployment-metadata",
+          ".vercel/deployment.json",
+        ],
+        {},
+      ),
+    ).toEqual({
+      deploymentMetadataPath: ".vercel/deployment.json",
+      expectedGitSha,
+      origin: "https://publication.example",
+    });
+    expect(
+      productionSmoke.parseProductionArguments([], {
+        PRODUCTION_EXPECTED_GIT_SHA: expectedGitSha,
+        PRODUCTION_ORIGIN: "https://publication.example/",
+        VERCEL_DEPLOYMENT_METADATA_PATH: ".vercel/deployment.json",
+      }),
+    ).toEqual({
+      deploymentMetadataPath: ".vercel/deployment.json",
+      expectedGitSha,
+      origin: "https://publication.example",
+    });
+
+    for (const args of [
+      ["--origin", "https://publication.example"],
+      [
+        "--origin",
+        "https://publication.example",
+        "--expected-sha",
+        "main",
+        "--deployment-metadata",
+        ".vercel/deployment.json",
+      ],
+      [
+        "--origin",
+        "https://publication.example",
+        "--expected-sha",
+        expectedGitSha,
+        "--deployment-metadata",
+        ".vercel/deployment.json",
+        "--unknown",
+        "value",
+      ],
+    ]) {
+      expect(() => productionSmoke.parseProductionArguments(args, {})).toThrow(
+        /expected-sha|deployment-metadata|unknown|SHA/i,
+      );
+    }
   });
 
   it("is exposed as the check:production package script", () => {
