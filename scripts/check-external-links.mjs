@@ -9,6 +9,7 @@ import { load } from "cheerio";
 import { readBuildFiles } from "./qa-build.mjs";
 import { readArticleRecords } from "./qa-content.mjs";
 import { siteUrl } from "../site.config.mjs";
+import { publicEvidenceUrlIssue } from "../src/utils/public-evidence-url.mjs";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_MAX_REDIRECTS = 5;
@@ -231,6 +232,11 @@ export async function validateFetchTarget(
   rawUrl,
   { lookupImpl = dnsLookup, timeoutMs = DEFAULT_TIMEOUT_MS } = {},
 ) {
+  const publicUrlIssue = publicEvidenceUrlIssue(rawUrl);
+  if (publicUrlIssue) {
+    return { ok: false, blocked: true, reason: publicUrlIssue };
+  }
+
   let url;
   try {
     url = new URL(rawUrl);

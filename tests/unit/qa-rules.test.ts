@@ -1095,6 +1095,82 @@ describe("content QA rules", () => {
     ).toContain(expectedCode);
   });
 
+  it.each([
+    [
+      "credential-bearing inline link",
+      "[Evidence](https://user:secret@www.nist.gov/record)",
+    ],
+    [
+      "secret-bearing inline link",
+      "[Evidence](https://www.nist.gov/record?client_secret=secret-value)",
+    ],
+    [
+      "reserved-host inline link",
+      "[Evidence](https://evidence.internal/record)",
+    ],
+    ["IP-literal inline link", "[Evidence](https://127.0.0.1/record)"],
+    [
+      "secret-bearing link definition",
+      "[Evidence][proof]\n\n[proof]: https://www.nist.gov/record?access_token=secret-value",
+    ],
+  ])("rejects an unsafe external Markdown %s", (_name, markdown) => {
+    const articles = validPortfolio();
+    articles[0]!.body += `\n\n${markdown}`;
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).toContain("body-link-url");
+  });
+
+  it("allows safe relative site links to continue to built-output validation", () => {
+    const articles = validPortfolio();
+    articles[0]!.body +=
+      "\n\n[Privacy](/privacy/) [Related](../related/) [Section](#decision-checks)";
+
+    const codes = validateContentPortfolio(articles, {
+      today: "2026-08-21",
+    }).map(({ code }) => code);
+
+    expect(codes).not.toContain("body-link-url");
+    expect(codes).not.toContain("path-hazard");
+  });
+
+  it.each([
+    ["Bearer credential", `Authorization: Bearer ${"A".repeat(32)}`],
+    ["JWT credential", `${"a".repeat(24)}.${"b".repeat(24)}.${"c".repeat(24)}`],
+    ["assigned password", `password: ${"p".repeat(20)}`],
+    ["private email", "private.owner@real-looking-domain.com"],
+    [
+      "private key material",
+      "-----BEGIN PRIVATE KEY-----\nsecret\n-----END PRIVATE KEY-----",
+    ],
+  ])("rejects raw %s in an article body", (_name, unsafe) => {
+    const articles = validPortfolio();
+    articles[0]!.body += `\n\n${unsafe}`;
+
+    const finding = validateContentPortfolio(articles, {
+      today: "2026-08-21",
+    }).find(({ code }) => code === "sensitive-public-content");
+
+    expect(finding).toBeDefined();
+    expect(finding?.message).toMatch(/cannot erase.*public history/i);
+  });
+
+  it("rejects a raw credential in parsed article frontmatter", () => {
+    const articles = validPortfolio();
+    Object.assign(articles[0]!, {
+      rawFrontmatter: `# api_key: ${"A".repeat(24)}`,
+    });
+
+    expect(
+      validateContentPortfolio(articles, { today: "2026-08-21" }).map(
+        ({ code }) => code,
+      ),
+    ).toContain("sensitive-public-content");
+  });
+
   it("validates source shape and HTTPS without labeling substantive primariness", () => {
     const articles = validPortfolio();
     const oldUrl = articles[0]!.data.sourceList[0]!.url;
@@ -2416,7 +2492,7 @@ describe("external link classification", () => {
       new Promise(
         () => undefined,
       )) as unknown as typeof import("node:dns/promises").lookup;
-    const check = checkUrl("https://stuck.example/source", {
+    const check = checkUrl("https://stuck.nist.gov/source", {
       lookupImpl: neverLookup,
       timeoutMs: 5,
       fetchImpl: async () => {
@@ -2434,9 +2510,33 @@ describe("external link classification", () => {
     expect(fetchCalls).toBe(0);
   });
 
+  it.each([
+    "https://user:secret@www.nist.gov/source",
+    "https://www.nist.gov/source?access_token=secret-value",
+    "https://evidence.internal/source",
+    "https://127.0.0.1/source",
+  ])("blocks unsafe external URL before DNS or fetch: %s", async (url) => {
+    let lookupCalls = 0;
+    let fetchCalls = 0;
+    const result = await checkUrl(url, {
+      lookupImpl: (async () => {
+        lookupCalls += 1;
+        return [{ address: "93.184.216.34", family: 4 as const }];
+      }) as unknown as typeof import("node:dns/promises").lookup,
+      fetchImpl: async () => {
+        fetchCalls += 1;
+        return new Response(null, { status: 200 });
+      },
+    });
+
+    expect(result.status).toBe("FAIL");
+    expect(lookupCalls).toBe(0);
+    expect(fetchCalls).toBe(0);
+  });
+
   it("uses HEAD first and falls back to GET before reporting PASS", async () => {
     const methods: string[] = [];
-    const result = await checkUrl("https://example.com/source", {
+    const result = await checkUrl("https://www.nist.gov/source", {
       lookupImpl: publicLookup,
       fetchImpl: async (_url, init: RequestInit | undefined) => {
         methods.push(init?.method ?? "GET");
@@ -2451,11 +2551,11 @@ describe("external link classification", () => {
   });
 
   it("distinguishes definitive failures from access-limited verification", async () => {
-    const missing = await checkUrl("https://example.com/missing", {
+    const missing = await checkUrl("https://www.nist.gov/missing", {
       lookupImpl: publicLookup,
       fetchImpl: async () => new Response(null, { status: 404 }),
     });
-    const blocked = await checkUrl("https://example.com/blocked", {
+    const blocked = await checkUrl("https://www.nist.gov/blocked", {
       lookupImpl: publicLookup,
       fetchImpl: async () => new Response(null, { status: 403 }),
     });
@@ -2491,7 +2591,7 @@ describe("external link classification", () => {
 
   it("stops at an unsafe redirect before contacting the redirected host", async () => {
     const fetchedUrls: string[] = [];
-    const result = await checkUrl("https://example.com/source", {
+    const result = await checkUrl("https://www.nist.gov/source", {
       lookupImpl: publicLookup,
       fetchImpl: async (input) => {
         fetchedUrls.push(String(input));
@@ -2504,7 +2604,7 @@ describe("external link classification", () => {
 
     expect(result.status).toBe("FAIL");
     expect(result.detail).toMatch(/unsafe redirect/i);
-    expect(fetchedUrls).toEqual(["https://example.com/source"]);
+    expect(fetchedUrls).toEqual(["https://www.nist.gov/source"]);
   });
 
   it("pins the HTTPS connection lookup to the addresses that passed DNS validation", async () => {
@@ -2541,7 +2641,7 @@ describe("external link classification", () => {
     const privateLookup = (async () => [
       { address: "10.20.30.40", family: 4 as const },
     ]) as unknown as typeof import("node:dns/promises").lookup;
-    const result = await checkUrl("https://internal.example/source", {
+    const result = await checkUrl("https://private-target.nist.gov/source", {
       lookupImpl: privateLookup,
       fetchImpl: async () => {
         fetchCalls += 1;

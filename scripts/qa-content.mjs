@@ -5,8 +5,12 @@ import { pathToFileURL } from "node:url";
 import { load as loadYaml } from "js-yaml";
 import { fromMarkdown } from "mdast-util-from-markdown";
 
-import { siteConfig } from "../site.config.mjs";
+import { siteConfig, siteOrigin } from "../site.config.mjs";
 import { visitTreeIterative } from "../src/utils/managed-image-ast.mjs";
+import {
+  findPublicSafetyIssues,
+  isSecretLikeQueryKey,
+} from "../src/utils/public-content-safety.mjs";
 import { publicEvidenceUrlIssue } from "../src/utils/public-evidence-url.mjs";
 
 export const REQUIRED_CATEGORY_SLUGS = [
@@ -60,7 +64,7 @@ const DATA_HTML_URI_PATTERN = /\]\(\s*data\s*:\s*text\/html\b/i;
 const REMOTE_IMAGE_PATTERN =
   /(?:!\[[^\]]*\]\(\s*(?:https?:\/\/|\/\/)|<img\b[^>]*\bsrc\s*=\s*["'](?:https?:\/\/|\/\/))/i;
 const PATH_HAZARD_PATTERN =
-  /(?:\]\(\s*(?:file:|[a-z]:[\\/]|\\\\|\/\/|\.\.?(?:[\\/]))|(?:src|href)\s*=\s*["'](?:file:|[a-z]:[\\/]|\\\\|\/\/|\.\.?(?:[\\/])))/i;
+  /(?:\]\(\s*(?:file:|[a-z]:[\\/]|\\\\|\/\/)|(?:src|href)\s*=\s*["'](?:file:|[a-z]:[\\/]|\\\\|\/\/))/i;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const HERO_IMAGE_PATTERN =
@@ -419,7 +423,55 @@ export function parseArticleMarkdown(raw, fileName) {
     throw new Error(`${fileName} frontmatter must be a YAML object.`);
   }
 
-  return { fileName, data, body: match[2] };
+  return { fileName, data, body: match[2], rawFrontmatter: match[1] };
+}
+
+function markdownDestinationIssue(destination) {
+  if (typeof destination !== "string" || destination.trim() !== destination) {
+    return "destination must be a trimmed URL";
+  }
+
+  let resolved;
+  try {
+    resolved = new URL(destination, siteOrigin);
+  } catch {
+    return "destination must be a valid URL";
+  }
+
+  if (resolved.origin === siteOrigin) {
+    if (
+      resolved.username ||
+      resolved.password ||
+      [...resolved.searchParams.keys()].some(isSecretLikeQueryKey)
+    ) {
+      return "site-relative destinations cannot contain credentials or secret-like query keys";
+    }
+    return null;
+  }
+
+  return publicEvidenceUrlIssue(destination);
+}
+
+function validateMarkdownDestinations(issues, fileName, body) {
+  const tree = fromMarkdown(body);
+  visitTreeIterative(tree, (node) => {
+    if (
+      !["link", "definition"].includes(node.type) ||
+      typeof node.url !== "string"
+    ) {
+      return;
+    }
+    const urlIssue = markdownDestinationIssue(node.url);
+    if (urlIssue) {
+      issues.push(
+        finding(
+          "body-link-url",
+          fileName,
+          `Markdown ${node.type} must use a safe site-relative or public HTTPS destination: ${urlIssue}.`,
+        ),
+      );
+    }
+  });
 }
 
 export async function readArticleRecords(
@@ -1141,8 +1193,19 @@ function validateArticle(
   }
 
   validateHero(issues, fileName, data);
+  validateMarkdownDestinations(issues, fileName, body);
 
-  const publicText = `${JSON.stringify(data)}\n${body}`;
+  const publicText = `${article.rawFrontmatter ?? JSON.stringify(data)}\n${body}`;
+  const safetyIssues = findPublicSafetyIssues(publicText, fileName);
+  if (safetyIssues.length > 0) {
+    issues.push(
+      finding(
+        "sensitive-public-content",
+        fileName,
+        `Article source contains sensitive public content (${[...new Set(safetyIssues.map(({ kind }) => kind))].join(", ")}). Remove it before commit; this build gate cannot erase a secret from public history after it has been committed.`,
+      ),
+    );
+  }
   if (PLACEHOLDER_PATTERN.test(publicText)) {
     issues.push(
       finding("placeholder", fileName, "content contains placeholder text."),

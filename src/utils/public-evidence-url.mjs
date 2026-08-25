@@ -1,3 +1,5 @@
+import { isSecretLikeQueryKey } from "./public-content-safety.mjs";
+
 const RESERVED_HOST_SUFFIXES = [
   ".invalid",
   ".test",
@@ -16,21 +18,11 @@ const RESERVED_HOSTS = [
   "example.net",
 ];
 
-const SECRET_QUERY_KEY =
-  /^(?:accesskey|accesstoken|apikey|authorization|authorizationcode|auth|clientsecret|code|consumerkey|consumersecret|credential|idtoken|jwt|key|password|passwd|privatekey|refreshtoken|sastoken|secret|session|signature|sig|token|webhooksecret|xamzcredential|xamzsecuritytoken|xamzsignature)$/;
-
 function containsControlCharacter(value) {
   return [...value].some((character) => {
     const codePoint = character.codePointAt(0);
     return codePoint <= 0x1f || (codePoint >= 0x7f && codePoint <= 0x9f);
   });
-}
-
-function normalizedQueryKey(value) {
-  return value
-    .normalize("NFKC")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
 }
 
 /**
@@ -77,8 +69,8 @@ export function publicEvidenceUrlIssue(value) {
     ) || RESERVED_HOST_SUFFIXES.some((suffix) => hostname.endsWith(suffix));
   const addressLiteral =
     hostname.includes(":") || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname);
-  const hasSecretQuery = [...url.searchParams.keys()].some((key) =>
-    SECRET_QUERY_KEY.test(normalizedQueryKey(key)),
+  const hasSecretQuery = [...url.searchParams.keys()].some(
+    isSecretLikeQueryKey,
   );
 
   if (url.username || url.password) {
