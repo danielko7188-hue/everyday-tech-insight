@@ -402,10 +402,7 @@ describe("future placement and public-copy safety", () => {
     const monetization = await loadMonetization();
 
     expect(monetization).toHaveProperty("resolveAdUnit");
-    if (
-      !monetization.defineMonetizationConfig ||
-      !monetization.resolveAdUnit
-    )
+    if (!monetization.defineMonetizationConfig || !monetization.resolveAdUnit)
       return;
 
     const config = monetization.defineMonetizationConfig({

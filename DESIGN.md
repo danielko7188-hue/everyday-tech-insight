@@ -27,25 +27,25 @@ The exact font packages above are installed dependencies in this phase, and the 
 
 ## Color tokens
 
-| Role                       | Exact value |
-| -------------------------- | ----------- |
-| Night publication frame    | `#0d0618`   |
-| Deep navigation surface    | `#17102a`   |
-| Raised dark surface        | `#24143d`   |
-| Ink                        | `#171221`   |
-| Paper                      | `#faf8ff`   |
-| Mist                       | `#f4f0ff`   |
-| White                      | `#ffffff`   |
-| Violet signal              | `#7c3aed`   |
-| Violet interaction state   | `#5b21b6`   |
-| Lavender                   | `#c4b5fd`   |
-| Magenta signal             | `#d946ef`   |
-| Light rule                 | `#ddd6fe`   |
-| Dark rule                  | `#3a2e51`   |
-| Light-surface muted text   | `#5b5566`   |
-| Dark-surface muted text    | `#c9c3d8`   |
-| Focus on dark surfaces     | `#fde047`   |
-| Focus on light surfaces    | `#5b21b6`   |
+| Role                     | Exact value |
+| ------------------------ | ----------- |
+| Night publication frame  | `#0d0618`   |
+| Deep navigation surface  | `#17102a`   |
+| Raised dark surface      | `#24143d`   |
+| Ink                      | `#171221`   |
+| Paper                    | `#faf8ff`   |
+| Mist                     | `#f4f0ff`   |
+| White                    | `#ffffff`   |
+| Violet signal            | `#7c3aed`   |
+| Violet interaction state | `#5b21b6`   |
+| Lavender                 | `#c4b5fd`   |
+| Magenta signal           | `#d946ef`   |
+| Light rule               | `#ddd6fe`   |
+| Dark rule                | `#3a2e51`   |
+| Light-surface muted text | `#5b5566`   |
+| Dark-surface muted text  | `#c9c3d8`   |
+| Focus on dark surfaces   | `#fde047`   |
+| Focus on light surfaces  | `#5b21b6`   |
 
 Category accents are limited to small labels, rules, focus-safe decorative details, and editorial artwork:
 
