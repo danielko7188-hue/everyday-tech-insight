@@ -22,6 +22,20 @@ const publishingGuidePath = path.join(
   "docs",
   "PUBLISHING_GUIDE.md",
 );
+const designSpecPath = path.join(
+  repositoryRoot,
+  "docs",
+  "superpowers",
+  "specs",
+  "2026-08-25-cms-purple-signal-publication-maturity-design.md",
+);
+const historicalPlanPath = path.join(
+  repositoryRoot,
+  "docs",
+  "superpowers",
+  "plans",
+  "2026-08-22-final-publication-maturity.md",
+);
 
 const launchSlugs = [
   "back-up-business-files-with-the-3-2-1-method",
@@ -72,27 +86,6 @@ const qualityFields = [
   "releaseGate",
 ] as const;
 
-const ownerGates = [
-  "Legal owner or publisher identity",
-  "Approved public publisher wording",
-  "Durable public contact email or contact method",
-  "Custom-domain decision and ownership proof",
-  "Named-author identity, if any",
-  "Author role, biography, and credential evidence",
-  "Author-photo file, alt text, credit, and rights basis",
-  "Firsthand-use or testing evidence for any claim that implies it",
-  "Human editorial review of all 15 guides",
-  "Expert review for consequential claims where needed",
-  "Image and worksheet rights review",
-  "Privacy and legal review for actual jurisdiction and data practices",
-  "Pages CMS GitHub App authorization and repository selection",
-  "Protected main branch and pull-request review rules",
-  "AdSense account and site status plus exact publisher values",
-  "Approved verification method and exact value",
-  "Authorized ads.txt line and certified CMP decision where applicable",
-  "Final owner acceptance of content, disclosures, placements, and production release",
-] as const;
-
 function parseFieldBlock(block: string): Map<string, string> {
   const fields = new Map<string, string>();
   let activeField: string | undefined;
@@ -121,7 +114,21 @@ function markdownWordCount(value: string): number {
 
 describe("owner input record", () => {
   it("contains the exact 18 evidence gates and exact five fields", async () => {
-    const document = await readFile(ownerInputsPath, "utf8");
+    const [document, designSpec] = await Promise.all([
+      readFile(ownerInputsPath, "utf8"),
+      readFile(designSpecPath, "utf8"),
+    ]);
+    const designGateSection = designSpec.match(
+      /contains 18 numbered gates[\s\S]*?\n\n([\s\S]*?)\n\n## 12\./,
+    )?.[1];
+    expect(designGateSection).toBeTruthy();
+    const ownerGates = [
+      ...designGateSection!.matchAll(/^\d+\. (.+?)[.;]$/gm),
+    ].map((match) => {
+      const plainName = match[1]!.replaceAll("`", "");
+      return `${plainName[0]!.toUpperCase()}${plainName.slice(1)}`;
+    });
+    expect(ownerGates).toHaveLength(18);
     const sections = [
       ...document.matchAll(
         /^## Gate (\d{2}): (.+)\r?\n([\s\S]*?)(?=^## Gate \d{2}:|(?![\s\S]))/gm,
@@ -156,6 +163,28 @@ describe("owner input record", () => {
     expect(document).toMatch(/internal, nonpublic record/i);
     expect(document).toMatch(/must not be copied into public placeholders/i);
     expect(document).not.toMatch(/\b(?:TBD|TODO)\b|ca-pub-|example@|<[^>]+>/i);
+  });
+});
+
+describe("historical implementation plan", () => {
+  it("marks the older Final plan as superseded and routes readers to all current controls", async () => {
+    const plan = await readFile(historicalPlanPath, "utf8");
+    const noticeBoundary = plan.indexOf("---");
+    const notice = plan.slice(0, noticeBoundary);
+
+    expect(noticeBoundary).toBeGreaterThan(0);
+    expect(notice).toMatch(/historical.*superseded/i);
+    for (const currentDocument of [
+      "2026-08-25-cms-purple-signal-publication-maturity-design.md",
+      "2026-08-25-pages-cms-content-workflow.md",
+      "2026-08-25-publication-maturity-release.md",
+      "PUBLISHING_GUIDE.md",
+    ]) {
+      expect(notice).toContain(currentDocument);
+    }
+    expect(plan).toContain(
+      "**Goal:** Turn Everyday Tech Insight into a curated, scalable, distinctive static publication",
+    );
   });
 });
 

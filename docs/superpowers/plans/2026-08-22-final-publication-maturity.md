@@ -1,5 +1,7 @@
 # Final Publication Maturity Implementation Plan
 
+> **Historical and superseded as of 2026-08-25:** This document preserves the earlier implementation record; its unchecked steps are not the current operating plan. Use the approved [2026-08-25 design specification](../specs/2026-08-25-cms-purple-signal-publication-maturity-design.md), [Pages CMS workflow plan](2026-08-25-pages-cms-content-workflow.md), [publication-maturity release plan](2026-08-25-publication-maturity-release.md), and current [Publishing Guide](../../PUBLISHING_GUIDE.md) for present requirements and status.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Turn Everyday Tech Insight into a curated, scalable, distinctive static publication while preserving every factual, privacy, security, accessibility, and no-tracking boundary.

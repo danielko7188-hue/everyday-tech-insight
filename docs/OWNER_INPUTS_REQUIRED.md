@@ -76,7 +76,7 @@ The two permitted status values are `OWNER ACTION REQUIRED` and `UNKNOWN`. Neith
 - `public effect`: The quality queue remains `OWNER REVIEW REQUIRED`; automated success must not be presented as human editorial approval.
 - `next action`: Review every queue record against its article and sources, resolve findings, and record the real reviewer and date without backdating.
 
-## Gate 10: Expert review for consequential claims where needed
+## Gate 10: Expert review for security, legal, privacy, financial, or other consequential claims where needed
 
 - `status`: OWNER ACTION REQUIRED
 - `reason`: Security, privacy, legal, financial, identity, recovery, and other consequential guidance may require competence beyond general editorial review.
@@ -92,7 +92,7 @@ The two permitted status values are `OWNER ACTION REQUIRED` and `UNKNOWN`. Neith
 - `public effect`: Media rights remain unresolved; no public rights-complete or original-asset claim may be made from automation alone.
 - `next action`: Review every editorial visual, uploaded image, social image input, and Toolkit worksheet before final owner acceptance.
 
-## Gate 12: Privacy and legal review for actual jurisdiction and data practices
+## Gate 12: Privacy/legal review for the actual operating jurisdiction and data practices
 
 - `status`: OWNER ACTION REQUIRED
 - `reason`: The repository cannot determine the operator's jurisdiction, legal obligations, actual off-site handling, or future service configuration.
@@ -116,7 +116,7 @@ The two permitted status values are `OWNER ACTION REQUIRED` and `UNKNOWN`. Neith
 - `public effect`: The guide describes the intended branch-and-PR workflow but does not claim GitHub enforces it.
 - `next action`: Configure and verify the live rules before routine CMS editing, then retain dated evidence of the settings reviewed.
 
-## Gate 15: AdSense account and site status plus exact publisher values
+## Gate 15: AdSense account/site status and exact owner-provided publisher values
 
 - `status`: UNKNOWN
 - `reason`: No authenticated AdSense account state, site state, approved publisher identifier, or authorization to enable advertising exists in the repository.
