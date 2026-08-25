@@ -2,10 +2,10 @@
 import { trustPages } from "../data/trust-pages";
 import { site } from "../data/site";
 import TrustPageLayout from "../layouts/TrustPageLayout.astro";
-import { monetizationPublicCopy } from "../utils/monetization";
+import { integrationPublicCopy } from "../utils/monetization";
 
 const page = trustPages.advertisingDisclosure;
-const monetizationCopy = monetizationPublicCopy(site.integrations.monetization);
+const integrationCopy = integrationPublicCopy(site.integrations);
 ---
 
 <TrustPageLayout page={page} currentKey="advertisingDisclosure">
@@ -13,7 +13,7 @@ const monetizationCopy = monetizationPublicCopy(site.integrations.monetization);
     No affiliate links, paid placements, sponsored articles, product samples, or
     other sponsored compensation are active in the published content.
   </p>
-  <p>{monetizationCopy.disclosureState}</p>
+  <p>{integrationCopy.disclosureState}</p>
   <p>
     A link to a source is included for evidence and reader access; it is not
     presented as an endorsement. If commercial relationships are introduced, the
@@ -21,6 +21,6 @@ const monetizationCopy = monetizationPublicCopy(site.integrations.monetization);
     relationships become active.
   </p>
   <p class="notice">
-    {monetizationCopy.approvalBoundary}
+    {integrationCopy.approvalBoundary}
   </p>
 </TrustPageLayout>

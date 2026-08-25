@@ -2,15 +2,15 @@
 import { trustPages } from "../data/trust-pages";
 import { site } from "../data/site";
 import TrustPageLayout from "../layouts/TrustPageLayout.astro";
-import { monetizationPublicCopy } from "../utils/monetization";
+import { integrationPublicCopy } from "../utils/monetization";
 
 const page = trustPages.privacy;
-const monetizationCopy = monetizationPublicCopy(site.integrations.monetization);
+const integrationCopy = integrationPublicCopy(site.integrations);
 ---
 
 <TrustPageLayout page={page} currentKey="privacy">
   <h2>Site-code data practices</h2>
-  <p>{monetizationCopy.privacyState}</p>
+  <p>{integrationCopy.privacyState}</p>
   <p>
     This site has no contact form and does not intentionally collect names,
     email addresses, or form submissions on this domain.

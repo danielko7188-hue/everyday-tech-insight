@@ -19,7 +19,7 @@ import {
   parseManagedArticleImageUrl,
   scanManagedImagesInMarkdown,
 } from "../src/utils/managed-article-images.mjs";
-import { monetizationPublicCopy } from "../src/utils/monetization.ts";
+import { integrationPublicCopy } from "../src/utils/monetization.ts";
 import { siteConfig, siteUrl as configuredSiteUrl } from "../site.config.mjs";
 
 const TRUST_NAVIGATION = JSON.parse(
@@ -1357,14 +1357,12 @@ export function validateBuiltOutput({
     }
   }
 
-  const monetizationCopy = monetizationPublicCopy(
-    siteConfig.integrations.monetization,
-  );
+  const integrationCopy = integrationPublicCopy(siteConfig.integrations);
   for (const [route, expectedStatements] of [
-    ["/privacy/", [monetizationCopy.privacyState]],
+    ["/privacy/", [integrationCopy.privacyState]],
     [
       "/advertising-disclosure/",
-      [monetizationCopy.disclosureState, monetizationCopy.approvalBoundary],
+      [integrationCopy.disclosureState, integrationCopy.approvalBoundary],
     ],
   ]) {
     const page = parsedPages.get(route);

@@ -5,7 +5,6 @@ import EditorialVisualSymbols from "../components/EditorialVisualSymbols.astro";
 import type { CategorySlug } from "../data/categories";
 import { site } from "../data/site";
 import type { ArticleVisual } from "../utils/content-contract";
-import { adScriptUrlFor, verificationMetaFor } from "../utils/monetization";
 import "../styles/global.css";
 
 interface Props {
@@ -49,8 +48,6 @@ const socialImageUrl = new URL(socialImagePath, site.url).toString();
 const jsonLdItems = Array.isArray(structuredData)
   ? structuredData
   : [structuredData];
-const verificationMeta = verificationMetaFor(site.integrations.monetization);
-const adScriptUrl = adScriptUrlFor(site.integrations.monetization);
 ---
 
 <!doctype html>
@@ -61,11 +58,6 @@ const adScriptUrl = adScriptUrlFor(site.integrations.monetization);
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="robots" content={robots} />
-    {
-      verificationMeta && (
-        <meta name={verificationMeta.name} content={verificationMeta.content} />
-      )
-    }
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -132,11 +124,6 @@ const adScriptUrl = adScriptUrlFor(site.integrations.monetization);
           set:html={JSON.stringify(item).replaceAll("<", "\\u003c")}
         />
       ))
-    }
-    {
-      adScriptUrl && (
-        <script is:inline async crossorigin="anonymous" src={adScriptUrl} />
-      )
     }
   </head>
   <body>

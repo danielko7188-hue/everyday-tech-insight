@@ -34,7 +34,7 @@ import {
 import { siteConfig, siteUrl } from "../../site.config.mjs";
 import { site } from "../../src/data/site";
 import { relatedTrustPages } from "../../src/data/trust-pages";
-import { monetizationPublicCopy } from "../../src/utils/monetization";
+import { integrationPublicCopy } from "../../src/utils/monetization";
 
 const categorySlugs = [
   "ai-automation",
@@ -414,13 +414,10 @@ function validBuiltFixture() {
       <div class="article-body"><h2 id="decision">Decision</h2></div>`;
     }
 
-    const monetizationCopy = monetizationPublicCopy(
-      siteConfig.integrations.monetization,
-    );
-    if (route === "/privacy/")
-      body += `<p>${monetizationCopy.privacyState}</p>`;
+    const integrationCopy = integrationPublicCopy(siteConfig.integrations);
+    if (route === "/privacy/") body += `<p>${integrationCopy.privacyState}</p>`;
     if (route === "/advertising-disclosure/") {
-      body += `<p>${monetizationCopy.disclosureState}</p><p>${monetizationCopy.approvalBoundary}</p>`;
+      body += `<p>${integrationCopy.disclosureState}</p><p>${integrationCopy.approvalBoundary}</p>`;
     }
 
     const isTrustRoute = trustRoutePaths.some((path) => path === route);
