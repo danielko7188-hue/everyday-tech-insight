@@ -38,7 +38,6 @@ const expectedFieldOrder = [
   "dateModified",
   "lastReviewed",
   "dateArchived",
-  "featured",
   "summary",
   "visual",
   "sourceList",
@@ -111,7 +110,6 @@ describe("Pages CMS configuration", () => {
           "contentType",
           "datePublished",
           "lastReviewed",
-          "featured",
         ],
         search: [
           "title",
@@ -144,6 +142,7 @@ describe("Pages CMS configuration", () => {
 
   it("keeps draft identity strict while leaving review and publication metadata optional", async () => {
     const config = await validConfig();
+    const collection = config.content[0];
 
     for (const name of ["title", "slug", "author", "status"]) {
       expect(field(config, name).required, name).toBe(true);
@@ -179,7 +178,10 @@ describe("Pages CMS configuration", () => {
       default: "unverified",
       options: { values: [...VERIFICATION_STATUSES] },
     });
-    expect(field(config, "featured").default).toBe(false);
+    expect(
+      collection.fields.some(({ name }: CmsConfig) => name === "featured"),
+    ).toBe(false);
+    expect(collection.view.fields).not.toContain("featured");
     expect(field(config, "relatedArticles").default).toEqual([]);
     expect(field(config, "noindex").default).toBe(true);
   });
@@ -333,7 +335,7 @@ describe("Pages CMS configuration", () => {
     expect(validatePagesCmsConfig(config)).toContainEqual(
       expect.objectContaining({
         code: "hosted-outcome-language",
-        location: "content[0].fields[22].fields[1].description",
+        location: "content[0].fields[21].fields[1].description",
       }),
     );
   });
@@ -645,12 +647,6 @@ describe("Pages CMS configuration", () => {
         (field(config, "verificationStatus").default = "tested"),
       "verification-default",
       "fields.verificationStatus.default",
-    ],
-    [
-      "featured default",
-      (config: CmsConfig) => (field(config, "featured").default = true),
-      "featured-default",
-      "fields.featured.default",
     ],
     [
       "relatedArticles default",

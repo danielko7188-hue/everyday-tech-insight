@@ -238,7 +238,7 @@ Pages CMS -> GitHub Markdown/media -> Astro validation/build -> Vercel preview/p
 
 `.pages.yml` provides:
 
-- List fields in this order: `title`, `status`, `category`, `contentType`, `datePublished`, `lastReviewed`, `featured`.
+- List fields in this order: `title`, `status`, `category`, `contentType`, `datePublished`, `lastReviewed`.
 - Search fields: `title`, `slug`, `summary`, `category`, `status`, `contentType`.
 - Sort fields: `datePublished`, `lastReviewed`, `title`, `category`, `status`; default publication-date descending.
 - Plain-language helper descriptions.
@@ -251,6 +251,8 @@ Pages CMS -> GitHub Markdown/media -> Astro validation/build -> Vercel preview/p
 - `delete: false` and `rename: false`.
 - `settings.content.merge: true` and app commit identity.
 - Empty date defaults so a CMS action does not manufacture publication or review dates.
+
+The legacy `featured` frontmatter key remains accepted by the content schema and preserved by `settings.content.merge: true`, but Pages CMS does not expose an editor control for it. Homepage placement is maintained in the reviewed `src/data/editorial.ts` curation registry, so an editable `featured` toggle would imply an effect it does not have.
 
 The collection uses `filename.template: "{fields.slug}.md"`, `filename.field: false`, `subfolders: false`, `operations: { create: true, rename: false, delete: false }`, and app commit identity. Slug is editable while drafting, but the CMS cannot lock it only after creation. Therefore the guide states that slug becomes immutable after the first commit, rename remains disabled, and QA rejects filename/slug mismatch. Any later URL change is a reviewed Git operation with redirect analysis.
 

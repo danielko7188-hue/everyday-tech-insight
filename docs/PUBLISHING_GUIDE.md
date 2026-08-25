@@ -34,6 +34,8 @@ Use one of these two controlled paths on a non-`main` branch:
 
 A new guide begins as `draft`. The intended lifecycle is `draft -> review -> published -> archived`.
 
+Pages CMS does not expose a `featured` control. The stored frontmatter key remains schema-compatible and is preserved when present, while homepage placement is maintained through the reviewed editorial curation registry rather than an article toggle.
+
 - `draft`: working content may be incomplete. It remains `noindex`, unfeatured, unverified, and nonroutable.
 - `review`: the editorial structure, explanation fields, fit fields, at least one source record, and visual tuple are complete enough for review. It remains nonroutable.
 - `published`: the complete software contract, at least two cited HTTPS source records, genuine dates, and media validation permit public routing. Published status controls routing only and does not prove source suitability, media rights, expert acceptance, owner acceptance, or human review.

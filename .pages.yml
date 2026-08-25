@@ -30,7 +30,6 @@ content:
         - contentType
         - datePublished
         - lastReviewed
-        - featured
       search:
         - title
         - slug
@@ -188,10 +187,6 @@ content:
         description: Required only when status is archived and archival actually occurs.
         options:
           format: yyyy-MM-dd
-      - name: featured
-        label: Featured
-        type: boolean
-        default: false
       - name: summary
         label: Summary
         type: text

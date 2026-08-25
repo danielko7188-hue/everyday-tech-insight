@@ -67,7 +67,6 @@ const FIELD_ORDER = [
   "dateModified",
   "lastReviewed",
   "dateArchived",
-  "featured",
   "summary",
   "visual",
   "sourceList",
@@ -103,7 +102,6 @@ const FIELD_TYPES = new Map([
   ["dateModified", "date"],
   ["lastReviewed", "date"],
   ["dateArchived", "date"],
-  ["featured", "boolean"],
   ["summary", "text"],
   ["visual", "object"],
   ["sourceList", "object"],
@@ -254,7 +252,6 @@ const VIEW = {
     "contentType",
     "datePublished",
     "lastReviewed",
-    "featured",
   ],
   search: ["title", "slug", "summary", "category", "status", "contentType"],
   sort: ["datePublished", "lastReviewed", "title", "category", "status"],
@@ -547,13 +544,6 @@ function validateFieldContract(collection, findings) {
     "fields.verificationStatus.default",
     fieldByName(collection, "verificationStatus")?.default,
     "unverified",
-  );
-  addExactFinding(
-    findings,
-    "featured-default",
-    "fields.featured.default",
-    fieldByName(collection, "featured")?.default,
-    false,
   );
   addExactFinding(
     findings,
