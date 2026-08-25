@@ -89,7 +89,12 @@ describe("publication operations documentation", () => {
     expect(combined).not.toMatch(
       /(?:guaranteed|guarantees) (?:AdSense )?approval/i,
     );
-    expect(trustPages).toMatch(/privacy:[\s\S]*reviewed on August 25, 2026/i);
+    expect(trustPages).toMatch(
+      /privacy:[\s\S]*implementation state dated August 25, 2026/i,
+    );
+    expect(trustPages).not.toMatch(
+      /privacy:[\s\S]*reviewed on August 25, 2026/i,
+    );
     expect(trustPages).not.toMatch(
       /privacy:[\s\S]*reviewed on August 22, 2026/i,
     );

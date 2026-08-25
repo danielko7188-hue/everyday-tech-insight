@@ -21,7 +21,7 @@ The candidate builds on an existing public HTTPS publication. Local release veri
 ## Candidate strengths confirmed locally
 
 - Fifteen published guides across five focused business-technology categories, with at least three guides per category.
-- Article bodies are publication-authored, source-led editorial frameworks with explicit outcomes, limitations, review dates, and primary-source records.
+- Article bodies are publication-authored, source-led editorial frameworks with explicit outcomes, limitations, and primary-source records. Public review claims remain withheld until the authoritative editorial record identifies a real reviewer and review date.
 - Four downloadable blank CSV worksheets add practical value beyond source summaries: automation screening, SaaS evidence, technology risk, and backup restore testing.
 - Complete desktop and mobile navigation, visible trust pages, correction and contact routes, HTML/XML sitemaps, RSS, canonical URLs, Open Graph, and Twitter summary metadata.
 - Static HTML delivers the primary content without client-side JavaScript.

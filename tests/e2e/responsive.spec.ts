@@ -357,7 +357,7 @@ test("wide homepage lead keeps automation on one rendered line", async ({
   expect(wordRectCount).toBe(1);
 });
 
-test("tablet article evidence keeps the reviewed date on one line", async ({
+test("tablet article evidence keeps each supported label on one line", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 768, height: 1024 });
@@ -366,17 +366,19 @@ test("tablet article evidence keeps the reviewed date on one line", async ({
     await document.fonts.ready;
   });
 
-  const renderedLines = await page
-    .locator(".article-evidence li:nth-child(2)")
-    .evaluate((item) => {
+  const evidenceItems = page.locator(".article-evidence li");
+  await expect(evidenceItems).toHaveCount(3);
+  const renderedLines = await evidenceItems.evaluateAll((items) =>
+    items.map((item) => {
       const range = document.createRange();
       range.selectNodeContents(item);
       return new Set(
         Array.from(range.getClientRects(), (rect) => Math.round(rect.top)),
       ).size;
-    });
+    }),
+  );
 
-  expect(renderedLines).toBe(1);
+  expect(renderedLines).toEqual([1, 1, 1]);
 });
 
 test("publication mark keeps the full name visible on one line at every required width", async ({

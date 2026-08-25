@@ -132,7 +132,7 @@ The article metadata selects one of thirteen supported visual families and a sta
 
 - Headers contain real category/content-type labels, headline, deck, publication-name byline, genuine dates, computed reading time, and a story-specific informative visual. The visual remains available at mobile widths and must not cause horizontal overflow.
 - The at-a-glance module presents four factual fields: Business problem, Technology focus, Intended reader, and What you will produce.
-- Article evidence exposes only measured facts: cited-source count, genuine publication and review dates, and links to standards and corrections. At tablet width it uses a balanced two-by-two grid, expanding to one desktop row only when there is enough space.
+- Article evidence exposes only measured facts: cited-source count and links to standards and corrections. It does not expose the internal `lastReviewed` field until a real reviewer and review date are recorded in the authoritative editorial record. At tablet width it uses a compact grid, expanding to one desktop row only when there is enough space.
 - The Business Technology Fit module and a single table-of-contents content structure are generated from real content. CSS changes its placement responsively without duplicating its heading/link structure in the document.
 - Markdown tables sit inside named, keyboard-focusable horizontal regions and retain a 16px minimum text size on narrow screens.
 - Body links remain visibly underlined, and sources, corrections, truthful byline boundaries, and explicit related-article relationships remain prominent.

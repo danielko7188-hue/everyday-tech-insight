@@ -1,20 +1,15 @@
 ---
 interface Props {
   sourceCount: number;
-  reviewedLabel: string;
-  reviewedDate: string;
 }
 
-const { sourceCount, reviewedLabel, reviewedDate } = Astro.props;
+const { sourceCount } = Astro.props;
 const sourceLabel = `${sourceCount} cited ${sourceCount === 1 ? "source" : "sources"}`;
 ---
 
 <aside class="article-evidence" role="region" aria-label="Article evidence">
   <ul>
     <li><strong>{sourceLabel}</strong></li>
-    <li>
-      Reviewed <time datetime={reviewedDate}>{reviewedLabel}</time>
-    </li>
     <li><a href="/editorial-standards/">Editorial standards</a></li>
     <li><a href="/corrections/">Corrections</a></li>
   </ul>

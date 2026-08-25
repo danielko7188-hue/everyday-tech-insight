@@ -2362,7 +2362,7 @@ strong {
   }
 
   .article-evidence ul {
-    grid-template-columns: repeat(4, minmax(0, auto));
+    grid-template-columns: repeat(3, minmax(0, auto));
     justify-content: start;
   }
 

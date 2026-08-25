@@ -107,7 +107,7 @@ export const trustPages = {
     breadcrumbLabel: trustNavigationByKey.privacy.label,
     eyebrow: "Current site behavior",
     heading: "Privacy",
-    deck: "This notice describes the code and services currently used by the static Everyday Tech Insight site as reviewed on August 25, 2026.",
+    deck: "This notice documents the static site's implementation state dated August 25, 2026.",
   },
   advertisingDisclosure: {
     path: trustNavigationByKey.advertisingDisclosure.path,

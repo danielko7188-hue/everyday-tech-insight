@@ -879,6 +879,14 @@ test("category directory visuals resolve their local symbol definitions", async 
   await expect(
     page.locator(".category-directory__visual [data-visual-key]"),
   ).toHaveCount(0);
+  await expect(
+    page.getByText(
+      "Each topic keeps every published guide together around a distinct decision focus.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByText(/every reviewed, published guide/i)).toHaveCount(
+    0,
+  );
 });
 
 test("category and published article routes expose useful editorial content", async ({
@@ -909,7 +917,7 @@ test("category and published article routes expose useful editorial content", as
     page.getByText("Everyday Tech Insight", { exact: true }).first(),
   ).toBeVisible();
   await expect(page.getByText(/published august 21, 2026/i)).toBeVisible();
-  await expect(page.getByText(/reviewed august 21, 2026/i)).toBeVisible();
+  await expect(page.getByText(/reviewed august 21, 2026/i)).toHaveCount(0);
   await expect(
     page.getByRole("heading", { level: 2, name: "At a glance" }),
   ).toBeVisible();
@@ -936,7 +944,7 @@ test("a substantively revised article exposes its distinct modification date", a
     page.locator('meta[property="article:modified_time"]'),
   ).toHaveAttribute("content", "2026-08-22");
   await expect(page.getByText(/updated august 22, 2026/i)).toBeVisible();
-  await expect(page.getByText(/reviewed august 22, 2026/i)).toBeVisible();
+  await expect(page.getByText(/reviewed august 22, 2026/i)).toHaveCount(0);
 });
 
 test("the AI category uses the compact branch with complete published membership and no lead card", async ({
@@ -1179,9 +1187,9 @@ test("article surfaces its evidence boundary near the headline", async ({
   const evidence = page.getByRole("region", { name: "Article evidence" });
   await expect(evidence).toBeVisible();
   await expect(evidence).toContainText("3 cited sources");
-  await expect(evidence.locator('time[datetime="2026-08-21"]')).toHaveText(
-    "August 21, 2026",
-  );
+  await expect(evidence.getByText(/^Reviewed\b/i)).toHaveCount(0);
+  await expect(evidence.locator("time")).toHaveCount(0);
+  await expect(evidence.locator("li")).toHaveCount(3);
   await expect(
     evidence.getByRole("link", { name: "Editorial standards" }),
   ).toHaveAttribute("href", "/editorial-standards/");
@@ -1402,6 +1410,10 @@ test("trust pages are reachable and state the public evidence boundary", async (
   await expect(
     page.getByText(/Vercel may process request, device, network, diagnostic/i),
   ).toBeVisible();
+  await expect(
+    page.getByText(/implementation state dated August 25, 2026/i),
+  ).toBeVisible();
+  await expect(page.getByText(/reviewed on August 25, 2026/i)).toHaveCount(0);
 
   await page.goto("/advertising-disclosure/");
   await expect(
