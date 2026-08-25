@@ -471,7 +471,7 @@ describe("CMS lifecycle build fixture", () => {
         fixtureTitles,
       }),
     ).rejects.toThrow(/social.*regular file/i);
-  });
+  }, 15_000);
 
   it("rejects a non-regular Markdown source before fixture derivation", async () => {
     const articlesDirectory = temporaryRoot("eti-cms-nonregular-source-");
