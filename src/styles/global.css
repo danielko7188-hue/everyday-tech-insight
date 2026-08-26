@@ -1694,6 +1694,8 @@ strong {
 .toolkit-grid {
   display: grid;
   min-inline-size: 0;
+  grid-auto-rows: 1fr;
+  align-items: stretch;
   gap: var(--space-6);
   margin-block-start: var(--space-10);
 }
@@ -1701,7 +1703,8 @@ strong {
 .toolkit-card {
   display: grid;
   min-inline-size: 0;
-  align-content: space-between;
+  min-block-size: 100%;
+  grid-template-rows: minmax(0, 1fr) auto;
   border-block-start: var(--space-1) solid var(--color-ink);
   background: var(--color-paper);
 }
@@ -1727,7 +1730,6 @@ strong {
   color: var(--color-soft-ink);
 }
 
-.toolkit-card__actions,
 .toolkit-detail__actions {
   display: flex;
   flex-wrap: wrap;
@@ -1736,8 +1738,13 @@ strong {
 }
 
 .toolkit-card__actions {
+  display: grid;
+  min-inline-size: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: var(--space-3) var(--space-4);
   margin-block-start: var(--space-5);
-  padding: var(--space-4) var(--space-5) var(--space-5);
+  padding: var(--space-5) var(--space-6) var(--space-6);
   border-block-start: 1px solid var(--color-rule);
 }
 
@@ -1750,10 +1757,30 @@ strong {
   font-weight: 700;
 }
 
+.toolkit-card__actions > a {
+  min-inline-size: 0;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
 .toolkit-card__primary {
   inline-size: 100%;
+  grid-column: 1 / -1;
+  padding: var(--space-3) var(--space-4);
   color: var(--color-ink);
   font-size: 1rem;
+}
+
+@media (max-width: 40rem) {
+  .toolkit-card__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .toolkit-card__primary {
+    grid-column: auto;
+  }
 }
 
 .toolkit-detail {
