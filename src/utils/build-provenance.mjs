@@ -1,15 +1,11 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 export const BUILD_GIT_SHA_META_NAME = "eti-build-git-sha";
 
 const FULL_GIT_SHA_PATTERN = /^[a-f\d]{40}$/;
-const defaultRepositoryRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../..",
-);
+const defaultRepositoryRoot = process.cwd();
 let cachedDefaultBuildGitSha;
 
 function validatedFullGitSha(candidate, sourceName) {

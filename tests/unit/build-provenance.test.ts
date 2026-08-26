@@ -299,8 +299,15 @@ describe("public build provenance", () => {
       new URL("../../src/layouts/BaseLayout.astro", import.meta.url),
       "utf8",
     );
+    const provenanceSource = readFileSync(
+      new URL("../../src/utils/build-provenance.mjs", import.meta.url),
+      "utf8",
+    );
 
     expect(BUILD_GIT_SHA_META_NAME).toBe("eti-build-git-sha");
+    expect(provenanceSource).toContain(
+      "const defaultRepositoryRoot = process.cwd();",
+    );
     expect(layout).toContain("resolveBuildGitSha");
     expect(layout).toContain("const buildGitSha = resolveBuildGitSha();");
     expect(layout).toContain(
