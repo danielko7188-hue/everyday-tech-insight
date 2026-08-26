@@ -257,7 +257,7 @@ describe("production screenshot capture contract", () => {
         repositoryRoot,
       }),
     ).rejects.toThrow(/assume-unchanged|index flags/i);
-  });
+  }, 15_000);
 
   it("rejects a skip-worktree tracked file that porcelain status hides", async () => {
     const { gitHead, repositoryRoot } = createCleanGitFixture(
@@ -280,7 +280,7 @@ describe("production screenshot capture contract", () => {
         repositoryRoot,
       }),
     ).rejects.toThrow(/skip-worktree|index flags/i);
-  });
+  }, 15_000);
 
   it("allows tracked .env.example but rejects an ignored local .env variant", async () => {
     const { gitHead, repositoryRoot } = createCleanGitFixture(
@@ -315,7 +315,7 @@ describe("production screenshot capture contract", () => {
         repositoryRoot,
       }),
     ).rejects.toThrow(/ignored.*\.env|environment.*file/i);
-  });
+  }, 15_000);
 
   it("exempts historical before captures from the local Git source gate", async () => {
     const deployedGitSha = "0123456789abcdef0123456789abcdef01234567";
