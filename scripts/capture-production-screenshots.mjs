@@ -16,9 +16,11 @@ export const CAPTURE_PHASES = Object.freeze([
   "after-production",
   "runtime-verification",
 ]);
-export const CAPTURE_WIDTHS = Object.freeze([390, 768, 1024, 1440, 1920]);
+export const CAPTURE_WIDTHS = Object.freeze([
+  320, 390, 600, 768, 1024, 1280, 1440, 1920,
+]);
 export const CAPTURE_HEIGHT = 900;
-export const RELEASE_EVIDENCE_ID = "purple-signal-2026-08-25";
+export const RELEASE_EVIDENCE_ID = "premium-spatial-2026-08-26";
 export const BEFORE_CAPTURE_ROUTES = Object.freeze([
   Object.freeze({ alias: "home", path: "/", status: 200 }),
   Object.freeze({ alias: "articles", path: "/articles/", status: 200 }),
@@ -164,7 +166,7 @@ function captureFileNamesForPhase(phase) {
   );
   if (phase !== "before") {
     names.push(
-      ...[390, 768].map((width) => `${width}-home-menu-open.png`),
+      ...[320, 390, 600, 768].map((width) => `${width}-home-menu-open.png`),
       ...CAPTURE_WIDTHS.map((width) => `${width}-home-skip-link-focus.png`),
     );
   }
@@ -614,7 +616,7 @@ export function buildCapturePlan({
   if (phase !== "before") {
     const home = routes.find(({ alias }) => alias === "home");
     plan.push(
-      ...[390, 768].map((width) =>
+      ...[320, 390, 600, 768].map((width) =>
         plannedCapture(home, width, "menu-open", origin),
       ),
       ...CAPTURE_WIDTHS.map((width) =>

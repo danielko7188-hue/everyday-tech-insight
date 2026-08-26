@@ -1,0 +1,1277 @@
+{
+  "schemaVersion": 1,
+  "captureCount": 64,
+  "capturedAt": "2026-08-26T09:36:03.617Z",
+  "phase": "before",
+  "origin": "https://everyday-tech-insight.vercel.app",
+  "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+  "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+  "captures": [
+    {
+      "actualStatus": 404,
+      "byteCount": 112661,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 404,
+      "fileName": "1024-404-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "d625210e771555ef47599bbde0255a0485a1df9ee8e494e0bbe8797f556a2348",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 191360,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1024-about-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/about/",
+      "sha256": "b043ccea68aa7614109bdcdc8a8df79ceb4389b341ea7b3bc637fa3b07a7f61e",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1404768,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1024-article-ai-automation-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "4d50fd411805b52cac64cf2c5daa0dacc21095523cfa8dcedf83963c3d2c225b",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 551552,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1024-articles-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/",
+      "sha256": "34d7629385b6eeee2b26cbc6a0c78442baaf0b19e5b072db53e2fec98bebbf37",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 221132,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1024-category-cybersecurity-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "460f2ce3a3e8a17fe4dae4bf679815da8129a573ffc67eb423cb1e4630c50ccc",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 356332,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1024-editorial-standards-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/editorial-standards/",
+      "sha256": "02d2c20b511c599ed39d1338145a0f7588679fdedc980d7b561f3e6bcbe8d59a",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 584481,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1024-home-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/",
+      "sha256": "0a309e0f89b38ca9436cbdf63c2629f9c3bfa4b125711cd3b8fde7a97fd2ba65",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 292114,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1024-toolkit-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/toolkit/",
+      "sha256": "fbb7433a7e3de94373290446e9f9542edb8c4504a5d2a1b965e6b3d947741d05",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 112078,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 404,
+      "fileName": "1280-404-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "9f6039a3c6eda86a1e8db8f0e101a96b56352b8b8f74a5ae7d964d2b9d427aad",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 194721,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1280-about-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/about/",
+      "sha256": "2cd9498d680102cf7886b1fc796fb0015cc96fe705f68c29f5d037a18d2428dd",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1446774,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1280-article-ai-automation-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "9af822c19630291bfb8cf5c6a949662c5b2c7414f62841bbabc0982515c2908b",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 546547,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1280-articles-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/",
+      "sha256": "02ae13282c2ddef600a9ac495424ab4fbb2b4f2b6db9c4f9a9aa2f8a1015f73e",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 232685,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1280-category-cybersecurity-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "36a392b03cc938a9bdc7dd5ba14b773c514e63bb947acdda83388e4494490f02",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 360825,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1280-editorial-standards-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/editorial-standards/",
+      "sha256": "b0bb3f55995c3d604bf94e06fdafb9e31964a8d13f4c38c495713f376b5c4b97",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 610065,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1280-home-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/",
+      "sha256": "4e8c7a9dc11023250caa9970ee9047bea6dcbacc78316dacb1d07340977c88e2",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 277220,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1280-toolkit-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/toolkit/",
+      "sha256": "bef2f9ceca1659e301555ab28418e7f16e15157c08acf6568315425ec71968a6",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 115351,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 404,
+      "fileName": "1440-404-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "5b1efeeca14ead4378341fc02a33501164ca40c24b0adc052a1a4d62e2d1eb86",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 197924,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1440-about-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/about/",
+      "sha256": "330ed379dd71ee5bcda5ae531ecd01b553753aa41e7625faa8ef413174367e25",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1475896,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1440-article-ai-automation-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "4eb877f8783e0415754139e874cdb4d23b7d5ef2630aba3aa9293229bbd6149e",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 559235,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1440-articles-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/",
+      "sha256": "5c8d2a49e5decd3cacd2391f2a3b1b4548c594c681b0e503b6a40e87c2c12e46",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 236661,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1440-category-cybersecurity-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "23bcf160424fe7291566bfd3dd86d56323769ee50692a773e5120d6890becbfa",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 368573,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1440-editorial-standards-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/editorial-standards/",
+      "sha256": "79e57d259b1251e22808b61c5f7e214e63640f1a55349999cac789000ea8fd2e",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 627405,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1440-home-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/",
+      "sha256": "eff7ce3e3ed2a80fe0f6307e5d1698ada80be31998902fa7ba7aeaaa8cbafd3a",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 282479,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1440-toolkit-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/toolkit/",
+      "sha256": "42dcacac78a97ab9b124e1ad0910c257e90acbfbd7c59d43d3f6b566390dd4c8",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 118158,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 404,
+      "fileName": "1920-404-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "1e2dfa4927a80ae1ee172cde61a79d1e237314f3f395a5df8ce8bc52b8d28198",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 208220,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1920-about-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/about/",
+      "sha256": "20264f71ac9233a6e32584f980f63a60885e5cdfe97cf0a7d68e8e24bbd6fdde",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1515966,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1920-article-ai-automation-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "ddcbcd79c2929d4f7484b5ef9bfe5fef5adc126b142daf219a33bc013ec276d8",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 590095,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1920-articles-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/",
+      "sha256": "32c1f75e7fd8fa6af7a4de75d26cc8d1c3851a110ef8e67462f10662c730319b",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 247452,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1920-category-cybersecurity-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "97f0b8e49fe1f8c604d7572469458f1cc709f40ff21bf0c1b7f39de645cc9483",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 384716,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1920-editorial-standards-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/editorial-standards/",
+      "sha256": "bd952881b25169fffcb889b9657c9d6aa30cb79d9267864d68fe94a53b5f71ae",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 667300,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1920-home-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/",
+      "sha256": "03e32a7f3e597176113d84dd13557c550270a8dd9fa99bb2c7869ac3399349fe",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 297041,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "1920-toolkit-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/toolkit/",
+      "sha256": "f3c19a94edb69eb2434f0ff8e688ddab905054348ffb3905a8a3421ffac23c71",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 84335,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 404,
+      "fileName": "320-404-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "930a62e85b4dd718b47b45c9a85908f671a952fd63d7fd01392eddabb69d5cd9",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 151369,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "320-about-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/about/",
+      "sha256": "59a70cabab46e53fb83f95be2bb0b15d953d65db2b88461d1fb12dbd41a31c97",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1187352,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "320-article-ai-automation-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "cbdd4b9f419ac0f952ee09d92db24d6ee40771db4b9bf6063807798644605e93",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 482737,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "320-articles-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/",
+      "sha256": "3f097e28f7090bd4e36c95b7b146bf9647370d118ad0fa323c208dfddfeae384",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 179642,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "320-category-cybersecurity-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "b8f674889382a99c8e2a842c96e5431183df583bd3f74f21addda1476f646b3d",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 308091,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "320-editorial-standards-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/editorial-standards/",
+      "sha256": "1c603b994b2f8f05ac8d1a30fa70340cfe0b4972ca899a763621a791af28f4f3",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 530209,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "320-home-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/",
+      "sha256": "f5f063ccd61dc1591d0c722385e5f4feecf2f04e435140d77bee37767f87cf4c",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 272918,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "320-toolkit-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/toolkit/",
+      "sha256": "b622de05cea5abaaa9ac977d06d743f40246a583949edf33f36661132b3dd456",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 87092,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 404,
+      "fileName": "390-404-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "564df7ce6755f3d4e6050d692ecd6555e986852a47251ffa9edf2550ac6aea43",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 164860,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "390-about-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/about/",
+      "sha256": "d4c098c07fa0f7afa1e24c742dbcc2107ff77da9764cff535acb482825f7338c",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1294414,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "390-article-ai-automation-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "6ecdac8035693cbc1363f9f6f73c23471a2d0e35b052636aa603ef30fe17656a",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 478035,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "390-articles-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/",
+      "sha256": "aec9f5deda647cd708bf240c4036983ad62114c900104c9556c886dd5bc27028",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 182979,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "390-category-cybersecurity-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "9a0bfca6b13e27f8fd370fbefdcec930c20dc9367e741dfc82a13c327defe0d3",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 355846,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "390-editorial-standards-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/editorial-standards/",
+      "sha256": "180d4b4bfce4ad963f9b603ec34e9d973a1064dd89f54a379cc44a9ec52f47a8",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 530173,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "390-home-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/",
+      "sha256": "92ba925ec360fe1726df67be75e6e75968e71803fc984fcc5010b7d68d53768b",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 271581,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "390-toolkit-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/toolkit/",
+      "sha256": "0d9ca3134b75d8ba2cfe97bbdff9fc9607e1eddf1021a57a24b86ac15ca6333d",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 94052,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 404,
+      "fileName": "600-404-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "8306a649e4fb5d70f6507de3b778ada30748301d7b3b28ab0a546e6d1324ae2e",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 166386,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "600-about-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/about/",
+      "sha256": "b26f6e6b9975081a8f09327472c2fa43be3fe72ade65bbe8ae3de7a2851f8623",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1311764,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "600-article-ai-automation-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "76b55f3c9b92538ee17ffb6935ca6c50133dc0d66f2ac127ec567ef7bae31dd3",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 504284,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "600-articles-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/",
+      "sha256": "3a56cf6fe5f643e9f2649f61a4e69f745b70fd41c2bd4f2b3ff9c241ccb5fc58",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 203132,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "600-category-cybersecurity-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "5f469274a2cf66deca54091131f0b6b53ffbb66f237a034b1862d68227c98200",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 340024,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "600-editorial-standards-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/editorial-standards/",
+      "sha256": "7d554c2e5b0e8b79d926a2ce2f138dcb0bd2dbfaddc9c4e9ebc87fb09609f1d8",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 563339,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "600-home-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/",
+      "sha256": "cfb51830fcad65c763877a3d98f7b444663b1d8a703095aafb2fbde9e1dc6167",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 290278,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "600-toolkit-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/toolkit/",
+      "sha256": "e15b63b879766268f550c76085e670973c8c1b7134e5d6fc00ecbffa5738bb33",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 97927,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 404,
+      "fileName": "768-404-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "58ed61a1470ab2c6379d8bd925be178f33763045a6e4e5c817879cd96fcd6b31",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 170764,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "768-about-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/about/",
+      "sha256": "227347b8d48eba41f332b22c088540d5524139d6ec2723644fb19b6046963135",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1366060,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "768-article-ai-automation-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "63ea8abaeaa4e40f6a985d1dad78ca58fa7ddd2c231bc901032514d641b651e6",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 542117,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "768-articles-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/articles/",
+      "sha256": "1baa77bb46c443e2985656879c8a1e7ab8180b7aba3136da303a810de567f21f",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 203916,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "768-category-cybersecurity-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "21af5f4c82f8c899db81ef73b5a103a0e5d909312fae51372295f8d8635ac635",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 334082,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "768-editorial-standards-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/editorial-standards/",
+      "sha256": "c5c1410a63a0338844e60a149f8dfb96a586ee3289a527e399abd3118eac8362",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 589580,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "768-home-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/",
+      "sha256": "a822238ab6881a2039f4f226425c2e2537d857b4480806e92f146cf39047b666",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 285615,
+      "capturedAt": "2026-08-26T09:36:03.617Z",
+      "deploymentId": "dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd",
+      "expectedGitSha": "af8dd44843860f3a055c76f934c02ae389ec1a81",
+      "expectedStatus": 200,
+      "fileName": "768-toolkit-full-page.png",
+      "origin": "https://everyday-tech-insight.vercel.app",
+      "phase": "before",
+      "route": "/toolkit/",
+      "sha256": "8a8f98940eef618f29d9b6c055d04897384d232e40033a71e0fdfd77b3f6a498",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "actual": 404,
+      "evidence": "http",
+      "expected": 404,
+      "id": "ads-txt-absent",
+      "passed": true,
+      "route": "/ads.txt"
+    },
+    {
+      "actual": 404,
+      "evidence": "http",
+      "expected": 404,
+      "id": "cms-admin-absent",
+      "passed": true,
+      "route": "/admin/"
+    },
+    {
+      "actual": 404,
+      "evidence": "http",
+      "expected": 404,
+      "id": "cms-config-absent",
+      "passed": true,
+      "route": "/.pages.yml"
+    },
+    {
+      "actual": 404,
+      "evidence": "http",
+      "expected": 404,
+      "id": "cms-draft-absent",
+      "passed": true,
+      "route": "/articles/cms-fixture-minimum-draft/"
+    },
+    {
+      "actual": 404,
+      "evidence": "http",
+      "expected": 404,
+      "id": "cms-keystatic-absent",
+      "passed": true,
+      "route": "/keystatic/"
+    },
+    {
+      "actual": "absent",
+      "evidence": "dom",
+      "expected": "absent",
+      "id": "monetization-off",
+      "passed": true,
+      "route": "/"
+    }
+  ]
+}

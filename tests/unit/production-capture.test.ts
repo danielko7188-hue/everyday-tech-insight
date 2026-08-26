@@ -20,6 +20,7 @@ import {
   CAPTURE_PHASES,
   CAPTURE_ROUTES,
   CAPTURE_WIDTHS,
+  RELEASE_EVIDENCE_ID,
   assertExpectedNavigation,
   assertSafeCaptureOutputPath,
   buildCapturePlan,
@@ -66,14 +67,17 @@ afterEach(() => {
 });
 
 describe("production screenshot capture contract", () => {
-  it("defines five widths, the representative before routes, and exact full after routes", () => {
+  it("defines the release evidence ID, eight widths, the representative before routes, and exact full after routes", () => {
+    expect(RELEASE_EVIDENCE_ID).toBe("premium-spatial-2026-08-26");
     expect(CAPTURE_PHASES).toEqual([
       "before",
       "after-local",
       "after-production",
       "runtime-verification",
     ]);
-    expect(CAPTURE_WIDTHS).toEqual([390, 768, 1024, 1440, 1920]);
+    expect(CAPTURE_WIDTHS).toEqual([
+      320, 390, 600, 768, 1024, 1280, 1440, 1920,
+    ]);
     expect(BEFORE_CAPTURE_ROUTES).toEqual([
       { alias: "home", path: "/", status: 200 },
       { alias: "articles", path: "/articles/", status: 200 },
@@ -123,16 +127,16 @@ describe("production screenshot capture contract", () => {
     expect(CAPTURE_ROUTES).toBe(AFTER_CAPTURE_ROUTES);
   });
 
-  it("builds a deterministic 40-image representative before inventory", () => {
+  it("builds a deterministic 64-image representative before inventory", () => {
     const plan = buildCapturePlan({
       origin: "https://publication.example",
       phase: "before",
     });
 
-    expect(plan).toHaveLength(40);
-    expect(new Set(plan.map(({ fileName }) => fileName)).size).toBe(40);
+    expect(plan).toHaveLength(64);
+    expect(new Set(plan.map(({ fileName }) => fileName)).size).toBe(64);
     expect(plan.every(({ state }) => state === "full-page")).toBe(true);
-    expect(plan[0]?.fileName).toBe("390-home-full-page.png");
+    expect(plan[0]?.fileName).toBe("320-home-full-page.png");
     expect(plan.at(-1)?.fileName).toBe("1920-404-full-page.png");
     expect(plan.every(({ height }) => height === 900)).toBe(true);
     expect(plan.every(({ deviceScaleFactor }) => deviceScaleFactor === 1)).toBe(
@@ -144,7 +148,7 @@ describe("production screenshot capture contract", () => {
     );
   });
 
-  it("builds the exact 97-image after inventory including keyboard states", () => {
+  it("builds the exact 156-image after inventory including keyboard states", () => {
     const productionPlan = buildCapturePlan({
       origin: "https://publication.example",
       phase: "after-production",
@@ -159,13 +163,13 @@ describe("production screenshot capture contract", () => {
     });
     const fileNames = productionPlan.map(({ fileName }) => fileName);
 
-    expect(productionPlan).toHaveLength(97);
-    expect(new Set(fileNames).size).toBe(97);
+    expect(productionPlan).toHaveLength(156);
+    expect(new Set(fileNames).size).toBe(156);
     expect(
       productionPlan
         .filter(({ state }) => state === "menu-open")
         .map(({ width }) => width),
-    ).toEqual([390, 768]);
+    ).toEqual([320, 390, 600, 768]);
     expect(
       productionPlan
         .filter(({ state }) => state === "skip-link-focus")
@@ -176,7 +180,7 @@ describe("production screenshot capture contract", () => {
     ).toHaveLength(AFTER_CAPTURE_ROUTES.length * CAPTURE_WIDTHS.length);
     expect(localPlan.map(({ fileName }) => fileName)).toEqual(fileNames);
     expect(runtimePlan.map(({ fileName }) => fileName)).toEqual(fileNames);
-    expect(runtimePlan).toHaveLength(97);
+    expect(runtimePlan).toHaveLength(156);
   });
 
   it("omits nullable representative routes instead of generating /null captures", () => {
@@ -200,8 +204,8 @@ describe("production screenshot capture contract", () => {
       representativeArticlePaths,
     });
 
-    expect(beforePlan).toHaveLength(35);
-    expect(afterPlan).toHaveLength(72);
+    expect(beforePlan).toHaveLength(56);
+    expect(afterPlan).toHaveLength(116);
     expect(
       [...beforePlan, ...afterPlan].filter(({ alias }) =>
         alias.startsWith("article-"),
@@ -397,10 +401,11 @@ describe("production screenshot capture contract", () => {
 
   it("maps phases to fixed versioned evidence directories", () => {
     const repositoryRoot = createTemporaryRoot("eti-capture-paths-");
+    expect(RELEASE_EVIDENCE_ID).toBe("premium-spatial-2026-08-26");
     expect(createCapturePaths(repositoryRoot, "before").outputDirectory).toBe(
       resolve(
         repositoryRoot,
-        "artifacts/site-audit/before/purple-signal-2026-08-25",
+        `artifacts/site-audit/before/${RELEASE_EVIDENCE_ID}`,
       ),
     );
     expect(
@@ -408,7 +413,7 @@ describe("production screenshot capture contract", () => {
     ).toBe(
       resolve(
         repositoryRoot,
-        "artifacts/site-audit/after/purple-signal-2026-08-25/local",
+        `artifacts/site-audit/after/${RELEASE_EVIDENCE_ID}/local`,
       ),
     );
     expect(
@@ -416,7 +421,7 @@ describe("production screenshot capture contract", () => {
     ).toBe(
       resolve(
         repositoryRoot,
-        "artifacts/site-audit/after/purple-signal-2026-08-25/production",
+        `artifacts/site-audit/after/${RELEASE_EVIDENCE_ID}/production`,
       ),
     );
     const runtimePaths = createCapturePaths(
@@ -426,10 +431,10 @@ describe("production screenshot capture contract", () => {
     expect(runtimePaths.outputDirectory).toBe(
       resolve(
         repositoryRoot,
-        "artifacts/site-audit/runtime-verification/purple-signal-2026-08-25-final",
+        `artifacts/site-audit/runtime-verification/${RELEASE_EVIDENCE_ID}-final`,
       ),
     );
-    expect(runtimePaths.expectedFileNames).toHaveLength(97);
+    expect(runtimePaths.expectedFileNames).toHaveLength(156);
     expect(
       readFileSync(new URL("../../.gitignore", import.meta.url), "utf8"),
     ).toMatch(/^artifacts\/site-audit\/runtime-verification\/$/m);
