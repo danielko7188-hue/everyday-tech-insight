@@ -2773,6 +2773,27 @@ strong {
   background: var(--brand-deep);
 }
 
+@supports selector(.site-header__mobile-menu::details-content) {
+  .site-header__mobile-menu {
+    interpolate-size: allow-keywords;
+  }
+
+  .site-header__mobile-menu::details-content {
+    overflow: clip;
+    block-size: 0;
+    opacity: 0;
+    transition:
+      block-size 180ms ease,
+      opacity 160ms ease,
+      content-visibility 180ms allow-discrete;
+  }
+
+  .site-header__mobile-menu[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+}
+
 .site-header__mobile-menu li + li {
   border-color: var(--brand-rule-dark);
 }
@@ -4083,6 +4104,10 @@ strong {
 
   .reading-progress {
     display: none !important;
+  }
+
+  .site-header__mobile-menu::details-content {
+    transition: none !important;
   }
 
   .signal-field__plane,

@@ -828,6 +828,88 @@ test("shared chrome uses the balanced 900px header breakpoint", async ({
   }
 });
 
+test("mobile menu uses a short CSS-only reveal and removes it for reduced motion", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+
+  const menu = page.locator(".site-header__mobile-menu");
+  const reveal = await menu.evaluate((details) => {
+    const style = getComputedStyle(details, "::details-content");
+    return {
+      duration: Math.max(
+        ...style.transitionDuration
+          .split(",")
+          .map(
+            (value) =>
+              Number.parseFloat(value) * (value.includes("ms") ? 1 : 1000),
+          ),
+      ),
+      properties: style.transitionProperty
+        .split(",")
+        .map((value) => value.trim()),
+      supported: CSS.supports("selector(details::details-content)"),
+    };
+  });
+
+  expect(reveal.supported).toBe(true);
+  expect(reveal.duration).toBeGreaterThan(0);
+  expect(reveal.duration).toBeLessThanOrEqual(200);
+  expect(reveal.properties).toEqual(
+    expect.arrayContaining(["block-size", "opacity"]),
+  );
+
+  await menu.locator("summary").click();
+  await expect(menu).toHaveAttribute("open", "");
+  const runningReveal = await menu.evaluate((details) =>
+    details.getAnimations({ subtree: true }).flatMap((animation) => {
+      const effect = animation.effect;
+      if (!(effect instanceof KeyframeEffect)) return [];
+      const duration = effect.getComputedTiming().duration;
+      return [
+        {
+          duration:
+            typeof duration === "number"
+              ? duration
+              : Number.parseFloat(String(duration)),
+          pseudoElement: effect.pseudoElement,
+        },
+      ];
+    }),
+  );
+  expect(
+    runningReveal.some(
+      ({ duration, pseudoElement }) =>
+        pseudoElement === "::details-content" &&
+        duration > 0 &&
+        duration <= 180,
+    ),
+  ).toBe(true);
+  await expect(menu.locator("nav")).toBeVisible();
+  await menu.evaluate(async (details) => {
+    await Promise.all(
+      details
+        .getAnimations({ subtree: true })
+        .map((animation) => animation.finished),
+    );
+  });
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const reducedDuration = await menu.evaluate((details) =>
+    Math.max(
+      ...getComputedStyle(details, "::details-content")
+        .transitionDuration.split(",")
+        .map(
+          (value) =>
+            Number.parseFloat(value) * (value.includes("ms") ? 1 : 1000),
+        ),
+    ),
+  );
+  expect(reducedDuration).toBeLessThanOrEqual(0.001);
+});
+
 test("open mobile menu keeps its control anchored while expanding an opaque panel below", async ({
   page,
 }) => {
@@ -847,6 +929,13 @@ test("open mobile menu keeps its control anchored while expanding an opaque pane
     await page.keyboard.press("Enter");
     await expect(menu).toHaveAttribute("open", "");
     await expect(summary).toContainText("Close");
+    await menu.evaluate(async (details) => {
+      await Promise.all(
+        details
+          .getAnimations({ subtree: true })
+          .map((animation) => animation.finished),
+      );
+    });
 
     const geometry = await page.evaluate(() => {
       const row = document.querySelector<HTMLElement>(

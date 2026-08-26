@@ -483,6 +483,55 @@ test("reduced motion removes cross-document root view-transition motion", async 
   ).toBe(true);
 });
 
+test("native page navigation preserves history, refreshes title and content, and resets focus", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto("/");
+
+  const homeTitle = await page.title();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Make technology decisions you can explain.",
+  );
+
+  const guidesLink = page.locator('.site-header__utility a[href="/articles/"]');
+  await guidesLink.focus();
+  await expect(guidesLink).toBeFocused();
+  await guidesLink.click();
+
+  await expect(page).toHaveURL(/\/articles\/$/);
+  await expect(page).toHaveTitle("All guides | Everyday Tech Insight");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "All guides",
+  );
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Make technology decisions you can explain.",
+    }),
+  ).toHaveCount(0);
+  expect(
+    await page.evaluate(() => document.activeElement === document.body),
+  ).toBe(true);
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveTitle(homeTitle);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Make technology decisions you can explain.",
+  );
+  await expect(
+    page.getByRole("heading", { level: 1, name: "All guides" }),
+  ).toHaveCount(0);
+
+  await page.goForward();
+  await expect(page).toHaveURL(/\/articles\/$/);
+  await expect(page).toHaveTitle("All guides | Everyday Tech Insight");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "All guides",
+  );
+});
+
 test("reduced motion leaves every spatial enhancement static", async ({
   page,
 }) => {
