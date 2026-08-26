@@ -189,7 +189,7 @@ describe("Pages CMS configuration", () => {
       type: "boolean",
       default: false,
       description: expect.stringMatching(
-        /three published guides.*homepage.*curation order.*chronology/i,
+        /no more than three published guides.*homepage.*QA blocks larger selections/i,
       ),
     });
     expect(field(config, "featured").readonly).not.toBe(true);

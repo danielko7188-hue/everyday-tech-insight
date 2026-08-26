@@ -165,7 +165,7 @@ content:
         label: Feature on homepage
         type: boolean
         default: false
-        description: Select up to three published guides for the homepage opening. If more than three are selected, reviewed curation order and then article chronology break ties.
+        description: Select no more than three published guides for the homepage opening. QA blocks larger selections.
       - name: datePublished
         label: Date published
         type: date

@@ -172,7 +172,7 @@ const FIELD_HELPERS = new Map([
   ],
   [
     "featured",
-    "Select up to three published guides for the homepage opening. If more than three are selected, reviewed curation order and then article chronology break ties.",
+    "Select no more than three published guides for the homepage opening. QA blocks larger selections.",
   ],
   [
     "datePublished",
