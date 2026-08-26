@@ -2,7 +2,9 @@
 import { categoriesBySlug } from "../data/categories";
 import {
   estimateReadingTime,
+  resolveStoryDate,
   resolveStoryTreatment,
+  type StoryDateMode,
   type StoryTreatment,
 } from "../utils/presentation";
 import type { PublishedArticleEntry } from "../utils/published-articles";
@@ -15,6 +17,7 @@ interface Props {
   headingLevel?: 2 | 3;
   showVisual?: boolean;
   showFullMeta?: boolean;
+  dateMode?: StoryDateMode;
 }
 
 const {
@@ -23,6 +26,7 @@ const {
   headingLevel = 2,
   showVisual: showVisualOverride,
   showFullMeta: showFullMetaOverride,
+  dateMode = "published",
 } = Astro.props;
 const Heading = `h${headingLevel}` as "h2" | "h3";
 const category = categoriesBySlug.get(article.data.category);
@@ -37,6 +41,7 @@ const treatment = resolveStoryTreatment(variant);
 const showVisual = showVisualOverride ?? treatment.showVisual;
 const showFullMeta = showFullMetaOverride ?? treatment.showFullMeta;
 const showDate = showFullMeta || variant === "list";
+const storyDate = resolveStoryDate(article.data, dateMode);
 ---
 
 <article
@@ -62,7 +67,8 @@ const showDate = showFullMeta || variant === "list";
       categoryName={category.name}
       categorySlug={category.slug}
       contentType={article.data.contentType}
-      publicationDate={article.data.datePublished}
+      publicationDate={storyDate.date}
+      dateLabel={storyDate.label}
       readingMinutes={readingMinutes}
       compact={treatment.compactMeta}
       showContentType={showFullMeta || variant !== "compact"}

@@ -11,6 +11,21 @@ export interface StoryTreatmentContract {
   showVisual: boolean;
 }
 
+export type StoryDateMode = "published" | "latest";
+
+export function resolveStoryDate(
+  dates: { datePublished: string; dateModified?: string },
+  mode: StoryDateMode = "published",
+): { date: string; label?: "Published" | "Updated" } {
+  if (mode === "latest") {
+    return dates.dateModified
+      ? { date: dates.dateModified, label: "Updated" }
+      : { date: dates.datePublished, label: "Published" };
+  }
+
+  return { date: dates.datePublished };
+}
+
 const storyTreatments = {
   lead: {
     compactMeta: false,

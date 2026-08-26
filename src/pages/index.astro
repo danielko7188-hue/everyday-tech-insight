@@ -134,7 +134,12 @@ const websiteStructuredData = {
         {
           briefingArticles.map((article) => (
             <li>
-              <ArticleCard article={article} variant="list" headingLevel={3} />
+              <ArticleCard
+                article={article}
+                variant="list"
+                headingLevel={3}
+                dateMode="latest"
+              />
             </li>
           ))
         }

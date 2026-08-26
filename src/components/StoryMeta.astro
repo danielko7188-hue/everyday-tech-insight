@@ -12,6 +12,7 @@ interface Props {
   compact?: boolean;
   showContentType?: boolean;
   showDate?: boolean;
+  dateLabel?: "Published" | "Updated";
 }
 
 const {
@@ -23,6 +24,7 @@ const {
   compact = false,
   showContentType = true,
   showDate = true,
+  dateLabel,
 } = Astro.props;
 
 const formattedDate = formatPublicationDate(publicationDate, {
@@ -48,7 +50,8 @@ const minutes = Math.max(1, Math.ceil(readingMinutes));
   </li>
   {
     showDate && (
-      <li>
+      <li class="story-meta__date">
+        {dateLabel && <span>{dateLabel}</span>}
         <time datetime={publicationDate}>{formattedDate}</time>
       </li>
     )
@@ -91,6 +94,10 @@ const minutes = Math.max(1, Math.ceil(readingMinutes));
 
   .story-meta__category a {
     min-inline-size: 0;
+  }
+
+  .story-meta .story-meta__date {
+    gap: 0.25rem;
   }
 
   .story-meta a {
