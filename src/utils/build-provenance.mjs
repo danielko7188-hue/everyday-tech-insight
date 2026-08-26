@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 export const BUILD_GIT_SHA_META_NAME = "eti-build-git-sha";
@@ -75,6 +75,19 @@ function unexpectedSourceStatusLines(statusOutput, verifiedVercelGitBuild) {
     : lines;
 }
 
+function canonicalJson(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => canonicalJson(entry)).join(",")}]`;
+  }
+  if (value !== null && typeof value === "object") {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
 function runBuildGitCommand(
   repositoryRoot,
   args,
@@ -127,11 +140,47 @@ function boundedVercelConfigDiff(
   return `\nVercel config diff:\n${boundedDiff}${suffix}`;
 }
 
+function hasSemanticallyIdenticalVercelConfigRewrite(
+  repositoryRoot,
+  unexpectedStatusLines,
+  verifiedVercelGitBuild,
+  execFileSyncImpl,
+  readFileSyncImpl,
+) {
+  if (
+    !verifiedVercelGitBuild ||
+    !unexpectedStatusLines.includes(" M vercel.json")
+  ) {
+    return false;
+  }
+
+  try {
+    const committedConfig = runBuildGitCommand(
+      repositoryRoot,
+      ["show", "HEAD:vercel.json"],
+      execFileSyncImpl,
+      "Could not read the committed Vercel config.",
+    );
+    const rewrittenConfig = readFileSyncImpl(
+      path.join(repositoryRoot, "vercel.json"),
+      "utf8",
+    );
+    if (typeof rewrittenConfig !== "string") return false;
+    return (
+      canonicalJson(JSON.parse(committedConfig)) ===
+      canonicalJson(JSON.parse(rewrittenConfig))
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * @param {{
  *   env?: Record<string, string | undefined>,
  *   execFileSyncImpl?: (command: string, args: string[], options: { cwd: string, encoding: "utf8", windowsHide: boolean }) => string,
  *   pathExistsImpl?: (candidate: string) => boolean,
+ *   readFileSyncImpl?: (candidate: string, encoding: "utf8") => string,
  *   repositoryRoot?: string,
  * }} [options]
  */
@@ -144,6 +193,7 @@ export function resolveBuildGitSha(options) {
     env = process.env,
     execFileSyncImpl = execFileSync,
     pathExistsImpl = existsSync,
+    readFileSyncImpl = readFileSync,
     repositoryRoot = defaultRepositoryRoot,
   } = options ?? {};
 
@@ -157,6 +207,9 @@ export function resolveBuildGitSha(options) {
     throw new TypeError(
       "Build path existence implementation must be callable.",
     );
+  }
+  if (typeof readFileSyncImpl !== "function") {
+    throw new TypeError("Build file reader implementation must be callable.");
   }
 
   const resolvedRepositoryRoot = path.resolve(repositoryRoot);
@@ -204,10 +257,23 @@ export function resolveBuildGitSha(options) {
     env,
     environmentGitSha,
   );
-  const unexpectedStatusLines = unexpectedSourceStatusLines(
+  let unexpectedStatusLines = unexpectedSourceStatusLines(
     statusOutput,
     verifiedVercelGitBuild,
   );
+  if (
+    hasSemanticallyIdenticalVercelConfigRewrite(
+      resolvedRepositoryRoot,
+      unexpectedStatusLines,
+      verifiedVercelGitBuild,
+      execFileSyncImpl,
+      readFileSyncImpl,
+    )
+  ) {
+    unexpectedStatusLines = unexpectedStatusLines.filter(
+      (line) => line !== " M vercel.json",
+    );
+  }
   if (unexpectedStatusLines.length > 0) {
     const diagnosticEntries = unexpectedStatusLines
       .slice(0, 10)

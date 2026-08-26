@@ -325,6 +325,105 @@ describe("public build provenance", () => {
     ).toThrow(/unexpected entries: M package-lock\.json/i);
   });
 
+  it("accepts a semantically identical Vercel config rewrite only in a verified Vercel Git build", () => {
+    const committedConfig = JSON.stringify(
+      {
+        framework: "astro",
+        trailingSlash: true,
+        headers: [
+          { source: "/(.*)", headers: [{ key: "X-Test", value: "1" }] },
+        ],
+      },
+      null,
+      2,
+    );
+    const providerConfig =
+      '{"headers":[{"headers":[{"value":"1","key":"X-Test"}],"source":"/(.*)"}],"trailingSlash":true,"framework":"astro"}';
+    const calls: string[][] = [];
+
+    expect(
+      resolveBuildGitSha({
+        env: VERCEL_GIT_BUILD_ENVIRONMENT,
+        execFileSyncImpl: (_command, args) => {
+          calls.push(args);
+          if (args[0] === "rev-parse") return `${VERCEL_SHA}\n`;
+          if (args[0] === "status") return " M vercel.json\n";
+          if (args[0] === "show") return committedConfig;
+          return "";
+        },
+        pathExistsImpl: () => true,
+        readFileSyncImpl: () => providerConfig,
+        repositoryRoot: "C:/vercel/path0",
+      }),
+    ).toBe(VERCEL_SHA);
+    expect(calls).toContainEqual(["show", "HEAD:vercel.json"]);
+    expect(calls.some((args) => args[0] === "diff")).toBe(false);
+  });
+
+  it("rejects a Vercel config rewrite when any parsed value changes", () => {
+    const committedConfig =
+      '{"framework":"astro","trailingSlash":true,"headers":[]}';
+    const changedConfig =
+      '{"framework":"astro","trailingSlash":false,"headers":[]}';
+
+    expect(() =>
+      resolveBuildGitSha({
+        env: VERCEL_GIT_BUILD_ENVIRONMENT,
+        execFileSyncImpl: (_command, args) => {
+          if (args[0] === "rev-parse") return `${VERCEL_SHA}\n`;
+          if (args[0] === "status") return " M vercel.json\n";
+          if (args[0] === "show") return committedConfig;
+          if (args[0] === "diff") return "provider changed trailingSlash";
+          return "";
+        },
+        pathExistsImpl: () => true,
+        readFileSyncImpl: () => changedConfig,
+        repositoryRoot: "C:/vercel/path0",
+      }),
+    ).toThrow(/source tree.*not clean/i);
+  });
+
+  it.each(["M  vercel.json\n", "MM vercel.json\n"])(
+    "rejects a semantically identical Vercel config when the index is modified: %s",
+    (statusOutput) => {
+      const config = '{"framework":"astro","trailingSlash":true}';
+      expect(() =>
+        resolveBuildGitSha({
+          env: VERCEL_GIT_BUILD_ENVIRONMENT,
+          execFileSyncImpl: (_command, args) => {
+            if (args[0] === "rev-parse") return `${VERCEL_SHA}\n`;
+            if (args[0] === "status") return statusOutput;
+            if (args[0] === "diff") return "staged config mutation";
+            return "";
+          },
+          pathExistsImpl: () => true,
+          readFileSyncImpl: () => config,
+          repositoryRoot: "C:/vercel/path0",
+        }),
+      ).toThrow(/source tree.*not clean/i);
+    },
+  );
+
+  it("still rejects other source changes beside an equivalent Vercel rewrite", () => {
+    const config = '{"framework":"astro","trailingSlash":true}';
+    expect(() =>
+      resolveBuildGitSha({
+        env: VERCEL_GIT_BUILD_ENVIRONMENT,
+        execFileSyncImpl: (_command, args) => {
+          if (args[0] === "rev-parse") return `${VERCEL_SHA}\n`;
+          if (args[0] === "status") {
+            return " M vercel.json\n M src/pages/index.astro\n";
+          }
+          if (args[0] === "show") return config;
+          return "";
+        },
+        pathExistsImpl: () => true,
+        readFileSyncImpl: () => config,
+        repositoryRoot: "C:/vercel/path0",
+      }),
+    ).toThrow(/unexpected entries: M src\/pages\/index\.astro/i);
+  });
+
   it("includes a bounded tracked diff only for the public Vercel config", () => {
     const diff = [
       "diff --git a/vercel.json b/vercel.json",
