@@ -162,11 +162,10 @@ content:
         options:
           values: [unverified, source-checked, tested]
       - name: featured
-        label: Legacy featured marker (read-only)
+        label: Feature on homepage
         type: boolean
-        readonly: true
         default: false
-        description: Preserved for frontmatter compatibility. This marker does not control homepage placement, which is maintained in the reviewed editorial curation registry.
+        description: Select up to three published guides for the homepage opening. If more than three are selected, reviewed curation order and then article chronology break ties.
       - name: datePublished
         label: Date published
         type: date

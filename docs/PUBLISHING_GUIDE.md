@@ -34,7 +34,7 @@ Use one of these two controlled paths on a non-`main` branch:
 
 A new guide begins as `draft`. The intended lifecycle is `draft -> review -> published -> archived`.
 
-Pages CMS exposes the stored `featured` value as a read-only legacy marker and includes it in the article list. It remains schema-compatible and is preserved when present, but it does not control homepage placement; that selection is maintained through the reviewed editorial curation registry rather than an article toggle.
+Pages CMS exposes `featured` as the homepage-opening control and includes it in the article list. Select up to three published guides. If more than three are selected, the reviewed curation order breaks ties first and publication or substantive-modification chronology breaks any remaining ties. Draft, review, and archived records never appear publicly even if the marker is set.
 
 - `draft`: working content may be incomplete. It remains `noindex`, unfeatured, unverified, and nonroutable.
 - `review`: the editorial structure, explanation fields, fit fields, at least one source record, and visual tuple are complete enough for review. It remains nonroutable.

@@ -185,14 +185,14 @@ describe("Pages CMS configuration", () => {
       ),
     ).toBe(false);
     expect(field(config, "featured")).toMatchObject({
-      label: "Legacy featured marker (read-only)",
+      label: "Feature on homepage",
       type: "boolean",
-      readonly: true,
       default: false,
       description: expect.stringMatching(
-        /compatibility.*does not control homepage placement.*curation registry/i,
+        /three published guides.*homepage.*curation order.*chronology/i,
       ),
     });
+    expect(field(config, "featured").readonly).not.toBe(true);
     expect(collection.view.fields).toContain("featured");
     expect(field(config, "relatedArticles").default).toEqual([]);
     expect(field(config, "noindex").default).toBe(true);

@@ -87,7 +87,7 @@ Set `$fullGitSha` and `$vercelDeploymentId` from the exact pushed commit and aut
 - `src/content/articles/`: article source files and source records.
 - `src/content-assets/articles/`: repository-tracked, non-deployed source media. The build publishes only validated, referenced files to public URLs under `/images/articles/`.
 - `docs/editorial-operations.yml`: strict source of truth for owner gates and guide-quality records; `npm run generate:editorial` produces the two finished Markdown documents, and `npm run check:editorial` rejects drift plus its defined secret-like, placeholder, and state-contract hazards. Human review remains required.
-- `.pages.yml`: Pages CMS collection, lifecycle fields, and repository-tracked source-media configuration; it does not prove hosted authorization.
+- `.pages.yml`: Pages CMS collection, lifecycle fields, homepage-featured control, and repository-tracked source-media configuration; it does not prove hosted authorization.
 - `public/toolkit/`: blank CSV worksheets linked from the Toolkit page; publication rights remain an owner-review gate.
 - `src/data/toolkit.ts`: four typed Toolkit records, their detail-page guidance, unchanged CSV contracts, and related-guide mappings.
 - `src/pages/`: generated public route templates.

@@ -172,7 +172,7 @@ const FIELD_HELPERS = new Map([
   ],
   [
     "featured",
-    "Preserved for frontmatter compatibility. This marker does not control homepage placement, which is maintained in the reviewed editorial curation registry.",
+    "Select up to three published guides for the homepage opening. If more than three are selected, reviewed curation order and then article chronology break ties.",
   ],
   [
     "datePublished",
