@@ -4,6 +4,10 @@ import Header from "../components/Header.astro";
 import EditorialVisualSymbols from "../components/EditorialVisualSymbols.astro";
 import type { CategorySlug } from "../data/categories";
 import { site } from "../data/site";
+import {
+  BUILD_GIT_SHA_META_NAME,
+  resolveBuildGitSha,
+} from "../utils/build-provenance.mjs";
 import type { ArticleVisual } from "../utils/content-contract";
 import "../styles/global.css";
 
@@ -43,6 +47,7 @@ const canonical = new URL(path, site.url).toString();
 const rssUrl = new URL("/rss.xml", site.url).toString();
 const ogLocale = site.locale.replaceAll("-", "_");
 const socialImageUrl = new URL(socialImagePath, site.url).toString();
+const buildGitSha = resolveBuildGitSha();
 const jsonLdItems = Array.isArray(structuredData)
   ? structuredData
   : [structuredData];
@@ -53,6 +58,7 @@ const jsonLdItems = Array.isArray(structuredData)
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name={BUILD_GIT_SHA_META_NAME} content={buildGitSha} />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="robots" content={robots} />

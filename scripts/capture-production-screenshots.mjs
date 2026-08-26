@@ -11,6 +11,7 @@ import {
   normalizeAuditOrigin,
   writeAuditManifest,
 } from "./write-audit-manifest.mjs";
+import { BUILD_GIT_SHA_META_NAME } from "../src/utils/build-provenance.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -601,6 +602,44 @@ export async function assertCaptureSourceProvenance(
       "Capture source tree is not clean; commit or remove tracked and untracked non-ignored changes before capturing.",
     );
   }
+
+  const indexFlagsOutput = await runGitCaptureCommand(
+    repositoryRootCandidate,
+    ["ls-files", "-v", "-z", "--cached"],
+    execFileImpl,
+  );
+  const flaggedIndexEntries = indexFlagsOutput
+    .split("\0")
+    .filter((entry) => /^(?:[a-z]|S) /.test(entry));
+  if (flaggedIndexEntries.length > 0) {
+    throw new Error(
+      "Tracked files carry assume-unchanged or skip-worktree index flags; clear those index flags before capturing.",
+    );
+  }
+
+  const ignoredEnvironmentOutput = await runGitCaptureCommand(
+    repositoryRootCandidate,
+    [
+      "ls-files",
+      "--others",
+      "--ignored",
+      "--exclude-standard",
+      "-z",
+      "--",
+      ":(top).env",
+      ":(top).env.*",
+    ],
+    execFileImpl,
+  );
+  const ignoredEnvironmentFiles = ignoredEnvironmentOutput
+    .split("\0")
+    .filter(Boolean)
+    .filter((fileName) => fileName !== ".env.example");
+  if (ignoredEnvironmentFiles.length > 0) {
+    throw new Error(
+      "Ignored local .env environment files can change build output; remove them before capturing.",
+    );
+  }
   return Object.freeze({ gitHead, sourceTreeClean: true });
 }
 
@@ -737,6 +776,80 @@ export function assertExpectedNavigation(response, { route, url }) {
     throw new Error(
       `${route.path} unexpectedly redirected to ${response.url()}.`,
     );
+  }
+}
+
+export function validateServedBuildGitSha(
+  markerValues,
+  expectedGitShaCandidate,
+) {
+  const expectedGitSha = normalizeExpectedGitSha(expectedGitShaCandidate);
+  if (!Array.isArray(markerValues) || markerValues.length !== 1) {
+    throw new Error(
+      "Served root build SHA marker must appear exactly once in the document head.",
+    );
+  }
+  let servedGitSha;
+  try {
+    servedGitSha = normalizeExpectedGitSha(markerValues[0]);
+  } catch (cause) {
+    throw new Error(
+      "Served root build SHA marker must contain a full lowercase 40-character SHA.",
+      { cause },
+    );
+  }
+  if (servedGitSha !== expectedGitSha) {
+    throw new Error(
+      `Served root build SHA ${servedGitSha} does not match expected SHA ${expectedGitSha}.`,
+    );
+  }
+  return servedGitSha;
+}
+
+export async function assertServedBuildGitSha(
+  browser,
+  { expectedGitSha, origin, phase: phaseCandidate },
+) {
+  const phase = assertCapturePhase(phaseCandidate);
+  if (phase === "before") {
+    return Object.freeze({ exempt: true });
+  }
+  const normalizedOrigin = normalizeCaptureOrigin(origin, phase);
+  const context = await browser.newContext({
+    colorScheme: "light",
+    deviceScaleFactor: 1,
+    locale: "en-US",
+    reducedMotion: "reduce",
+    timezoneId: "America/Los_Angeles",
+    viewport: { height: CAPTURE_HEIGHT, width: 390 },
+  });
+  const page = await context.newPage();
+  const route = { path: "/", status: 200 };
+  const runtimeErrors = createRuntimeMonitor(page, normalizedOrigin, route);
+  try {
+    const url = new URL(route.path, `${normalizedOrigin}/`).href;
+    const response = await page.goto(url, { waitUntil: "networkidle" });
+    assertExpectedNavigation(response, { route, url });
+    if (runtimeErrors.length > 0) {
+      throw new Error(`/: ${runtimeErrors.join("; ")}`);
+    }
+
+    const locator = page.locator(
+      `head > meta[name="${BUILD_GIT_SHA_META_NAME}"]`,
+    );
+    const markerCount = await locator.count();
+    const markerValues = [];
+    for (let index = 0; index < markerCount; index += 1) {
+      markerValues.push(await locator.nth(index).getAttribute("content"));
+    }
+    const servedGitSha = validateServedBuildGitSha(
+      markerValues,
+      expectedGitSha,
+    );
+    return Object.freeze({ servedGitSha });
+  } finally {
+    await page.close();
+    await context.close();
   }
 }
 
@@ -1150,6 +1263,11 @@ export async function captureProductionScreenshots(options, overrides = {}) {
   try {
     browser = await (overrides.chromiumImpl ?? chromium).launch({
       headless: true,
+    });
+    await assertServedBuildGitSha(browser, {
+      expectedGitSha,
+      origin,
+      phase,
     });
     const statusByFileName = new Map();
     for (const width of CAPTURE_WIDTHS) {

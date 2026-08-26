@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -24,6 +25,7 @@ import {
   assertExpectedNavigation,
   assertCaptureSourceProvenance,
   assertSafeCaptureOutputPath,
+  assertServedBuildGitSha,
   buildCapturePlan,
   captureProductionScreenshots,
   createCapturePaths,
@@ -31,6 +33,7 @@ import {
   parseCaptureArguments,
   prepareCaptureWorkspace,
   publishCaptureRun,
+  validateServedBuildGitSha,
 } from "../../scripts/capture-production-screenshots.mjs";
 
 const temporaryRoots: string[] = [];
@@ -40,6 +43,48 @@ function createTemporaryRoot(prefix: string): string {
   const root = mkdtempSync(join(tmpdir(), prefix));
   temporaryRoots.push(root);
   return root;
+}
+
+function runGit(repositoryRoot: string, args: string[]): string {
+  return execFileSync("git", args, {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+}
+
+function createCleanGitFixture(prefix: string): {
+  gitHead: string;
+  repositoryRoot: string;
+} {
+  const repositoryRoot = createTemporaryRoot(prefix);
+  runGit(repositoryRoot, ["init", "--quiet"]);
+  runGit(repositoryRoot, ["config", "user.email", "capture@example.invalid"]);
+  runGit(repositoryRoot, ["config", "user.name", "Capture Test"]);
+  runGit(repositoryRoot, ["config", "core.autocrlf", "false"]);
+  writeFileSync(
+    join(repositoryRoot, ".gitignore"),
+    ".env\n.env.*\n!.env.example\n",
+    "utf8",
+  );
+  writeFileSync(
+    join(repositoryRoot, ".env.example"),
+    "PUBLIC_EXAMPLE=\n",
+    "utf8",
+  );
+  writeFileSync(join(repositoryRoot, "tracked.txt"), "tracked\n", "utf8");
+  runGit(repositoryRoot, [
+    "add",
+    "--",
+    ".gitignore",
+    ".env.example",
+    "tracked.txt",
+  ]);
+  runGit(repositoryRoot, ["commit", "--quiet", "-m", "fixture"]);
+  return {
+    gitHead: runGit(repositoryRoot, ["rev-parse", "--verify", "HEAD"]).trim(),
+    repositoryRoot,
+  };
 }
 
 afterEach(() => {
@@ -110,6 +155,25 @@ describe("production screenshot capture contract", () => {
         command: "git",
         cwd: repositoryRoot,
       },
+      {
+        args: ["ls-files", "-v", "-z", "--cached"],
+        command: "git",
+        cwd: repositoryRoot,
+      },
+      {
+        args: [
+          "ls-files",
+          "--others",
+          "--ignored",
+          "--exclude-standard",
+          "-z",
+          "--",
+          ":(top).env",
+          ":(top).env.*",
+        ],
+        command: "git",
+        cwd: repositoryRoot,
+      },
     ]);
   });
 
@@ -167,6 +231,91 @@ describe("production screenshot capture contract", () => {
     ).rejects.toThrow(/could not verify.*Git source/i);
   });
 
+  it("rejects an assume-unchanged tracked file that porcelain status hides", async () => {
+    const { gitHead, repositoryRoot } = createCleanGitFixture(
+      "eti-capture-assume-unchanged-",
+    );
+    runGit(repositoryRoot, [
+      "update-index",
+      "--assume-unchanged",
+      "tracked.txt",
+    ]);
+    expect(
+      runGit(repositoryRoot, [
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+        "--ignored=no",
+      ]),
+    ).toBe("");
+
+    await expect(
+      assertCaptureSourceProvenance({
+        expectedGitSha: gitHead,
+        phase: "after-local",
+        repositoryRoot,
+      }),
+    ).rejects.toThrow(/assume-unchanged|index flags/i);
+  });
+
+  it("rejects a skip-worktree tracked file that porcelain status hides", async () => {
+    const { gitHead, repositoryRoot } = createCleanGitFixture(
+      "eti-capture-skip-worktree-",
+    );
+    runGit(repositoryRoot, ["update-index", "--skip-worktree", "tracked.txt"]);
+    expect(
+      runGit(repositoryRoot, [
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+        "--ignored=no",
+      ]),
+    ).toBe("");
+
+    await expect(
+      assertCaptureSourceProvenance({
+        expectedGitSha: gitHead,
+        phase: "after-production",
+        repositoryRoot,
+      }),
+    ).rejects.toThrow(/skip-worktree|index flags/i);
+  });
+
+  it("allows tracked .env.example but rejects an ignored local .env variant", async () => {
+    const { gitHead, repositoryRoot } = createCleanGitFixture(
+      "eti-capture-ignored-env-",
+    );
+    await expect(
+      assertCaptureSourceProvenance({
+        expectedGitSha: gitHead,
+        phase: "runtime-verification",
+        repositoryRoot,
+      }),
+    ).resolves.toEqual({ gitHead, sourceTreeClean: true });
+
+    writeFileSync(
+      join(repositoryRoot, ".env.production.local"),
+      "PUBLIC_VARIANT=unsafe\n",
+      "utf8",
+    );
+    expect(
+      runGit(repositoryRoot, [
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+        "--ignored=no",
+      ]),
+    ).toBe("");
+
+    await expect(
+      assertCaptureSourceProvenance({
+        expectedGitSha: gitHead,
+        phase: "runtime-verification",
+        repositoryRoot,
+      }),
+    ).rejects.toThrow(/ignored.*\.env|environment.*file/i);
+  });
+
   it("exempts historical before captures from the local Git source gate", async () => {
     const deployedGitSha = "0123456789abcdef0123456789abcdef01234567";
     let gitInvoked = false;
@@ -212,6 +361,102 @@ describe("production screenshot capture contract", () => {
       ),
     ).rejects.toThrow(/source tree.*not clean/i);
     expect(readFileSync(sentinelPath, "utf8")).toBe("prior");
+  });
+
+  it("accepts exactly one served root build marker matching the expected SHA", () => {
+    const head = "0123456789abcdef0123456789abcdef01234567";
+
+    expect(validateServedBuildGitSha([head], head)).toBe(head);
+  });
+
+  it.each([
+    ["a missing marker", []],
+    [
+      "duplicate markers",
+      [
+        "0123456789abcdef0123456789abcdef01234567",
+        "0123456789abcdef0123456789abcdef01234567",
+      ],
+    ],
+    ["a malformed marker", ["main"]],
+    ["a mismatched marker", ["89abcdef0123456789abcdef0123456789abcdef"]],
+  ])("rejects %s on the served root", (_label, markerValues) => {
+    const expectedGitSha = "0123456789abcdef0123456789abcdef01234567";
+
+    expect(() =>
+      validateServedBuildGitSha(markerValues, expectedGitSha),
+    ).toThrow(/served root.*build.*SHA/i);
+  });
+
+  it("rejects a mismatched served root marker before any screenshot", async () => {
+    const expectedGitSha = "0123456789abcdef0123456789abcdef01234567";
+    const servedGitSha = "89abcdef0123456789abcdef0123456789abcdef";
+    const repositoryRoot = createTemporaryRoot("eti-capture-served-sha-");
+    const paths = createCapturePaths(repositoryRoot, "after-local");
+    let screenshotCalls = 0;
+    const mainFrame = {};
+    const page = {
+      close: async () => undefined,
+      goto: async (url: string) => ({
+        request: () => ({ redirectedFrom: () => null }),
+        status: () => 200,
+        url: () => url,
+      }),
+      locator: () => ({
+        count: async () => 1,
+        nth: () => ({ getAttribute: async () => servedGitSha }),
+      }),
+      mainFrame: () => mainFrame,
+      on: () => page,
+      screenshot: async () => {
+        screenshotCalls += 1;
+      },
+    };
+    const context = {
+      close: async () => undefined,
+      newPage: async () => page,
+    };
+    const browser = {
+      close: async () => undefined,
+      newContext: async () => context,
+    };
+    const chromiumImpl = { launch: async () => browser };
+    const execFileImpl = async (_command: string, args: string[]) =>
+      args[0] === "rev-parse"
+        ? { stderr: "", stdout: `${expectedGitSha}\n` }
+        : { stderr: "", stdout: "" };
+
+    await expect(
+      captureProductionScreenshots(
+        {
+          deploymentId: null,
+          expectedGitSha,
+          origin: "http://127.0.0.1:4321",
+          phase: "after-local",
+        },
+        { chromiumImpl, execFileImpl, paths },
+      ),
+    ).rejects.toThrow(/served root.*build.*SHA/i);
+    expect(screenshotCalls).toBe(0);
+  });
+
+  it("keeps historical before captures compatible with sites without a build marker", async () => {
+    let browserUsed = false;
+    const browser = {
+      newContext: async () => {
+        browserUsed = true;
+        throw new Error("before phase must not inspect a build marker");
+      },
+    };
+
+    await expect(
+      assertServedBuildGitSha(browser, {
+        expectedGitSha: "0123456789abcdef0123456789abcdef01234567",
+        origin: "https://publication.example",
+        phase: "before",
+      }),
+    ).resolves.toEqual({ exempt: true });
+    expect(browserUsed).toBe(false);
   });
 
   it("defines the release evidence ID, eight widths, the representative before routes, and exact full after routes", () => {
