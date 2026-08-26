@@ -25,16 +25,25 @@ type LocatedSentence = Readonly<{
 type AuditCapture = Readonly<{
   actualStatus: number;
   byteCount: number;
+  capturedAt: string;
+  deploymentId: string;
+  expectedGitSha: string;
   expectedStatus: number;
   fileName: string;
+  origin: string;
+  phase: string;
   route: string;
   sha256: string;
   state: string;
-  viewport: Readonly<{ width: number }>;
+  viewport: Readonly<{
+    deviceScaleFactor: number;
+    height: number;
+    width: number;
+  }>;
 }>;
 
 type AuditManifest = Readonly<{
-  assertions: ReadonlyArray<Readonly<{ passed: boolean }>>;
+  assertions: ReadonlyArray<Readonly<{ id: string; passed: boolean }>>;
   captureCount: number;
   capturedAt: string;
   captures: ReadonlyArray<AuditCapture>;
@@ -43,6 +52,8 @@ type AuditManifest = Readonly<{
   origin: string;
   phase: string;
 }>;
+
+type CapturePlanEntry = ReturnType<typeof buildCapturePlan>[number];
 
 function locateSentences(text: string): LocatedSentence[] {
   return text.split(/\r?\n/).flatMap((line, lineIndex) =>
@@ -54,21 +65,36 @@ function locateSentences(text: string): LocatedSentence[] {
   );
 }
 
+function locateClauses(text: string): LocatedSentence[] {
+  return locateSentences(text).flatMap(({ line, sentence }) =>
+    sentence
+      .split(/\s*(?:,\s*but\s+|;|\s+but\s+|,\s+)\s*/i)
+      .map((clause) => clause.trim())
+      .filter(Boolean)
+      .map((clause) => ({ line, sentence: clause })),
+  );
+}
+
 function findUnsupportedHostedCompletionClaims(
   text: string,
 ): LocatedSentence[] {
-  const hostedSubject =
-    /(?:Pages CMS hosted (?:access|authorization|sign-in|connection)|hosted (?:Pages )?CMS(?: access| authorization| sign-in| connection)?)/i;
+  const hostedSubject = /(?:Pages CMS hosted\b|hosted (?:Pages )?CMS\b)/i;
   const affirmativeCompletion =
-    /(?:(?:\bis\b|\bare\b|\bwas\b|\bwere\b|\bhas been\b|\bhave been\b)[^.!?]{0,50}\b(?:verified|configured|connected|complete|completed|ready|active|owner-only)\b|\b(?:verified|configured|connected|completed)\b[^.!?]{0,40}(?:hosted (?:Pages )?CMS|Pages CMS hosted))/i;
-  const explicitBoundary =
-    /\b(?:unverified|unknown|not configured|not verified|not performed|not observed|owner action)\b/i;
+    /\b(?:verified|configured|connected|complete|completed|succeeded|works|authorized|operational|ready|active|owner-only)\b/i;
+  const explicitBoundary = /\b(?:not|unverified|unknown|owner actions?)\b/i;
+  const leadingConditional = /^(?:[-*]\s*)?(?:if|when|once|after)\b/i;
 
-  return locateSentences(text).filter(
-    ({ sentence }) =>
-      hostedSubject.test(sentence) &&
-      affirmativeCompletion.test(sentence) &&
-      !explicitBoundary.test(sentence),
+  return locateSentences(text).flatMap(({ line, sentence }) =>
+    leadingConditional.test(sentence)
+      ? []
+      : locateClauses(sentence)
+          .map(({ sentence: clause }) => ({ line, sentence: clause }))
+          .filter(
+            ({ sentence: clause }) =>
+              hostedSubject.test(clause) &&
+              affirmativeCompletion.test(clause) &&
+              !explicitBoundary.test(clause),
+          ),
   );
 }
 
@@ -77,11 +103,11 @@ function findUnsupportedEnabledClaims(
   subject: RegExp,
 ): LocatedSentence[] {
   const affirmative =
-    /\b(?:uses?|enables?|activates?|loads?|ships?|runs?|serves?)\b|\b(?:is|are|was|were|has been|have been)\b[^.!?]{0,35}\b(?:used|enabled|active|activated|loaded|in use)\b/i;
+    /\b(?:uses?|used|enables?|enabled|activates?|activated|active|loads?|loaded|ships?|runs?|serves?|in use)\b/i;
   const explicitBoundary =
-    /\b(?:does not|do not|must not|no|not used|not enabled|not active|without|disabled|off|absent|absence|rejects?|excludes?|forbids?|prohibits?|never|cannot|future)\b/i;
+    /\b(?:instead of|rather than|not loaded|not used|not enabled|not active|does not|do not|must not|no|without|disabled|off|absent|absence|rejects?|excludes?|forbids?|prohibits?|never|cannot|future)\b/i;
 
-  return locateSentences(text).filter(
+  return locateClauses(text).filter(
     ({ sentence }) =>
       subject.test(sentence) &&
       affirmative.test(sentence) &&
@@ -90,13 +116,72 @@ function findUnsupportedEnabledClaims(
 }
 
 function findStaleBlanketMotionBans(text: string): LocatedSentence[] {
-  const prohibition = /\b(?:do not|must not|never|ban|bans|prohibit|forbid)\b/i;
+  const prohibition =
+    /\b(?:do not|must not|never|bans?|banned|prohibits?|prohibited|forbids?|forbidden)\b/i;
   const blanketScope =
-    /\bdecorative entrance (?:motion|animation)\b|\b(?:any|all) nonessential (?:motion|animation|transition)s?\b/i;
+    /\bdecorative entrance (?:motions?|animations?)\b|\b(?:any|all) nonessential (?:motion|animation|transition)s?\b/i;
+  const safetyScope =
+    /\b(?:legal|trust|downloads?|toolkit|ads?|advertising|controls?)\b/i;
 
-  return locateSentences(text).filter(
-    ({ sentence }) => prohibition.test(sentence) && blanketScope.test(sentence),
+  return locateClauses(text).filter(
+    ({ sentence }) =>
+      prohibition.test(sentence) &&
+      blanketScope.test(sentence) &&
+      !safetyScope.test(sentence),
   );
+}
+
+function findCaptureBindingErrors(
+  captures: ReadonlyArray<AuditCapture>,
+  plan: ReadonlyArray<CapturePlanEntry>,
+  manifest: AuditManifest,
+): string[] {
+  const errors: string[] = [];
+  const expectedByFileName = new Map(
+    plan.map((entry) => [entry.fileName, entry] as const),
+  );
+  const captureFileNames = new Set(captures.map(({ fileName }) => fileName));
+
+  for (const expected of plan) {
+    if (!captureFileNames.has(expected.fileName)) {
+      errors.push(`${expected.fileName}: missing capture`);
+    }
+  }
+
+  for (const capture of captures) {
+    const expected = expectedByFileName.get(capture.fileName);
+    if (!expected) {
+      errors.push(`${capture.fileName}: unexpected fileName`);
+      continue;
+    }
+
+    const comparisons = [
+      ["route", capture.route, expected.path],
+      ["state", capture.state, expected.state],
+      ["viewport.width", capture.viewport.width, expected.width],
+      ["viewport.height", capture.viewport.height, expected.height],
+      [
+        "viewport.deviceScaleFactor",
+        capture.viewport.deviceScaleFactor,
+        expected.deviceScaleFactor,
+      ],
+      ["expectedStatus", capture.expectedStatus, expected.status],
+      ["actualStatus", capture.actualStatus, capture.expectedStatus],
+      ["capturedAt", capture.capturedAt, manifest.capturedAt],
+      ["origin", capture.origin, manifest.origin],
+      ["phase", capture.phase, manifest.phase],
+      ["expectedGitSha", capture.expectedGitSha, manifest.expectedGitSha],
+      ["deploymentId", capture.deploymentId, manifest.deploymentId],
+    ] as const;
+
+    for (const [field, actual, expectedValue] of comparisons) {
+      if (actual !== expectedValue) {
+        errors.push(`${capture.fileName}: ${field}`);
+      }
+    }
+  }
+
+  return errors;
 }
 
 async function pathExists(relativePath: string): Promise<boolean> {
@@ -132,6 +217,12 @@ describe("publication operations documentation", () => {
       "The hosted CMS is connected.",
       "Hosted Pages CMS sign-in has been completed.",
       "Pages CMS hosted authorization is owner-only and complete.",
+      "Hosted CMS access remains operational.",
+      "The hosted CMS works.",
+      "Hosted CMS access succeeded.",
+      "Hosted CMS access is authorized.",
+      "Hosted CMS access is configured.",
+      "Hosted CMS access operational.",
     ]) {
       expect(findUnsupportedHostedCompletionClaims(unsupported)).toEqual([
         { line: 1, sentence: unsupported },
@@ -144,6 +235,15 @@ describe("publication operations documentation", () => {
       "Hosted Pages CMS sign-in is an owner action and has not been observed.",
       "Pages CMS hosted authorization remains unknown.",
       "Hosted CMS access is not configured.",
+      "Hosted CMS access is not yet verified.",
+      "Hosted CMS access is not currently configured.",
+      "Hosted CMS access is operational and not performed.",
+      "Hosted CMS access is operational and not observed.",
+      "If hosted CMS access is authorized, verify the repository scope.",
+      "When hosted CMS access works, inspect the saved commit.",
+      "Once hosted CMS access is operational, record evidence.",
+      "After hosted CMS access succeeds, inspect the diff.",
+      "Once the owner authorizes access, the hosted CMS is operational.",
     ]) {
       expect(findUnsupportedHostedCompletionClaims(bounded)).toEqual([]);
     }
@@ -152,6 +252,16 @@ describe("publication operations documentation", () => {
         "Pages CMS hosted access is verified. The selected branch remains unverified.",
       ),
     ).toEqual([{ line: 1, sentence: "Pages CMS hosted access is verified." }]);
+    expect(
+      findUnsupportedHostedCompletionClaims(
+        "Hosted CMS access is unverified, but hosted CMS save access works.",
+      ),
+    ).toEqual([{ line: 1, sentence: "hosted CMS save access works." }]);
+    expect(
+      findUnsupportedHostedCompletionClaims(
+        "Hosted CMS access is unknown; hosted CMS authorization succeeded.",
+      ),
+    ).toEqual([{ line: 1, sentence: "hosted CMS authorization succeeded." }]);
 
     const runtimeSubject =
       /\b(?:Motion|Astro ClientRouter|Three\.js|WebGL|Lenis|remote (?:presentation )?runtime)\b/i;
@@ -182,6 +292,36 @@ describe("publication operations documentation", () => {
       findUnsupportedEnabledClaims("WebGL is not used.", runtimeSubject),
     ).toEqual([]);
     expect(
+      findUnsupportedEnabledClaims(
+        "Motion is used instead of ClientRouter.",
+        runtimeSubject,
+      ),
+    ).toEqual([]);
+    expect(
+      findUnsupportedEnabledClaims(
+        "The site uses CSS rather than Motion.",
+        runtimeSubject,
+      ),
+    ).toEqual([]);
+    expect(
+      findUnsupportedEnabledClaims(
+        "The page works without Lenis.",
+        runtimeSubject,
+      ),
+    ).toEqual([]);
+    expect(
+      findUnsupportedEnabledClaims("Lenis remains loaded.", runtimeSubject),
+    ).toEqual([{ line: 1, sentence: "Lenis remains loaded." }]);
+    expect(
+      findUnsupportedEnabledClaims("WebGL loaded at runtime.", runtimeSubject),
+    ).toEqual([{ line: 1, sentence: "WebGL loaded at runtime." }]);
+    expect(
+      findUnsupportedEnabledClaims(
+        "Motion is not loaded, but WebGL is active.",
+        runtimeSubject,
+      ),
+    ).toEqual([{ line: 1, sentence: "WebGL is active." }]);
+    expect(
       findUnsupportedEnabledClaims("Analytics is active.", advertisingSubject),
     ).toHaveLength(1);
     expect(
@@ -206,6 +346,9 @@ describe("publication operations documentation", () => {
       "Do not add decorative entrance motion, parallax, or any nonessential transition.",
       "Never use decorative entrance animation in this publication.",
       "The standard must prohibit all nonessential animations.",
+      "Decorative entrance motions are prohibited.",
+      "Decorative entrance animations are banned.",
+      "Never use decorative entrance animations.",
     ]) {
       expect(findStaleBlanketMotionBans(staleBan)).toHaveLength(1);
     }
@@ -214,6 +357,108 @@ describe("publication operations documentation", () => {
         "Do not add scroll hijacking, runtime motion, or continuous or infinite loops.",
       ),
     ).toEqual([]);
+    expect(
+      findStaleBlanketMotionBans(
+        "Never use decorative entrance motion on legal and trust controls.",
+      ),
+    ).toEqual([]);
+    expect(
+      findStaleBlanketMotionBans(
+        "Do not add decorative entrance animation to Toolkit download controls.",
+      ),
+    ).toEqual([]);
+    expect(
+      findStaleBlanketMotionBans(
+        "Decorative entrance animations are prohibited in advertising controls.",
+      ),
+    ).toEqual([]);
+  });
+
+  it("rejects per-capture mutations against the manifest header and capture plan", async () => {
+    const manifest = JSON.parse(
+      await read(
+        "artifacts/site-audit/before/premium-spatial-2026-08-26/audit-manifest.json",
+      ),
+    ) as AuditManifest;
+    const plan = buildCapturePlan({
+      origin: manifest.origin,
+      phase: "before",
+    });
+
+    expect(findCaptureBindingErrors(manifest.captures, plan, manifest)).toEqual(
+      [],
+    );
+
+    const original = manifest.captures[0]!;
+    const mutations: ReadonlyArray<
+      Readonly<{ capture: AuditCapture; expectedField: string }>
+    > = [
+      { capture: { ...original, route: "/mutated/" }, expectedField: "route" },
+      {
+        capture: { ...original, state: "menu-open" },
+        expectedField: "state",
+      },
+      {
+        capture: {
+          ...original,
+          viewport: { ...original.viewport, width: 321 },
+        },
+        expectedField: "viewport.width",
+      },
+      {
+        capture: {
+          ...original,
+          viewport: { ...original.viewport, height: 901 },
+        },
+        expectedField: "viewport.height",
+      },
+      {
+        capture: {
+          ...original,
+          viewport: { ...original.viewport, deviceScaleFactor: 2 },
+        },
+        expectedField: "viewport.deviceScaleFactor",
+      },
+      {
+        capture: { ...original, expectedStatus: 500 },
+        expectedField: "expectedStatus",
+      },
+      {
+        capture: { ...original, actualStatus: 500 },
+        expectedField: "actualStatus",
+      },
+      {
+        capture: { ...original, capturedAt: "mutated" },
+        expectedField: "capturedAt",
+      },
+      {
+        capture: { ...original, origin: "https://example.invalid" },
+        expectedField: "origin",
+      },
+      {
+        capture: { ...original, phase: "after-production" },
+        expectedField: "phase",
+      },
+      {
+        capture: { ...original, expectedGitSha: "mutated" },
+        expectedField: "expectedGitSha",
+      },
+      {
+        capture: { ...original, deploymentId: "mutated" },
+        expectedField: "deploymentId",
+      },
+    ];
+
+    for (const { capture, expectedField } of mutations) {
+      expect(
+        findCaptureBindingErrors(
+          [capture, ...manifest.captures.slice(1)],
+          plan,
+          manifest,
+        ),
+        expectedField,
+      ).toContain(`${capture.fileName}: ${expectedField}`);
+    }
   });
 
   it("records the native premium spatial architecture in every operating document", async () => {
@@ -262,9 +507,11 @@ describe("publication operations documentation", () => {
         findUnsupportedEnabledClaims(document, runtimeSubject),
         `${documentName} must not affirm an enabled presentation runtime`,
       ).toEqual([]);
+      expect(
+        findStaleBlanketMotionBans(document),
+        `${documentName} must retain the selected finite/native motion architecture`,
+      ).toEqual([]);
     }
-
-    expect(findStaleBlanketMotionBans(documents.get("DESIGN.md")!)).toEqual([]);
   });
 
   it("records the semantic spacing, viewport, and implemented surface contracts", async () => {
@@ -404,6 +651,7 @@ describe("publication operations documentation", () => {
     );
 
     expect(manifest.phase).toBe("before");
+    expect(manifest.origin).toBe("https://everyday-tech-insight.vercel.app");
     expect(expectedBeforePlan).toHaveLength(64);
     expect(manifest.captureCount).toBe(expectedBeforePlan.length);
     expect(manifest.captures).toHaveLength(expectedBeforePlan.length);
@@ -411,6 +659,9 @@ describe("publication operations documentation", () => {
     expect(pngEntries.toSorted()).toEqual(
       expectedBeforePlan.map(({ fileName }) => fileName).toSorted(),
     );
+    expect(
+      findCaptureBindingErrors(manifest.captures, expectedBeforePlan, manifest),
+    ).toEqual([]);
 
     const recomputedFiles = await Promise.all(
       manifest.captures.map(async (capture) => {
@@ -451,6 +702,14 @@ describe("publication operations documentation", () => {
     const passedAssertions = manifest.assertions.filter(
       ({ passed }) => passed,
     ).length;
+    const requiredSafetyAssertionIds = [
+      "ads-txt-absent",
+      "cms-admin-absent",
+      "cms-config-absent",
+      "cms-draft-absent",
+      "cms-keystatic-absent",
+      "monetization-off",
+    ];
 
     expect(widths).toEqual([...CAPTURE_WIDTHS]);
     expect(routes).toEqual(
@@ -464,8 +723,13 @@ describe("publication operations documentation", () => {
     ).toBe(manifest.captureCount);
     expect(uniqueHashes).toBe(manifest.captureCount);
     expect(passedAssertions).toBe(manifest.assertions.length);
+    expect(manifest.assertions.map(({ id }) => id).toSorted()).toEqual(
+      requiredSafetyAssertionIds.toSorted(),
+    );
+    expect(manifest.assertions.every(({ passed }) => passed)).toBe(true);
 
     expect(technicalQa).toContain("premium-spatial-2026-08-26");
+    expect(technicalQa).toContain(manifest.origin);
     expect(technicalQa).toContain(manifest.capturedAt);
     expect(technicalQa).toContain(manifest.expectedGitSha);
     expect(technicalQa).toContain(manifest.deploymentId);
