@@ -10,6 +10,7 @@ import {
   type CategoryRecord,
   type CategorySlug,
 } from "../../data/categories";
+import { partitionCategoryEdition } from "../../data/editorial";
 import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
@@ -54,6 +55,7 @@ interface Props {
 }
 
 const { category, articles } = Astro.props;
+const categoryEdition = partitionCategoryEdition(articles);
 const path = `/categories/${category.slug}/`;
 const title = `${category.name} for small business | ${site.name}`;
 const description = category.description;
@@ -71,7 +73,7 @@ const description = category.description;
   <div
     class="page-shell category-page"
     data-guide-count={articles.length}
-    data-layout="compact"
+    data-layout={categoryEdition.layout}
   >
     <Breadcrumbs
       items={[
@@ -102,31 +104,145 @@ const description = category.description;
       </div>
     </header>
 
-    <section
-      class="category-compact"
-      aria-labelledby="category-compact-heading"
-    >
-      <SectionHeading
-        eyebrow="Published guidance"
-        title="All guides in this topic"
-        description={`All ${formatGuideCount(articles.length, `published ${category.name}`)} appear once in a neutral reading order.`}
-        id="category-compact-heading"
-      />
-      <ol class="category-compact__list">
-        {
-          articles.map((article) => (
-            <li>
-              <ArticleCard
-                article={article}
-                variant="compact"
-                headingLevel={3}
-                showVisual={false}
-                showFullMeta={true}
-              />
-            </li>
-          ))
-        }
-      </ol>
-    </section>
+    {
+      categoryEdition.layout === "compact" ? (
+        categoryEdition.articles.length > 0 ? (
+          <section
+            class="category-compact"
+            aria-labelledby="category-compact-heading"
+          >
+            <SectionHeading
+              eyebrow="Published guidance"
+              title="All guides in this topic"
+              description={`All ${formatGuideCount(categoryEdition.articles.length, `published ${category.name}`)} appear once in a neutral reading order.`}
+              id="category-compact-heading"
+            />
+            <ol class="category-compact__list">
+              {categoryEdition.articles.map((article) => (
+                <li>
+                  <ArticleCard
+                    article={article}
+                    variant="compact"
+                    headingLevel={3}
+                    showVisual={false}
+                    showFullMeta={true}
+                  />
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : (
+          <section class="empty-category" aria-labelledby="scope-heading">
+            <h2 id="scope-heading">Current scope</h2>
+            <p>
+              This topic currently has no published guide. Only published
+              entries that satisfy the site content contract appear here.
+            </p>
+          </section>
+        )
+      ) : categoryEdition.layout === "editorial" ? (
+        <section
+          class="category-editorial"
+          aria-labelledby="category-editorial-heading"
+        >
+          <SectionHeading
+            eyebrow="Published guidance"
+            title="A guided topic edition"
+            description={`All ${formatGuideCount(articles.length, `published ${category.name}`)} appear once, with a clear opening guide and a complete reading sequence.`}
+            id="category-editorial-heading"
+          />
+          <div class="category-editorial__lead">
+            <ArticleCard
+              article={categoryEdition.lead}
+              variant="lead"
+              headingLevel={3}
+              showVisual={false}
+              showFullMeta={true}
+            />
+          </div>
+          <ol class="category-editorial__features">
+            {categoryEdition.features.map((article) => (
+              <li>
+                <ArticleCard
+                  article={article}
+                  variant="feature"
+                  headingLevel={3}
+                  showVisual={false}
+                  showFullMeta={true}
+                />
+              </li>
+            ))}
+          </ol>
+          {categoryEdition.remainder.length > 0 && (
+            <ol class="category-editorial__remainder">
+              {categoryEdition.remainder.map((article) => (
+                <li>
+                  <ArticleCard
+                    article={article}
+                    variant="list"
+                    headingLevel={3}
+                    showVisual={false}
+                    showFullMeta={true}
+                  />
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      ) : (
+        <section
+          class="category-archive"
+          aria-labelledby="category-archive-heading"
+        >
+          <SectionHeading
+            eyebrow="Complete topic archive"
+            title="Browse the full topic collection"
+            description={`All ${formatGuideCount(articles.length, `published ${category.name}`)} remain available once across a featured opening, recent set, and complete archive.`}
+            id="category-archive-heading"
+          />
+          <ol class="category-archive__featured">
+            {categoryEdition.featured.map((article) => (
+              <li>
+                <ArticleCard
+                  article={article}
+                  variant="feature"
+                  headingLevel={3}
+                  showVisual={false}
+                  showFullMeta={true}
+                />
+              </li>
+            ))}
+          </ol>
+          <ol class="category-archive__recent">
+            {categoryEdition.recent.map((article) => (
+              <li>
+                <ArticleCard
+                  article={article}
+                  variant="compact"
+                  headingLevel={3}
+                  showVisual={false}
+                  showFullMeta={true}
+                />
+              </li>
+            ))}
+          </ol>
+          {categoryEdition.archive.length > 0 && (
+            <ol class="category-archive__remainder">
+              {categoryEdition.archive.map((article) => (
+                <li>
+                  <ArticleCard
+                    article={article}
+                    variant="list"
+                    headingLevel={3}
+                    showVisual={false}
+                    showFullMeta={true}
+                  />
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )
+    }
   </div>
 </BaseLayout>
