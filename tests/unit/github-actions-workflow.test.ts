@@ -28,6 +28,7 @@ type QualityWorkflow = {
   on?: {
     pull_request?: unknown;
     push?: { branches?: string[] };
+    workflow_dispatch?: unknown;
   };
   permissions?: Record<string, unknown>;
 };
@@ -41,11 +42,12 @@ function readWorkflow(): QualityWorkflow {
 }
 
 describe("GitHub Actions quality gate", () => {
-  it("runs for main pushes and pull requests with read-only repository access", () => {
+  it("runs for main pushes, pull requests, and explicit release verification with read-only repository access", () => {
     const workflow = readWorkflow();
 
     expect(workflow.on?.push?.branches).toEqual(["main"]);
     expect(workflow.on).toHaveProperty("pull_request");
+    expect(workflow.on).toHaveProperty("workflow_dispatch");
     expect(workflow.permissions).toEqual({ contents: "read" });
     expect(workflow.env).toEqual({ CI: true });
   });

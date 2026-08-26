@@ -12,6 +12,13 @@ import {
 
 const VERCEL_SHA = "0123456789abcdef0123456789abcdef01234567";
 const GITHUB_SHA = "89abcdef0123456789abcdef0123456789abcdef";
+const VERCEL_GIT_BUILD_ENVIRONMENT = {
+  CI: "1",
+  VERCEL: "1",
+  VERCEL_ENV: "production",
+  VERCEL_GIT_COMMIT_SHA: VERCEL_SHA,
+  VERCEL_GIT_PROVIDER: "github",
+};
 const temporaryRoots: string[] = [];
 
 function runGit(repositoryRoot: string, args: string[]): string {
@@ -247,6 +254,84 @@ describe("public build provenance", () => {
       }),
     ).toThrow(/environment SHA.*does not match.*Git HEAD/i);
   });
+
+  it("accepts Vercel-managed Git pruning only in a complete exact-SHA platform context", () => {
+    const calls: string[][] = [];
+    const execFileSyncImpl = (_command: string, args: string[]) => {
+      calls.push(args);
+      if (args[0] === "rev-parse") return `${VERCEL_SHA}\n`;
+      if (args[0] === "status") {
+        return [
+          " D .planning/sketches/review.png",
+          " D AGENTS.md",
+          " D artifacts/site-audit/evidence.png",
+          " D playwright.config.ts",
+          " D tests/release-only.test.ts",
+        ].join("\n");
+      }
+      return "";
+    };
+
+    expect(
+      resolveBuildGitSha({
+        env: VERCEL_GIT_BUILD_ENVIRONMENT,
+        execFileSyncImpl,
+        pathExistsImpl: () => true,
+        repositoryRoot: "C:/vercel/path0",
+      }),
+    ).toBe(VERCEL_SHA);
+    expect(calls.map((args) => args[0])).toEqual([
+      "rev-parse",
+      "status",
+      "ls-files",
+      "ls-files",
+    ]);
+  });
+
+  it.each([
+    ["modified source", " M src/pages/index.astro\n"],
+    ["staged deletion", "D  tests/release-only.test.ts\n"],
+    ["untracked input", "?? tests/release-only.test.ts\n"],
+    ["unexpected deletion", " D src/pages/index.astro\n"],
+  ])("rejects %s in a complete Vercel Git context", (_label, statusOutput) => {
+    expect(() =>
+      resolveBuildGitSha({
+        env: VERCEL_GIT_BUILD_ENVIRONMENT,
+        execFileSyncImpl: (_command, args) =>
+          args[0] === "rev-parse" ? `${VERCEL_SHA}\n` : statusOutput,
+        pathExistsImpl: () => true,
+        repositoryRoot: "C:/vercel/path0",
+      }),
+    ).toThrow(/source tree.*not clean/i);
+  });
+
+  it.each([
+    ["missing CI", { VERCEL: "1", VERCEL_ENV: "production" }],
+    ["missing Vercel indicator", { CI: "1", VERCEL_ENV: "production" }],
+    ["missing environment", { CI: "1", VERCEL: "1" }],
+    [
+      "missing Git provider",
+      { CI: "1", VERCEL: "1", VERCEL_ENV: "production" },
+    ],
+  ])(
+    "does not allow provider pruning for an incomplete context: %s",
+    (_label, context) => {
+      expect(() =>
+        resolveBuildGitSha({
+          env: {
+            ...context,
+            VERCEL_GIT_COMMIT_SHA: VERCEL_SHA,
+          },
+          execFileSyncImpl: (_command, args) =>
+            args[0] === "rev-parse"
+              ? `${VERCEL_SHA}\n`
+              : " D tests/release-only.test.ts\n",
+          pathExistsImpl: () => true,
+          repositoryRoot: "C:/vercel/path0",
+        }),
+      ).toThrow(/source tree.*not clean/i);
+    },
+  );
 
   it("rejects a dirty same-HEAD build from a real local Git repository", () => {
     const { gitHead, repositoryRoot } = createCleanGitFixture();

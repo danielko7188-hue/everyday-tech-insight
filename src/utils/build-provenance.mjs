@@ -5,6 +5,20 @@ import path from "node:path";
 export const BUILD_GIT_SHA_META_NAME = "eti-build-git-sha";
 
 const FULL_GIT_SHA_PATTERN = /^[a-f\d]{40}$/;
+// Exact tracked repository-only paths removed by the committed .vercelignore.
+// New deployment exclusions must be reviewed here instead of becoming a broad
+// provider-context dirty-tree bypass.
+const VERCEL_PRUNED_REPOSITORY_PREFIXES = [
+  ".planning/",
+  "artifacts/",
+  "tests/",
+];
+const VERCEL_PRUNED_REPOSITORY_FILES = new Set([
+  "AGENTS.md",
+  "DESIGN.md",
+  "playwright.config.ts",
+  "vitest.config.ts",
+]);
 const defaultRepositoryRoot = process.cwd();
 let cachedDefaultBuildGitSha;
 
@@ -30,6 +44,33 @@ function selectedEnvironmentGitSha(env) {
     }
   }
   return null;
+}
+
+function isVerifiedVercelGitBuild(env, environmentGitSha) {
+  return (
+    environmentGitSha?.variableName === "VERCEL_GIT_COMMIT_SHA" &&
+    env?.CI === "1" &&
+    env?.VERCEL === "1" &&
+    ["preview", "production"].includes(env?.VERCEL_ENV) &&
+    env?.VERCEL_GIT_PROVIDER === "github"
+  );
+}
+
+function containsOnlyVercelPrunedRepositoryFiles(statusOutput) {
+  const lines = statusOutput.split(/\r?\n/).filter(Boolean);
+  return (
+    lines.length > 0 &&
+    lines.every((line) => {
+      if (!line.startsWith(" D ")) return false;
+      const fileName = line.slice(3);
+      return (
+        VERCEL_PRUNED_REPOSITORY_FILES.has(fileName) ||
+        VERCEL_PRUNED_REPOSITORY_PREFIXES.some((prefix) =>
+          fileName.startsWith(prefix),
+        )
+      );
+    })
+  );
 }
 
 function runBuildGitCommand(
@@ -127,7 +168,17 @@ export function resolveBuildGitSha(options) {
     execFileSyncImpl,
     "Could not verify build source tree status.",
   );
-  if (statusOutput.trim().length > 0) {
+  const verifiedVercelGitBuild = isVerifiedVercelGitBuild(
+    env,
+    environmentGitSha,
+  );
+  const containsUnexpectedBuildChanges =
+    statusOutput.trim().length > 0 &&
+    !(
+      verifiedVercelGitBuild &&
+      containsOnlyVercelPrunedRepositoryFiles(statusOutput)
+    );
+  if (containsUnexpectedBuildChanges) {
     throw new Error(
       "Build source tree is not clean; commit or remove tracked and untracked non-ignored changes before building.",
     );
