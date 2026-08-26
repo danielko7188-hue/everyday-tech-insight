@@ -19,6 +19,7 @@ jobs:
     steps:
       - name: Require the sole publishing owner
         env:
+          # The numeric GitHub user ID survives an account-login rename.
           PR_AUTHOR_ID: ${{ github.event.pull_request.user.id }}
           PUBLISHING_OWNER_ID: "239253033"
         run: |
