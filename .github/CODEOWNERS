@@ -1,0 +1,10 @@
+# Sole repository and publication owner.
+* @danielko7188-hue
+
+# Publication-critical controls are listed explicitly for audit visibility.
+/.github/CODEOWNERS @danielko7188-hue
+/.github/workflows/ @danielko7188-hue
+/.pages.yml @danielko7188-hue
+/src/content/articles/ @danielko7188-hue
+/src/content-assets/articles/ @danielko7188-hue
+/docs/editorial-operations.yml @danielko7188-hue

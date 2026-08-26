@@ -103,18 +103,18 @@ Unresolved gates use `OWNER ACTION REQUIRED` or `UNKNOWN`; neither is an error i
 ## Gate 13: Pages CMS GitHub App authorization and repository selection
 
 - `status`: OWNER ACTION REQUIRED
-- `reason`: Pages CMS is configured and locally tested, but hosted sign-in, GitHub App authorization, repository access, and a real save round-trip are unverified.
-- `accepted evidence`: Owner-observed GitHub authorization, exact repository and branch selection, least-privilege access review, and a reversible test edit whose commit is inspected.
+- `reason`: Pages CMS is configured and locally tested, but hosted sign-in, the hosted collaborator list, GitHub App authorization, exact GitHub App scope, repository access, and a real save round-trip are unverified.
+- `accepted evidence`: Owner-observed GitHub authorization, an empty hosted collaborator list, exact-repository GitHub App scope, exact repository and branch selection, and a reversible test edit whose commit is inspected.
 - `public effect`: No hosted-CMS-ready, connected, authorized, or save-tested claim may be published.
-- `next action`: The owner must authorize the app, select the repository and content branch, perform the controlled round-trip, and revoke excess access if found.
+- `next action`: The owner must review the hosted collaborator list and installed App scope, retain only exact-repository access, select the content branch, perform the controlled round-trip, and revoke excess access if found.
 
 ## Gate 14: Protected main branch and pull-request review rules
 
 - `status`: OWNER ACTION REQUIRED
-- `reason`: A live GitHub API inspection on 2026-08-25 found that `main` is not protected and that the repository has no rulesets or Actions workflows; required checks, reviewer rules, and bypass controls are therefore not enforced.
-- `accepted evidence`: Owner-observed repository settings showing protected `main`, required pull requests and checks, authorized reviewers, and controlled bypass policy.
-- `public effect`: The guide describes an intended branch-and-PR workflow, but routine CMS edits cannot rely on GitHub enforcing review or automated checks.
-- `next action`: Configure and verify the live rules before routine CMS editing, then retain dated evidence of the settings reviewed.
+- `reason`: A live GitHub API inspection on 2026-08-26 confirmed protected `main` with required pull requests, the strict app-bound `Full quality gate`, admin enforcement, no bypass actors, linear history, conversation resolution, and force-push and deletion disabled. This release candidate defines the fail-closed `Owner-only publishing gate` against the owner's immutable GitHub user ID, but it is not live until the trusted-base workflow is merged, exercised, and added to required branch protection. An owner-authenticated review of installed GitHub Apps and hosted CMS access remains external.
+- `accepted evidence`: Dated GitHub API records showing protected branches, required app-bound checks, the sole CODEOWNER, repository access, Actions policy, and bypass policy, plus an owner-authenticated installed-App and hosted-CMS access review.
+- `public effect`: Protected `main` currently requires the `Full quality gate`; the candidate owner-only author check is not yet an enforced live control. `content/editorial` retains direct CMS saves under admin, linear-history, no-force-push, and no-delete controls. Hosted CMS authorization remains a separate Gate 13 unknown.
+- `next action`: Merge the trusted-base workflow through the existing full-quality requirement, exercise it on a second owner-authored pull request, add its app-bound context to required `main` checks, and re-inspect the live rule; then have the owner verify that the Pages CMS collaborator list is empty and each installed App is limited to the exact repository, retaining only nonsecret dated evidence.
 
 ## Gate 15: AdSense account/site status and exact owner-provided publisher values
 
