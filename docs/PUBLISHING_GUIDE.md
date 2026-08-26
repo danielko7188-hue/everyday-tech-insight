@@ -6,11 +6,15 @@ This guide is the operating procedure for the Astro publication. It does not app
 
 Pages CMS is **configured and locally tested** through the repository-root `.pages.yml`, lifecycle validators, a safe draft generator, and disposable draft/review/archived build fixtures.
 
-Hosted Pages CMS sign-in, GitHub App authorization, and repository selection are an **owner action** and have not been performed or observed in this work. Hosted authorization, save behavior, and a real commit round-trip remain **unverified**. Configuration compatibility is not evidence that an external account is connected.
+The exact repository is `danielko7188-hue/everyday-tech-insight`, and the release branch is `main`. The recommended owner-created planned branch is `content/editorial`; its creation and selection remain unverified.
+
+Hosted Pages CMS sign-in, GitHub App authorization, and repository selection are an **owner action** and have not been performed or observed in this work. Hosted collaborator absence, exact GitHub App scope, hosted sign-in, selected branch, branch protection, media upload, and save/commit round-trip all remain **unverified**. Hosted authorization, save behavior, and the real save/commit round-trip remain unverified. Configuration compatibility is not evidence that an external account is connected.
+
+The reviewed YAML sets `create: true`, `rename: false`, and `delete: false`; these constrain the Pages CMS UI only and do not prevent direct Git operations. Direct Git can still rename, delete, or publish files, so pull-request and branch controls remain necessary.
 
 Pages CMS is a Git-backed editor, not a native editorial approval engine. The repository lifecycle, branch protections, pull request, automated checks, human review, and owner acceptance provide the controls; the CMS must not be described as enforcing approvals it does not enforce.
 
-This is a public GitHub repository. Every committed file and branch is publicly visible, including non-`main` content branches and later-deleted files retained in history. Repository-tracked editorial records and managed media are non-deployed source, not confidential storage. Keep confidential owner, account, legal, review, and rights evidence outside Git; commit only a nonsecret evidence reference and truthful status.
+This is a public GitHub repository. Every committed public branch, file, and managed-media byte is publicly visible, including non-`main` content branches and later-deleted files retained in history. “Owner-only” means intended write access, not privacy. Repository-tracked editorial records and managed media are non-deployed source, not confidential storage. Keep confidential owner, account, legal, review, and rights evidence outside Git; commit only a nonsecret evidence reference and truthful status.
 
 `docs/editorial-operations.yml` is the source of truth for owner gates and the content-quality queue. Edit that strict structured record, then run `npm run generate:editorial` to regenerate the two finished Markdown documents. Review their diff and run `npm run check:editorial`; do not hand-edit generated records because the check requires an exact byte match.
 
@@ -19,11 +23,12 @@ A guide-level `clear` release gate requires a real source-check date, named and 
 ## One-time owner setup
 
 1. Sign in to Pages CMS using the owner's authorized GitHub identity.
-2. Review the GitHub App permission request before authorizing it. Grant access only to the exact Everyday Tech Insight repository needed for editing.
-3. Select the exact repository, then select a dedicated non-main content branch (`main` remains the protected release branch). Do not make routine editorial saves directly to `main`.
-4. Confirm that live GitHub settings protect `main`, require a pull request and required checks, limit bypass access, and name real reviewers. Repository documentation cannot prove those hosted settings.
-5. Make one reversible test edit on the content branch. Inspect the resulting GitHub commit, author identity, changed paths, and diff; then revert or close that test cleanly.
-6. Keep confidential authorization evidence outside Git. Commit only a nonsecret evidence reference and truthful status after the owner observes the save round-trip. Until then, keep the hosted status recorded as unverified.
+2. Review the GitHub App permission request before authorizing it. Grant the Pages CMS GitHub App access to the exact repository only: `danielko7188-hue/everyday-tech-insight`.
+3. Do not invite Pages CMS collaborators. The intended owner-only write boundary depends on the owner's GitHub access and exact-repository App grant, neither of which this repository can prove.
+4. Select the exact repository, then create or select the recommended `content/editorial` non-main content branch (`main` remains the release branch). Do not make routine editorial saves directly to `main`.
+5. Confirm that live GitHub settings protect `main`, require a pull request and required checks, limit bypass access, and name real reviewers. Repository documentation cannot prove those hosted settings.
+6. Make one reversible test edit on the content branch. Inspect the resulting GitHub commit, author identity, changed paths, diff, and any managed-media upload; then revert or close that test cleanly.
+7. Keep confidential authorization evidence outside Git. Commit only a nonsecret evidence reference and truthful status after the owner observes the save/commit round-trip. Until then, keep the hosted status recorded as unverified.
 
 ## Create a guide
 

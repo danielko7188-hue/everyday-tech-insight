@@ -1,6 +1,6 @@
 # Technical QA
 
-Date recorded: 2026-08-25
+Date recorded: 2026-08-26, with earlier release evidence retained in dated historical sections.
 
 ## Release command
 
@@ -48,6 +48,7 @@ The release command runs formatting, lint, Astro type checks, unit tests, a prod
 - Category pages and the HTML sitemap contain their exact required memberships.
 - The homepage curates up to nine distinct currently published guide destinations, using deterministic fallbacks when a configured guide is archived; the current launch output remains exactly nine. `/articles/` contains every published guide exactly once, grouped under the five configured topics. The 15-guide launch subset remains an exact named historical regression contract while lifecycle changes and later valid records are allowed.
 - Four Toolkit detail routes and their CSVs remain discoverable from public navigation/sitemap surfaces and preserve the exact typed record contracts.
+- Monetization remains in exact mode `off`: no publisher or account IDs, ad scripts, ad slots, ad placeholders, ad layout gaps, `ads.txt`, analytics, tracking, or CMP. These changes do not establish AdSense eligibility; Google alone decides eligibility and approval.
 
 ### External HTTP(S) destinations
 
@@ -62,6 +63,7 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 ### Browser and performance
 
 - Playwright verifies representative routes, the Toolkit and its exact header-only CSV downloads, real 404 behavior, metadata, RSS/robots, mobile overflow, keyboard focus, reduced-motion support, unique navigation landmarks, and axe moderate/serious/critical WCAG results.
+- Source and browser contracts verify native CSS `@view-transition { navigation: auto; }`, a custom root transition no longer than 200ms, and zero executable client JavaScript. Static-first, finite, and scroll-linked enhancements exclude Astro ClientRouter, Motion, Three.js, WebGL, Lenis, any remote presentation runtime, scroll hijacking, and any continuous or infinite loop. `prefers-reduced-motion`, `prefers-reduced-data`, `(pointer: coarse)`, and `(update: slow)` preserve static fallbacks.
 - Lighthouse audits the home page, cybersecurity category, Toolkit, and—when one exists—the representative automation article on mobile and desktop, using the Playwright-installed Chromium for three runs per route and device profile. The current inventory therefore produces eight audits across four pages; a valid zero-published inventory produces six across three pages.
 - Thresholds: Performance at least 90; Accessibility, Best Practices, and SEO at least 95.
 - Stale Lighthouse output is cleared at startup. Raw reports and a status/form-factor-labeled `summary.json` are first written to a pending directory and then replace ignored `.lighthouseci/` atomically, so an interrupted run cannot leave an apparently current success summary. The runner owns the Launcher instance before readiness polling, applies bounded startup polling, and uses one idempotent cleanup path for normal completion, launch failure, `SIGINT`, and `SIGTERM`. Signal protection stays installed through browser/server/profile cleanup and report publication or discard.
@@ -74,8 +76,10 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 - Snapshot paths include the test file, snapshot argument, Playwright project, and platform. The documented tolerance is `maxDiffPixelRatio: 0.001`; it is not a license to accept an unexplained visual change.
 - Console errors, page errors, failed requests, and cross-origin requests fail the visual run. The intentional missing route permits only its expected primary 404 resource message.
 - `capture:production` requires `--origin`, `--phase`, and the exact expected 40-character Git SHA. `before`, `after-production`, and `runtime-verification` require a deployment ID and canonical HTTPS origin; `after-local` requires a canonical `http://127.0.0.1[:port]` origin and forbids a deployment ID.
-- With the current published inventory, the `before` phase captures 40 full-page PNGs: eight representative routes at 390, 768, 1024, 1440, and 1920 pixels. Each after phase captures 97 PNGs: 18 routes at all five widths, keyboard-open navigation at 390 and 768 pixels, and focused skip-link states at all five widths. If no article is published, nullable representative article routes are omitted rather than converted to `/null`; the valid inventories are then 35 before-state and 72 after-state PNGs. Each successful run atomically publishes an `audit-manifest.json` containing provenance, route/status, viewport/state, byte count, SHA-256 digest, and monetization/CMS-absence assertions.
-- Fixed outputs are `artifacts/site-audit/before/purple-signal-2026-08-25/`, `artifacts/site-audit/after/purple-signal-2026-08-25/local/`, `artifacts/site-audit/after/purple-signal-2026-08-25/production/`, and the ignored `artifacts/site-audit/runtime-verification/purple-signal-2026-08-25-final/`.
+- Release `premium-spatial-2026-08-26` uses 320, 390, 600, 768, 1024, 1280, 1440, and 1920px capture widths. Its completed before baseline contains 64 PNGs across 8 routes and 8 widths: 56 matching HTTP 200 responses, 8 expected 404 responses, 64 unique SHA-256 hashes, and 6/6 safety assertions.
+- The before manifest was captured at `2026-08-26T09:36:03.617Z` from `https://everyday-tech-insight.vercel.app` for Git SHA `af8dd44843860f3a055c76f934c02ae389ec1a81` and deployment `dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd`.
+- The planned after-local, after-production, and runtime-verification inventory is 156 PNGs per phase. It comprises 18 routes × 8 widths = 144 full-page PNGs, 4 menu states at 320, 390, 600, and 768px, and 8 skip-link states. Those after and runtime phases are not yet generated or verified; this is an expected inventory, not release evidence.
+- Fixed premium-spatial outputs are `artifacts/site-audit/before/premium-spatial-2026-08-26/`, `artifacts/site-audit/after/premium-spatial-2026-08-26/local/`, `artifacts/site-audit/after/premium-spatial-2026-08-26/production/`, and the ignored `artifacts/site-audit/runtime-verification/premium-spatial-2026-08-26-final/`. Each successful run atomically publishes an `audit-manifest.json` containing provenance, route/status, viewport/state, byte count, SHA-256 digest, and monetization/CMS-absence assertions.
 
 ```text
 npm run capture:production -- --origin https://production.example --phase before --expected-sha $fullGitSha --deployment-id $vercelDeploymentId
@@ -86,7 +90,7 @@ npm run capture:production -- --origin https://production.example --phase runtim
 
 ## Dated Purple Signal release evidence snapshot
 
-The evidence in this section records named commits and deployments observed on 2026-08-25. It remains evidence for those exact artifacts, not an evergreen claim about the current tree or the next deployment. Every release requires fresh exact-SHA live checks. Its committed after-production record is intentionally complemented by a Git-ignored runtime-verification record for the final deployed SHA, avoiding an evidence-commit recursion.
+This Purple Signal section is historical, dated, and separate from `premium-spatial-2026-08-26`. The evidence records named commits and deployments observed on 2026-08-25. It remains evidence for those exact artifacts, not an evergreen claim about the current tree or the next deployment. Every release requires fresh exact-SHA live checks. Its committed after-production record is intentionally complemented by a Git-ignored runtime-verification record for the final deployed SHA, avoiding an evidence-commit recursion.
 
 The post-fix candidate code commit `95ab2fde3bc3973d6f42715dea480a72145c6644` completed a fresh local `npm run qa` on 2026-08-25:
 

@@ -4,6 +4,10 @@ Everyday Tech Insight is a static, source-backed publication for small-business 
 
 The site is built with Astro and contains five categories, fifteen practical guides, four downloadable decision worksheets, trust pages, an HTML sitemap, XML sitemaps, and RSS. The homepage curates exactly nine distinct guides; `/articles/` groups all fifteen once across the five topics. Primary content renders as HTML without client-side JavaScript.
 
+The premium spatial layer remains zero executable client JavaScript. It uses native CSS `@view-transition { navigation: auto; }`, a custom root transition capped at 200ms, finite and scroll-linked progressive enhancement, and local SVG. It does not use Astro ClientRouter, Motion, Three.js, WebGL, Lenis, a remote presentation runtime, scroll hijacking, or a continuous or infinite loop. Static-first output and `prefers-reduced-motion`, `prefers-reduced-data`, `(pointer: coarse)`, and `(update: slow)` fallbacks preserve the complete experience.
+
+Implemented surfaces include the local `SignalField` on the homepage and 404, CSS-only reading progress on article pages, a real-data Toolkit structure preview on each Toolkit detail route, and a direct 404 Toolkit path. Required release-review widths are 320, 390, 600, 768, 1024, 1280, 1440, and 1920px.
+
 ## Current publication boundary
 
 - Public byline: `Everyday Tech Insight`, a publication name only.
@@ -18,6 +22,10 @@ Google alone decides AdSense eligibility and approval.
 ## Editorial workflow
 
 Pages CMS is configured and locally tested as a Git-backed editor through `.pages.yml`. Hosted Pages CMS sign-in, GitHub App authorization, repository selection, and a real save/commit round-trip are owner actions and remain unverified. There is no public CMS or admin route.
+
+The exact repository is `danielko7188-hue/everyday-tech-insight`; the release branch is `main`; and the recommended owner-created planned editorial branch is `content/editorial`. Branch creation and selection remain unverified. The owner should grant the Pages CMS GitHub App access to this exact repository only and must not invite Pages CMS collaborators. Hosted collaborator absence, exact GitHub App scope, hosted sign-in, selected branch, branch protection, media upload, and save/commit round-trip all remain unverified.
+
+The checked YAML exposes `create: true`, `rename: false`, and `delete: false`; these operations constrain the Pages CMS UI only and do not prevent direct Git changes. “Owner-only” describes intended write access, not privacy. Every committed public branch, file, and managed-media byte is publicly visible.
 
 This GitHub repository is public: every committed file and branch is publicly visible. Repository-tracked editorial records and managed media are non-deployed source, not confidential storage. Confidential owner, account, legal, review, and rights evidence must stay outside Git; commit only a nonsecret evidence reference and truthful status.
 
@@ -78,7 +86,7 @@ After a reviewed release is actually deployed, capture the production evidence s
 npm run capture:production -- --origin https://production.example --phase after-production --expected-sha $fullGitSha --deployment-id $vercelDeploymentId
 ```
 
-Set `$fullGitSha` and `$vercelDeploymentId` from the exact pushed commit and authenticated Vercel deployment metadata. The command validates the explicit HTTPS origin and release metadata, verifies protected CMS/advertising routes remain exact non-redirecting 404s, and captures 97 reviewed states: 18 page families at 390, 768, 1024, 1440, and 1920 CSS pixels plus mobile-menu and skip-link focus states. It writes the fixed versioned set and a SHA-256 manifest under `artifacts/site-audit/after/purple-signal-2026-08-25/production/`. Do not run it against an old deployment or treat local visual baselines as deployment evidence.
+Set `$fullGitSha` and `$vercelDeploymentId` from the exact pushed commit and authenticated Vercel deployment metadata. The command validates the explicit HTTPS origin and release metadata and verifies protected CMS/advertising routes remain exact non-redirecting 404s. For release `premium-spatial-2026-08-26`, the planned after-phase inventory is 156 PNGs: 18 page families across all eight required widths (144), four keyboard-open menu states at 320, 390, 600, and 768px, and eight focused skip-link states. The after-local, after-production, and runtime-verification phases are not yet generated or verified in this documentation pass. Do not run the command against an old deployment or treat local visual baselines as deployment evidence. The dated Purple Signal evidence remains a separate historical record in [Technical QA](docs/TECHNICAL_QA.md).
 
 `npm run check:links` checks article sources and every external HTTP(S) destination rendered in public HTML. It uses `PASS`, `FAIL`, and `UNVERIFIED` deliberately. Plain HTTP, a definitive 404/410, or a blocked unsafe target is `FAIL`; access controls, rate limits, server errors, timeouts, and network failures are `UNVERIFIED`. Either state blocks the full QA command until a human can establish the destination is reachable.
 

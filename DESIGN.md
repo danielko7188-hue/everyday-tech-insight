@@ -63,6 +63,20 @@ The violet-to-magenta gradient is reserved for small publication-signal details.
 
 - Base spacing unit: **4px**.
 - Editorial spacing scale: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, and 96px.
+- The semantic spacing layer maps recurring editorial relationships to the base scale:
+
+  | Semantic token           | Exact value |
+  | ------------------------ | ----------- |
+  | `--space-section-mobile` | 48px        |
+  | `--space-section-tablet` | 64px        |
+  | `--space-section-wide`   | 80px        |
+  | `--space-heading-body`   | 24px        |
+  | `--space-card-major`     | 24px        |
+  | `--space-card-compact`   | 20px        |
+  | `--space-grid-standard`  | 24px        |
+  | `--space-grid-compact`   | 16px        |
+
+- Major modules separate by 48px on mobile, 64px on tablet, and 80px on wide screens. Card interiors use 20–24px padding; action controls retain at least a 44px block size.
 - Major modules use restrained 8–16px radii where the boundary improves scanning.
 - Giant rounded cards and ornamental shadows are prohibited.
 - Create hierarchy with rules, alignment, whitespace, typography, and restrained background shifts.
@@ -75,7 +89,7 @@ The violet-to-magenta gradient is reserved for small publication-signal details.
 - Tablet: 6-column grid.
 - Mobile: one logical source order, with the lead story first.
 - Content-driven breakpoints are centered around 480px, 768px, and 1080px.
-- Required QA widths are 320, 360, 390, 768, 1024, 1280, 1440, and 1920px.
+- Required QA widths are 320, 390, 600, 768, 1024, 1280, 1440, and 1920px.
 
 The layout must preserve one H1, logical landmarks and source order, visible focus, usable zoom, and no ordinary-content horizontal overflow.
 
@@ -83,8 +97,11 @@ The layout must preserve one H1, logical landmarks and source order, visible foc
 
 - Link, menu-state, and visual-hover transitions last **160–220ms**.
 - Motion must not carry essential meaning.
-- Respect `prefers-reduced-motion` and remove nonessential transitions when requested.
-- Do not add scroll hijacking, autoplay, carousels, parallax, decorative entrance animation, or client-side hydration for presentation.
+- Cross-document navigation uses the browser-native CSS rule `@view-transition { navigation: auto; }`; the custom root transition is 200ms and moves no more than 4px.
+- Presentation remains static-first. Finite entry and hover effects and progressive scroll-linked effects may add hierarchy only when the browser supports them; no essential information depends on motion.
+- `prefers-reduced-motion`, `prefers-reduced-data`, `(pointer: coarse)`, and `(update: slow)` fallbacks remove or suppress nonessential presentation effects. The page remains complete and legible without animation support.
+- Do not add Astro ClientRouter, Motion, Three.js, WebGL, Lenis, a remote presentation runtime, scroll hijacking, autoplay, carousels, parallax, or a continuous or infinite loop.
+- The architecture retains zero executable client JavaScript: native CSS and local SVG provide transitions and spatial detail without hydration.
 - Touch targets should be practical at approximately 44px where the control permits it.
 
 ## Editorial artwork
@@ -122,6 +139,7 @@ The article metadata selects one of thirteen supported visual families and a sta
 ### Homepage and categories
 
 - The homepage opens full-bleed in the night palette with the promise **Make technology decisions you can explain.** A 5/7 desktop composition pairs that promise with one dominant illustrated guide and two typographic support guides.
+- One decorative, local `SignalField` composition gives the opening a recognizable publication signal without adding a remote request or factual claim.
 - Three latest guides, three practical foundations, and the opening curation expose exactly nine distinct guide destinations.
 - The homepage exposes exactly nine distinct, explicitly curated guides. `/articles/` is the complete archive and groups all fifteen published guides once across the five topics.
 - Each of the five topic cards provides a direct category path, guide count, concise editorial cue, and decorative category motif without repeating article links.
@@ -132,6 +150,7 @@ The article metadata selects one of thirteen supported visual families and a sta
 ### Article pages
 
 - Headers contain real category/content-type labels, headline, deck, publication-name byline, genuine dates, computed reading time, and a story-specific informative visual. The visual remains available at mobile widths and must not cause horizontal overflow.
+- A CSS-only reading progress line is progressive enhancement; it is hidden when scroll timelines are unavailable and carries no semantic meaning.
 - The at-a-glance module presents four factual fields: Business problem, Technology focus, Intended reader, and What you will produce.
 - Article evidence exposes only measured facts: cited-source count and links to standards and corrections. It does not expose the internal `lastReviewed` field until a real reviewer and review date are recorded in the authoritative editorial record. At tablet width it uses a compact grid, expanding to one desktop row only when there is enough space.
 - A compact “How this guide was prepared” module appears before Sources. It reports only the stored source count and access dates, identifies the work as editorial synthesis, explicitly avoids claiming first-hand results or completed human/expert review, and links to the AI-assisted workflow, Sources, and Corrections.
@@ -143,6 +162,7 @@ The article metadata selects one of thirteen supported visual families and a sta
 ### Supporting pages and footer
 
 - Trust and legal pages share an editorial page shell and measured reading width without changing their factual copy.
+- The not-found page reuses a compact `SignalField` and exposes a direct 404 Toolkit path alongside the home and complete-guide paths.
 - Footer groups are Publication, Guides, Topics, Standards & Transparency, Privacy & Advertising, and Sitemap & RSS.
 - Do not invent social profiles or add an unimplemented newsletter form.
 
@@ -151,6 +171,7 @@ The article metadata selects one of thirteen supported visual families and a sta
 - The Toolkit opening is a restrained dark panel inside the publication frame so it remains balanced at wide viewports.
 - The Toolkit landing page exposes exactly four typed resources with outcome, detail, related-guide, and direct CSV actions.
 - Each detail route explains purpose, audience, when to use, when not to use, field definitions, limitation, data notice, related guide, and download without claiming an observed result.
+- Each detail route also renders a real-data Toolkit structure preview from that resource's typed field groups; it is a static orientation aid, not a fabricated sample result.
 - Stacked semantic field cards are the primary mobile guide. A wide-only table may supplement them, but the primary 390px experience must not require horizontal scrolling.
 
 ### CMS editorial boundary
@@ -162,6 +183,8 @@ The article metadata selects one of thirteen supported visual families and a sta
 ## Advertising boundary
 
 `site.integrations.monetization` accepts exactly `{ mode: "off" }` in this release. It rejects every provider, publisher/account value, verification method, `ads.txt` value, display unit, placement, advertising CMP value, or other extra field. The site renders no verification marker, ad script, request, slot, label, empty box, or layout gap, and no dormant ad component is shipped.
+
+Exact ads-off mode means no publisher or account IDs, ad scripts, ad slots, ad placeholders, ad layout gaps, `ads.txt`, analytics, tracking, or CMP. The premium spatial changes do not establish AdSense eligibility; Google alone decides eligibility and approval.
 
 `verification` and `live` are deliberately not implemented states. A future owner-authorized release must design and test the exact account verification artifact, `ads.txt` output, route eligibility, provider initialization, production CSP, account-side ad settings, consent/CMP behavior where applicable, privacy/disclosure copy, and production requests as one end-to-end change. Supplying a value or changing one flag can never activate advertising in the current code.
 
