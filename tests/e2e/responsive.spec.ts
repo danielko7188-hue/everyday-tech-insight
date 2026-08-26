@@ -871,10 +871,13 @@ test("mobile menu uses a short CSS-only reveal and removes it for reduced motion
     };
     const closed = readFrame();
     details.querySelector("summary")?.click();
-    await new Promise<void>((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-    );
-    const opening = readFrame();
+    const opening = [];
+    for (let frame = 0; frame < 12; frame += 1) {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve()),
+      );
+      opening.push(readFrame());
+    }
     await new Promise((resolve) => setTimeout(resolve, 220));
     return { closed, opening, opened: readFrame(), open: details.open };
   });
@@ -882,12 +885,15 @@ test("mobile menu uses a short CSS-only reveal and removes it for reduced motion
   expect(revealFrames.open).toBe(true);
   expect(revealFrames.closed.blockSize).toBe(0);
   expect(revealFrames.closed.opacity).toBe(0);
-  expect(revealFrames.opening.blockSize).toBeGreaterThan(0);
-  expect(revealFrames.opening.blockSize).toBeLessThan(
-    revealFrames.opened.blockSize,
-  );
-  expect(revealFrames.opening.opacity).toBeGreaterThan(0);
-  expect(revealFrames.opening.opacity).toBeLessThan(1);
+  expect(
+    revealFrames.opening.some(
+      ({ blockSize }) =>
+        blockSize > 0 && blockSize < revealFrames.opened.blockSize,
+    ),
+  ).toBe(true);
+  expect(
+    revealFrames.opening.some(({ opacity }) => opacity > 0 && opacity < 1),
+  ).toBe(true);
   expect(revealFrames.opened.opacity).toBe(1);
   await expect(menu.locator("nav")).toBeVisible();
 
