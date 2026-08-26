@@ -217,6 +217,19 @@ for (const route of routes) {
   }
 }
 
+for (const width of [600, 1024] as const) {
+  test(`toolkit full page at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ height: viewportHeight, width });
+    const runtimeErrors = await visitStablePage(page, "/toolkit/");
+
+    await materializeDeferredContent(page);
+    await expect(page).toHaveScreenshot(`${width}-toolkit-full.png`, {
+      fullPage: true,
+    });
+    expect(runtimeErrors, `/toolkit/ runtime errors after capture`).toEqual([]);
+  });
+}
+
 for (const width of [390, 768] as const) {
   test(`keyboard-open menu at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ height: viewportHeight, width });

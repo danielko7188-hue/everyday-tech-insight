@@ -78,7 +78,7 @@ npm run test:visual
 npm run lighthouse
 ```
 
-The visual suite selects its committed platform-specific references automatically. The repository retains the same 32 reviewed states for Windows and Linux; update either set only after examining the rendered change.
+The visual suite selects its committed platform-specific references automatically. The repository retains the same 34 reviewed states for Windows and Linux, including Toolkit full-page coverage at 390, 600, 768, 1024, and 1440px, for 68 paired baseline files. Update either platform set only after examining the rendered change.
 
 After a reviewed release is actually deployed, capture the production evidence set with an explicit canonical HTTPS origin:
 

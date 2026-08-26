@@ -880,8 +880,10 @@ describe("publication operations documentation", () => {
       expect(await pathExists(ungeneratedPath), ungeneratedPath).toBe(false);
     }
 
-    expect(technicalQa).toMatch(/32 reviewed states/i);
-    expect(technicalQa).not.toMatch(/34 reviewed states/i);
+    expect(technicalQa).toMatch(
+      /compares 34 reviewed states on each supported test platform/i,
+    );
+    expect(technicalQa).toMatch(/for 68 baseline files/i);
     expect(technicalQa).toMatch(
       /Purple Signal[^\n]{0,100}(?:historical|dated|separate)/i,
     );
