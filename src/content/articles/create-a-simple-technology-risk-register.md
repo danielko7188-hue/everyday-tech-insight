@@ -15,7 +15,6 @@ intendedAudience: "Small-business owners and technology decision makers who need
 readerOutcome: "Create and maintain a prioritized register that supports decisions, assigns action, preserves uncertainty, and escalates risks that exceed business tolerance."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: false
 summary: "Write risks as event-to-consequence statements, support ratings with evidence, name an accountable owner, choose a response, and review movement instead of accumulating rows."
 visual:

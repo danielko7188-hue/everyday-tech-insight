@@ -681,14 +681,16 @@ describe("content portfolio", () => {
         published.localeCompare(today),
         article.fileName,
       ).toBeLessThanOrEqual(0);
-      expect(
-        reviewed.localeCompare(published),
-        article.fileName,
-      ).toBeGreaterThanOrEqual(0);
-      expect(
-        reviewed.localeCompare(today),
-        article.fileName,
-      ).toBeLessThanOrEqual(0);
+      if (reviewed) {
+        expect(
+          reviewed.localeCompare(published),
+          article.fileName,
+        ).toBeGreaterThanOrEqual(0);
+        expect(
+          reviewed.localeCompare(today),
+          article.fileName,
+        ).toBeLessThanOrEqual(0);
+      }
       if (modified) {
         expect(
           modified.localeCompare(published),

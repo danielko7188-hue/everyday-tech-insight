@@ -15,7 +15,6 @@ intendedAudience: "Small-business teams replacing informal personal storage with
 readerOutcome: "Design a shallow folder structure, adopt consistent names, migrate active files safely, assign permissions and owners, and schedule ongoing cleanup."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: false
 summary: "Organize around durable business functions, keep names meaningful and consistent, separate active from archived work, and make one owner accountable for upkeep."
 visual:

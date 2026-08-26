@@ -15,7 +15,6 @@ intendedAudience: "Small-business decision makers evaluating a SaaS, automation,
 readerOutcome: "Write a pilot charter, execute four controlled weekly stages, collect comparable evidence, and make a documented decision without silently entering production."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: false
 summary: "Use week 1 to baseline and configure, week 2 for normal cases, week 3 for exceptions and failure, and week 4 for export and the decision."
 visual:

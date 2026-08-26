@@ -15,7 +15,6 @@ intendedAudience: "Small-business owners and operations leaders creating a first
 readerOutcome: "Draft a short acceptable-use policy that separates allowed, restricted, and prohibited work and assigns approval, review, and reporting duties."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: false
 summary: "Define approved tools and data first, classify use cases by consequence, require review before external action, and give staff a clear incident route."
 visual:

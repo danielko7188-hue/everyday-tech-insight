@@ -15,7 +15,6 @@ intendedAudience: "Small-business owners and technical operators evaluating a ne
 readerOutcome: "Run an evidence-based exit rehearsal, identify data and workflow gaps, estimate migration labor, and negotiate or redesign before dependence grows."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: false
 summary: "Inventory the records and connections that matter, export a representative sample, prove it can be interpreted, and document the time, omissions, and owner of an exit."
 visual:

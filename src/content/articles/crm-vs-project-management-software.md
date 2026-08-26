@@ -15,7 +15,6 @@ intendedAudience: "Small-business leaders deciding whether the next system shoul
 readerOutcome: "Map the primary work object and handoff, choose the appropriate system category, and avoid duplicating the same operational record in two tools."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: false
 summary: "Choose a CRM when the durable record is the customer relationship, a project tool when the durable record is coordinated delivery, and define the handoff if both are needed."
 visual:

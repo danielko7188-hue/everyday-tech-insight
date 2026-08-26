@@ -15,7 +15,6 @@ intendedAudience: "Small-business managers and administrators who provision tech
 readerOutcome: "Create a repeatable onboarding record, grant only approved access, verify the user can work securely, and capture everything needed for later changes or departure."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: false
 summary: "Start from the person’s role and start date, approve minimum access, issue individual accounts, verify controls and training, and schedule an access review."
 visual:

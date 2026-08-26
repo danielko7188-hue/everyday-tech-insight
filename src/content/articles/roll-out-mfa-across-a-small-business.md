@@ -15,7 +15,6 @@ intendedAudience: "Small-business owners and administrators improving sign-in se
 readerOutcome: "Create a prioritized MFA rollout, select the strongest supported method, document recovery, and verify that critical accounts are actually protected."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: true
 summary: "Inventory accounts, protect administrators and recovery paths first, prefer phishing-resistant methods, stage enrollment, and verify enforcement with evidence."
 visual:

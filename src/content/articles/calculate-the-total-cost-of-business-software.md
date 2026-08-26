@@ -15,7 +15,6 @@ intendedAudience: "Small-business decision makers comparing software options or 
 readerOutcome: "Produce a transparent cost range for a defined period, show major assumptions and cost drivers, and compare options on the same operating scenario."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: true
 summary: "Choose a horizon, model normal and stress scenarios, include loaded labor, and show contingent exit exposure separately unless exit occurs within the horizon."
 visual:

@@ -15,7 +15,6 @@ intendedAudience: "Small-business process owners preparing to improve or automat
 readerOutcome: "Create a verified current-state map and requirements packet that separates stable rules from judgment, exceptions, rework, and unresolved policy."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: false
 summary: "Observe the real process, map information and decisions, count exceptions and rework, validate the map with participants, and automate only a stable boundary."
 visual:

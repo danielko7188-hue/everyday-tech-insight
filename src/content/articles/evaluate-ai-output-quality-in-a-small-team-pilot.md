@@ -15,7 +15,6 @@ intendedAudience: "Small-business teams evaluating a bounded AI drafting, classi
 readerOutcome: "Build a small evaluation set, score results consistently, measure review burden and harmful errors, and make a documented go, revise, or stop decision."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: false
 summary: "Define the task and failure costs, freeze representative cases, score outputs with a task-specific rubric, and include human correction time in the decision."
 visual:

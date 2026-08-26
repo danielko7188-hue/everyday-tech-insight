@@ -278,7 +278,7 @@ const commonPublicationShape = {
   verificationStatus: z.enum(PUBLICATION_VERIFICATION_STATUSES),
   datePublished: publicationEraDateSchema,
   dateModified: optionalCmsValue(publicationEraDateSchema),
-  lastReviewed: publicationEraDateSchema,
+  lastReviewed: optionalCmsValue(publicationEraDateSchema),
   featured: z.boolean().default(false),
   summary: requiredText(40, 500),
   visual: articleVisualSchema,

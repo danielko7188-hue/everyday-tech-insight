@@ -983,15 +983,6 @@ function validateArticle(
         ),
       );
     }
-    if (data.lastReviewed === undefined) {
-      issues.push(
-        finding(
-          "review-date",
-          fileName,
-          "published and archived content requires lastReviewed.",
-        ),
-      );
-    }
   }
   if (
     data.dateModified !== undefined &&

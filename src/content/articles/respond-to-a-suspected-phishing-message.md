@@ -15,7 +15,6 @@ intendedAudience: "Small-business employees, owners, and administrators who need
 readerOutcome: "Pause the request, verify it through a known channel, report it safely, and take proportionate containment steps if information or access was exposed."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
-lastReviewed: "2026-08-21"
 featured: false
 summary: "Do not use the message to verify itself, report it through a known channel, and treat clicks, credentials, payments, or malware as escalating incident conditions."
 visual:
