@@ -1,5 +1,5 @@
 ---
-title: "CRM vs. project-management software: choose by work object"
+title: "CRM vs. project‑management software: choose by work object"
 description: "A practical comparison of customer relationship management and project-management systems based on the records, handoffs, and outcomes a business must control."
 slug: "crm-vs-project-management-software"
 category: "business-software"

@@ -34,6 +34,7 @@
   --brand-violet-dark: #5b21b6;
   --brand-violet-light: #a78bfa;
   --brand-lavender: #c4b5fd;
+  --brand-visited: #6f285f;
   --brand-magenta: #d946ef;
   --brand-pink: #ec4899;
   --brand-rule-light: #ddd6fe;
@@ -335,7 +336,10 @@ strong {
 .site-header__mark {
   grid-column: 1;
   grid-row: 1;
+  inline-size: max-content;
   min-inline-size: 0;
+  max-inline-size: 100%;
+  justify-self: start;
   color: var(--color-ink);
 }
 
@@ -796,7 +800,7 @@ strong {
 }
 
 .article-card__title a:visited {
-  color: var(--color-soft-ink);
+  color: var(--brand-visited);
 }
 
 .article-card__title a:hover {
@@ -3081,6 +3085,7 @@ strong {
 .article-hero h1 {
   max-inline-size: 17ch;
   font-size: clamp(2.25rem, 9vw, 3.35rem);
+  overflow-wrap: normal;
 }
 
 .article-hero .article-summary {
@@ -3135,6 +3140,14 @@ strong {
   text-decoration-line: underline;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.18em;
+}
+
+.article-body a:visited,
+.source-list a:visited,
+.byline-notice a:visited,
+.trust-content a:visited,
+.page-intro ~ section a:visited {
+  color: var(--brand-visited);
 }
 
 .article-body :where(blockquote, .notice),
@@ -3322,6 +3335,10 @@ strong {
   .topic-directory--compact ol {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .article-hero h1 {
+    max-inline-size: 20ch;
+  }
 }
 
 @media (min-width: 56.25rem) {
@@ -3431,6 +3448,7 @@ strong {
 
   .article-hero h1 {
     font-size: clamp(3rem, 4vw, 4.5rem);
+    max-inline-size: 17ch;
   }
 
   .table-of-contents {
@@ -3449,6 +3467,10 @@ strong {
   .article-hero {
     gap: var(--space-6);
     padding-block: var(--space-8);
+  }
+
+  .article-hero h1 {
+    font-size: clamp(1.875rem, 9vw, 2.75rem);
   }
 
   .fit-summary {

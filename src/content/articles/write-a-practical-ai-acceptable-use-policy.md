@@ -1,5 +1,5 @@
 ---
-title: "How to write a practical AI acceptable-use policy"
+title: "How to write a practical AI acceptable‑use policy"
 description: "A small-business template for deciding which AI uses are allowed, restricted, or prohibited and who reviews exceptions before work begins."
 slug: "write-a-practical-ai-acceptable-use-policy"
 category: "ai-automation"

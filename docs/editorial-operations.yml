@@ -181,7 +181,7 @@ ownerGates:
     verifiedAt: null
 qualityRecords:
   - slug: back-up-business-files-with-the-3-2-1-method
-    title: How to back up business files with the 3-2-1 method
+    title: How to back up business files with the 3‑2‑1 method
     category: cybersecurity-data-protection
     publicationStatus: published
     wordCount: 1157
@@ -314,7 +314,7 @@ qualityRecords:
       rationale: Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide.
       evidenceReference: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
   - slug: crm-vs-project-management-software
-    title: "CRM vs. project-management software: choose by work object"
+    title: "CRM vs. project‑management software: choose by work object"
     category: business-software
     publicationStatus: published
     wordCount: 992
@@ -581,7 +581,7 @@ qualityRecords:
       rationale: Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide.
       evidenceReference: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
   - slug: run-a-30-day-business-technology-pilot
-    title: How to run a 30-day business technology pilot
+    title: How to run a 30‑day business technology pilot
     category: technology-strategy
     publicationStatus: published
     wordCount: 1036
@@ -647,7 +647,7 @@ qualityRecords:
       rationale: Human editorial, expert-when-needed, source-recency, and media-rights evidence remain unresolved for this guide.
       evidenceReference: docs/OWNER_INPUTS_REQUIRED.md Gates 09–11 and this guide's ownerAction field.
   - slug: write-a-practical-ai-acceptable-use-policy
-    title: How to write a practical AI acceptable-use policy
+    title: How to write a practical AI acceptable‑use policy
     category: ai-automation
     publicationStatus: published
     wordCount: 1126

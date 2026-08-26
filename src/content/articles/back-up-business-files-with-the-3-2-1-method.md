@@ -1,5 +1,5 @@
 ---
-title: "How to back up business files with the 3-2-1 method"
+title: "How to back up business files with the 3‑2‑1 method"
 description: "A practical backup plan for identifying critical data, maintaining three copies on two media with one offsite, testing restoration, and assigning ownership."
 slug: "back-up-business-files-with-the-3-2-1-method"
 category: "cybersecurity-data-protection"

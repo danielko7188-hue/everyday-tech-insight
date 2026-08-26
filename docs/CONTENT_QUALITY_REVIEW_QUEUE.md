@@ -7,7 +7,7 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 ## Guide 01: `back-up-business-files-with-the-3-2-1-method`
 
 - `slug`: back-up-business-files-with-the-3-2-1-method
-- `title`: How to back up business files with the 3-2-1 method
+- `title`: How to back up business files with the 3‑2‑1 method
 - `category`: cybersecurity-data-protection
 - `publicationStatus`: published
 - `wordCount`: 1157
@@ -131,7 +131,7 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 ## Guide 05: `crm-vs-project-management-software`
 
 - `slug`: crm-vs-project-management-software
-- `title`: CRM vs. project-management software: choose by work object
+- `title`: CRM vs. project‑management software: choose by work object
 - `category`: business-software
 - `publicationStatus`: published
 - `wordCount`: 992
@@ -379,7 +379,7 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 ## Guide 13: `run-a-30-day-business-technology-pilot`
 
 - `slug`: run-a-30-day-business-technology-pilot
-- `title`: How to run a 30-day business technology pilot
+- `title`: How to run a 30‑day business technology pilot
 - `category`: technology-strategy
 - `publicationStatus`: published
 - `wordCount`: 1036
@@ -441,7 +441,7 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 ## Guide 15: `write-a-practical-ai-acceptable-use-policy`
 
 - `slug`: write-a-practical-ai-acceptable-use-policy
-- `title`: How to write a practical AI acceptable-use policy
+- `title`: How to write a practical AI acceptable‑use policy
 - `category`: ai-automation
 - `publicationStatus`: published
 - `wordCount`: 1126

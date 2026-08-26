@@ -1,5 +1,5 @@
 ---
-title: "How to run a 30-day business technology pilot"
+title: "How to run a 30‑day business technology pilot"
 description: "A week-by-week pilot plan for testing one bounded workflow, measuring outcomes and review burden, protecting data, and making a go, revise, or stop decision."
 slug: "run-a-30-day-business-technology-pilot"
 category: "technology-strategy"

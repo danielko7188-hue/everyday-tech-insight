@@ -88,7 +88,7 @@ For each guest or contractor space, identify the internal owner and sharing boun
 
 Explain the system of record for customer, project, finance, and personnel information. Onboarding fails if the person creates a new private spreadsheet because they do not know where approved work belongs.
 
-## Deliver role-specific training
+## Deliver role‑specific training
 
 Cover practical actions, not only policy acknowledgments:
 
