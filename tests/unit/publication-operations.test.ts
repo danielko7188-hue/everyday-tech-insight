@@ -75,6 +75,56 @@ function locateClauses(text: string): LocatedSentence[] {
   );
 }
 
+function splitCoordinatedHostedClaims(
+  clause: string,
+  hostedSubject: RegExp,
+): string[] {
+  for (const match of clause.matchAll(/\s+and\s+/gi)) {
+    const splitIndex = match.index;
+    const left = clause.slice(0, splitIndex).trim();
+    const right = clause.slice(splitIndex + match[0].length).trim();
+
+    if (hostedSubject.test(left) && hostedSubject.test(right)) {
+      return [
+        ...splitCoordinatedHostedClaims(left, hostedSubject),
+        ...splitCoordinatedHostedClaims(right, hostedSubject),
+      ];
+    }
+  }
+
+  return [clause];
+}
+
+function subjectOnlyFollowsExclusionConnector(
+  sentence: string,
+  subject: RegExp,
+): boolean {
+  const subjectMatcher = new RegExp(
+    subject.source,
+    `${subject.flags.replace(/[gy]/g, "")}g`,
+  );
+  const subjectMatches = [...sentence.matchAll(subjectMatcher)];
+
+  return (
+    subjectMatches.length > 0 &&
+    subjectMatches.every(({ index = 0 }) =>
+      /\b(?:instead of|rather than|without)\s+(?:(?:a|an|the|any)\s+)?$/i.test(
+        sentence.slice(0, index),
+      ),
+    )
+  );
+}
+
+function hasTrailingConditionalMarker(
+  clause: string,
+  affirmativeCompletion: RegExp,
+): boolean {
+  const completionIndex = clause.search(affirmativeCompletion);
+  const conditionalIndex = clause.search(/\b(?:if|when|once|after)\b/i);
+
+  return completionIndex >= 0 && conditionalIndex > completionIndex;
+}
+
 function findUnsupportedHostedCompletionClaims(
   text: string,
 ): LocatedSentence[] {
@@ -88,12 +138,16 @@ function findUnsupportedHostedCompletionClaims(
     leadingConditional.test(sentence)
       ? []
       : locateClauses(sentence)
-          .map(({ sentence: clause }) => ({ line, sentence: clause }))
+          .flatMap(({ sentence: clause }) =>
+            splitCoordinatedHostedClaims(clause, hostedSubject),
+          )
+          .map((clause) => ({ line, sentence: clause }))
           .filter(
             ({ sentence: clause }) =>
               hostedSubject.test(clause) &&
               affirmativeCompletion.test(clause) &&
-              !explicitBoundary.test(clause),
+              !explicitBoundary.test(clause) &&
+              !hasTrailingConditionalMarker(clause, affirmativeCompletion),
           ),
   );
 }
@@ -105,13 +159,14 @@ function findUnsupportedEnabledClaims(
   const affirmative =
     /\b(?:uses?|used|enables?|enabled|activates?|activated|active|loads?|loaded|ships?|runs?|serves?|in use)\b/i;
   const explicitBoundary =
-    /\b(?:instead of|rather than|not loaded|not used|not enabled|not active|does not|do not|must not|no|without|disabled|off|absent|absence|rejects?|excludes?|forbids?|prohibits?|never|cannot|future)\b/i;
+    /\b(?:not loaded|not used|not enabled|not active|does not|do not|must not|no|disabled|off|absent|absence|rejects?|excludes?|forbids?|prohibits?|never|cannot|future)\b/i;
 
   return locateClauses(text).filter(
     ({ sentence }) =>
       subject.test(sentence) &&
       affirmative.test(sentence) &&
-      !explicitBoundary.test(sentence),
+      !explicitBoundary.test(sentence) &&
+      !subjectOnlyFollowsExclusionConnector(sentence, subject),
   );
 }
 
@@ -211,6 +266,50 @@ const requiredCommands = [
 ] as const;
 
 describe("publication operations documentation", () => {
+  it("classifies coordinated and trailing-conditional hosted claims directionally", () => {
+    expect(
+      findUnsupportedHostedCompletionClaims(
+        "Hosted CMS access is unverified and hosted CMS authorization succeeded.",
+      ),
+    ).toEqual([{ line: 1, sentence: "hosted CMS authorization succeeded." }]);
+
+    for (const marker of ["if", "when", "once", "after"]) {
+      expect(
+        findUnsupportedHostedCompletionClaims(
+          `Hosted CMS access works ${marker} the owner authorizes it.`,
+        ),
+        marker,
+      ).toEqual([]);
+    }
+  });
+
+  it("classifies runtime connector direction from the prohibited runtime", () => {
+    const runtimeSubject =
+      /\b(?:Motion|(?:Astro )?ClientRouter|Three\.js|WebGL|Lenis|remote (?:presentation )?runtime)\b/i;
+
+    for (const excludedObject of [
+      "The site uses native CSS instead of Motion.",
+      "The site uses native CSS rather than Motion.",
+      "The site works without ClientRouter.",
+    ]) {
+      expect(
+        findUnsupportedEnabledClaims(excludedObject, runtimeSubject),
+        excludedObject,
+      ).toEqual([]);
+    }
+
+    for (const affirmativeRuntime of [
+      "Motion is used instead of ClientRouter.",
+      "Motion is used rather than CSS.",
+      "Motion is enabled without ClientRouter.",
+    ]) {
+      expect(
+        findUnsupportedEnabledClaims(affirmativeRuntime, runtimeSubject),
+        affirmativeRuntime,
+      ).toEqual([{ line: 1, sentence: affirmativeRuntime }]);
+    }
+  });
+
   it("distinguishes unsupported hosted completion claims from explicit uncertainty", () => {
     for (const unsupported of [
       "Pages CMS hosted access is verified.",
@@ -290,12 +389,6 @@ describe("publication operations documentation", () => {
     ).toEqual([]);
     expect(
       findUnsupportedEnabledClaims("WebGL is not used.", runtimeSubject),
-    ).toEqual([]);
-    expect(
-      findUnsupportedEnabledClaims(
-        "Motion is used instead of ClientRouter.",
-        runtimeSubject,
-      ),
     ).toEqual([]);
     expect(
       findUnsupportedEnabledClaims(
