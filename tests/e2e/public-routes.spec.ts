@@ -8,6 +8,7 @@ import {
 } from "../../scripts/publication-route-inventory.mjs";
 import { siteConfig, siteUrl } from "../../site.config.mjs";
 import {
+  compareCategoryArticlesByEditorialPriority,
   homepageCuration,
   homepageSectionSizes,
   resolveHomepageCuration,
@@ -880,7 +881,7 @@ test("Guides navigation targets the all-guides archive with a correct active sta
     page.locator('.site-header__utility a[href="/articles/"]'),
   ).toHaveAttribute("aria-current", "page");
   await expect(page.locator('footer a[href="/articles/"]')).toHaveText(
-    "Guides",
+    "All guides",
   );
 
   await page.goto("/");
@@ -892,7 +893,7 @@ test("Guides navigation targets the all-guides archive with a correct active sta
 
   await page.goto("/sitemap/");
   await expect(
-    page.getByRole("link", { name: "All guides", exact: true }),
+    page.locator("main").getByRole("link", { name: "All guides", exact: true }),
   ).toHaveAttribute("href", "/articles/");
 });
 
@@ -1040,6 +1041,7 @@ test("the AI category uses the compact branch with complete published membership
       ({ data }) =>
         data.status === "published" && data.category === "ai-automation",
     )
+    .sort(compareCategoryArticlesByEditorialPriority)
     .map(({ data }) => `/articles/${data.slug}/`);
 
   await page.goto("/categories/ai-automation/");
