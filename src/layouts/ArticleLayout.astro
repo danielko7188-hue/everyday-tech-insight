@@ -107,7 +107,13 @@ const formatDate = (date: string) =>
               )
             }
           </div>
-          <ArticleEvidence sourceCount={data.sourceList.length} />
+          <ArticleEvidence
+            sourceCount={data.sourceList.length}
+            reviewedDate={data.lastReviewed}
+            reviewedLabel={data.lastReviewed
+              ? formatDate(data.lastReviewed)
+              : undefined}
+          />
         </div>
         <div
           class="article-hero__visual"
