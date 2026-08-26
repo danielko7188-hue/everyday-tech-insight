@@ -1,6 +1,6 @@
 # Deployment guide
 
-Date reviewed: 2026-08-25
+Date reviewed: 2026-08-26
 
 ## Authorized production sequence
 
@@ -9,7 +9,7 @@ This release uses GitHub first and Vercel second. Do not deploy local unpushed c
 1. Complete the human review checklist or record every unchecked gate honestly.
 2. From a clean checkout, run `npm ci`, `npm run setup:browsers`, and `npm run qa`. On a fresh Linux CI/workstation that needs Chromium libraries, use `npm run setup:browsers:linux` for the browser step.
 3. Confirm no parent Blogger files, secrets, account identifiers, or generated output are tracked.
-4. Confirm the GitHub repository is connected to Vercel with `main` as the production branch, Astro as the framework, `npm run build` as the build command, and `dist` as the output directory. The npm `prebuild` lifecycle fails closed on the deterministic content, editorial, CMS, and image contracts before asset generation or Astro can publish output. The `postbuild` lifecycle then rejects broken internal routes/resources, sitemap or RSS membership drift, incomplete metadata/social output, and forbidden output leakage. Do not add a browser-install or full-QA step to the Vercel production build; browser setup belongs in the verified local/CI release gate.
+4. Confirm the GitHub repository is connected to Vercel with `main` as the production branch, Astro as the framework, `npm run build` as the build command, and `dist` as the output directory. The npm `prebuild` lifecycle fails closed on the deterministic content, editorial, CMS, source-image, and committed social-asset contracts before Astro can publish output. It validates the committed social PNGs without rewriting them. The `postbuild` lifecycle then rejects broken internal routes/resources, sitemap or RSS membership drift, incomplete metadata/social output, and forbidden output leakage. Do not add a browser-install or full-QA step to the Vercel production build; browser setup belongs in the verified local/CI release gate.
 5. Merge the verified branch to `main` and rerun the complete QA command on `main`.
 6. Push `main` to the public GitHub repository and confirm the remote commit SHA equals local `HEAD`.
 7. Wait for the connected Git integration to create the production deployment from that pushed commit. Do not substitute a local CLI upload, because caller-supplied metadata does not prove which Git tree produced the deployed bytes.
@@ -67,16 +67,21 @@ therefore share one origin. After deployment:
 
 For a future custom domain, add and verify the domain in Vercel, configure the required DNS records at the registrar, choose one canonical hostname, redirect alternatives, then set the production variable and complete the full release cycle. Do not switch canonicals before the domain resolves over HTTPS.
 
-`npm run build` first runs the fail-closed content, editorial, CMS, and image
-source checks through npm's `prebuild` lifecycle. It then regenerates the fixed
-local social-preview portfolio: one default image, five category images, one
-image for every published guide, and the Apple touch icon. Sharp is pinned
-directly, generation uses bundled inputs only, and the built-output gate
-requires the generated article-image set to match the published guide set
-exactly. The npm `postbuild` lifecycle runs the deterministic built-output gate
-before Vercel can accept the build. Commit the generated `public/social/*.png` and
-`public/apple-touch-icon.png` files with their source changes; never replace
-them with remote image URLs.
+`npm run build` first runs the fail-closed content, editorial, CMS, source-image,
+and social-asset checks through npm's `prebuild` lifecycle. Production does not
+rerasterize social images: it verifies and consumes the committed portfolio of
+one default image, five category images, one image for every published guide,
+and the Apple touch icon. `scripts/social-images.manifest.json` binds normalized,
+OS-independent visual-source signatures to the exact committed PNG hashes. The
+validator requires exact inventory, complete PNG structure, expected dimensions,
+and manifest/source parity before Astro starts. The npm `postbuild` lifecycle
+then runs the deterministic built-output gate before Vercel can accept the build.
+
+Run `npm run generate:social` only during authoring after a relevant content,
+visual, font, dependency, or generator change. Review and commit the generated
+`public/social/*.png`, `public/apple-touch-icon.png`, and manifest together.
+Never replace them with remote image URLs. Linux CI and Vercel run only
+`check:social`; they must not rewrite platform-dependent raster bytes.
 
 ## Search Console
 

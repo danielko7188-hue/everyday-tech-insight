@@ -5,6 +5,7 @@ import {
   readFileSync,
   readdirSync,
   unlinkSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -15,6 +16,15 @@ import sharp from "sharp";
 
 export const SOCIAL_IMAGE_WIDTH = 1200;
 export const SOCIAL_IMAGE_HEIGHT = 630;
+export const SOCIAL_IMAGE_MANIFEST_SCHEMA_VERSION = 1;
+
+const SOCIAL_IMAGE_RASTER_RECIPE = Object.freeze({
+  adaptiveFiltering: false,
+  compressionLevel: 9,
+  fit: "fill",
+  format: "png",
+  palette: false,
+});
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -27,6 +37,11 @@ const articleDirectory = path.join(
   "articles",
 );
 const defaultOutputRoot = path.join(repositoryRoot, "public");
+export const SOCIAL_IMAGE_MANIFEST_PATH = path.join(
+  repositoryRoot,
+  "scripts",
+  "social-images.manifest.json",
+);
 const fontData = readFileSync(
   path.join(
     repositoryRoot,
@@ -267,6 +282,91 @@ function renderAppleIconSvg() {
 </svg>`;
 }
 
+function sha256(value) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function normalizedGeneratorSourceSha256() {
+  const source = readFileSync(fileURLToPath(import.meta.url), "utf8").replace(
+    /\r\n?/g,
+    "\n",
+  );
+  return sha256(source);
+}
+
+function requireSharpVersion() {
+  const version = sharp.versions?.sharp;
+  if (typeof version !== "string" || !/^\d+\.\d+\.\d+$/.test(version)) {
+    throw new Error("Unable to resolve the pinned Sharp version.");
+  }
+  return version;
+}
+
+function sourceAssetRecord({
+  assetPath,
+  generatorSourceSha256,
+  height,
+  kind,
+  sharpVersion,
+  svg,
+  width,
+}) {
+  const sourceSha256 = sha256(
+    JSON.stringify({
+      assetPath,
+      generatorSourceSha256,
+      height,
+      kind,
+      rasterRecipe: SOCIAL_IMAGE_RASTER_RECIPE,
+      sharpVersion,
+      svgSha256: sha256(Buffer.from(svg)),
+      width,
+    }),
+  );
+  return {
+    height,
+    kind,
+    path: assetPath,
+    sourceSha256,
+    width,
+  };
+}
+
+export function createSocialImageSourceManifest() {
+  const generatorSourceSha256 = normalizedGeneratorSourceSha256();
+  const sharpVersion = requireSharpVersion();
+  const assets = [
+    sourceAssetRecord({
+      assetPath: "apple-touch-icon.png",
+      generatorSourceSha256,
+      height: 180,
+      kind: "apple-touch-icon",
+      sharpVersion,
+      svg: renderAppleIconSvg(),
+      width: 180,
+    }),
+    ...SOCIAL_IMAGE_RECORDS.map((record) =>
+      sourceAssetRecord({
+        assetPath: `social/${record.fileName}`,
+        generatorSourceSha256,
+        height: SOCIAL_IMAGE_HEIGHT,
+        kind: record.kind,
+        sharpVersion,
+        svg: renderSocialSvg(record),
+        width: SOCIAL_IMAGE_WIDTH,
+      }),
+    ),
+  ].sort((left, right) => left.path.localeCompare(right.path));
+
+  return {
+    assets,
+    generatorSourceSha256,
+    rasterRecipe: { ...SOCIAL_IMAGE_RASTER_RECIPE },
+    schemaVersion: SOCIAL_IMAGE_MANIFEST_SCHEMA_VERSION,
+    sharpVersion,
+  };
+}
+
 async function writePng(svg, outputPath, width, height) {
   await sharp(Buffer.from(svg))
     .resize(width, height, { fit: "fill" })
@@ -360,12 +460,21 @@ function safeOutputTargets(outputRoot) {
     resolvedOutputRoot,
     "apple-touch-icon.png",
   );
+  const resolvedManifestPath = isProductionRoot
+    ? SOCIAL_IMAGE_MANIFEST_PATH
+    : path.join(resolvedOutputRoot, "social-images.manifest.json");
   assertNoSymbolicLinkInPath(resolvedOutputRoot);
   assertNoSymbolicLinkInPath(resolvedSocialDir);
   assertNoSymbolicLinkInPath(resolvedAppleIconPath);
+  assertNoSymbolicLinkInPath(resolvedManifestPath);
   assertNoSymbolicLinksBelow(resolvedOutputRoot);
 
-  return { resolvedAppleIconPath, resolvedSocialDir };
+  return {
+    resolvedAppleIconPath,
+    resolvedManifestPath,
+    resolvedOutputRoot,
+    resolvedSocialDir,
+  };
 }
 
 function resolveDirectChild(parentDirectory, fileName) {
@@ -394,8 +503,12 @@ function resolveDirectChild(parentDirectory, fileName) {
 export async function generateSocialImages({
   outputRoot = defaultOutputRoot,
 } = {}) {
-  const { resolvedAppleIconPath, resolvedSocialDir } =
-    safeOutputTargets(outputRoot);
+  const {
+    resolvedAppleIconPath,
+    resolvedManifestPath,
+    resolvedOutputRoot,
+    resolvedSocialDir,
+  } = safeOutputTargets(outputRoot);
   const outputRecords = SOCIAL_IMAGE_RECORDS.map((record) => ({
     outputPath: resolveDirectChild(resolvedSocialDir, record.fileName),
     record,
@@ -430,8 +543,30 @@ export async function generateSocialImages({
   assertNoSymbolicLinkInPath(resolvedAppleIconPath);
   await writePng(renderAppleIconSvg(), resolvedAppleIconPath, 180, 180);
 
+  const sourceManifest = createSocialImageSourceManifest();
+  const manifest = {
+    ...sourceManifest,
+    assets: sourceManifest.assets.map((asset) => {
+      const outputPath = path.join(
+        resolvedOutputRoot,
+        ...asset.path.split("/"),
+      );
+      return {
+        ...asset,
+        pngSha256: sha256(readFileSync(outputPath)),
+      };
+    }),
+  };
+  assertNoSymbolicLinkInPath(resolvedManifestPath);
+  writeFileSync(
+    resolvedManifestPath,
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    "utf8",
+  );
+
   return {
     appleIconPath: resolvedAppleIconPath,
+    manifestPath: resolvedManifestPath,
     socialImagePaths: outputRecords.map(({ outputPath }) => outputPath),
   };
 }
@@ -439,7 +574,7 @@ export async function generateSocialImages({
 async function main() {
   const result = await generateSocialImages();
   console.log(
-    `Generated ${result.socialImagePaths.length} social images and one Apple touch icon.`,
+    `Generated ${result.socialImagePaths.length} social images, one Apple touch icon, and the immutable source manifest.`,
   );
 }
 

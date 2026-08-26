@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "npm run check:content && npm run check:editorial && npm run check:cms && npm run check:images",
-    "build": "npm run generate:social && astro build",
+    "prebuild": "npm run check:content && npm run check:editorial && npm run check:cms && npm run check:images && npm run check:social",
+    "build": "astro build",
     "postbuild": "npm run check:seo",
     "preview": "astro preview",
     "format": "prettier --plugin=prettier-plugin-astro --no-error-on-unmatched-pattern --write src tests scripts docs artifacts/site-audit astro.config.mjs site.config.mjs eslint.config.js playwright.config.ts vitest.config.ts package.json tsconfig.json vercel.json README.md AGENTS.md",
@@ -28,6 +28,7 @@
     "check:editorial": "node scripts/qa-editorial.mjs",
     "check:cms": "node scripts/qa-cms.mjs",
     "check:images": "node scripts/qa-images.mjs",
+    "check:social": "node scripts/check-social-images.mjs",
     "check:cms-fixture": "node scripts/check-cms-fixture.mjs",
     "check:seo": "node scripts/qa-build.mjs",
     "check:production": "node scripts/check-production.mjs",

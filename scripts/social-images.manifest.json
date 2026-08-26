@@ -1,0 +1,190 @@
+{
+  "assets": [
+    {
+      "height": 180,
+      "kind": "apple-touch-icon",
+      "path": "apple-touch-icon.png",
+      "sourceSha256": "8bbb2fc9a42f144aca57dec26dc831cc097781e82749ff15ee821d75a5c27041",
+      "width": 180,
+      "pngSha256": "c502a1d0552d017c28ad9b3157a2f808bcacfeb19995255bb2005e9ceb34d947"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-back-up-business-files-with-the-3-2-1-method.png",
+      "sourceSha256": "64e8b129aec16ea3c39e90ae5955e6e5d4e22bdebab6ef62a41f484274806bf8",
+      "width": 1200,
+      "pngSha256": "5381f790c2768786c440f6314f15f000e62b5047e909eab0d6248ff2b02d9f1d"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-calculate-the-total-cost-of-business-software.png",
+      "sourceSha256": "e7c51ce40143fd93a461941d9cf6a544cebee463761e5853be4e023b49c02425",
+      "width": 1200,
+      "pngSha256": "b53f54df41d358b248ea799757798cc9feadb0b9b018fe7cf2f66a67e6ceb948"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-create-a-shared-file-and-folder-system.png",
+      "sourceSha256": "781f12c6fb9a2a1ffcc43d602ff5c93c245ea5341d1daab1de6f79ef938a8bc0",
+      "width": 1200,
+      "pngSha256": "f03884be2a596b541ea43b81dbb107341a0dbf66410b6c80bf9de957f8de6df2"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-create-a-simple-technology-risk-register.png",
+      "sourceSha256": "8874c2f73f40d71cff3ac70cd395ffdc796b82b1168e1ecb4c385945dc218ccd",
+      "width": 1200,
+      "pngSha256": "d6a8d2a5a507500a3daee9ee089a35a54008668d7ba1e931c571608ef6b5619b"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-crm-vs-project-management-software.png",
+      "sourceSha256": "98bafe7aed37f90918f6551364662af364a6f261202507dee86a8fb4c4021321",
+      "width": 1200,
+      "pngSha256": "36a6d65336bc7b6c02947e9062e99b576cc39ada0a185f8cfb1471512c338e96"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-document-a-repetitive-workflow-before-automating.png",
+      "sourceSha256": "a18b28e75671ff588f525065b49f0db5f04533a41a09da8b58233ed9487759a4",
+      "width": 1200,
+      "pngSha256": "94c00defe703293cec1c0bebc6086364f67d1a79786d41332ea3f1012ec33c65"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-evaluate-ai-output-quality-in-a-small-team-pilot.png",
+      "sourceSha256": "0d1860237b28509f42ce6e52c8056590ca66448dc6221450b871aa0799aee391",
+      "width": 1200,
+      "pngSha256": "706a6fdf67e1fbc5a4117cdcbe7bd2b3aa34e4144cd416debf67224d3df64203"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-evaluate-saas-with-a-practical-checklist.png",
+      "sourceSha256": "ea7bb8d73ddfdaa4e8657dae8d3d7394cee1cca91f04b22961a5cdf121dbb562",
+      "width": 1200,
+      "pngSha256": "2777024501c87ad7a72c3c9ac1fa98f7012dbedf7393969ec01a58c6e75a1008"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-how-to-identify-business-tasks-for-automation.png",
+      "sourceSha256": "e79bd882316c735599b3dc027c5a42f0a6ea098659cdf1300e88560fb4936db7",
+      "width": 1200,
+      "pngSha256": "653885a2e3d5f1016c3fff527afab50dd3e7167c398bb3ff84d0c6f2fa19cd6e"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-onboard-employees-and-contractors-to-business-technology.png",
+      "sourceSha256": "18809694c2f4ad00dcb465a8813fb615ecd09c50c566e51e4f5cd023a3dd7aee",
+      "width": 1200,
+      "pngSha256": "38c39e48d9811a5214afd4e633429412618509199bef365e4c185d03e4ab2b0f"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-respond-to-a-suspected-phishing-message.png",
+      "sourceSha256": "c986cbf47c4b8e7d22403ae7aa5f12795352faa88fabb1611d361af0d6303db6",
+      "width": 1200,
+      "pngSha256": "0d8ca65f06c6708fff99fad7b28e42731abf17aa8e779535392a1abb9b096f5e"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-roll-out-mfa-across-a-small-business.png",
+      "sourceSha256": "53d3969a077a5d055ca3f06e92f15ffb3d156a1bda435ff25c8a67ca48129864",
+      "width": 1200,
+      "pngSha256": "c09efc9427588b2cc1d0494715a15242164f14fc4b6b8b2e4258f53fa6d88428"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-run-a-30-day-business-technology-pilot.png",
+      "sourceSha256": "d3d05b21f5ea2759f4bcca9297fb78873b809d07b8beae6d3ddfe35933357277",
+      "width": 1200,
+      "pngSha256": "6f4f8359397724657b686dce47c88d75228599527ed38d8218ce331dacaf96bc"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-test-data-export-and-integrations-before-saas-lock-in.png",
+      "sourceSha256": "1d2f8ce105c7ab63bbf03b346f51e59807e61bd3d77a466a5e173594e7b8f9a5",
+      "width": 1200,
+      "pngSha256": "0c1dbaf0a7b83fa25a4f72ca9b805a95e75a2d4f3dadc4f8122553c095533593"
+    },
+    {
+      "height": 630,
+      "kind": "article",
+      "path": "social/article-write-a-practical-ai-acceptable-use-policy.png",
+      "sourceSha256": "c504ffc282ab666ce01a8d615503f3512f8ee82cdc71e2665ed4d40804d9178f",
+      "width": 1200,
+      "pngSha256": "0d007964db6954e20d7ff247f8d53ce8866c43d1c60bcf9ab48ec593390b0d22"
+    },
+    {
+      "height": 630,
+      "kind": "category",
+      "path": "social/category-ai-automation.png",
+      "sourceSha256": "7d9a03241f8aec22727962f987b6c28b760ff8cefbe5679d921ebeec5d32205f",
+      "width": 1200,
+      "pngSha256": "3d2d2e532761e7d17c11dc54a1cf3232ec408f14723e3109c73e7a13dc8c81a9"
+    },
+    {
+      "height": 630,
+      "kind": "category",
+      "path": "social/category-business-software.png",
+      "sourceSha256": "3e746b3b03efd8a136b54bc982d03de2968811b4d9aaea230da34a6518bf2e52",
+      "width": 1200,
+      "pngSha256": "cd96e9f4f85bd3376abe7de9eacafae93a848648082d7a557df3971c90bdba38"
+    },
+    {
+      "height": 630,
+      "kind": "category",
+      "path": "social/category-cybersecurity-data-protection.png",
+      "sourceSha256": "5edc1871049dcd3dabdc7e354eb211c8ff80d278d1acb06c73375ae1ba39f040",
+      "width": 1200,
+      "pngSha256": "8e4c18d9ae4c8eefcb5462affa6de98141bb0a366d6e0427ae4128c6ccd901cc"
+    },
+    {
+      "height": 630,
+      "kind": "category",
+      "path": "social/category-digital-operations.png",
+      "sourceSha256": "fb72d5aba085de984882de8ccbc88645aff552bdf320b596f0598581e913fa64",
+      "width": 1200,
+      "pngSha256": "17b58f5203f3a1a6219e80be48655427b1656e12d1a3777c58ffb47a1cf2934f"
+    },
+    {
+      "height": 630,
+      "kind": "category",
+      "path": "social/category-technology-strategy.png",
+      "sourceSha256": "271cd636b12782788e9d632c2e757f449b007067de2f5f3fca2d2bc825ff765e",
+      "width": 1200,
+      "pngSha256": "965e2283e2434d874f264ac8ec7ac2724bc5b7d2ee2c5585582ecb5087524538"
+    },
+    {
+      "height": 630,
+      "kind": "default",
+      "path": "social/default.png",
+      "sourceSha256": "191f9862d2e557d6b80e0a50533939cca9cd441b6d94877c5f4e0d482eec1c41",
+      "width": 1200,
+      "pngSha256": "047e2b8e5beefcc22037160b6c3193d765b8336e464f8de8050f90d66239c888"
+    }
+  ],
+  "generatorSourceSha256": "d20bfd057eb7a0b0513dc16487ce6284f9d5067c8a2422b478f02bc404511515",
+  "rasterRecipe": {
+    "adaptiveFiltering": false,
+    "compressionLevel": 9,
+    "fit": "fill",
+    "format": "png",
+    "palette": false
+  },
+  "schemaVersion": 1,
+  "sharpVersion": "0.35.3"
+}

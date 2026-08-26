@@ -58,6 +58,13 @@ npm run build
 npm run preview
 ```
 
+`generate:social` is an authoring command, not a production-build step. Run it
+after changing a published guide's title, category, slug, visual key, the local
+social-image generator, or its bundled font. Review and commit the resulting
+PNGs together with `scripts/social-images.manifest.json`. `npm run build` reads
+those committed bytes and fails closed if their source signatures, inventory,
+hashes, PNG structure, or dimensions are stale; it never rerasterizes them.
+
 Focused checks:
 
 ```text
@@ -70,6 +77,7 @@ npm run check:content
 npm run check:editorial
 npm run check:cms
 npm run check:images
+npm run check:social
 npm run check:cms-fixture
 npm run check:seo
 npm run check:links
@@ -102,13 +110,13 @@ Set `$fullGitSha` and `$vercelDeploymentId` from the exact pushed commit and aut
 - `src/layouts/` and `src/components/`: shared publication shell.
 - `src/data/`: publication and category configuration.
 - `site.config.mjs`: the validated single source of truth for the canonical origin and publication identity used by Astro, runtime pages, robots, and QA. The optional `PUBLIC_SITE_URL` build variable accepts only an HTTPS origin; preview-host variables are ignored.
-- `public/social/`: deterministic local 1200×630 previews generated for the publication, five categories, and every published article.
-- `scripts/`: content, built-output, external-link, and Lighthouse QA.
+- `public/social/`: committed 1200×630 previews generated during authoring for the publication, five categories, and every published article; production validates and consumes these exact bytes.
+- `scripts/`: content, social-asset integrity, built-output, external-link, and Lighthouse QA. `scripts/social-images.manifest.json` binds normalized visual-source signatures to the committed PNG hashes without requiring cross-platform rerasterization.
 - `tests/`: unit, route, responsive, keyboard, accessibility, and deterministic visual-regression contracts.
 - `artifacts/site-audit/`: retained before-state evidence and the deliberately separate after-state production-capture workflow.
 - `docs/`: editorial evidence, assumptions, review gates, deployment, and QA records.
 
-Generated folders such as `dist/`, `.astro/`, `.vercel/`, and `.lighthouseci/` are intentionally ignored. Edit source files, never generated output.
+Generated folders such as `dist/`, `.astro/`, `.vercel/`, and `.lighthouseci/` are intentionally ignored. Do not hand-edit generated social PNGs or their manifest; update their source inputs, run the authoring generator, inspect the images, and commit the complete portfolio.
 
 Category pages adapt to content volume: fewer than six guides use one compact list, six to eleven use a lead and supporting sequence, and twelve or more use a three-guide priority opening, the next three recent guides, and the remaining archive. Every published category guide remains linked exactly once. Ordering is deterministic: published featured guides first, then the newest `dateModified` or `datePublished`, then title and slug. The opening label reflects whether its three guides are featured, latest fallbacks, or a mix; the compact branch does not manufacture a separate visual featured tier. Article illustrations are informative, story-specific local SVGs with text alternatives; category fallbacks remain decorative. Toolkit field guidance is stacked on mobile, with no horizontally scrolling primary field table.
 

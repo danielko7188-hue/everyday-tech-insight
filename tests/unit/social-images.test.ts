@@ -50,6 +50,67 @@ function sha256(path: string): string {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
+type GeneratedSocialPortfolio = {
+  appleIconPath: string;
+  manifestPath: string;
+  socialImagePaths: string[];
+};
+
+type SocialImageManifest = {
+  assets: Array<{
+    height: number;
+    kind: string;
+    path: string;
+    pngSha256: string;
+    sourceSha256: string;
+    width: number;
+  }>;
+  generatorSourceSha256: string;
+  schemaVersion: number;
+  sharpVersion: string;
+};
+
+type SocialImageValidator = {
+  validateCommittedSocialImages: (options: {
+    manifestPath: string;
+    publicRoot: string;
+  }) => Promise<{
+    appleTouchIcons: number;
+    socialImages: number;
+    totalAssets: number;
+  }>;
+};
+
+async function importSocialImageValidator(): Promise<SocialImageValidator> {
+  const modulePath = pathToFileURL(
+    join(process.cwd(), "scripts", "check-social-images.mjs"),
+  ).href;
+  return (await import(modulePath)) as SocialImageValidator;
+}
+
+function readManifest(manifestPath: string): SocialImageManifest {
+  return JSON.parse(readFileSync(manifestPath, "utf8")) as SocialImageManifest;
+}
+
+function writeManifest(
+  manifestPath: string,
+  manifest: SocialImageManifest,
+): void {
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+}
+
+async function generateTemporaryPortfolio(): Promise<{
+  result: GeneratedSocialPortfolio;
+  root: string;
+}> {
+  const root = mkdtempSync(join(tmpdir(), "eti-social-images-"));
+  temporaryRoots.push(root);
+  const result = (await generateSocialImages({
+    outputRoot: root,
+  })) as GeneratedSocialPortfolio;
+  return { result, root };
+}
+
 async function importGeneratorWithFixture({
   articleCategory = "ai-automation",
   articleSlug,
@@ -117,6 +178,24 @@ describe("social image portfolio", () => {
       "article-fixture-future-published-guide.png",
       "article-fixture-launch-guide.png",
     ]);
+  });
+
+  it("keeps source signatures stable across LF and CRLF worktrees", async () => {
+    const lfModule = (await importGeneratorWithFixture({
+      articleSlug: "fixture-launch-guide",
+    })) as {
+      createSocialImageSourceManifest: () => SocialImageManifest;
+    };
+    const crlfModule = (await importGeneratorWithFixture({
+      articleSlug: "fixture-launch-guide",
+      generatorSourceTransform: (source) => source.replace(/\r?\n/g, "\r\n"),
+    })) as {
+      createSocialImageSourceManifest: () => SocialImageManifest;
+    };
+
+    expect(crlfModule.createSocialImageSourceManifest()).toEqual(
+      lfModule.createSocialImageSourceManifest(),
+    );
   });
 
   it("renders the Purple Signal identity without the retired publication palette", () => {
@@ -201,9 +280,13 @@ describe("social image portfolio", () => {
     const socialDir = join(root, "social");
     const appleIconPath = join(root, "apple-touch-icon.png");
 
-    await generateSocialImages({ outputRoot: root });
+    const generated = (await generateSocialImages({
+      outputRoot: root,
+    })) as GeneratedSocialPortfolio;
     writeFileSync(join(socialDir, "stale.png"), "stale");
-    await generateSocialImages({ outputRoot: root });
+    const regenerated = (await generateSocialImages({
+      outputRoot: root,
+    })) as GeneratedSocialPortfolio;
 
     expect(readdirSync(socialDir).sort()).toEqual(expectedSocialNames);
 
@@ -236,7 +319,130 @@ describe("social image portfolio", () => {
       ),
     ).toEqual(firstHashes);
     expect(sha256(appleIconPath)).toBe(firstAppleHash);
+    expect(generated.manifestPath).toBe(
+      join(root, "social-images.manifest.json"),
+    );
+    expect(regenerated.manifestPath).toBe(generated.manifestPath);
+    expect(readManifest(generated.manifestPath)).toEqual(
+      readManifest(regenerated.manifestPath),
+    );
   }, 10_000);
+
+  it("validates committed PNG bytes without regenerating them", async () => {
+    const { result, root } = await generateTemporaryPortfolio();
+    const before = new Map(
+      [result.appleIconPath, ...result.socialImagePaths].map((filePath) => [
+        filePath,
+        sha256(filePath),
+      ]),
+    );
+    const { validateCommittedSocialImages } =
+      await importSocialImageValidator();
+
+    await expect(
+      validateCommittedSocialImages({
+        manifestPath: result.manifestPath,
+        publicRoot: root,
+      }),
+    ).resolves.toEqual({
+      appleTouchIcons: 1,
+      socialImages: SOCIAL_IMAGE_RECORDS.length,
+      totalAssets: SOCIAL_IMAGE_RECORDS.length + 1,
+    });
+    expect(
+      new Map(
+        [result.appleIconPath, ...result.socialImagePaths].map((filePath) => [
+          filePath,
+          sha256(filePath),
+        ]),
+      ),
+    ).toEqual(before);
+  }, 15_000);
+
+  it("rejects a committed manifest whose source signatures are stale", async () => {
+    const { result, root } = await generateTemporaryPortfolio();
+    const manifest = readManifest(result.manifestPath);
+    manifest.assets[0]!.sourceSha256 = "0".repeat(64);
+    writeManifest(result.manifestPath, manifest);
+    const { validateCommittedSocialImages } =
+      await importSocialImageValidator();
+
+    await expect(
+      validateCommittedSocialImages({
+        manifestPath: result.manifestPath,
+        publicRoot: root,
+      }),
+    ).rejects.toThrow(/source|manifest|generate:social/i);
+  }, 15_000);
+
+  it("rejects missing and unexpected social image inventory", async () => {
+    const { result, root } = await generateTemporaryPortfolio();
+    const { validateCommittedSocialImages } =
+      await importSocialImageValidator();
+    rmSync(result.socialImagePaths[0]!);
+
+    await expect(
+      validateCommittedSocialImages({
+        manifestPath: result.manifestPath,
+        publicRoot: root,
+      }),
+    ).rejects.toThrow(/inventory|missing|social/i);
+
+    copyFileSync(result.socialImagePaths[1]!, result.socialImagePaths[0]!);
+    writeFileSync(join(root, "social", "unexpected.png"), "unexpected");
+    await expect(
+      validateCommittedSocialImages({
+        manifestPath: result.manifestPath,
+        publicRoot: root,
+      }),
+    ).rejects.toThrow(/inventory|unexpected|social/i);
+  }, 15_000);
+
+  it("rejects valid PNG bytes with the wrong committed hash", async () => {
+    const { result, root } = await generateTemporaryPortfolio();
+    copyFileSync(result.socialImagePaths[1]!, result.socialImagePaths[0]!);
+    const { validateCommittedSocialImages } =
+      await importSocialImageValidator();
+
+    await expect(
+      validateCommittedSocialImages({
+        manifestPath: result.manifestPath,
+        publicRoot: root,
+      }),
+    ).rejects.toThrow(/hash|sha-?256|bytes/i);
+  }, 15_000);
+
+  it("rejects a hash-matched PNG with invalid dimensions", async () => {
+    const { result, root } = await generateTemporaryPortfolio();
+    const targetPath = result.socialImagePaths[0]!;
+    await sharp({
+      create: {
+        background: "#000000",
+        channels: 4,
+        height: 1,
+        width: 1,
+      },
+    })
+      .png()
+      .toFile(targetPath);
+    const manifest = readManifest(result.manifestPath);
+    const relativePath = `social/${targetPath.split(/[\\/]/).at(-1)}`;
+    const record = manifest.assets.find(
+      ({ path: assetPath }) => assetPath === relativePath,
+    );
+    expect(record).toBeDefined();
+    record!.pngSha256 = sha256(targetPath);
+    writeManifest(result.manifestPath, manifest);
+    const { validateCommittedSocialImages } =
+      await importSocialImageValidator();
+
+    await expect(
+      validateCommittedSocialImages({
+        manifestPath: result.manifestPath,
+        publicRoot: root,
+      }),
+    ).rejects.toThrow(/dimension|1200|630/i);
+  }, 15_000);
 
   it("rejects broad output roots before cleanup", async () => {
     const root = mkdtempSync(join(tmpdir(), "eti-social-safety-"));

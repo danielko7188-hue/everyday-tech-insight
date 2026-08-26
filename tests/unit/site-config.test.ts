@@ -233,7 +233,7 @@ describe("static deployment configuration", () => {
     expect(packageJson.devDependencies?.["@types/node"]).toBe("22.20.1");
   });
 
-  it("fails closed on source validation and generates social images before every build", () => {
+  it("fails closed on source validation and consumes immutable committed social images", () => {
     const packageJson = readJson("../../package.json") as {
       scripts?: Record<string, string>;
       devDependencies?: Record<string, string>;
@@ -241,14 +241,15 @@ describe("static deployment configuration", () => {
 
     expect(packageJson.devDependencies?.sharp).toMatch(/^\d+\.\d+\.\d+$/);
     expect(packageJson.scripts?.prebuild).toBe(
-      "npm run check:content && npm run check:editorial && npm run check:cms && npm run check:images",
+      "npm run check:content && npm run check:editorial && npm run check:cms && npm run check:images && npm run check:social",
     );
     expect(packageJson.scripts?.["generate:social"]).toBe(
       "node scripts/generate-social-images.mjs",
     );
-    expect(packageJson.scripts?.build).toBe(
-      "npm run generate:social && astro build",
+    expect(packageJson.scripts?.["check:social"]).toBe(
+      "node scripts/check-social-images.mjs",
     );
+    expect(packageJson.scripts?.build).toBe("astro build");
     expect(packageJson.scripts?.postbuild).toBe("npm run check:seo");
   });
 
