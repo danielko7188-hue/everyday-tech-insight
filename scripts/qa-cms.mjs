@@ -661,6 +661,7 @@ function validateFieldContract(collection, findings) {
       expectedFieldConstraintSnapshot({
         type: "boolean",
         required: true,
+        readonly: true,
         default: false,
       }),
     ],

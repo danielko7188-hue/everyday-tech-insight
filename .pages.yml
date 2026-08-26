@@ -265,7 +265,9 @@ content:
             label: Decorative
             type: boolean
             required: true
+            readonly: true
             default: false
+            description: Article editorial visuals are informative by contract. Category motif fallbacks are the separate decorative visual system.
       - name: sourceList
         label: Sources
         type: object
