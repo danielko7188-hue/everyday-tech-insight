@@ -6,9 +6,9 @@ This guide is the operating procedure for the Astro publication. It does not app
 
 Pages CMS is **configured and locally tested** through the repository-root `.pages.yml`, lifecycle validators, a safe draft generator, and disposable draft/review/archived build fixtures.
 
-The exact repository is `danielko7188-hue/everyday-tech-insight`, and the release branch is `main`. The recommended owner-created editorial branch is `content/editorial`; its creation and selection remain unverified.
+The exact repository is `danielko7188-hue/everyday-tech-insight`, the release branch is `main`, and the owner editorial branch is `content/editorial`. The remote editorial branch and the current `main` protection were verified on GitHub on 2026-08-26. Selection of that branch inside hosted Pages CMS remains unverified.
 
-Hosted Pages CMS access and hosted authorization—including hosted sign-in, GitHub App authorization, exact repository selection, hosted collaborator absence, exact GitHub App scope, selected branch, branch protection, media upload, and a real save/commit round-trip—are **owner actions** and remain **unverified** because they have not been performed or observed in this work. Configuration compatibility is not evidence that an external account is connected.
+Hosted Pages CMS access and hosted authorization—including hosted sign-in, GitHub App authorization, exact repository selection, hosted collaborator absence, exact GitHub App scope, Pages CMS branch selection, media upload, and a real save/commit round-trip—are **owner actions** and remain **unverified** because they have not been performed or observed in this work. The separately verified GitHub branch and protection settings are not evidence that an external CMS account is connected.
 
 The reviewed YAML sets `create: true`, `rename: false`, and `delete: false`; these constrain the Pages CMS UI only and do not prevent direct Git operations. Direct Git can still rename, delete, or publish files, so pull-request and branch controls remain necessary.
 
@@ -26,7 +26,7 @@ A guide-level `clear` release gate requires a real source-check date, named and 
 2. Review the GitHub App permission request before authorizing it. Grant the Pages CMS GitHub App access to the exact repository only: `danielko7188-hue/everyday-tech-insight`.
 3. Do not invite Pages CMS collaborators. The intended owner-only write boundary depends on the owner's GitHub access and exact-repository App grant, neither of which this repository can prove.
 4. Select the exact repository, then create or select the recommended `content/editorial` non-main content branch (`main` remains the release branch). Do not make routine editorial saves directly to `main`.
-5. Confirm that live GitHub settings protect `main`, require a pull request and required checks, limit bypass access, and name real reviewers. Repository documentation cannot prove those hosted settings.
+5. Reconfirm the live GitHub controls before release. As verified on 2026-08-26, `main` requires the app-bound `Full quality gate`, strict checks, admin enforcement, linear history, and conversation resolution; force pushes and deletion are disabled, and no bypass actors are configured. Hosted settings can change. This solo-owner setup requires no second-person approval; record the owner's actual review rather than inventing a reviewer.
 6. Make one reversible test edit on the content branch. Inspect the resulting GitHub commit, author identity, changed paths, diff, and any managed-media upload; then revert or close that test cleanly.
 7. Keep confidential authorization evidence outside Git. Commit only a nonsecret evidence reference and truthful status after the owner observes the save/commit round-trip. Until then, keep the hosted status recorded as unverified.
 

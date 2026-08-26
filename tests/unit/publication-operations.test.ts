@@ -669,9 +669,12 @@ describe("publication operations documentation", () => {
         /release branch[^\n]{0,40}`main`/i,
       );
       expect(document, documentName).toMatch(
-        /recommended owner-created editorial branch[^\n]{0,80}`content\/editorial`/i,
+        /owner editorial branch[^\n]{0,80}`content\/editorial`/i,
       );
       expect(document, documentName).toMatch(
+        /remote editorial branch[^\n]{0,100}main`? protection[^\n]{0,100}verified[^\n]{0,40}2026-08-26/i,
+      );
+      expect(document, documentName).not.toMatch(
         /creation and selection[^\n]{0,60}(?:remain|are) unverified/i,
       );
       expect(document, documentName).toMatch(
@@ -684,8 +687,7 @@ describe("publication operations documentation", () => {
         "hosted collaborator absence",
         "exact GitHub App scope",
         "hosted sign-in",
-        "selected branch",
-        "branch protection",
+        "Pages CMS branch selection",
         "media upload",
         "save/commit round-trip",
       ]) {
