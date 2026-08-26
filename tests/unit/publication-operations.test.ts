@@ -912,12 +912,7 @@ describe("publication operations documentation", () => {
       origin: manifest.origin,
       phase: "after-local",
     });
-    const historicalFileNames = new Set(
-      manifest.captures.map(({ fileName }) => fileName),
-    );
-    const expectedPlan = expandedPlan.filter(({ fileName }) =>
-      historicalFileNames.has(fileName),
-    );
+    const expectedPlan = expandedPlan;
 
     expect(Object.keys(manifest).toSorted()).toEqual(
       [
@@ -933,16 +928,16 @@ describe("publication operations documentation", () => {
       ].toSorted(),
     );
     expect(manifest).toMatchObject({
-      captureCount: 156,
-      capturedAt: "2026-08-26T15:17:01.882Z",
+      captureCount: 228,
+      capturedAt: "2026-08-26T16:58:13.990Z",
       deploymentId: null,
-      expectedGitSha: "6156b01ad5e5de9b8185e57b2764eaf17184641f",
+      expectedGitSha: "679bc6c23313e29693c68aec0acdce111fe2fb0e",
       origin: "http://127.0.0.1:4321",
       phase: "after-local",
       schemaVersion: 1,
     });
     expect(expandedPlan).toHaveLength(228);
-    expect(expectedPlan).toHaveLength(156);
+    expect(expectedPlan).toHaveLength(228);
     expect(manifest.captures).toHaveLength(expectedPlan.length);
     expect(directoryEntries.toSorted()).toEqual(
       [
@@ -1040,9 +1035,9 @@ describe("publication operations documentation", () => {
       ),
     ).toBe(true);
     expect(new Set(recomputedFiles.map(({ fileName }) => fileName)).size).toBe(
-      156,
+      228,
     );
-    expect(new Set(recomputedFiles.map(({ sha256 }) => sha256)).size).toBe(156);
+    expect(new Set(recomputedFiles.map(({ sha256 }) => sha256)).size).toBe(228);
     expect(
       recomputedFiles.every(({ sha256 }) => /^[a-f0-9]{64}$/.test(sha256)),
     ).toBe(true);
@@ -1054,7 +1049,7 @@ describe("publication operations documentation", () => {
       ]),
     );
     expect(stateCounts).toEqual({
-      "full-page": 144,
+      "full-page": 216,
       "menu-open": 4,
       "skip-link-focus": 8,
     });
@@ -1063,7 +1058,7 @@ describe("publication operations documentation", () => {
         ({ actualStatus, expectedStatus }) =>
           actualStatus === 200 && expectedStatus === 200,
       ),
-    ).toHaveLength(148);
+    ).toHaveLength(220);
     expect(
       manifest.captures.filter(
         ({ actualStatus, expectedStatus }) =>
@@ -1141,9 +1136,9 @@ describe("publication operations documentation", () => {
         localManifest.origin,
         localManifest.expectedGitSha,
         `${localManifest.captureCount} PNGs`,
-        "148 matching HTTP 200",
+        "220 matching HTTP 200",
         "8 expected 404",
-        "156 unique SHA-256 hashes",
+        "228 unique SHA-256 hashes",
         "6/6 safety assertions",
       ]) {
         expect(document, `${documentName}: ${fact}`).toContain(fact);
