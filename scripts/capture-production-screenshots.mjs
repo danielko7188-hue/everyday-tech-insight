@@ -1,6 +1,8 @@
+import { execFile } from "node:child_process";
 import { lstat, mkdir, readdir, realpath, rename, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 
 import { chromium } from "@playwright/test";
 
@@ -9,6 +11,8 @@ import {
   normalizeAuditOrigin,
   writeAuditManifest,
 } from "./write-audit-manifest.mjs";
+
+const execFileAsync = promisify(execFile);
 
 export const CAPTURE_PHASES = Object.freeze([
   "before",
@@ -517,6 +521,87 @@ function assertCaptureProvenance(phase, expectedGitSha, deploymentId) {
   if (deploymentId === null) {
     throw new TypeError(`Capture phase ${phase} requires a deployment ID.`);
   }
+}
+
+async function runGitCaptureCommand(
+  repositoryRootCandidate,
+  args,
+  execFileImpl,
+) {
+  const resolvedRepositoryRoot = path.resolve(repositoryRootCandidate);
+  try {
+    const result = await execFileImpl("git", args, {
+      cwd: resolvedRepositoryRoot,
+      encoding: "utf8",
+      windowsHide: true,
+    });
+    if (!result || typeof result.stdout !== "string") {
+      throw new TypeError("Git command returned no text output contract.");
+    }
+    return result.stdout;
+  } catch (cause) {
+    throw new Error(
+      `Could not verify capture Git source with git ${args[0]}.`,
+      { cause },
+    );
+  }
+}
+
+export async function assertCaptureSourceProvenance(
+  {
+    expectedGitSha: expectedGitShaCandidate,
+    phase: phaseCandidate,
+    repositoryRoot: repositoryRootCandidate,
+  },
+  overrides = {},
+) {
+  const phase = assertCapturePhase(phaseCandidate);
+  if (phase === "before") {
+    return Object.freeze({ exempt: true });
+  }
+  if (
+    typeof repositoryRootCandidate !== "string" ||
+    repositoryRootCandidate.length === 0
+  ) {
+    throw new TypeError("Capture repository root must be explicit.");
+  }
+  const expectedGitSha = normalizeExpectedGitSha(expectedGitShaCandidate);
+  const execFileImpl = overrides.execFileImpl ?? execFileAsync;
+  if (typeof execFileImpl !== "function") {
+    throw new TypeError("Capture Git command implementation must be callable.");
+  }
+
+  const headOutput = await runGitCaptureCommand(
+    repositoryRootCandidate,
+    ["rev-parse", "--verify", "HEAD"],
+    execFileImpl,
+  );
+  let gitHead;
+  try {
+    gitHead = normalizeExpectedGitSha(headOutput.trim());
+  } catch (cause) {
+    throw new Error(
+      "Could not verify capture Git source because Git HEAD was not a full lowercase SHA.",
+      { cause },
+    );
+  }
+  if (gitHead !== expectedGitSha) {
+    throw new Error(
+      `Capture expected SHA ${expectedGitSha} does not match current Git HEAD ${gitHead}.`,
+    );
+  }
+
+  const statusOutput = await runGitCaptureCommand(
+    repositoryRootCandidate,
+    ["status", "--porcelain=v1", "--untracked-files=all", "--ignored=no"],
+    execFileImpl,
+  );
+  if (statusOutput.trim().length > 0) {
+    throw new Error(
+      "Capture source tree is not clean; commit or remove tracked and untracked non-ignored changes before capturing.",
+    );
+  }
+  return Object.freeze({ gitHead, sourceTreeClean: true });
 }
 
 export function parseCaptureArguments(arguments_) {
@@ -1045,9 +1130,18 @@ export async function captureProductionScreenshots(options, overrides = {}) {
   const plan = buildCapturePlan({ origin, phase });
   const expectedNames = plan.map(({ fileName }) => fileName);
   const paths = overrides.paths ?? createCapturePaths(repositoryRoot, phase);
+  assertFixedCaptureLayout(paths);
   if (paths.phase !== phase) {
     throw new Error("Capture paths do not match the requested phase.");
   }
+  await assertCaptureSourceProvenance(
+    {
+      expectedGitSha,
+      phase,
+      repositoryRoot: paths.repositoryRoot,
+    },
+    { execFileImpl: overrides.execFileImpl },
+  );
   await prepareCaptureWorkspace(paths, overrides.fileSystem);
 
   let browser;

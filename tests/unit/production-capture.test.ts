@@ -22,8 +22,10 @@ import {
   CAPTURE_WIDTHS,
   RELEASE_EVIDENCE_ID,
   assertExpectedNavigation,
+  assertCaptureSourceProvenance,
   assertSafeCaptureOutputPath,
   buildCapturePlan,
+  captureProductionScreenshots,
   createCapturePaths,
   normalizeCaptureOrigin,
   parseCaptureArguments,
@@ -67,6 +69,151 @@ afterEach(() => {
 });
 
 describe("production screenshot capture contract", () => {
+  it("accepts an after capture only when the expected SHA matches a clean full Git HEAD", async () => {
+    const head = "0123456789abcdef0123456789abcdef01234567";
+    const calls: Array<{ args: string[]; command: string; cwd?: string }> = [];
+    const repositoryRoot = createTemporaryRoot("eti-capture-git-clean-");
+    const execFileImpl = async (
+      command: string,
+      args: string[],
+      options: { cwd?: string },
+    ) => {
+      calls.push({ args, command, cwd: options.cwd });
+      return args[0] === "rev-parse"
+        ? { stderr: "", stdout: `${head}\n` }
+        : { stderr: "", stdout: "" };
+    };
+
+    await expect(
+      assertCaptureSourceProvenance(
+        {
+          expectedGitSha: head,
+          phase: "after-local",
+          repositoryRoot,
+        },
+        { execFileImpl },
+      ),
+    ).resolves.toEqual({ gitHead: head, sourceTreeClean: true });
+    expect(calls).toEqual([
+      {
+        args: ["rev-parse", "--verify", "HEAD"],
+        command: "git",
+        cwd: repositoryRoot,
+      },
+      {
+        args: [
+          "status",
+          "--porcelain=v1",
+          "--untracked-files=all",
+          "--ignored=no",
+        ],
+        command: "git",
+        cwd: repositoryRoot,
+      },
+    ]);
+  });
+
+  it("rejects an after capture when the expected SHA differs from Git HEAD", async () => {
+    const expectedGitSha = "0123456789abcdef0123456789abcdef01234567";
+    const gitHead = "89abcdef0123456789abcdef0123456789abcdef";
+    const execFileImpl = async () => ({ stderr: "", stdout: `${gitHead}\n` });
+
+    await expect(
+      assertCaptureSourceProvenance(
+        {
+          expectedGitSha,
+          phase: "after-production",
+          repositoryRoot: createTemporaryRoot("eti-capture-git-mismatch-"),
+        },
+        { execFileImpl },
+      ),
+    ).rejects.toThrow(/expected SHA.*does not match.*Git HEAD/i);
+  });
+
+  it("rejects a dirty tracked or untracked non-ignored source tree", async () => {
+    const head = "0123456789abcdef0123456789abcdef01234567";
+    const execFileImpl = async (_command: string, args: string[]) =>
+      args[0] === "rev-parse"
+        ? { stderr: "", stdout: `${head}\n` }
+        : { stderr: "", stdout: " M src/styles/global.css\n?? notes.txt\n" };
+
+    await expect(
+      assertCaptureSourceProvenance(
+        {
+          expectedGitSha: head,
+          phase: "runtime-verification",
+          repositoryRoot: createTemporaryRoot("eti-capture-git-dirty-"),
+        },
+        { execFileImpl },
+      ),
+    ).rejects.toThrow(/source tree.*not clean/i);
+  });
+
+  it("fails closed when a Git provenance command fails", async () => {
+    const head = "0123456789abcdef0123456789abcdef01234567";
+    const execFileImpl = async () => {
+      throw new Error("injected Git failure");
+    };
+
+    await expect(
+      assertCaptureSourceProvenance(
+        {
+          expectedGitSha: head,
+          phase: "after-local",
+          repositoryRoot: createTemporaryRoot("eti-capture-git-error-"),
+        },
+        { execFileImpl },
+      ),
+    ).rejects.toThrow(/could not verify.*Git source/i);
+  });
+
+  it("exempts historical before captures from the local Git source gate", async () => {
+    const deployedGitSha = "0123456789abcdef0123456789abcdef01234567";
+    let gitInvoked = false;
+    const execFileImpl = async () => {
+      gitInvoked = true;
+      throw new Error("before captures must not inspect local Git");
+    };
+
+    await expect(
+      assertCaptureSourceProvenance(
+        {
+          expectedGitSha: deployedGitSha,
+          phase: "before",
+          repositoryRoot: createTemporaryRoot("eti-capture-git-before-"),
+        },
+        { execFileImpl },
+      ),
+    ).resolves.toEqual({ exempt: true });
+    expect(gitInvoked).toBe(false);
+  });
+
+  it("checks source cleanliness before mutating an existing capture output", async () => {
+    const head = "0123456789abcdef0123456789abcdef01234567";
+    const repositoryRoot = createTemporaryRoot("eti-capture-git-order-");
+    const paths = createCapturePaths(repositoryRoot, "after-local");
+    const sentinelPath = join(paths.outputDirectory, "prior-evidence.txt");
+    mkdirSync(paths.outputDirectory, { recursive: true });
+    writeFileSync(sentinelPath, "prior", "utf8");
+    const execFileImpl = async (_command: string, args: string[]) =>
+      args[0] === "rev-parse"
+        ? { stderr: "", stdout: `${head}\n` }
+        : { stderr: "", stdout: "?? uncommitted-source.txt\n" };
+
+    await expect(
+      captureProductionScreenshots(
+        {
+          deploymentId: null,
+          expectedGitSha: head,
+          origin: "http://127.0.0.1:4321",
+          phase: "after-local",
+        },
+        { execFileImpl, paths },
+      ),
+    ).rejects.toThrow(/source tree.*not clean/i);
+    expect(readFileSync(sentinelPath, "utf8")).toBe("prior");
+  });
+
   it("defines the release evidence ID, eight widths, the representative before routes, and exact full after routes", () => {
     expect(RELEASE_EVIDENCE_ID).toBe("premium-spatial-2026-08-26");
     expect(CAPTURE_PHASES).toEqual([
