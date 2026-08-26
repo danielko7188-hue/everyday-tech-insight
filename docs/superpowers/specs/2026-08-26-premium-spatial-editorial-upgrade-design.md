@@ -1,8 +1,10 @@
 # Premium Spatial Editorial Upgrade Design
 
-**Date:** 2026-08-26  
-**Status:** Approved through the user's attached implementation brief and delegated owner judgment  
-**Applies to:** `everyday-tech-insight-static` only  
+**Date:** 2026-08-26
+
+**Status:** Approved through the user's attached implementation brief and delegated owner judgment
+
+**Applies to:** `everyday-tech-insight-static` only
 **Production baseline:** `af8dd44843860f3a055c76f934c02ae389ec1a81` at `https://everyday-tech-insight.vercel.app/`
 
 ## 1. Decision
