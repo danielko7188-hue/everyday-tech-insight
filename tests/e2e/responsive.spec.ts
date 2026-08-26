@@ -862,15 +862,16 @@ test("mobile menu uses a short CSS-only reveal and removes it for reduced motion
   );
 
   const revealFrames = await menu.evaluate(async (details) => {
+    const detailsElement = details as HTMLDetailsElement;
     const readFrame = () => {
-      const style = getComputedStyle(details, "::details-content");
+      const style = getComputedStyle(detailsElement, "::details-content");
       return {
         blockSize: Number.parseFloat(style.blockSize),
         opacity: Number.parseFloat(style.opacity),
       };
     };
     const closed = readFrame();
-    details.querySelector("summary")?.click();
+    detailsElement.querySelector("summary")?.click();
     const opening = [];
     for (let frame = 0; frame < 12; frame += 1) {
       await new Promise<void>((resolve) =>
@@ -879,7 +880,12 @@ test("mobile menu uses a short CSS-only reveal and removes it for reduced motion
       opening.push(readFrame());
     }
     await new Promise((resolve) => setTimeout(resolve, 220));
-    return { closed, opening, opened: readFrame(), open: details.open };
+    return {
+      closed,
+      opening,
+      opened: readFrame(),
+      open: detailsElement.open,
+    };
   });
 
   expect(revealFrames.open).toBe(true);
