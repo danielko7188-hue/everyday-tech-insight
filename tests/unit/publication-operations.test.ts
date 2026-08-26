@@ -928,9 +928,9 @@ describe("publication operations documentation", () => {
     );
     expect(manifest).toMatchObject({
       captureCount: 156,
-      capturedAt: "2026-08-26T13:43:44.318Z",
+      capturedAt: "2026-08-26T15:17:01.882Z",
       deploymentId: null,
-      expectedGitSha: "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      expectedGitSha: "6156b01ad5e5de9b8185e57b2764eaf17184641f",
       origin: "http://127.0.0.1:4321",
       phase: "after-local",
       schemaVersion: 1,
