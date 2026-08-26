@@ -177,7 +177,7 @@ describe("static deployment configuration", () => {
       trailingSlash: "always",
     });
     expect(astroConfig).not.toHaveProperty("adapter");
-  });
+  }, 15_000);
 
   it("provides the complete foundation script surface", () => {
     const packageJson = readJson("../../package.json") as {

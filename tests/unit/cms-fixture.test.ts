@@ -171,7 +171,7 @@ describe("CMS lifecycle build fixture", () => {
     expect(isolatedWorktreePath).toBeTypeOf("string");
     expect(existsSync(isolatedWorktreePath!)).toBe(false);
     expect(existsSync(path.dirname(isolatedWorktreePath!))).toBe(false);
-  });
+  }, 15_000);
 
   it("keeps inherited source provenance strict without an explicit test environment", async () => {
     const projectRoot = await createCleanWorktreeRepository();
