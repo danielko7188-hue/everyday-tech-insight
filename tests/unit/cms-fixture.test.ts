@@ -33,6 +33,7 @@ type SignalControl = {
 };
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   for (const root of temporaryRoots.splice(0)) {
     rmSync(root, { force: true, recursive: true });
   }
@@ -50,6 +51,13 @@ function runFixtureGit(projectRoot: string, args: string[]): string {
     encoding: "utf8",
     windowsHide: true,
   });
+}
+
+function listFixtureWorktrees(projectRoot: string): string[] {
+  return runFixtureGit(projectRoot, ["worktree", "list", "--porcelain", "-z"])
+    .split("\0")
+    .filter((entry) => entry.startsWith("worktree "))
+    .map((entry) => entry.slice("worktree ".length));
 }
 
 async function createCleanWorktreeRepository(): Promise<string> {
@@ -121,27 +129,30 @@ describe("CMS lifecycle build fixture", () => {
 
   it("removes its filesystem and Git worktree registration when interrupted after setup", async () => {
     const projectRoot = await createCleanWorktreeRepository();
-    const worktreesBefore = runFixtureGit(projectRoot, [
-      "worktree",
-      "list",
-      "--porcelain",
-    ]);
-    const temporaryEntriesBefore = new Set(
-      (await readdir(tmpdir())).filter((name) =>
-        name.startsWith("eti-cms-fixture-worktree-"),
-      ),
-    );
+    vi.stubEnv("GITHUB_SHA", "1111111111111111111111111111111111111111");
+    const worktreesBefore = listFixtureWorktrees(projectRoot);
     const operation = vi.fn();
     let checkpoints = 0;
+    let isolatedWorktreePath: string | undefined;
 
     await expect(
       withIsolatedCmsWorktree(
         {
           projectRoot,
+          provenanceEnvironment: {},
           signalControl: {
             throwIfSignaled() {
               checkpoints += 1;
               if (checkpoints === 6) {
+                const addedWorktrees = listFixtureWorktrees(projectRoot).filter(
+                  (candidate) => !worktreesBefore.includes(candidate),
+                );
+                if (addedWorktrees.length !== 1) {
+                  throw new Error(
+                    `Expected one isolated worktree during interruption; found ${addedWorktrees.length}.`,
+                  );
+                }
+                [isolatedWorktreePath] = addedWorktrees;
                 throw new CmsFixtureSignalError("SIGINT");
               }
             },
@@ -156,15 +167,25 @@ describe("CMS lifecycle build fixture", () => {
 
     expect(operation).not.toHaveBeenCalled();
     expect(runFixtureGit(projectRoot, ["status", "--porcelain=v1"])).toBe("");
-    expect(
-      runFixtureGit(projectRoot, ["worktree", "list", "--porcelain"]),
-    ).toBe(worktreesBefore);
-    const newTemporaryEntries = (await readdir(tmpdir())).filter(
-      (name) =>
-        name.startsWith("eti-cms-fixture-worktree-") &&
-        !temporaryEntriesBefore.has(name),
-    );
-    expect(newTemporaryEntries).toEqual([]);
+    expect(listFixtureWorktrees(projectRoot)).toEqual(worktreesBefore);
+    expect(isolatedWorktreePath).toBeTypeOf("string");
+    expect(existsSync(isolatedWorktreePath!)).toBe(false);
+    expect(existsSync(path.dirname(isolatedWorktreePath!))).toBe(false);
+  });
+
+  it("keeps inherited source provenance strict without an explicit test environment", async () => {
+    const projectRoot = await createCleanWorktreeRepository();
+    const operation = vi.fn();
+    vi.stubEnv("GITHUB_SHA", "1111111111111111111111111111111111111111");
+
+    await expect(
+      withIsolatedCmsWorktree(
+        { projectRoot, signalControl: undefined },
+        operation,
+      ),
+    ).rejects.toThrow(/GITHUB_SHA.*does not match.*Git HEAD/i);
+    expect(operation).not.toHaveBeenCalled();
+    expect(runFixtureGit(projectRoot, ["status", "--porcelain=v1"])).toBe("");
   });
 
   it("launches npm through Node on Windows instead of spawning a .cmd shim", () => {

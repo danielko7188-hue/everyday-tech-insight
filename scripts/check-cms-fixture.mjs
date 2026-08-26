@@ -845,7 +845,7 @@ export async function runCmsLifecycleFixture({
 }
 
 export async function withIsolatedCmsWorktree(
-  { projectRoot, signalControl },
+  { projectRoot, provenanceEnvironment = process.env, signalControl },
   operation,
 ) {
   if (typeof operation !== "function") {
@@ -853,7 +853,10 @@ export async function withIsolatedCmsWorktree(
   }
   const resolvedProjectRoot = path.resolve(projectRoot);
   signalControl?.throwIfSignaled();
-  resolveBuildGitSha({ repositoryRoot: resolvedProjectRoot });
+  resolveBuildGitSha({
+    env: provenanceEnvironment,
+    repositoryRoot: resolvedProjectRoot,
+  });
   signalControl?.throwIfSignaled();
 
   let temporaryRoot;
