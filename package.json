@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": "^22.19.0 || >=24.0.0"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "astro dev",
@@ -52,7 +52,7 @@
     "@axe-core/playwright": "4.13.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.62.1",
-    "@types/node": "22.20.1",
+    "@types/node": "24.13.3",
     "cheerio": "1.1.2",
     "chrome-launcher": "1.2.1",
     "eslint": "10.9.0",

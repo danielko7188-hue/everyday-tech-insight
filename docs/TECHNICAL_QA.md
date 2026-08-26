@@ -4,7 +4,7 @@ Date recorded: 2026-08-26, with earlier release evidence retained in dated histo
 
 ## Release command
 
-Run from a clean checkout with a supported Node version:
+Run from a clean checkout with Node.js `24.x`, the same maintained major pinned in `package.json`, GitHub Actions, and Vercel:
 
 ```text
 npm ci
@@ -81,8 +81,15 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 - Release `premium-spatial-2026-08-26` uses 320, 390, 600, 768, 1024, 1280, 1440, and 1920px capture widths. Its completed before baseline contains 64 PNGs across 8 routes and 8 widths: 56 matching HTTP 200 responses, 8 expected 404 responses, 64 unique SHA-256 hashes, and 6/6 safety assertions.
 - The before manifest was captured at `2026-08-26T09:36:03.617Z` from `https://everyday-tech-insight.vercel.app` for Git SHA `af8dd44843860f3a055c76f934c02ae389ec1a81` and deployment `dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd`.
 - The expanded after-local capture completed at `2026-08-26T16:58:13.990Z` from `http://127.0.0.1:4321` for exact source SHA `679bc6c23313e29693c68aec0acdce111fe2fb0e`: 228 PNGs, 220 matching HTTP 200 responses, 8 expected 404 responses, 228 unique SHA-256 hashes, and 6/6 safety assertions. It comprises 27 routes × 8 widths = 216 full-page PNGs, 4 menu states at 320, 390, 600, and 768px, and 8 skip-link states. Representative mobile and desktop outputs, menu-open, focus, Toolkit, trust, sitemap, and 404 states were inspected. This after-local result is local evidence only and is not deployment evidence.
-- The after-production phase is planned and unverified at 228 PNGs; runtime-verification is planned and unverified at 228 PNGs. Those two future phases are not yet generated or verified; their counts remain expected inventory, not release evidence.
+- The after-production capture completed with 228 PNGs at `2026-08-26T18:41:09.773Z` from `https://everyday-tech-insight.vercel.app` for exact deployed SHA `17a09a40f6045311ad9a5d6f66516ccdca8b1b3c` and Vercel deployment `dpl_6LwKJsjsYUoB4rdJiTRyinnrj2js`: 220 matching HTTP 200 responses, 8 expected 404 responses, 228 unique SHA-256 hashes, and 6/6 safety assertions. All 228 production PNG hashes exactly matched the corresponding after-local filename. Authenticated Vercel metadata reported `READY`, production target, the exact Git SHA, and the canonical `everyday-tech-insight.vercel.app` alias. The exact-commit production smoke passed 46 routes and 30 root-relative assets with security headers, metadata parity, monetization-off behavior, deployment provenance, and Git SHA match.
+- The Git-ignored runtime-verification phase is planned and unverified at 228 PNGs for the final evidence commit. It must use that later commit's exact READY deployment and must not be committed.
 - Fixed premium-spatial outputs are `artifacts/site-audit/before/premium-spatial-2026-08-26/`, `artifacts/site-audit/after/premium-spatial-2026-08-26/local/`, `artifacts/site-audit/after/premium-spatial-2026-08-26/production/`, and the ignored `artifacts/site-audit/runtime-verification/premium-spatial-2026-08-26-final/`. Each successful run atomically publishes an `audit-manifest.json` containing provenance, route/status, viewport/state, byte count, SHA-256 digest, and monetization/CMS-absence assertions.
+
+### Premium spatial deployment provenance
+
+Seven Git-triggered deployments failed closed during source-provenance hardening and did not replace the canonical production release: `dpl_HkLhe7vhiJzw1m8z7ZXKyEeKMW6z`, `dpl_9KSXoW94sJ1LdWpFGocSCXKYS69s`, `dpl_BjN8sYG3DtQdqzKXKYssf7vhUHZQ`, `dpl_GqttgmgLFL67oJzEUrcxT3BWaaGd`, `dpl_FZ39BFCgTNztGmRHQtyC2947uSQb`, `dpl_AGRRi6Tamfer4XTM2SUEHCBMsyfT`, and the intentional bounded-diagnostic deployment `dpl_EjcjXtv9aQHMihqvRErHH11dfs1F`. Each ended in `ERROR` at the production build gate. The bounded diagnostic established that Vercel rewrote the tracked `vercel.json` from formatted JSON to one-line JSON while preserving its parsed values.
+
+The final provenance policy accepts only the exact unstaged ` M vercel.json` condition in a complete Vercel Git build and only when recursively canonicalized committed and working JSON values are identical. Any value change, staged config change, parse/read failure, or additional source change still fails closed. Commit `17a09a40f6045311ad9a5d6f66516ccdca8b1b3c` passed the GitHub Actions `Full quality gate`; Vercel deployment `dpl_6LwKJsjsYUoB4rdJiTRyinnrj2js` then ran the project-level `npm ci`, installed 622 packages with zero reported vulnerabilities, built all 37 pages, passed built-output QA, reached `READY`/`PROMOTED`, and assigned the canonical alias.
 
 ```text
 npm run capture:production -- --origin https://production.example --phase before --expected-sha $fullGitSha --deployment-id $vercelDeploymentId

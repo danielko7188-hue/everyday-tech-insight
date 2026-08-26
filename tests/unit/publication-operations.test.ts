@@ -719,7 +719,7 @@ describe("publication operations documentation", () => {
     expect(hostedRoundTripBoundarySentences).toHaveLength(1);
   });
 
-  it("classifies the premium spatial before evidence and future production inventory", async () => {
+  it("classifies the premium spatial before evidence and expanded capture inventory", async () => {
     const evidenceDirectory = path.join(
       root,
       "artifacts/site-audit/before/premium-spatial-2026-08-26",
@@ -869,8 +869,11 @@ describe("publication operations documentation", () => {
       ({ state }) => state === "skip-link-focus",
     ).length;
     expect(technicalQa).toMatch(
+      new RegExp(`after-production[^\\n]{0,220}${plannedAfterCount} PNGs`, "i"),
+    );
+    expect(technicalQa).toMatch(
       new RegExp(
-        `after-production[^\\n]{0,100}${plannedAfterCount} PNGs[^\\n]{0,100}runtime-verification[^\\n]{0,100}${plannedAfterCount} PNGs`,
+        `runtime-verification[^\\n]{0,100}${plannedAfterCount} PNGs`,
         "i",
       ),
     );
@@ -880,15 +883,11 @@ describe("publication operations documentation", () => {
         "i",
       ),
     );
-    expect(technicalQa).toMatch(
-      /not (?:yet )?(?:generated|captured) or verified/i,
-    );
-    for (const ungeneratedPath of [
-      "artifacts/site-audit/after/premium-spatial-2026-08-26/production",
-      "artifacts/site-audit/runtime-verification/premium-spatial-2026-08-26-final",
-    ]) {
-      expect(await pathExists(ungeneratedPath), ungeneratedPath).toBe(false);
-    }
+    expect(
+      await pathExists(
+        "artifacts/site-audit/after/premium-spatial-2026-08-26/production",
+      ),
+    ).toBe(true);
 
     expect(technicalQa).toMatch(
       /compares 34 reviewed states on each supported test platform/i,
@@ -1118,12 +1117,123 @@ describe("publication operations documentation", () => {
     ]);
   }, 30_000);
 
-  it("documents local evidence without claiming unfinished production phases", async () => {
-    const localManifest = JSON.parse(
-      await read(
-        "artifacts/site-audit/after/premium-spatial-2026-08-26/local/audit-manifest.json",
+  it("deeply validates premium spatial production evidence and exact local screenshot parity", async () => {
+    const productionRelativePath =
+      "artifacts/site-audit/after/premium-spatial-2026-08-26/production";
+    const localRelativePath =
+      "artifacts/site-audit/after/premium-spatial-2026-08-26/local";
+    const productionDirectory = path.join(root, productionRelativePath);
+    const [productionText, localText, directoryEntries] = await Promise.all([
+      read(`${productionRelativePath}/audit-manifest.json`),
+      read(`${localRelativePath}/audit-manifest.json`),
+      readdir(productionDirectory),
+    ]);
+    const productionManifest = JSON.parse(productionText) as AuditManifest;
+    const localManifest = JSON.parse(localText) as AuditManifest;
+    const expectedPlan = buildCapturePlan({
+      origin: productionManifest.origin,
+      phase: "after-production",
+    });
+
+    expect(Object.keys(productionManifest).toSorted()).toEqual(
+      [
+        "assertions",
+        "captureCount",
+        "capturedAt",
+        "captures",
+        "deploymentId",
+        "expectedGitSha",
+        "origin",
+        "phase",
+        "schemaVersion",
+      ].toSorted(),
+    );
+    expect(productionManifest).toMatchObject({
+      captureCount: 228,
+      capturedAt: "2026-08-26T18:41:09.773Z",
+      deploymentId: "dpl_6LwKJsjsYUoB4rdJiTRyinnrj2js",
+      expectedGitSha: "17a09a40f6045311ad9a5d6f66516ccdca8b1b3c",
+      origin: "https://everyday-tech-insight.vercel.app",
+      phase: "after-production",
+      schemaVersion: 1,
+    });
+    expect(expectedPlan).toHaveLength(228);
+    expect(productionManifest.captures).toHaveLength(expectedPlan.length);
+    expect(directoryEntries.toSorted()).toEqual(
+      [
+        "audit-manifest.json",
+        ...expectedPlan.map(({ fileName }) => fileName),
+      ].toSorted(),
+    );
+    expect(
+      productionManifest.captures.map(({ fileName }) => fileName).toSorted(),
+    ).toEqual(expectedPlan.map(({ fileName }) => fileName).toSorted());
+    expect(
+      findCaptureBindingErrors(
+        productionManifest.captures,
+        expectedPlan,
+        productionManifest,
       ),
-    ) as AuditManifest;
+    ).toEqual([]);
+
+    const recomputedFiles = [];
+    for (const capture of productionManifest.captures) {
+      const bytes = await readFile(
+        path.join(productionDirectory, capture.fileName),
+      );
+      recomputedFiles.push({
+        byteCount: bytes.byteLength,
+        fileName: capture.fileName,
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      });
+    }
+    expect(recomputedFiles).toEqual(
+      productionManifest.captures.map(({ byteCount, fileName, sha256 }) => ({
+        byteCount,
+        fileName,
+        sha256,
+      })),
+    );
+    expect(
+      new Set(productionManifest.captures.map(({ sha256 }) => sha256)).size,
+    ).toBe(228);
+    expect(
+      productionManifest.captures.filter(
+        ({ actualStatus, expectedStatus }) =>
+          actualStatus === 200 && expectedStatus === 200,
+      ),
+    ).toHaveLength(220);
+    expect(
+      productionManifest.captures.filter(
+        ({ actualStatus, expectedStatus }) =>
+          actualStatus === 404 && expectedStatus === 404,
+      ),
+    ).toHaveLength(8);
+    expect(productionManifest.assertions).toHaveLength(6);
+    expect(productionManifest.assertions.every(({ passed }) => passed)).toBe(
+      true,
+    );
+    expect(productionManifest.assertions).toEqual(localManifest.assertions);
+
+    const screenshotHashes = (manifest: AuditManifest) =>
+      manifest.captures
+        .map(({ fileName, sha256 }) => ({ fileName, sha256 }))
+        .toSorted((left, right) => left.fileName.localeCompare(right.fileName));
+    expect(screenshotHashes(productionManifest)).toEqual(
+      screenshotHashes(localManifest),
+    );
+  }, 30_000);
+
+  it("documents local and production evidence without claiming runtime verification", async () => {
+    const [localManifest, productionManifest] = (await Promise.all(
+      ["local", "production"].map(async (scope) =>
+        JSON.parse(
+          await read(
+            `artifacts/site-audit/after/premium-spatial-2026-08-26/${scope}/audit-manifest.json`,
+          ),
+        ),
+      ),
+    )) as [AuditManifest, AuditManifest];
     const documents = new Map([
       ["README.md", await read("README.md")],
       ["docs/TECHNICAL_QA.md", await read("docs/TECHNICAL_QA.md")],
@@ -1140,6 +1250,11 @@ describe("publication operations documentation", () => {
         "8 expected 404",
         "228 unique SHA-256 hashes",
         "6/6 safety assertions",
+        productionManifest.capturedAt,
+        productionManifest.origin,
+        productionManifest.expectedGitSha,
+        productionManifest.deploymentId,
+        "All 228 production PNG hashes exactly matched the corresponding after-local filename",
       ]) {
         expect(document, `${documentName}: ${fact}`).toContain(fact);
       }
@@ -1147,7 +1262,7 @@ describe("publication operations documentation", () => {
         /after-local[^\n]{0,300}local evidence only[^\n]{0,80}not deployment evidence/i,
       );
       expect(document, documentName).toMatch(
-        /after-production[^\n]{0,100}(?:planned and unverified|unverified and planned)[^\n]{0,80}228 PNGs/i,
+        /after-production[^\n]{0,180}(?:completed|captured)[^\n]{0,220}228 PNGs/i,
       );
       expect(document, documentName).toMatch(
         /runtime-verification[^\n]{0,100}(?:planned and unverified|unverified and planned)[^\n]{0,80}228 PNGs/i,
@@ -1159,12 +1274,11 @@ describe("publication operations documentation", () => {
         "artifacts/site-audit/after/premium-spatial-2026-08-26/local",
       ),
     ).toBe(true);
-    for (const ungeneratedPath of [
-      "artifacts/site-audit/after/premium-spatial-2026-08-26/production",
-      "artifacts/site-audit/runtime-verification/premium-spatial-2026-08-26-final",
-    ]) {
-      expect(await pathExists(ungeneratedPath), ungeneratedPath).toBe(false);
-    }
+    expect(
+      await pathExists(
+        "artifacts/site-audit/after/premium-spatial-2026-08-26/production",
+      ),
+    ).toBe(true);
   });
 
   it("keeps the premium spatial release in exact ads-off mode", async () => {

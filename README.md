@@ -35,7 +35,7 @@ See the [Publishing Guide](docs/PUBLISHING_GUIDE.md) for the complete workflow, 
 
 ## Requirements
 
-- Node.js `^22.19.0` or `>=24.0.0`
+- Node.js `24.x` (the same maintained major used by GitHub Actions and Vercel)
 - npm 11 or the npm version bundled with a supported Node release
 - The version-matched Playwright Chromium installed by the setup command below
 
@@ -94,7 +94,13 @@ After a reviewed release is actually deployed, capture the production evidence s
 npm run capture:production -- --origin https://production.example --phase after-production --expected-sha $fullGitSha --deployment-id $vercelDeploymentId
 ```
 
-Set `$fullGitSha` and `$vercelDeploymentId` from the exact pushed commit and authenticated Vercel deployment metadata. The command validates the explicit HTTPS origin and release metadata and verifies protected CMS/advertising routes remain exact non-redirecting 404s. For release `premium-spatial-2026-08-26`, the expanded after-local capture completed at `2026-08-26T16:58:13.990Z` from `http://127.0.0.1:4321` for exact source SHA `679bc6c23313e29693c68aec0acdce111fe2fb0e`: 228 PNGs, 220 matching HTTP 200 responses, 8 expected 404 responses, 228 unique SHA-256 hashes, and 6/6 safety assertions. It covers 27 routes across all eight required widths (216 full-page states), four keyboard-open menu states at 320, 390, 600, and 768px, and eight focused skip-link states. This after-local result is local evidence only and is not deployment evidence. The after-production phase is planned and unverified at 228 PNGs; runtime-verification is planned and unverified at 228 PNGs. Do not run the command against an old deployment or treat local visual baselines as deployment evidence. The dated Purple Signal evidence remains a separate historical record in [Technical QA](docs/TECHNICAL_QA.md).
+Set `$fullGitSha` and `$vercelDeploymentId` from the exact pushed commit and authenticated Vercel deployment metadata. The command validates the explicit HTTPS origin and release metadata and verifies protected CMS/advertising routes remain exact non-redirecting 404s.
+
+For release `premium-spatial-2026-08-26`, the expanded after-local capture completed at `2026-08-26T16:58:13.990Z` from `http://127.0.0.1:4321` for exact source SHA `679bc6c23313e29693c68aec0acdce111fe2fb0e`: 228 PNGs, 220 matching HTTP 200 responses, 8 expected 404 responses, 228 unique SHA-256 hashes, and 6/6 safety assertions. It covers 27 routes across all eight required widths (216 full-page states), four keyboard-open menu states at 320, 390, 600, and 768px, and eight focused skip-link states. This after-local result is local evidence only and is not deployment evidence.
+
+The after-production capture completed with 228 PNGs at `2026-08-26T18:41:09.773Z` from `https://everyday-tech-insight.vercel.app` for exact deployed SHA `17a09a40f6045311ad9a5d6f66516ccdca8b1b3c` and Vercel deployment `dpl_6LwKJsjsYUoB4rdJiTRyinnrj2js`: 220 matching HTTP 200 responses, 8 expected 404 responses, 228 unique SHA-256 hashes, and 6/6 safety assertions. All 228 production PNG hashes exactly matched the corresponding after-local filename. Authenticated Vercel metadata reported `READY`, production target, and the canonical alias; exact-commit production smoke passed 46 routes and 30 root-relative assets with security, metadata, monetization-off, and Git SHA checks.
+
+The Git-ignored runtime-verification phase is planned and unverified at 228 PNGs for the final evidence commit. Do not run the capture command against an old deployment or treat local visual baselines as deployment evidence. The dated Purple Signal evidence remains a separate historical record in [Technical QA](docs/TECHNICAL_QA.md).
 
 `npm run check:links` checks article sources and every external HTTP(S) destination rendered in public HTML. It uses `PASS`, `FAIL`, and `UNVERIFIED` deliberately. Plain HTTP, a definitive 404/410, or a blocked unsafe target is `FAIL`; access controls, rate limits, server errors, timeouts, and network failures are `UNVERIFIED`. Either state blocks the full QA command until a human can establish the destination is reachable.
 

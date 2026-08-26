@@ -215,22 +215,22 @@ describe("static deployment configuration", () => {
     expect(packageJson.scripts?.qa).not.toContain("playwright install");
   });
 
-  it("supports maintained Node releases while excluding Node 23", () => {
+  it("pins the Vercel and CI runtime to the maintained Node 24 major", () => {
     const packageJson = readJson("../../package.json") as {
       engines?: { node?: string };
     };
 
-    expect(packageJson.engines?.node).toBe("^22.19.0 || >=24.0.0");
+    expect(packageJson.engines?.node).toBe("24.x");
   });
 
-  it("uses Node 22 types for the lowest supported runtime", () => {
+  it("uses Node 24 types for the pinned runtime", () => {
     const packageJson = readJson("../../package.json") as {
       engines?: { node?: string };
       devDependencies?: Record<string, string>;
     };
 
-    expect(packageJson.engines?.node).toBe("^22.19.0 || >=24.0.0");
-    expect(packageJson.devDependencies?.["@types/node"]).toBe("22.20.1");
+    expect(packageJson.engines?.node).toBe("24.x");
+    expect(packageJson.devDependencies?.["@types/node"]).toBe("24.13.3");
   });
 
   it("fails closed on source validation and consumes immutable committed social images", () => {
