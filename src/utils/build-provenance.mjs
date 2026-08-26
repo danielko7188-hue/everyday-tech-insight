@@ -56,21 +56,22 @@ function isVerifiedVercelGitBuild(env, environmentGitSha) {
   );
 }
 
-function containsOnlyVercelPrunedRepositoryFiles(statusOutput) {
-  const lines = statusOutput.split(/\r?\n/).filter(Boolean);
+function isVercelPrunedRepositoryStatusLine(line) {
+  if (!line.startsWith(" D ")) return false;
+  const fileName = line.slice(3);
   return (
-    lines.length > 0 &&
-    lines.every((line) => {
-      if (!line.startsWith(" D ")) return false;
-      const fileName = line.slice(3);
-      return (
-        VERCEL_PRUNED_REPOSITORY_FILES.has(fileName) ||
-        VERCEL_PRUNED_REPOSITORY_PREFIXES.some((prefix) =>
-          fileName.startsWith(prefix),
-        )
-      );
-    })
+    VERCEL_PRUNED_REPOSITORY_FILES.has(fileName) ||
+    VERCEL_PRUNED_REPOSITORY_PREFIXES.some((prefix) =>
+      fileName.startsWith(prefix),
+    )
   );
+}
+
+function unexpectedSourceStatusLines(statusOutput, verifiedVercelGitBuild) {
+  const lines = statusOutput.split(/\r?\n/).filter(Boolean);
+  return verifiedVercelGitBuild
+    ? lines.filter((line) => !isVercelPrunedRepositoryStatusLine(line))
+    : lines;
 }
 
 function runBuildGitCommand(
@@ -172,15 +173,20 @@ export function resolveBuildGitSha(options) {
     env,
     environmentGitSha,
   );
-  const containsUnexpectedBuildChanges =
-    statusOutput.trim().length > 0 &&
-    !(
-      verifiedVercelGitBuild &&
-      containsOnlyVercelPrunedRepositoryFiles(statusOutput)
-    );
-  if (containsUnexpectedBuildChanges) {
+  const unexpectedStatusLines = unexpectedSourceStatusLines(
+    statusOutput,
+    verifiedVercelGitBuild,
+  );
+  if (unexpectedStatusLines.length > 0) {
+    const diagnosticEntries = unexpectedStatusLines
+      .slice(0, 10)
+      .map((line) => line.trimStart())
+      .join(", ");
+    const remainingCount = unexpectedStatusLines.length - 10;
+    const diagnosticSuffix =
+      remainingCount > 0 ? `, plus ${remainingCount} more` : "";
     throw new Error(
-      "Build source tree is not clean; commit or remove tracked and untracked non-ignored changes before building.",
+      `Build source tree is not clean; commit or remove tracked and untracked non-ignored changes before building. Unexpected entries: ${diagnosticEntries}${diagnosticSuffix}.`,
     );
   }
 

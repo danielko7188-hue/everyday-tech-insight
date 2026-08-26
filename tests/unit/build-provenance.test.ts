@@ -305,6 +305,20 @@ describe("public build provenance", () => {
     ).toThrow(/source tree.*not clean/i);
   });
 
+  it("names the unexpected source entry in a dirty-tree diagnostic", () => {
+    expect(() =>
+      resolveBuildGitSha({
+        env: VERCEL_GIT_BUILD_ENVIRONMENT,
+        execFileSyncImpl: (_command, args) =>
+          args[0] === "rev-parse"
+            ? `${VERCEL_SHA}\n`
+            : " M package-lock.json\n",
+        pathExistsImpl: () => true,
+        repositoryRoot: "C:/vercel/path0",
+      }),
+    ).toThrow(/unexpected entries: M package-lock\.json/i);
+  });
+
   it.each([
     ["missing CI", { VERCEL: "1", VERCEL_ENV: "production" }],
     ["missing Vercel indicator", { CI: "1", VERCEL_ENV: "production" }],
