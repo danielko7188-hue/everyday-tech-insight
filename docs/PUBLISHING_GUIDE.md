@@ -6,9 +6,9 @@ This guide is the operating procedure for the Astro publication. It does not app
 
 Pages CMS is **configured and locally tested** through the repository-root `.pages.yml`, lifecycle validators, a safe draft generator, and disposable draft/review/archived build fixtures.
 
-The exact repository is `danielko7188-hue/everyday-tech-insight`, and the release branch is `main`. The recommended owner-created planned branch is `content/editorial`; its creation and selection remain unverified.
+The exact repository is `danielko7188-hue/everyday-tech-insight`, and the release branch is `main`. The recommended owner-created editorial branch is `content/editorial`; its creation and selection remain unverified.
 
-Hosted Pages CMS sign-in, GitHub App authorization, and repository selection are an **owner action** and have not been performed or observed in this work. Hosted collaborator absence, exact GitHub App scope, hosted sign-in, selected branch, branch protection, media upload, and save/commit round-trip all remain **unverified**. Hosted authorization, save behavior, and the real save/commit round-trip remain unverified. Configuration compatibility is not evidence that an external account is connected.
+Hosted Pages CMS access and hosted authorization—including hosted sign-in, GitHub App authorization, exact repository selection, hosted collaborator absence, exact GitHub App scope, selected branch, branch protection, media upload, and a real save/commit round-trip—are **owner actions** and remain **unverified** because they have not been performed or observed in this work. Configuration compatibility is not evidence that an external account is connected.
 
 The reviewed YAML sets `create: true`, `rename: false`, and `delete: false`; these constrain the Pages CMS UI only and do not prevent direct Git operations. Direct Git can still rename, delete, or publish files, so pull-request and branch controls remain necessary.
 
