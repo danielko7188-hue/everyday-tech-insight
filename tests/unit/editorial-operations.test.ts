@@ -326,14 +326,14 @@ describe("strict structured editorial source", () => {
     expect(repositoryGate?.reason).toMatch(
       /2026-08-26.*protected `main`.*owner-only publishing gate/i,
     );
-    expect(repositoryGate?.reason).toMatch(
-      /not live until.*trusted-base workflow.*merged.*required branch protection/i,
+    expect(repositoryGate?.reason).not.toMatch(
+      /not live until|not yet an enforced live control/i,
     );
     expect(repositoryGate?.publicEffect).toMatch(
-      /currently requires the `Full quality gate`.*not yet an enforced live control/i,
+      /rejects non-owner pull requests.*requires both.*owner-only publishing gate.*full quality gate/i,
     );
     expect(repositoryGate?.nextAction).toMatch(
-      /second owner-authored pull request.*app-bound context.*required `main` checks/i,
+      /preserve both required checks.*hosted Pages CMS collaborator list.*installed App/i,
     );
     expect(repositoryGate?.status).toBe("OWNER ACTION REQUIRED");
     expect(repositoryGate?.evidenceReference).toBeNull();
