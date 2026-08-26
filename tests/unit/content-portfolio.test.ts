@@ -465,6 +465,26 @@ function whitespaceTokenCount(value: string): number {
 }
 
 describe("content portfolio", () => {
+  it("fails closed when more than three published guides request homepage feature placement", async () => {
+    const records = await readArticleRecords();
+    const overSelected = records.map((article, index) => ({
+      ...article,
+      data: {
+        ...article.data,
+        featured:
+          article.data.status === "published" && index < 4
+            ? true
+            : article.data.featured,
+      },
+    }));
+
+    const issues = validateContentPortfolio(overSelected);
+
+    expect(issues).toContainEqual(
+      expect.objectContaining({ code: "homepage-featured-limit" }),
+    );
+  });
+
   it("keeps the fifteen launch contracts scoped when valid lifecycle records are added", () => {
     const seed = articleBySlug(launchArticleSlugs[0]);
     const extras = (["draft", "review", "archived", "published"] as const).map(

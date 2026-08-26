@@ -1230,6 +1230,18 @@ export function validateContentPortfolio(
   const publishedArticles = normalizedArticles.filter(
     ({ data }) => data.status === "published",
   );
+  const homepageFeatured = publishedArticles.filter(
+    ({ data }) => data.featured === true,
+  );
+  if (homepageFeatured.length > 3) {
+    issues.push(
+      finding(
+        "homepage-featured-limit",
+        homepageFeatured[3].fileName,
+        `homepage featured selection contains ${homepageFeatured.length} published guides; select no more than 3.`,
+      ),
+    );
+  }
 
   const entriesBySlug = new Map();
   for (const article of normalizedArticles) {

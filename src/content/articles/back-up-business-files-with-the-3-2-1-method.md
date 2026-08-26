@@ -16,7 +16,7 @@ readerOutcome: "Create a scoped backup inventory, implement independent copies, 
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
 dateModified: "2026-08-22"
-featured: true
+featured: false
 summary: "Separate live data from backup copies, protect an offsite copy from the same failure, define recovery priorities, and prove restoration with documented tests."
 visual:
   type: "backup-topology"
