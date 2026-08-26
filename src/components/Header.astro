@@ -61,8 +61,7 @@ const categoryCurrentState = (slug: CategorySlug) => {
           <li>
             <a
               href="/articles/"
-              aria-current={isCurrentPath("/articles/") ? "page" : undefined}
-              >Guides</a
+              aria-current={sectionCurrentState("/articles/")}>Guides</a
             >
           </li>
           <li>
