@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -60,6 +61,7 @@ type AuditManifest = Readonly<{
   expectedGitSha: string;
   origin: string;
   phase: string;
+  schemaVersion: number;
 }>;
 
 type CapturePlanEntry = ReturnType<typeof buildCapturePlan>[number];
@@ -911,6 +913,19 @@ describe("publication operations documentation", () => {
       phase: "after-local",
     });
 
+    expect(Object.keys(manifest).toSorted()).toEqual(
+      [
+        "assertions",
+        "captureCount",
+        "capturedAt",
+        "captures",
+        "deploymentId",
+        "expectedGitSha",
+        "origin",
+        "phase",
+        "schemaVersion",
+      ].toSorted(),
+    );
     expect(manifest).toMatchObject({
       captureCount: 156,
       capturedAt: "2026-08-26T13:43:44.318Z",
@@ -918,6 +933,7 @@ describe("publication operations documentation", () => {
       expectedGitSha: "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
       origin: "http://127.0.0.1:4321",
       phase: "after-local",
+      schemaVersion: 1,
     });
     expect(expectedPlan).toHaveLength(156);
     expect(manifest.captures).toHaveLength(expectedPlan.length);
@@ -933,20 +949,54 @@ describe("publication operations documentation", () => {
     expect(
       findCaptureBindingErrors(manifest.captures, expectedPlan, manifest),
     ).toEqual([]);
+    const captureKeys = [
+      "actualStatus",
+      "byteCount",
+      "capturedAt",
+      "deploymentId",
+      "expectedGitSha",
+      "expectedStatus",
+      "fileName",
+      "origin",
+      "phase",
+      "route",
+      "sha256",
+      "state",
+      "viewport",
+    ].toSorted();
+    expect(
+      manifest.captures.every(
+        (capture) =>
+          JSON.stringify(Object.keys(capture).toSorted()) ===
+            JSON.stringify(captureKeys) &&
+          JSON.stringify(Object.keys(capture.viewport).toSorted()) ===
+            JSON.stringify(["deviceScaleFactor", "height", "width"].toSorted()),
+      ),
+    ).toBe(true);
 
-    const recomputedFiles = await Promise.all(
-      manifest.captures.map(async (capture) => {
-        const bytes = await readFile(
-          path.join(evidenceDirectory, capture.fileName),
-        );
-        return {
-          byteCount: bytes.byteLength,
-          fileName: capture.fileName,
-          pngSignature: bytes.subarray(0, 8).toString("hex"),
-          sha256: createHash("sha256").update(bytes).digest("hex"),
-        };
-      }),
-    );
+    const recomputedFiles = [];
+    for (const capture of manifest.captures) {
+      const bytes = await readFile(
+        path.join(evidenceDirectory, capture.fileName),
+      );
+      const image = sharp(bytes, { failOn: "error" });
+      const metadata = await image.metadata();
+      const { info } = await image
+        .clone()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      recomputedFiles.push({
+        byteCount: bytes.byteLength,
+        fileName: capture.fileName,
+        format: metadata.format,
+        height: info.height,
+        pngSignature: bytes.subarray(0, 8).toString("hex"),
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+        state: capture.state,
+        viewport: capture.viewport,
+        width: info.width,
+      });
+    }
     expect(
       recomputedFiles.map(({ byteCount, fileName, sha256 }) => ({
         byteCount,
@@ -964,6 +1014,16 @@ describe("publication operations documentation", () => {
     expect(
       recomputedFiles.every(
         ({ pngSignature }) => pngSignature === "89504e470d0a1a0a",
+      ),
+    ).toBe(true);
+    expect(recomputedFiles.every(({ format }) => format === "png")).toBe(true);
+    expect(
+      recomputedFiles.every(
+        ({ height, state, viewport, width }) =>
+          width === viewport.width &&
+          typeof height === "number" &&
+          height >= viewport.height &&
+          (state === "full-page" || height === viewport.height),
       ),
     ).toBe(true);
     expect(new Set(recomputedFiles.map(({ fileName }) => fileName)).size).toBe(
@@ -998,25 +1058,57 @@ describe("publication operations documentation", () => {
       ),
     ).toHaveLength(8);
 
-    expect(manifest.assertions.map(({ id, route }) => ({ id, route }))).toEqual(
-      [
-        { id: "ads-txt-absent", route: "/ads.txt" },
-        { id: "cms-admin-absent", route: "/admin/" },
-        { id: "cms-config-absent", route: "/.pages.yml" },
-        {
-          id: "cms-draft-absent",
-          route: "/articles/cms-fixture-minimum-draft/",
-        },
-        { id: "cms-keystatic-absent", route: "/keystatic/" },
-        { id: "monetization-off", route: "/" },
-      ],
-    );
-    expect(
-      manifest.assertions.every(
-        ({ actual, expected, passed }) => passed && actual === expected,
-      ),
-    ).toBe(true);
-  });
+    expect(manifest.assertions).toEqual([
+      {
+        actual: 404,
+        evidence: "http",
+        expected: 404,
+        id: "ads-txt-absent",
+        passed: true,
+        route: "/ads.txt",
+      },
+      {
+        actual: 404,
+        evidence: "http",
+        expected: 404,
+        id: "cms-admin-absent",
+        passed: true,
+        route: "/admin/",
+      },
+      {
+        actual: 404,
+        evidence: "http",
+        expected: 404,
+        id: "cms-config-absent",
+        passed: true,
+        route: "/.pages.yml",
+      },
+      {
+        actual: 404,
+        evidence: "http",
+        expected: 404,
+        id: "cms-draft-absent",
+        passed: true,
+        route: "/articles/cms-fixture-minimum-draft/",
+      },
+      {
+        actual: 404,
+        evidence: "http",
+        expected: 404,
+        id: "cms-keystatic-absent",
+        passed: true,
+        route: "/keystatic/",
+      },
+      {
+        actual: "absent",
+        evidence: "dom",
+        expected: "absent",
+        id: "monetization-off",
+        passed: true,
+        route: "/",
+      },
+    ]);
+  }, 30_000);
 
   it("documents local evidence without claiming unfinished production phases", async () => {
     const localManifest = JSON.parse(
