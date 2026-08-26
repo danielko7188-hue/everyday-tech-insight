@@ -990,6 +990,7 @@ describe("publication operations documentation", () => {
         fileName: capture.fileName,
         format: metadata.format,
         height: info.height,
+        iendChunk: bytes.subarray(-12).toString("hex"),
         pngSignature: bytes.subarray(0, 8).toString("hex"),
         sha256: createHash("sha256").update(bytes).digest("hex"),
         state: capture.state,
@@ -1017,6 +1018,11 @@ describe("publication operations documentation", () => {
       ),
     ).toBe(true);
     expect(recomputedFiles.every(({ format }) => format === "png")).toBe(true);
+    expect(
+      recomputedFiles.every(
+        ({ iendChunk }) => iendChunk === "0000000049454e44ae426082",
+      ),
+    ).toBe(true);
     expect(
       recomputedFiles.every(
         ({ height, state, viewport, width }) =>
