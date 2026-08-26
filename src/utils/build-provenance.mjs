@@ -29,7 +29,11 @@ export function resolveBuildGitSha({
   execFileSyncImpl = execFileSync,
   repositoryRoot = defaultRepositoryRoot,
 } = {}) {
-  for (const variableName of ["VERCEL_GIT_COMMIT_SHA", "GITHUB_SHA"]) {
+  for (const variableName of [
+    "VERCEL_GIT_COMMIT_SHA",
+    "PUBLIC_VERCEL_GIT_COMMIT_SHA",
+    "GITHUB_SHA",
+  ]) {
     const candidate = env?.[variableName];
     if (candidate !== undefined && candidate !== "") {
       return validatedFullGitSha(candidate, variableName);

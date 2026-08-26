@@ -41,6 +41,21 @@ describe("public build provenance", () => {
     ).toBe(GITHUB_SHA);
   });
 
+  it("uses Astro-compatible public Vercel SHA before GitHub when private Vercel SHA is absent", () => {
+    expect(
+      resolveBuildGitSha({
+        env: {
+          GITHUB_SHA,
+          PUBLIC_VERCEL_GIT_COMMIT_SHA: VERCEL_SHA,
+        },
+        execFileSyncImpl: () => {
+          throw new Error("Git fallback must not run");
+        },
+        repositoryRoot: "C:/unused",
+      }),
+    ).toBe(VERCEL_SHA);
+  });
+
   it("falls back to the repository full Git HEAD with an argument-array command", () => {
     const calls: Array<{
       args: string[];
@@ -75,6 +90,7 @@ describe("public build provenance", () => {
 
   it.each([
     ["VERCEL_GIT_COMMIT_SHA", "main"],
+    ["PUBLIC_VERCEL_GIT_COMMIT_SHA", "main"],
     ["GITHUB_SHA", "ABCDEF0123456789ABCDEF0123456789ABCDEF01"],
     ["VERCEL_GIT_COMMIT_SHA", ` ${VERCEL_SHA}`],
   ])("fails closed for an invalid explicit %s value", (name, value) => {
