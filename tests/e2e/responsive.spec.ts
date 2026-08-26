@@ -861,40 +861,35 @@ test("mobile menu uses a short CSS-only reveal and removes it for reduced motion
     expect.arrayContaining(["block-size", "opacity"]),
   );
 
-  await menu.locator("summary").click();
-  await expect(menu).toHaveAttribute("open", "");
-  const runningReveal = await menu.evaluate((details) =>
-    details.getAnimations({ subtree: true }).flatMap((animation) => {
-      const effect = animation.effect;
-      if (!(effect instanceof KeyframeEffect)) return [];
-      const duration = effect.getComputedTiming().duration;
-      return [
-        {
-          duration:
-            typeof duration === "number"
-              ? duration
-              : Number.parseFloat(String(duration)),
-          pseudoElement: effect.pseudoElement,
-        },
-      ];
-    }),
-  );
-  expect(
-    runningReveal.some(
-      ({ duration, pseudoElement }) =>
-        pseudoElement === "::details-content" &&
-        duration > 0 &&
-        duration <= 180,
-    ),
-  ).toBe(true);
-  await expect(menu.locator("nav")).toBeVisible();
-  await menu.evaluate(async (details) => {
-    await Promise.all(
-      details
-        .getAnimations({ subtree: true })
-        .map((animation) => animation.finished),
+  const revealFrames = await menu.evaluate(async (details) => {
+    const readFrame = () => {
+      const style = getComputedStyle(details, "::details-content");
+      return {
+        blockSize: Number.parseFloat(style.blockSize),
+        opacity: Number.parseFloat(style.opacity),
+      };
+    };
+    const closed = readFrame();
+    details.querySelector("summary")?.click();
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
     );
+    const opening = readFrame();
+    await new Promise((resolve) => setTimeout(resolve, 220));
+    return { closed, opening, opened: readFrame(), open: details.open };
   });
+
+  expect(revealFrames.open).toBe(true);
+  expect(revealFrames.closed.blockSize).toBe(0);
+  expect(revealFrames.closed.opacity).toBe(0);
+  expect(revealFrames.opening.blockSize).toBeGreaterThan(0);
+  expect(revealFrames.opening.blockSize).toBeLessThan(
+    revealFrames.opened.blockSize,
+  );
+  expect(revealFrames.opening.opacity).toBeGreaterThan(0);
+  expect(revealFrames.opening.opacity).toBeLessThan(1);
+  expect(revealFrames.opened.opacity).toBe(1);
+  await expect(menu.locator("nav")).toBeVisible();
 
   await page.emulateMedia({ reducedMotion: "reduce" });
   const reducedDuration = await menu.evaluate((details) =>
