@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 import { load } from "js-yaml";
 import { describe, expect, it } from "vitest";
@@ -29,6 +29,28 @@ type QualityWorkflow = {
     pull_request?: unknown;
     push?: { branches?: string[] };
     workflow_dispatch?: unknown;
+  };
+  permissions?: Record<string, unknown>;
+};
+
+type OwnerOnlyWorkflow = {
+  jobs?: Record<
+    string,
+    {
+      name?: string;
+      "runs-on"?: string;
+      steps?: Array<
+        WorkflowStep & {
+          env?: Record<string, string>;
+        }
+      >;
+      "timeout-minutes"?: number;
+    }
+  >;
+  on?: {
+    pull_request_target?: {
+      types?: string[];
+    };
   };
   permissions?: Record<string, unknown>;
 };
@@ -97,5 +119,76 @@ describe("GitHub Actions quality gate", () => {
       },
       { name: "Run full quality gate", run: "npm run qa" },
     ]);
+  });
+});
+
+describe("owner-only repository controls", () => {
+  it("assigns every path and publication-critical path to the sole owner", () => {
+    const codeownersPath = new URL("../../.github/CODEOWNERS", import.meta.url);
+
+    expect(existsSync(codeownersPath)).toBe(true);
+    if (!existsSync(codeownersPath)) return;
+
+    const rules = readFileSync(codeownersPath, "utf8")
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && !line.startsWith("#"))
+      .map((line) => line.split(/\s+/));
+
+    expect(rules.map(([pattern]) => pattern)).toEqual(
+      expect.arrayContaining([
+        "*",
+        "/.github/CODEOWNERS",
+        "/.github/workflows/",
+        "/.pages.yml",
+        "/src/content/articles/",
+        "/src/content-assets/articles/",
+        "/docs/editorial-operations.yml",
+      ]),
+    );
+    for (const [, ...owners] of rules) {
+      expect(owners).toEqual(["@danielko7188-hue"]);
+    }
+  });
+
+  it("rejects every pull request not authored by the sole owner without executing pull-request code", () => {
+    const workflowPath = new URL(
+      "../../.github/workflows/owner-only.yml",
+      import.meta.url,
+    );
+
+    expect(existsSync(workflowPath)).toBe(true);
+    if (!existsSync(workflowPath)) return;
+
+    const workflow = load(
+      readFileSync(workflowPath, "utf8"),
+    ) as OwnerOnlyWorkflow;
+    const gate = workflow.jobs?.owner_only;
+    const steps = gate?.steps ?? [];
+
+    expect(workflow.on?.pull_request_target?.types).toEqual([
+      "opened",
+      "reopened",
+      "synchronize",
+      "ready_for_review",
+    ]);
+    expect(workflow.permissions).toEqual({});
+    expect(gate?.name).toBe("Owner-only publishing gate");
+    expect(gate?.["runs-on"]).toBe("ubuntu-latest");
+    expect(gate?.["timeout-minutes"]).toBe(5);
+    expect(steps).toHaveLength(1);
+    expect(steps[0]?.uses).toBeUndefined();
+    expect(steps[0]?.env).toEqual({
+      PR_AUTHOR: "${{ github.event.pull_request.user.login }}",
+      PUBLISHING_OWNER: "danielko7188-hue",
+    });
+    expect(steps[0]?.run).toMatch(
+      /if \[ "\$PR_AUTHOR" != "\$PUBLISHING_OWNER" \]/,
+    );
+    expect(steps[0]?.run).toContain("exit 1");
+    expect(steps[0]?.run).toMatch(/owner-authored pull request/i);
+    expect(readFileSync(workflowPath, "utf8")).not.toMatch(
+      /checkout|pull_request\.head|github\.head_ref|secrets\./i,
+    );
   });
 });

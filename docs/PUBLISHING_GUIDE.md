@@ -26,7 +26,7 @@ A guide-level `clear` release gate requires a real source-check date, named and 
 2. Review the GitHub App permission request before authorizing it. Grant the Pages CMS GitHub App access to the exact repository only: `danielko7188-hue/everyday-tech-insight`.
 3. Do not invite Pages CMS collaborators. The intended owner-only write boundary depends on the owner's GitHub access and exact-repository App grant, neither of which this repository can prove.
 4. Select the exact repository, then create or select the recommended `content/editorial` non-main content branch (`main` remains the release branch). Do not make routine editorial saves directly to `main`.
-5. Reconfirm the live GitHub controls before release. As verified on 2026-08-26, `main` requires the app-bound `Full quality gate`, strict checks, admin enforcement, linear history, and conversation resolution; force pushes and deletion are disabled, and no bypass actors are configured. Hosted settings can change. This solo-owner setup requires no second-person approval; record the owner's actual review rather than inventing a reviewer.
+5. Reconfirm the live GitHub controls before release. As verified on 2026-08-26, `main` requires the app-bound `Full quality gate` and `Owner-only publishing gate`, strict checks, admin enforcement, linear history, and conversation resolution; force pushes and deletion are disabled, and no bypass actors are configured. Repository Actions permit GitHub-owned actions only, and every external fork contributor requires workflow approval. `content/editorial` permits direct CMS saves while enforcing admins, linear history, and no force pushes or deletion. Hosted settings can change. This solo-owner setup requires no second-person approval; record the owner's actual review rather than inventing a reviewer.
 6. Make one reversible test edit on the content branch. Inspect the resulting GitHub commit, author identity, changed paths, diff, and any managed-media upload; then revert or close that test cleanly.
 7. Keep confidential authorization evidence outside Git. Commit only a nonsecret evidence reference and truthful status after the owner observes the save/commit round-trip. Until then, keep the hosted status recorded as unverified.
 
@@ -123,7 +123,7 @@ A body image is represented only by a Markdown image path and meaningful alt tex
 1. Save editorial work only to the selected non-`main` branch.
 2. Inspect every GitHub commit and diff. A CMS-generated commit is still a real source change.
 3. Open a pull request into protected `main`.
-4. Run the local checks below and require the repository checks configured on the pull request.
+4. Confirm the pull request was authored by `danielko7188-hue`; then run the local checks below and require both `Owner-only publishing gate` and `Full quality gate`. The owner-only check must run from the trusted base branch without checking out pull-request code or receiving token permissions.
 5. Use the Vercel preview for published-content shell, responsive, accessibility, route, and integration review. Remember that draft and review articles intentionally have no public preview route.
 6. Complete human source-suitability, editorial, expert-when-needed, privacy/legal, and media-rights review outside automation. Record real names and dates only after those actions occur.
 7. Merge only the reviewed changes. A passing build does not supply owner acceptance or guarantee AdSense approval.

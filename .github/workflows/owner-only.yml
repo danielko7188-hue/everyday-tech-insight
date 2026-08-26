@@ -1,0 +1,29 @@
+name: Owner-only publishing
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+# This workflow needs no repository or pull-request token permissions.
+permissions: {}
+
+jobs:
+  owner_only:
+    name: Owner-only publishing gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require the sole publishing owner
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PUBLISHING_OWNER: danielko7188-hue
+        run: |
+          if [ "$PR_AUTHOR" != "$PUBLISHING_OWNER" ]; then
+            echo "Only $PUBLISHING_OWNER may author a publishing pull request."
+            exit 1
+          fi
+          echo "Confirmed owner-authored pull request."

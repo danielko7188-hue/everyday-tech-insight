@@ -312,6 +312,33 @@ describe("strict structured editorial source", () => {
     }
   });
 
+  it("records current repository enforcement without treating external CMS access as verified", async () => {
+    const { source } = await loadCurrentRecords();
+    const repositoryGate = source.ownerGates.find(
+      ({ number }) => number === 14,
+    );
+    const cmsGate = source.ownerGates.find(({ number }) => number === 13);
+
+    expect(repositoryGate).toBeDefined();
+    expect(repositoryGate?.reason).not.toMatch(
+      /main is not protected|no (?:GitHub )?Actions workflows/i,
+    );
+    expect(repositoryGate?.reason).toMatch(
+      /2026-08-26.*protected `main`.*owner-only publishing gate/i,
+    );
+    expect(repositoryGate?.publicEffect).toMatch(
+      /rejects non-owner pull requests/i,
+    );
+    expect(repositoryGate?.publicEffect).toMatch(/requires repository checks/i);
+    expect(repositoryGate?.status).toBe("OWNER ACTION REQUIRED");
+    expect(repositoryGate?.evidenceReference).toBeNull();
+
+    expect(cmsGate?.reason).toMatch(
+      /hosted collaborator.*exact GitHub App scope.*unverified/i,
+    );
+    expect(cmsGate?.status).toBe("OWNER ACTION REQUIRED");
+  });
+
   it("renders truthful instructions after valid owner and review transitions", async () => {
     const { source, articles } = await loadCurrentRecords();
     const transitioned = clone(source);
