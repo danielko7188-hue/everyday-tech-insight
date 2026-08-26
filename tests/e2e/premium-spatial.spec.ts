@@ -220,6 +220,121 @@ const articlePath =
 const toolkitDetailPath = "/toolkit/automation-candidate-screen/" as const;
 const spatialWidths = [320, 390, 600, 768, 1024, 1280, 1440, 1920] as const;
 
+type RootViewTransitionProbe = {
+  animations: {
+    durationMs: number;
+    opacityValues: string[];
+    pseudoElement: string;
+    transformValues: string[];
+  }[];
+  error: string | null;
+  ready: boolean;
+  transitionObserved: boolean;
+};
+
+async function navigateAndProbeRootViewTransition(
+  page: Page,
+): Promise<RootViewTransitionProbe> {
+  await page.addInitScript(() => {
+    const probe: RootViewTransitionProbe = {
+      animations: [],
+      error: null,
+      ready: false,
+      transitionObserved: false,
+    };
+    const targetWindow = window as typeof window & {
+      __etiRootViewTransitionProbe?: RootViewTransitionProbe;
+    };
+    targetWindow.__etiRootViewTransitionProbe = probe;
+
+    addEventListener("pagereveal", (event) => {
+      const transition = (
+        event as Event & {
+          viewTransition?: { ready: Promise<void> } | null;
+        }
+      ).viewTransition;
+      probe.transitionObserved =
+        transition !== null && transition !== undefined;
+
+      if (!transition) {
+        probe.ready = true;
+        return;
+      }
+
+      void transition.ready
+        .then(() => {
+          probe.animations = document.getAnimations().flatMap((animation) => {
+            const effect = animation.effect;
+            if (!(effect instanceof KeyframeEffect)) return [];
+
+            const pseudoElement = effect.pseudoElement ?? "";
+            if (
+              !/^::view-transition-(?:group|image-pair|old|new)\(root\)$/.test(
+                pseudoElement,
+              )
+            ) {
+              return [];
+            }
+
+            const duration = effect.getComputedTiming().duration;
+            const keyframes = effect.getKeyframes();
+            return [
+              {
+                durationMs:
+                  typeof duration === "number"
+                    ? duration
+                    : Number.parseFloat(String(duration)),
+                opacityValues: [
+                  ...new Set(
+                    keyframes
+                      .map(({ opacity }) => opacity)
+                      .filter((value) => value !== undefined)
+                      .map(String),
+                  ),
+                ],
+                pseudoElement,
+                transformValues: [
+                  ...new Set(
+                    keyframes
+                      .map(({ transform }) => transform)
+                      .filter((value) => value !== undefined)
+                      .map(String),
+                  ),
+                ],
+              },
+            ];
+          });
+          probe.ready = true;
+        })
+        .catch((error: unknown) => {
+          probe.error = error instanceof Error ? error.message : String(error);
+          probe.ready = true;
+        });
+    });
+  });
+
+  await page.goto("/");
+  await page.locator('.site-header__utility a[href="/articles/"]').click();
+  await page.waitForURL("**/articles/");
+  await page.waitForFunction(
+    () =>
+      (
+        window as typeof window & {
+          __etiRootViewTransitionProbe?: RootViewTransitionProbe;
+        }
+      ).__etiRootViewTransitionProbe?.ready === true,
+  );
+
+  return page.evaluate(
+    () =>
+      (
+        window as typeof window & {
+          __etiRootViewTransitionProbe?: RootViewTransitionProbe;
+        }
+      ).__etiRootViewTransitionProbe!,
+  );
+}
+
 test("homepage renders one local three-plane signal after its promise", async ({
   page,
 }) => {
@@ -328,6 +443,44 @@ test("spatial pages preserve the zero-executable-script contract", async ({
       route,
     ).toHaveCount(0);
   }
+});
+
+test("cross-document root view-transition animations finish within 200ms", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  const probe = await navigateAndProbeRootViewTransition(page);
+
+  expect(probe.error).toBeNull();
+  expect(probe.transitionObserved).toBe(true);
+  expect(probe.animations.length).toBeGreaterThan(0);
+  expect(
+    probe.animations.some(
+      ({ pseudoElement }) => pseudoElement === "::view-transition-group(root)",
+    ),
+  ).toBe(true);
+  expect(probe.animations.every(({ durationMs }) => durationMs <= 200)).toBe(
+    true,
+  );
+});
+
+test("reduced motion removes cross-document root view-transition motion", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const probe = await navigateAndProbeRootViewTransition(page);
+
+  expect(probe.error).toBeNull();
+  expect(probe.transitionObserved).toBe(true);
+  expect(probe.animations.every(({ durationMs }) => durationMs <= 1)).toBe(
+    true,
+  );
+  expect(
+    probe.animations.every(
+      ({ opacityValues, transformValues }) =>
+        opacityValues.length <= 1 && transformValues.length <= 1,
+    ),
+  ).toBe(true);
 });
 
 test("reduced motion leaves every spatial enhancement static", async ({
