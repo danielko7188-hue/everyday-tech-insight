@@ -19,11 +19,11 @@ jobs:
     steps:
       - name: Require the sole publishing owner
         env:
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-          PUBLISHING_OWNER: danielko7188-hue
+          PR_AUTHOR_ID: ${{ github.event.pull_request.user.id }}
+          PUBLISHING_OWNER_ID: "239253033"
         run: |
-          if [ "$PR_AUTHOR" != "$PUBLISHING_OWNER" ]; then
-            echo "Only $PUBLISHING_OWNER may author a publishing pull request."
+          if [ "$PR_AUTHOR_ID" != "$PUBLISHING_OWNER_ID" ]; then
+            echo "Only the publishing owner account may author a pull request."
             exit 1
           fi
           echo "Confirmed owner-authored pull request."
