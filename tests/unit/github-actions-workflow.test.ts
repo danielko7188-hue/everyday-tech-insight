@@ -176,19 +176,25 @@ describe("owner-only repository controls", () => {
     expect(gate?.name).toBe("Owner-only publishing gate");
     expect(gate?.["runs-on"]).toBe("ubuntu-latest");
     expect(gate?.["timeout-minutes"]).toBe(5);
-    expect(steps).toHaveLength(1);
-    expect(steps[0]?.uses).toBeUndefined();
-    expect(steps[0]?.env).toEqual({
-      PR_AUTHOR: "${{ github.event.pull_request.user.login }}",
-      PUBLISHING_OWNER: "danielko7188-hue",
-    });
-    expect(steps[0]?.run).toMatch(
-      /if \[ "\$PR_AUTHOR" != "\$PUBLISHING_OWNER" \]/,
-    );
-    expect(steps[0]?.run).toContain("exit 1");
-    expect(steps[0]?.run).toMatch(/owner-authored pull request/i);
+    expect(steps).toEqual([
+      {
+        name: "Require the sole publishing owner",
+        env: {
+          PR_AUTHOR: "${{ github.event.pull_request.user.login }}",
+          PUBLISHING_OWNER: "danielko7188-hue",
+        },
+        run: [
+          'if [ "$PR_AUTHOR" != "$PUBLISHING_OWNER" ]; then',
+          '  echo "Only $PUBLISHING_OWNER may author a publishing pull request."',
+          "  exit 1",
+          "fi",
+          'echo "Confirmed owner-authored pull request."',
+          "",
+        ].join("\n"),
+      },
+    ]);
     expect(readFileSync(workflowPath, "utf8")).not.toMatch(
-      /checkout|pull_request\.head|github\.head_ref|secrets\./i,
+      /checkout|pull_request\.head|github\.head_ref|github\.token|GITHUB_EVENT_PATH|secrets\.|\b(?:curl|wget|git|gh)\b/i,
     );
   });
 });
