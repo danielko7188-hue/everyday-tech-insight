@@ -16,7 +16,7 @@
 
 **Approval forecast:** Indeterminate. Google alone reviews and approves a site.
 
-The candidate builds on an existing public HTTPS publication. Local release verification confirms a crawlable, fast, navigable, responsive, source-led build without unfinished routes, containing fifteen publication-authored practical guides plus four first-party worksheets. Production behavior for this revision remains unverified until deployment. No code review can prove the account holder’s eligibility, ownership verification, policy status, content rights, audience value, originality, or Google’s approval decision.
+The candidate builds on an existing public HTTPS publication. Local release verification confirms a crawlable, fast, navigable, responsive, source-led build without unfinished routes, containing fifteen publication-authored practical guides plus four blank worksheets. Production behavior for this revision remains unverified until deployment. No code review can prove the account holder’s eligibility, ownership verification, policy status, content rights, audience value, originality, or Google’s approval decision.
 
 ## Candidate strengths confirmed locally
 
@@ -35,7 +35,7 @@ The candidate builds on an existing public HTTPS publication. Local release veri
 3. Added RSS autodiscovery, site/locale Open Graph fields, Twitter summaries, and article publication, section, and conditional modification metadata.
 4. Corrected Lighthouse representative-run selection so the retained report is closest to all reported category medians, not performance alone.
 5. Re-reviewed the backup guide against the official CISA #StopRansomware guide and added bounded offline, encrypted, immutable, and restore-test guidance with a truthful modification date.
-6. Added a first-party Toolkit page and four blank CSV worksheets with field-level instructions, guide links, mobile table guidance, sitemap discovery, and exact header-only download QA.
+6. Added a Toolkit page and four blank CSV worksheets with field-level instructions, guide links, mobile table guidance, sitemap discovery, and exact header-only download QA.
 7. Added an explicit worksheet safety boundary: never record passwords, tokens, recovery-key material, authentication secrets, or raw confidential data, and protect completed records under applicable access, retention, and disposal rules.
 8. Gave desktop navigation landmarks unique accessible names, gave every download a resource-specific name, expanded Axe coverage to moderate-impact issues, and kept table-scroll guidance visible through the width where the tables actually overflow.
 9. Capped the home page’s additional-guide list at six and linked the full archive so future publishing cannot create an unbounded front page.
