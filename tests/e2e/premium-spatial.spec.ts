@@ -12,11 +12,13 @@ type ToolkitGeometry = {
   cardTop: number;
   links: {
     height: number;
+    isPrimary: boolean;
     justify: string;
     overflow: number;
     paddingInlineEnd: number;
     paddingInlineStart: number;
     textAlign: string;
+    textCenterDelta: number;
   }[];
   primaryContentDelta: number;
 };
@@ -57,8 +59,13 @@ async function readToolkitGeometry(page: Page): Promise<ToolkitGeometry[]> {
         links: Array.from(actions.querySelectorAll<HTMLElement>("a")).map(
           (link) => {
             const linkStyle = getComputedStyle(link);
+            const linkBox = link.getBoundingClientRect();
+            const textRange = document.createRange();
+            textRange.selectNodeContents(link);
+            const textBox = textRange.getBoundingClientRect();
             return {
-              height: link.getBoundingClientRect().height,
+              height: linkBox.height,
+              isPrimary: link.classList.contains("toolkit-card__primary"),
               justify: linkStyle.justifyContent,
               overflow: link.scrollWidth - link.clientWidth,
               paddingInlineEnd: Number.parseFloat(linkStyle.paddingInlineEnd),
@@ -66,6 +73,11 @@ async function readToolkitGeometry(page: Page): Promise<ToolkitGeometry[]> {
                 linkStyle.paddingInlineStart,
               ),
               textAlign: linkStyle.textAlign,
+              textCenterDelta: Math.abs(
+                linkBox.left +
+                  linkBox.width / 2 -
+                  (textBox.left + textBox.width / 2),
+              ),
             };
           },
         ),
@@ -122,11 +134,27 @@ for (const width of toolkitWidths) {
 
       for (const link of item.links) {
         expect(link.height).toBeGreaterThanOrEqual(44);
-        expect(link.justify).toBe("center");
         expect(link.overflow).toBeLessThanOrEqual(0);
-        expect(link.paddingInlineStart).toBeGreaterThanOrEqual(12);
-        expect(link.paddingInlineEnd).toBeGreaterThanOrEqual(12);
-        expect(link.textAlign).toBe("center");
+        expect(
+          Math.abs(link.paddingInlineStart - link.paddingInlineEnd),
+        ).toBeLessThanOrEqual(0.01);
+      }
+
+      const primary = item.links.find(({ isPrimary }) => isPrimary);
+      expect(primary).toBeDefined();
+      expect(primary!.justify).toBe("center");
+      expect(primary!.paddingInlineStart).toBeGreaterThanOrEqual(16);
+      expect(primary!.paddingInlineEnd).toBeGreaterThanOrEqual(16);
+      expect(primary!.textAlign).toBe("center");
+      expect(primary!.textCenterDelta).toBeLessThan(2);
+
+      const secondaryLinks = item.links.filter(({ isPrimary }) => !isPrimary);
+      expect(secondaryLinks.length).toBeGreaterThanOrEqual(1);
+      for (const secondary of secondaryLinks) {
+        expect(secondary.justify).toBe("flex-start");
+        expect(secondary.paddingInlineStart).toBeGreaterThanOrEqual(12);
+        expect(secondary.paddingInlineEnd).toBeGreaterThanOrEqual(12);
+        expect(secondary.textAlign).toBe("start");
       }
     }
 
