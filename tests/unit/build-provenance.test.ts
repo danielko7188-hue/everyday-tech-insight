@@ -1,5 +1,11 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -38,7 +44,7 @@ function createCleanGitFixture(): { gitHead: string; repositoryRoot: string } {
   runGit(repositoryRoot, ["config", "core.autocrlf", "false"]);
   writeFileSync(
     join(repositoryRoot, ".gitignore"),
-    ".env\n.env.*\n!.env.example\n",
+    readFileSync(new URL("../../.gitignore", import.meta.url), "utf8"),
     "utf8",
   );
   writeFileSync(
@@ -358,6 +364,28 @@ describe("public build provenance", () => {
       }),
     ).toThrow(/source tree.*not clean/i);
   });
+
+  it.skipIf(process.platform === "win32")(
+    "keeps a Linux node_modules symlink out of the source-integrity status",
+    () => {
+      const { gitHead, repositoryRoot } = createCleanGitFixture();
+      const dependencyStore = mkdtempSync(
+        join(tmpdir(), "eti-build-dependencies-"),
+      );
+      temporaryRoots.push(dependencyStore);
+      symlinkSync(dependencyStore, join(repositoryRoot, "node_modules"), "dir");
+
+      expect(
+        runGit(repositoryRoot, [
+          "status",
+          "--porcelain=v1",
+          "--untracked-files=all",
+          "--ignored=no",
+        ]),
+      ).toBe("");
+      expect(resolveBuildGitSha({ env: {}, repositoryRoot })).toBe(gitHead);
+    },
+  );
 
   it.each([
     ["assume-unchanged", "h tracked.txt\0"],

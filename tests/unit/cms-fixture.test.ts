@@ -64,7 +64,7 @@ async function createCleanWorktreeRepository(): Promise<string> {
   const projectRoot = temporaryRoot("eti-cms-worktree-source-");
   runFixtureGit(projectRoot, ["init", "--quiet"]);
   runFixtureGit(projectRoot, ["config", "core.autocrlf", "false"]);
-  await writeFile(path.join(projectRoot, ".gitignore"), "node_modules/\n");
+  await writeFile(path.join(projectRoot, ".gitignore"), "node_modules\n");
   await writeFile(path.join(projectRoot, "seed.txt"), "clean fixture\n");
   await mkdir(path.join(projectRoot, "node_modules"));
   runFixtureGit(projectRoot, ["add", "--", ".gitignore", "seed.txt"]);

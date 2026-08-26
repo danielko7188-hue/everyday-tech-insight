@@ -9,7 +9,7 @@ This release uses GitHub first and Vercel second. Do not deploy local unpushed c
 1. Complete the human review checklist or record every unchecked gate honestly.
 2. From a clean checkout, run `npm ci`, `npm run setup:browsers`, and `npm run qa`. On a fresh Linux CI/workstation that needs Chromium libraries, use `npm run setup:browsers:linux` for the browser step.
 3. Confirm no parent Blogger files, secrets, account identifiers, or unexpected or disposable build output are tracked. The deterministic social PNGs and their integrity manifest are intentional source-controlled publication assets.
-4. Confirm the GitHub repository is connected to Vercel with `main` as the production branch, Astro as the framework, `npm ci` as the install command, `npm run build` as the build command, and `dist` as the output directory. The committed `installCommand` makes Vercel consume the lockfile without rewriting it, preserving exact source provenance. The npm `prebuild` lifecycle fails closed on the deterministic content, editorial, CMS, source-image, and committed social-asset contracts before Astro can publish output. It validates the committed social PNGs without rewriting them. The `postbuild` lifecycle then rejects broken internal routes/resources, sitemap or RSS membership drift, incomplete metadata/social output, and forbidden output leakage. Do not add a browser-install or full-QA step to the Vercel production build; browser setup belongs in the verified local/CI release gate.
+4. Confirm the GitHub repository is connected to Vercel with `main` as the production branch, Astro as the framework, `npm ci` as the project-level Install Command, `npm run build` as the build command, and `dist` as the output directory. Keep `installCommand` out of the committed `vercel.json`: Vercel's build sandbox normalizes that file after consuming a file-level install override, which violates this publication's exact-source provenance gate. Verify the authenticated project setting before every release. The npm `prebuild` lifecycle fails closed on the deterministic content, editorial, CMS, source-image, and committed social-asset contracts before Astro can publish output. It validates the committed social PNGs without rewriting them. The `postbuild` lifecycle then rejects broken internal routes/resources, sitemap or RSS membership drift, incomplete metadata/social output, and forbidden output leakage. Do not add a browser-install or full-QA step to the Vercel production build; browser setup belongs in the verified local/CI release gate.
 5. Merge the verified branch to `main` and rerun the complete QA command on `main`.
 6. Push `main` to the public GitHub repository and confirm the remote commit SHA equals local `HEAD`.
 7. Wait for the connected Git integration to create the production deployment from that pushed commit. Do not substitute a local CLI upload, because caller-supplied metadata does not prove which Git tree produced the deployed bytes.
@@ -34,6 +34,9 @@ deployment second:
 npx vercel@latest link --yes --project everyday-tech-insight
 npx vercel@latest git connect https://github.com/danielko7188-hue/everyday-tech-insight
 $expectedSha = (git rev-parse HEAD).Trim()
+$projectId = (Get-Content -Raw .vercel\project.json | ConvertFrom-Json).projectId
+$projectSettings = npx vercel@latest api "/v9/projects/$projectId" --raw | ConvertFrom-Json
+if ($projectSettings.installCommand -ne "npm ci") { throw "Vercel Install Command must be npm ci." }
 git push origin main
 # Wait for the Git-triggered production deployment to claim the canonical alias.
 $deploymentHost = "everyday-tech-insight.vercel.app"

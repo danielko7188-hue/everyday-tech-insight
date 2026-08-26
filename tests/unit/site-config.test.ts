@@ -263,12 +263,24 @@ describe("static deployment configuration", () => {
     expect(vercelConfig).not.toHaveProperty("redirects");
   });
 
-  it("uses a clean deterministic dependency install on Vercel", () => {
+  it("keeps the Vercel install command in provider settings to preserve source immutability", () => {
     const vercelConfig = readJson("../../vercel.json") as {
       installCommand?: string;
     };
 
-    expect(vercelConfig.installCommand).toBe("npm ci");
+    expect(vercelConfig).not.toHaveProperty("installCommand");
+  });
+
+  it("ignores node_modules whether the dependency path is a directory or symlink", () => {
+    const gitignoreLines = readFileSync(
+      new URL("../../.gitignore", import.meta.url),
+      "utf8",
+    )
+      .split(/\r?\n/)
+      .filter(Boolean);
+
+    expect(gitignoreLines).toContain("node_modules");
+    expect(gitignoreLines).not.toContain("node_modules/");
   });
 
   it("does not allow inline executable scripts in the production CSP", () => {
