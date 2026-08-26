@@ -1777,13 +1777,23 @@ describe("built-output QA rules", () => {
     expect(issues).toEqual([]);
   });
 
-  it("keeps category membership in neutral stable slug order instead of promoting featured guides", () => {
+  it("accepts category membership in featured-first substantive-date order", () => {
     const fixture = validBuiltFixture();
     const categoryArticles = fixture.articles.filter(
       ({ data }) => data.category === "ai-automation",
     );
     categoryArticles[0]!.data.featured = false;
+    categoryArticles[0]!.data.dateModified = "2026-08-22";
     categoryArticles[1]!.data.featured = true;
+    const categoryFile = "categories/ai-automation/index.html";
+    const guideOne = `<a href="/articles/ai-automation-guide-1/">Practical technology decision guide number 1</a>`;
+    const guideTwo = `<a href="/articles/ai-automation-guide-2/">Practical technology decision guide number 2</a>`;
+    fixture.files.set(
+      categoryFile,
+      fixture.files
+        .get(categoryFile)!
+        .replace(`${guideOne}${guideTwo}`, `${guideTwo}${guideOne}`),
+    );
 
     const issues = validateBuiltOutput({
       files: fixture.files,

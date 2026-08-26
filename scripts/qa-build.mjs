@@ -20,6 +20,7 @@ import {
   scanManagedImagesInMarkdown,
 } from "../src/utils/managed-article-images.mjs";
 import { integrationPublicCopy } from "../src/utils/monetization.ts";
+import { compareCategoryArticlesByEditorialPriority } from "../src/data/editorial.ts";
 import { siteConfig, siteUrl as configuredSiteUrl } from "../site.config.mjs";
 
 const TRUST_NAVIGATION = JSON.parse(
@@ -395,10 +396,6 @@ export function validateManagedArticleImageBuildOutput({
   }
 
   return issues;
-}
-
-function compareCategoryArticles(left, right) {
-  return left.data.slug.localeCompare(right.data.slug, "en");
 }
 
 function compareArchiveArticles(left, right) {
@@ -1722,7 +1719,7 @@ export function validateBuiltOutput({
       );
     const expected = publishedArticles
       .filter(({ data }) => data.category === categorySlug)
-      .sort(compareCategoryArticles)
+      .sort(compareCategoryArticlesByEditorialPriority)
       .map(({ data }) => `/articles/${data.slug}/`);
     if (!sameOrderedMembers(actual, expected)) {
       issues.push(

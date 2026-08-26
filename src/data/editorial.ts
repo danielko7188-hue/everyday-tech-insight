@@ -129,27 +129,51 @@ export function selectCategoryLayout(count: number): CategoryLayout {
   return "archive";
 }
 
-export function partitionCategoryEdition<T>(
+export function compareCategoryArticlesByEditorialPriority<
+  T extends CuratableArticle,
+>(left: T, right: T): number {
+  const featuredOrder =
+    Number(right.data.status === "published" && right.data.featured === true) -
+    Number(left.data.status === "published" && left.data.featured === true);
+  if (featuredOrder !== 0) return featuredOrder;
+
+  const leftDate = left.data.dateModified ?? left.data.datePublished ?? "";
+  const rightDate = right.data.dateModified ?? right.data.datePublished ?? "";
+  const chronologyOrder = rightDate.localeCompare(leftDate, "en");
+  if (chronologyOrder !== 0) return chronologyOrder;
+
+  return (
+    (left.data.title ?? left.data.slug).localeCompare(
+      right.data.title ?? right.data.slug,
+      "en",
+    ) || left.data.slug.localeCompare(right.data.slug, "en")
+  );
+}
+
+export function partitionCategoryEdition<T extends CuratableArticle>(
   articles: readonly T[],
 ): CategoryEdition<T> {
   const layout = selectCategoryLayout(articles.length);
+  const orderedArticles = [...articles].sort(
+    compareCategoryArticlesByEditorialPriority,
+  );
 
   if (layout === "compact") {
-    return { layout, articles: [...articles] };
+    return { layout, articles: orderedArticles };
   }
   if (layout === "editorial") {
     return {
       layout,
-      lead: articles[0]!,
-      features: articles.slice(1, 3),
-      remainder: articles.slice(3),
+      lead: orderedArticles[0]!,
+      features: orderedArticles.slice(1, 3),
+      remainder: orderedArticles.slice(3),
     };
   }
   return {
     layout,
-    featured: articles.slice(0, 3),
-    recent: articles.slice(3, 6),
-    archive: articles.slice(6),
+    featured: orderedArticles.slice(0, 3),
+    recent: orderedArticles.slice(3, 6),
+    archive: orderedArticles.slice(6),
   };
 }
 

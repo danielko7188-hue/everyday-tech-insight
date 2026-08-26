@@ -127,7 +127,7 @@ The article metadata selects one of thirteen supported visual families and a sta
 - Each of the five topic cards provides a direct category path, guide count, concise editorial cue, and decorative category motif without repeating article links.
 - The all-guides archive uses one static topic jump and fifteen promise-led rows. Each guide destination appears once.
 - The lower “How we work” module may describe sourcing, corrections, guide production, and the publication-name byline only within the verified factual boundary.
-- Category pages use one neutral, complete compact list with no manufactured featured hierarchy. Every published category guide remains linked exactly once in stable order.
+- Category pages are count-aware: fewer than six guides use one compact list, six to eleven use a lead with supporting and remainder lists, and twelve or more use a three-guide priority opening, a three-guide recent group, and the remaining archive. Every published guide appears exactly once. Across every branch, published `featured: true` guides sort first; remaining ties use the newest substantive event (`dateModified` or `datePublished`), then title and slug. The archive opening is labeled `Featured guides`, `Featured and latest guides`, or `Latest guides` to match its actual contents. The compact branch does not add a visual lead-versus-feature hierarchy.
 
 ### Article pages
 
@@ -155,8 +155,8 @@ The article metadata selects one of thirteen supported visual families and a sta
 
 ### CMS editorial boundary
 
-- Pages CMS lists the legacy `featured` boolean as a read-only field so existing frontmatter remains visible to editors without implying an editorial control that does not exist.
-- The `featured` marker has no homepage effect. Homepage placement remains controlled by the reviewed `src/data/editorial.ts` curation registry.
+- Pages CMS exposes `featured` as an editable homepage-opening control for published guides. At most three published guides may be selected; repository QA rejects a larger set.
+- Homepage resolution uses selected featured guides first, with the reviewed `src/data/editorial.ts` curation registry and article chronology providing deterministic fallback order. The same metadata puts featured guides first on category pages without creating a separate visual tier in the compact branch.
 - No public CMS route, script, credential, or configuration is added to the generated site.
 
 ## Advertising boundary

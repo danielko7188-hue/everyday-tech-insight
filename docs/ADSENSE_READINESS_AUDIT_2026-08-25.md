@@ -12,7 +12,7 @@ The safest current implementation is monetization mode `off`: no publisher ID, a
 
 - The Git-backed article lifecycle is `draft -> review -> published -> archived`; only `published` records may enter public routes, navigation, feeds, sitemaps, related guides, or generated social images.
 - Pages CMS configuration and repository validation exist, while no public `/admin/`, `/keystatic/`, or CMS runtime is added to the site.
-- Pages CMS exposes the legacy `featured` marker in the guide list and field panel as read-only. It does not control homepage placement; reviewed curation data remains authoritative.
+- Pages CMS exposes `featured` as an editable control for selecting up to three published guides for the homepage opening; repository QA rejects a larger set. Reviewed curation order and article chronology provide deterministic fallbacks, and category pages use the same featured-first metadata ordering while preserving exactly-once membership.
 - The structured editorial source contains 18 owner gates and a 15-guide content-quality queue. Every current owner gate and guide-specific human release gate remains unresolved rather than being presented as complete.
 - Managed article media is validated before publication and only referenced media from published guides is emitted. This technical validation does not establish authorship, license, attribution sufficiency, or publication rights.
 - The public-repository safety model is explicit: committed source and editorial records are publicly visible, and confidential owner, account, legal, review, or rights evidence must stay outside Git.

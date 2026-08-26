@@ -129,26 +129,124 @@ describe("count-aware category discovery", () => {
     expect(discoveryApi.selectCategoryLayout(count)).toBe(layout);
   });
 
+  it("orders every category edition by featured status, substantive date, title, and slug", () => {
+    expect(discoveryApi.partitionCategoryEdition).toBeTypeOf("function");
+    if (!discoveryApi.partitionCategoryEdition) return;
+
+    const guides = [
+      article("plain-old", {
+        datePublished: "2026-08-20",
+        title: "Plain old",
+      }),
+      article("same-title-z", {
+        datePublished: "2026-08-24",
+        title: "Same title",
+      }),
+      article("featured-old", {
+        featured: true,
+        datePublished: "2026-08-21",
+        title: "Featured old",
+      }),
+      article("title-first", {
+        datePublished: "2026-08-24",
+        title: "A title",
+      }),
+      article("same-title-a", {
+        datePublished: "2026-08-24",
+        title: "Same title",
+      }),
+      article("featured-updated", {
+        featured: true,
+        datePublished: "2026-08-19",
+        dateModified: "2026-08-25",
+        title: "Featured updated",
+      }),
+    ];
+
+    const edition = discoveryApi.partitionCategoryEdition(guides) as {
+      layout: "editorial";
+      lead: DiscoveryArticle;
+      features: DiscoveryArticle[];
+      remainder: DiscoveryArticle[];
+    };
+
+    expect(
+      [edition.lead, ...edition.features, ...edition.remainder].map(
+        ({ data }) => data.slug,
+      ),
+    ).toEqual([
+      "featured-updated",
+      "featured-old",
+      "title-first",
+      "same-title-a",
+      "same-title-z",
+      "plain-old",
+    ]);
+  });
+
+  it("fills fixed archive opening and recent groups after semantic ordering", () => {
+    expect(discoveryApi.partitionCategoryEdition).toBeTypeOf("function");
+    if (!discoveryApi.partitionCategoryEdition) return;
+
+    const guides = Array.from({ length: 12 }, (_, index) =>
+      article(`guide-${String(index + 1).padStart(2, "0")}`, {
+        featured: index === 2 || index === 8,
+        datePublished: `2026-08-${String(index + 1).padStart(2, "0")}`,
+        title: `Guide ${String(index + 1).padStart(2, "0")}`,
+      }),
+    ).reverse();
+
+    const edition = discoveryApi.partitionCategoryEdition(guides) as {
+      layout: "archive";
+      featured: DiscoveryArticle[];
+      recent: DiscoveryArticle[];
+      archive: DiscoveryArticle[];
+    };
+
+    expect(edition.featured.map(({ data }) => data.slug)).toEqual([
+      "guide-09",
+      "guide-03",
+      "guide-12",
+    ]);
+    expect(edition.recent.map(({ data }) => data.slug)).toEqual([
+      "guide-11",
+      "guide-10",
+      "guide-08",
+    ]);
+    expect(edition.archive.map(({ data }) => data.slug)).toEqual([
+      "guide-07",
+      "guide-06",
+      "guide-05",
+      "guide-04",
+      "guide-02",
+      "guide-01",
+    ]);
+  });
+
   it.each([3, 6, 11, 12, 16])(
     "partitions %s guides without duplication or omission",
     (count) => {
       expect(discoveryApi.partitionCategoryEdition).toBeTypeOf("function");
       if (!discoveryApi.partitionCategoryEdition) return;
 
-      const guides = Array.from({ length: count }, (_, index) => index + 1);
+      const guides = Array.from({ length: count }, (_, index) =>
+        article(`guide-${index + 1}`, {
+          title: `Guide ${String(index + 1).padStart(2, "0")}`,
+        }),
+      );
       const edition = discoveryApi.partitionCategoryEdition(guides) as
-        | { layout: "compact"; articles: number[] }
+        | { layout: "compact"; articles: DiscoveryArticle[] }
         | {
             layout: "editorial";
-            lead: number;
-            features: number[];
-            remainder: number[];
+            lead: DiscoveryArticle;
+            features: DiscoveryArticle[];
+            remainder: DiscoveryArticle[];
           }
         | {
             layout: "archive";
-            featured: number[];
-            recent: number[];
-            archive: number[];
+            featured: DiscoveryArticle[];
+            recent: DiscoveryArticle[];
+            archive: DiscoveryArticle[];
           };
       const flattened =
         edition.layout === "compact"
@@ -157,7 +255,9 @@ describe("count-aware category discovery", () => {
             ? [edition.lead, ...edition.features, ...edition.remainder]
             : [...edition.featured, ...edition.recent, ...edition.archive];
 
-      expect(flattened).toEqual(guides);
+      expect(flattened.map(({ data }) => data.slug)).toEqual(
+        guides.map(({ data }) => data.slug),
+      );
       expect(new Set(flattened).size).toBe(guides.length);
     },
   );
@@ -173,5 +273,13 @@ describe("count-aware category discovery", () => {
     expect(routeSource).toContain('categoryEdition.layout === "compact"');
     expect(routeSource).toContain('categoryEdition.layout === "editorial"');
     expect(routeSource).toContain('class="category-archive"');
+    expect(routeSource).toContain("Featured lead guide");
+    expect(routeSource).toContain("Latest guide");
+    expect(routeSource).toContain("Featured and latest guides");
+    expect(routeSource).toContain("Latest guides");
+    expect(routeSource).toContain('id="category-featured-label"');
+    expect(routeSource).toContain('id="category-recent-label"');
+    expect(routeSource).toContain("categoryEdition.featured.length > 0");
+    expect(routeSource).toContain("categoryEdition.recent.length > 0");
   });
 });

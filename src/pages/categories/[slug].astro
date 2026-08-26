@@ -14,7 +14,6 @@ import { partitionCategoryEdition } from "../../data/editorial";
 import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
-  comparePublishedArticlesBySlug,
   filterPublishedArticles,
   formatGuideCount,
   type PublishedArticleEntry,
@@ -42,9 +41,9 @@ export async function getStaticPaths() {
     params: { slug: category.slug },
     props: {
       category,
-      articles: publishedArticles
-        .filter(({ data }) => data.category === category.slug)
-        .sort(comparePublishedArticlesBySlug),
+      articles: publishedArticles.filter(
+        ({ data }) => data.category === category.slug,
+      ),
     },
   }));
 }
@@ -56,6 +55,14 @@ interface Props {
 
 const { category, articles } = Astro.props;
 const categoryEdition = partitionCategoryEdition(articles);
+const archiveOpeningLabel =
+  categoryEdition.layout === "archive"
+    ? categoryEdition.featured.every(({ data }) => data.featured === true)
+      ? "Featured guides"
+      : categoryEdition.featured.some(({ data }) => data.featured === true)
+        ? "Featured and latest guides"
+        : "Latest guides"
+    : "";
 const path = `/categories/${category.slug}/`;
 const title = `${category.name} for small business | ${site.name}`;
 const description = category.description;
@@ -114,7 +121,7 @@ const description = category.description;
             <SectionHeading
               eyebrow="Published guidance"
               title="All guides in this topic"
-              description={`All ${formatGuideCount(categoryEdition.articles.length, `published ${category.name}`)} appear once in a neutral reading order.`}
+              description={`All ${formatGuideCount(categoryEdition.articles.length, `published ${category.name}`)} appear once. Homepage-featured guides come first; the rest follow the newest substantive article event, title, and slug.`}
               id="category-compact-heading"
             />
             <ol class="category-compact__list">
@@ -148,10 +155,18 @@ const description = category.description;
           <SectionHeading
             eyebrow="Published guidance"
             title="A guided topic edition"
-            description={`All ${formatGuideCount(articles.length, `published ${category.name}`)} appear once, with a clear opening guide and a complete reading sequence.`}
+            description={`All ${formatGuideCount(articles.length, `published ${category.name}`)} appear once. A featured guide leads when present; otherwise the newest guide leads.`}
             id="category-editorial-heading"
           />
-          <div class="category-editorial__lead">
+          <div
+            class="category-editorial__lead"
+            aria-labelledby="category-lead-label"
+          >
+            <p class="eyebrow" id="category-lead-label">
+              {categoryEdition.lead.data.featured
+                ? "Featured lead guide"
+                : "Latest guide"}
+            </p>
             <ArticleCard
               article={categoryEdition.lead}
               variant="lead"
@@ -160,7 +175,13 @@ const description = category.description;
               showFullMeta={true}
             />
           </div>
-          <ol class="category-editorial__features">
+          <p class="eyebrow" id="category-supporting-label">
+            Supporting guides
+          </p>
+          <ol
+            class="category-editorial__features"
+            aria-labelledby="category-supporting-label"
+          >
             {categoryEdition.features.map((article) => (
               <li>
                 <ArticleCard
@@ -197,49 +218,77 @@ const description = category.description;
           <SectionHeading
             eyebrow="Complete topic archive"
             title="Browse the full topic collection"
-            description={`All ${formatGuideCount(articles.length, `published ${category.name}`)} remain available once across a featured opening, recent set, and complete archive.`}
+            description={`All ${formatGuideCount(articles.length, `published ${category.name}`)} remain available once across a three-guide priority opening, the next three recent guides, and the complete archive.`}
             id="category-archive-heading"
           />
-          <ol class="category-archive__featured">
-            {categoryEdition.featured.map((article) => (
-              <li>
-                <ArticleCard
-                  article={article}
-                  variant="feature"
-                  headingLevel={3}
-                  showVisual={false}
-                  showFullMeta={true}
-                />
-              </li>
-            ))}
-          </ol>
-          <ol class="category-archive__recent">
-            {categoryEdition.recent.map((article) => (
-              <li>
-                <ArticleCard
-                  article={article}
-                  variant="compact"
-                  headingLevel={3}
-                  showVisual={false}
-                  showFullMeta={true}
-                />
-              </li>
-            ))}
-          </ol>
+          {categoryEdition.featured.length > 0 && (
+            <>
+              <p class="eyebrow" id="category-featured-label">
+                {archiveOpeningLabel}
+              </p>
+              <ol
+                class="category-archive__featured"
+                aria-labelledby="category-featured-label"
+              >
+                {categoryEdition.featured.map((article) => (
+                  <li>
+                    <ArticleCard
+                      article={article}
+                      variant="feature"
+                      headingLevel={3}
+                      showVisual={false}
+                      showFullMeta={true}
+                    />
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
+          {categoryEdition.recent.length > 0 && (
+            <>
+              <p class="eyebrow" id="category-recent-label">
+                Recent guides
+              </p>
+              <ol
+                class="category-archive__recent"
+                aria-labelledby="category-recent-label"
+              >
+                {categoryEdition.recent.map((article) => (
+                  <li>
+                    <ArticleCard
+                      article={article}
+                      variant="compact"
+                      headingLevel={3}
+                      showVisual={false}
+                      showFullMeta={true}
+                    />
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
           {categoryEdition.archive.length > 0 && (
-            <ol class="category-archive__remainder">
-              {categoryEdition.archive.map((article) => (
-                <li>
-                  <ArticleCard
-                    article={article}
-                    variant="list"
-                    headingLevel={3}
-                    showVisual={false}
-                    showFullMeta={true}
-                  />
-                </li>
-              ))}
-            </ol>
+            <>
+              <p class="eyebrow" id="category-archive-label">
+                More guides
+              </p>
+              <ol
+                class="category-archive__remainder"
+                aria-labelledby="category-archive-label"
+              >
+                {categoryEdition.archive.map((article) => (
+                  <li>
+                    <ArticleCard
+                      article={article}
+                      variant="list"
+                      headingLevel={3}
+                      showVisual={false}
+                      showFullMeta={true}
+                    />
+                  </li>
+                ))}
+              </ol>
+            </>
           )}
         </section>
       )
