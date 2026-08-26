@@ -222,9 +222,11 @@ function htmlFixture({
         </main>
         <footer>
           <nav><h2>Publication</h2></nav>
+          <nav><h2>Guides</h2></nav>
           <nav><h2>Topics</h2></nav>
           <nav><h2>Standards &amp; transparency</h2></nav>
-          <nav><h2>Legal &amp; feeds</h2></nav>
+          <nav><h2>Privacy &amp; advertising</h2></nav>
+          <nav><h2>Sitemap &amp; RSS</h2></nav>
         </footer>
       </body>
     </html>`;

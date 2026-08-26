@@ -143,7 +143,7 @@ The article metadata selects one of thirteen supported visual families and a sta
 ### Supporting pages and footer
 
 - Trust and legal pages share an editorial page shell and measured reading width without changing their factual copy.
-- Footer groups are Publication, Topics, Standards & Transparency, and Legal & Feeds.
+- Footer groups are Publication, Guides, Topics, Standards & Transparency, Privacy & Advertising, and Sitemap & RSS.
 - Do not invent social profiles or add an unimplemented newsletter form.
 
 ### Toolkit

@@ -601,9 +601,11 @@ export function collectInternalAssets(html) {
 
 const FOOTER_GROUPS = [
   "Publication",
+  "Guides",
   "Topics",
   "Standards & transparency",
-  "Legal & feeds",
+  "Privacy & advertising",
+  "Sitemap & RSS",
 ];
 
 function finding(code, route, message) {
