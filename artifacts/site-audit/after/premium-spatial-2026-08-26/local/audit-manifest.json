@@ -1,0 +1,3025 @@
+{
+  "schemaVersion": 1,
+  "captureCount": 156,
+  "capturedAt": "2026-08-26T13:43:44.318Z",
+  "phase": "after-local",
+  "origin": "http://127.0.0.1:4321",
+  "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+  "deploymentId": null,
+  "captures": [
+    {
+      "actualStatus": 404,
+      "byteCount": 198975,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 404,
+      "fileName": "1024-404-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "0517795e7201178d0b55cb4cb9987ad52b68dd36eb14cc31f85d6b6d9c268397",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 222652,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-about-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/about/",
+      "sha256": "48f4a53e4ac58337ef9dd985b88c3010f9a7992f903490ccdd8dddd96e755c2d",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 204798,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-advertising-disclosure-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/advertising-disclosure/",
+      "sha256": "9831e5b6cc0f3ec5d47e33a484e2a72ee4d3fd64fd63269c9109483c82f1ea95",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1436495,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-article-ai-automation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "414ab8b403a7036ed388ccdaf1344ed81d6084d3570623f6cf9d82e0cbb2c397",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1118479,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-article-phishing-response-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/respond-to-a-suspected-phishing-message/",
+      "sha256": "224618a307fb04e9614cf294ca24ca38d19fa4d271a0ea8cbc303d79ad2f49ca",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1197146,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-article-saas-evaluation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/evaluate-saas-with-a-practical-checklist/",
+      "sha256": "c99a1c482152b802a6c52aafac891ef5273d65a53c12ebd7bb1c50f48b7ceb86",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1086685,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-article-shared-files-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/create-a-shared-file-and-folder-system/",
+      "sha256": "be8336da1cf96419eff95a23317baa9c2ebd82cf0258a7fd729827abe95d4811",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1238140,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-article-software-tco-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/calculate-the-total-cost-of-business-software/",
+      "sha256": "dee460fc7595679d2b3c7cebfd4cca5f2f79407db37567d5237cae671b67aedd",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 584177,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-articles-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/",
+      "sha256": "e67ef0629fd760d38dd7d83f4e81728160b3bf8e5d4057acdeaed9511cd7282a",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 268386,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-categories-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/",
+      "sha256": "d3a3bf3f77650a64226dec82d6c89bf3c07722d5c4e0561eab203041212509fc",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 252198,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-category-cybersecurity-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "c7c3853e5d8a2af205ded3cefc70bc2ac9d69b6b30d5abe2703b4f11313b84d5",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 175347,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-contact-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/contact/",
+      "sha256": "6b6f7cb16581c18d96b1382fc2d4a4c49e3e0de657945e829f287d951fdcde48",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 388820,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-editorial-standards-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/editorial-standards/",
+      "sha256": "6a6137e8167a3477f7ab57e57a2736242cf723f36eccd627ce6cb4ecb2b008aa",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 688349,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-home-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "c0ef48bae3aa8922a4fdbd2e5d18050f643a7ae54cdd17d8d576d8d1a6ad290c",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 132260,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-home-skip-link-focus.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "ce5c324e65e320aa202b3757c9c56d3d6c733c3df5274caf7b099e277829f203",
+      "state": "skip-link-focus",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 257514,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-privacy-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/privacy/",
+      "sha256": "16881b7ba1840b5fa248f774ed96f21f4c0e0ccdfa86b2c1ab811e0f40fce89a",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 314733,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-publisher-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publisher/",
+      "sha256": "9dc7539d739452a10e2c405e5f54a33ff27e2fbc26f9d76eec925cc026f2f216",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 315796,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-toolkit-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/",
+      "sha256": "ea2723ec6ffb6396af80d4856c34beb668e377d656eda5c991daecb6d37a2daf",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 386055,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1024-toolkit-risk-register-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/technology-risk-register/",
+      "sha256": "87ac44f1579ceaa827529d1f2459fb8fb827d094ded360616dd8e173b1a4ca45",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1024
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 202027,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 404,
+      "fileName": "1280-404-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "ee6f1728ae52c40042d88b8030f976edd06e22370c44fff5713c2a3cf2a8d0e0",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 228919,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-about-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/about/",
+      "sha256": "c9c676546f8b161389d46a0f424d16515b663970d5a53badfa14620769a53b33",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 207189,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-advertising-disclosure-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/advertising-disclosure/",
+      "sha256": "4b8da0ee014471d7f3cf06dc50fb587128ee142af355ff5f3f6889c0dc6936eb",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1481940,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-article-ai-automation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "64fd78f3369913a7a663dd7a88b122e60a1aba5e1d78faffc0e95b30d5d62b94",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1150943,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-article-phishing-response-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/respond-to-a-suspected-phishing-message/",
+      "sha256": "743f4b48479d25747d5ef17feb8c9ffffabcf0a277feb462534d9f6a198b9df0",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1237167,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-article-saas-evaluation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/evaluate-saas-with-a-practical-checklist/",
+      "sha256": "66724adb2e6292b9d5e105364d7c9a29d6a48b14fb72d97f5ea7102938eb8265",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1107949,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-article-shared-files-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/create-a-shared-file-and-folder-system/",
+      "sha256": "0f06a1550d9c20ab95dea38be7dcabf706d7c7290a52b6d471174e061935794d",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1273684,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-article-software-tco-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/calculate-the-total-cost-of-business-software/",
+      "sha256": "c559a9e86ec9ad0cccaa8bcde541c9301f66d5e8fb6a0a4be9e542c89595e204",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 580022,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-articles-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/",
+      "sha256": "bcda2f858e9e2e70ac0ef5c3a46de04270814c68c10ccab0b034c561b4b236ee",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 291691,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-categories-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/",
+      "sha256": "0adc17ef9951311988dbe959a40c5d7c4f3ead0e1d9618abc6bef746f56d43d8",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 265955,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-category-cybersecurity-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "be6dca5a84df92d1b2a90053eef3a0da5312b060581e0ef2b1e16d5b389447da",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 177836,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-contact-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/contact/",
+      "sha256": "05f6f2c8f358ed83c6ae8938005374fdf3cfe911698b99e9f82456a88b83c2ae",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 394932,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-editorial-standards-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/editorial-standards/",
+      "sha256": "36dd0ffb451fb517ddb03fac63679e7651a5aae6b635e848a83e7c3e2c2aadfc",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 698199,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-home-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "4e8c09b386bd274129cdd0061de25e9c9279636c3ce25aa21b81b20edcc69def",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 160784,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-home-skip-link-focus.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "87732caca7358e91f41c664fa8581102eea758ed11d3d5c5fccbd5d6c6ff6c57",
+      "state": "skip-link-focus",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 260074,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-privacy-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/privacy/",
+      "sha256": "385d13943fad995ad0822e9624742f65520efb181cb8359b8866b703d4589b5e",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 318640,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-publisher-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publisher/",
+      "sha256": "1e09e480fd55ba5374ec4e0e74adc8a3a5ebeea02de4484d16bcbf2ea66976e8",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 318295,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-toolkit-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/",
+      "sha256": "740feb822659ace665676b26c465887edcdae55d413c4c62e1b41bb024aa6135",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 390518,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1280-toolkit-risk-register-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/technology-risk-register/",
+      "sha256": "5d32719bb5929012d17f443afb85c685465f9e882b237994b71ce6eeb8f4f19b",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1280
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 205296,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 404,
+      "fileName": "1440-404-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "a87a1f4e85efdef6723d39f1eb8662d0bb2ef529fd62b2e82eba5400c962dbb4",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 231820,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-about-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/about/",
+      "sha256": "503e6f5d676ecf7e0414236ea4a7dcbbaad5cf318ad2ff956b84892c76461ca5",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 215724,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-advertising-disclosure-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/advertising-disclosure/",
+      "sha256": "7a917aa2481a7cc1cb1f2d8a5ad23d1a194287a202fe6c09fb9f0f1b922a087d",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1510291,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-article-ai-automation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "b840bc92f6ce3f58498471d4a0a993ea5a93664a9ffc07efb1d2c2c4805a79a5",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1169679,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-article-phishing-response-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/respond-to-a-suspected-phishing-message/",
+      "sha256": "b05f0c333d09c49990718c28eef8bc74aaf6b92ff7521361be2138a98a10fd32",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1258431,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-article-saas-evaluation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/evaluate-saas-with-a-practical-checklist/",
+      "sha256": "b99e91b8b8f87a45289087192a566f9de06f21a87897478d877dbe38d7e5e50b",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1124512,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-article-shared-files-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/create-a-shared-file-and-folder-system/",
+      "sha256": "89d9aa60d019aff7bfff190411ae5f56dd55238e19ec0115ace5533de2699d84",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1292164,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-article-software-tco-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/calculate-the-total-cost-of-business-software/",
+      "sha256": "ac1276ceeb18bf8d8e6faac7cc053638ece40e21c58d45c87a799b9cd0ca0949",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 592391,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-articles-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/",
+      "sha256": "9bd808f59ae200d5144a0f78365fe09686fadac778e96e44effa3f7cee382a34",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 300115,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-categories-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/",
+      "sha256": "a81bf4e7feeff44c33c85a92a67f34998eef6c2d02a75c8e1b40e25186da894f",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 271083,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-category-cybersecurity-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "41955ab1d4a7664f8f0481842b203cf07cd0dfc68168cffe373edec98ca18f2c",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 182062,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-contact-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/contact/",
+      "sha256": "ec75da69f09eb89091e532b22728d658b59b931c4c0afd782561d2364ec92d9b",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 401889,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-editorial-standards-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/editorial-standards/",
+      "sha256": "0aebd6baa62803d237b0e0cf78f6746d3c1558988415f0f84c61cd8b405ec740",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 736182,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-home-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "652d21c51ede9976f2698acfeb521169b6ba540568b0e632994b7b8ff786983c",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 164517,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-home-skip-link-focus.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "92c76faf8cb9290881714a635e987e5648a6225196b8817d6a3acde1f99ca33c",
+      "state": "skip-link-focus",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 267638,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-privacy-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/privacy/",
+      "sha256": "5a53df49b130be6a47c2f66e8291321713225a47385d673cd253a464b82bf252",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 322754,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-publisher-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publisher/",
+      "sha256": "89aba08809590e9e1a1bc00b6d826506359e65d1ebfbc1b87069a2066ebbb8fe",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 315863,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-toolkit-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/",
+      "sha256": "94fbb0412c3e5c3a0be2377b1e61740cf74d8cf95d9841faa79c94ef8a3302fb",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 396091,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1440-toolkit-risk-register-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/technology-risk-register/",
+      "sha256": "4069e0648f3bed4bb3da8c7ef15473ab1278f7252efff8f82faea0ad2393520d",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 214167,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 404,
+      "fileName": "1920-404-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "57a55b815f8d1dd82e330d545d66490f3990fb57837e3425a13b9a0e574b9c12",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 241445,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-about-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/about/",
+      "sha256": "9c67ecb7d311b413ad3ffa2742a8c87a82e40524fc9ccf368bf774528fe4a591",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 223772,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-advertising-disclosure-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/advertising-disclosure/",
+      "sha256": "a4b3f94ee793599b7a7ee84259e2ae369bdaebbe8f80ada647212f6f18bd0724",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1550450,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-article-ai-automation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "0ebbc843c04c96fb3d8b1698fd35d61a44a2f5551d9711ccfd5013161126d597",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1200731,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-article-phishing-response-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/respond-to-a-suspected-phishing-message/",
+      "sha256": "65bd46951c667150b0f169ad71f9bbf4e62e091213d5c775734a79ff88ad8394",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1297081,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-article-saas-evaluation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/evaluate-saas-with-a-practical-checklist/",
+      "sha256": "5e22699e628386c9b0099acb83b2c26cca1d35faca109ea5f1f103dbc9c0abba",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1154738,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-article-shared-files-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/create-a-shared-file-and-folder-system/",
+      "sha256": "2fd65a2693f5038c6fed36704e08ee4ffc8db42aa9773f3a74da8568752f58df",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1325850,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-article-software-tco-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/calculate-the-total-cost-of-business-software/",
+      "sha256": "915501ab42f9bb0f8ddb011e37c524daa224395dd71ae4186b5cf523987091ae",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 623721,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-articles-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/",
+      "sha256": "ae1c3419d0fc0d5393cfb937c4b122dd5d15e217e364fd37fa8365220c2d2afb",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 315796,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-categories-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/",
+      "sha256": "2215beb2b35708131b0e0fd48c3f70d0a9fb14a37fc9d86aabb2df0ab76dfc89",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 282009,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-category-cybersecurity-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "0765659d89601133c3f686386a8765cd6c9d46a4a5974507af295d402e068b07",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 187724,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-contact-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/contact/",
+      "sha256": "f1a647addc4ce2603921cae4e08d90129e86765b2b634826509586329550ea91",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 417677,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-editorial-standards-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/editorial-standards/",
+      "sha256": "332611c7d457bf80647b619bb56cfd5cd3c5c61d62aea72f0182bf957b185138",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 771045,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-home-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "8952944c9f2e23ab8b066fd0d944daf231646262b064a2b5d08cdf6c1af1b986",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 156301,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-home-skip-link-focus.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "4d4625cbcf7232238d3f1e43ba1b9f48d049c6003e47b6a1ed288498d18b4069",
+      "state": "skip-link-focus",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 274860,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-privacy-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/privacy/",
+      "sha256": "65004b066d00f1389a88e1eeec6f1917c44497e8bd7f4fa548a42c72af8f8165",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 332733,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-publisher-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publisher/",
+      "sha256": "ac4ea49d12778967a9cbd1fa81d6c553455d7c80d1e7002289c9442401d8fe33",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 329690,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-toolkit-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/",
+      "sha256": "f304a6f4403a1cf4d3a3d1e8bae22719c65359995ee3508ab4a7b7cda43ff1fd",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 412612,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "1920-toolkit-risk-register-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/technology-risk-register/",
+      "sha256": "4d587a719549ef36882098f4064ca97b7b355ec2c3501fd80987320204791bd3",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 1920
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 120501,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 404,
+      "fileName": "320-404-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "9d527e8e35bf292bb0c10bd3e2d5df3a0478ea2e93fe19bdbca4bce42a0b05d5",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 164352,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-about-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/about/",
+      "sha256": "3e6ce58e76a3e7e72b4fe6a1c366b21514a0a1c2869dbd86f93b6b91dfc8b65d",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 154557,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-advertising-disclosure-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/advertising-disclosure/",
+      "sha256": "9f24e193897af270afc41cb07eae55ae505496b766e2e413012cc8cf5528c86e",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1200913,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-article-ai-automation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "088176e2a65f4b1ad1832a8ec00e593f92f1f4463da07620dd408116c3265d11",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 949498,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-article-phishing-response-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/respond-to-a-suspected-phishing-message/",
+      "sha256": "46f51c754a15f488dca72783fc229d41bee32aad7b85af11b32ef8bf85f0675e",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1031878,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-article-saas-evaluation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/evaluate-saas-with-a-practical-checklist/",
+      "sha256": "21a03e2cacd14cd82d5af000007eafc6154b2aec3f453cb473b8a1e1a7c7b708",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 911665,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-article-shared-files-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/create-a-shared-file-and-folder-system/",
+      "sha256": "2ac62441d6bdc1e431fd744dec80ffb1e78015d4f9cfaa24b02a3164e6f622f4",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1035210,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-article-software-tco-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/calculate-the-total-cost-of-business-software/",
+      "sha256": "5e1d681937bca389b4eed3d7c09a83289d2ad867b7cff2a904fafd38fcd9700e",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 495341,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-articles-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/",
+      "sha256": "4d3a8b3dd61fd95969122642dd33ebcd82e79724f81c20a00319ffd2c8f2c1fd",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 210571,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-categories-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/",
+      "sha256": "337b0924516e587c907d3392d3dc7716b3a13f1132907f5aee45bc59982278da",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 192999,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-category-cybersecurity-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "861634a5687976909fc0f219131c46095ff43c14f21237ef74f7c42602ea3d66",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 129522,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-contact-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/contact/",
+      "sha256": "b0d5566b71e0566f4c86cc6181abe97c21a68a35cede70622b1a7e0a7a80f121",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 321514,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-editorial-standards-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/editorial-standards/",
+      "sha256": "2c5e8c7963eb49bff57e3fb3815d18cf7a22cf0d4c4e8c6b49e528d7d7437753",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 558220,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-home-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "3b5c2741a901bf1bcea467456ce02c5bb91a585c220c5a05c41fc550d2880774",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 60398,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-home-menu-open.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "0ff0c491fe7d024111de9601df8bf9a6f7737427a8b8b0886caa3486f78dcf38",
+      "state": "menu-open",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 71982,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-home-skip-link-focus.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "5c3601dbfc058c81558e6a18047d9afe1745ea5f2ed1e883cfb115f5c23c31c9",
+      "state": "skip-link-focus",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 208092,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-privacy-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/privacy/",
+      "sha256": "f0d843564dd3ceec8447cd99059e8c4648d516309b5b77373f05ec1aebec5a4d",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 262848,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-publisher-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publisher/",
+      "sha256": "fa7f73677bee379e95a58bac2408cd150e04c829d3d3f9370257ed3bf0881740",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 287079,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-toolkit-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/",
+      "sha256": "86c7488f74b6589b638b6dfdf77af4177361a1c3d34988953454eaefb6a24938",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 347688,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "320-toolkit-risk-register-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/technology-risk-register/",
+      "sha256": "0fa6265535d253f2dde657caced2042c01628264215ad3b4e7d0d232147598c3",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 137504,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 404,
+      "fileName": "390-404-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "41b500563ddabd370e1a974e797e00f65b40e3252fda03a2781e4915e498fe13",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 180022,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-about-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/about/",
+      "sha256": "12a11cb65110d2df458568f6992ae6072a908e59f41a5757f2863f90d2cd0702",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 169854,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-advertising-disclosure-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/advertising-disclosure/",
+      "sha256": "19b21d7617c730fb00c3b2d5e7d6a24c1193a7efdaf1c361b1dff4da13d4c844",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1309710,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-article-ai-automation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "c44ef9bc651627738d5fdb7b23d23136a2e173249d18996116f7588972f06b57",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1061252,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-article-phishing-response-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/respond-to-a-suspected-phishing-message/",
+      "sha256": "4fc22f1ee122a623872e5acea22d7542058c77ca7f28089205b1beed58a0f02d",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1134974,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-article-saas-evaluation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/evaluate-saas-with-a-practical-checklist/",
+      "sha256": "8aeca62a98f0ac37d7a42c2f394229492c32e9b2aa9b0f4cce41538629006f58",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1014284,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-article-shared-files-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/create-a-shared-file-and-folder-system/",
+      "sha256": "617f50b2c440d677ead817d7410f548ce61a7ab59629255b21edcf6fb4a4ea85",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1156765,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-article-software-tco-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/calculate-the-total-cost-of-business-software/",
+      "sha256": "b617da260f11ee3340388a2cb1fac8fc6deec12232028f270510da0090a3167c",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 492976,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-articles-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/",
+      "sha256": "58708e1e351417e59727ffc0c3f2cd8aa57cfd8e4a8364c2ac0e1d5f48047427",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 223274,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-categories-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/",
+      "sha256": "cd85745c072a8d7f41661eba2760b4dc1d54b11e1612e1e377ed8cf5244fe90c",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 199219,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-category-cybersecurity-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "9d1107bf88932ebb371d571b30f69da5190a4d864b58bef0774a1a2275f5673c",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 138832,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-contact-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/contact/",
+      "sha256": "32a3d1a2c4f10f420f734b6dcb6000f970ae8dd760e2a260ef11ac1be8a58600",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 371420,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-editorial-standards-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/editorial-standards/",
+      "sha256": "7bbd4edbffb80586a4de252be310912242ee191c03702732b3e9ff52acaf73aa",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 563116,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-home-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "2182774a4209a1ed5f697d05f771d58df4dac6c4a53a0a15894fbe96122234c6",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 66579,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-home-menu-open.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "f11b34af83e0ed5c13211ebd838b8051707acedf35760182f3e0b7975bbbe569",
+      "state": "menu-open",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 80673,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-home-skip-link-focus.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "a28f3e133e822a4a6bb19c7f4d2353fd6c68eda1487a93aa7fbc1e0bc5e9234f",
+      "state": "skip-link-focus",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 227867,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-privacy-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/privacy/",
+      "sha256": "0c009d9e3c4dc13eedf7b15592f3ab9a6124e93ace80461b3cc239f73d0bf4f7",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 287851,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-publisher-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publisher/",
+      "sha256": "5165450113af4e211d366462bff09889f56d56b3762e16dad003ab8180ee7e79",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 288163,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-toolkit-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/",
+      "sha256": "c635034d58bd3f106d7e159e013db4820eae0edc0470d01df4c7743eec31fe7f",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 377338,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "390-toolkit-risk-register-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/technology-risk-register/",
+      "sha256": "eec5d07b85138a03fb0089ab0dedc1c327b489bf0ea8a0943c43fbf7c7c8b0fa",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 390
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 170882,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 404,
+      "fileName": "600-404-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "ac2a49912624f5e4ccd6c23d87b37e2193086a3eca0d18931a4c5526caa7c037",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 188226,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-about-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/about/",
+      "sha256": "127d9b87736cd11b76983e7645cbbdd1deba860ae51acf89324b795e3d537a08",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 175210,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-advertising-disclosure-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/advertising-disclosure/",
+      "sha256": "770e455fc6535d1a12d61480fa61fa9f8eff47315de68268874d112b968fe757",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1333395,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-article-ai-automation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "8c315039900ffedaa02813c022f33c0b6c4dfef1cd9e751238a9d7b23668db19",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1042146,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-article-phishing-response-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/respond-to-a-suspected-phishing-message/",
+      "sha256": "cc2c84c08d2c0893e0160f58f79c18749b7c11c299a35e325f22ab1b24c99037",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1125893,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-article-saas-evaluation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/evaluate-saas-with-a-practical-checklist/",
+      "sha256": "90099d868d018479fe7a9262d0cb3ad48dd59014f8ff5fef35a63cd0d38c72da",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1005573,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-article-shared-files-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/create-a-shared-file-and-folder-system/",
+      "sha256": "76a3413f51f45a962451a4659f335416b83aa53a603a711df7e8358bd9005bd8",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1149096,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-article-software-tco-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/calculate-the-total-cost-of-business-software/",
+      "sha256": "1c5d4a37cd4851ecc3295de749f332b48888b6c6654f3226cf57dda47b9d2a86",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 526314,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-articles-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/",
+      "sha256": "c05a8a4a15b2c4cac427f3ccbd281799c1e7f2346805091a64bc8b11aa9887fe",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 253397,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-categories-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/",
+      "sha256": "65a6f3595e73041c8cf791e9791ac08aac1cada8c6cb31a28f6a0bacfb1090a2",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 224050,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-category-cybersecurity-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "b1429eaeeb0c4e2a173251bf6970132f31eed201b3722c80e14207de8319c3a8",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 148886,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-contact-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/contact/",
+      "sha256": "5d7ff77dc4c2cee2c81114a039e9f0b45322e9e660ea0cbc74305dfb45752575",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 361794,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-editorial-standards-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/editorial-standards/",
+      "sha256": "3d0248f5f9c602b54985dac9e87f3bb7937e4cb0c29f8b96b8040eb0922febfb",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 608014,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-home-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "befbd349c3ddb17bc4d6c9f519d3d592bc0cde8a92ce5528f705de45ca6044ed",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 68387,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-home-menu-open.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "4728d8752949ab1a865974d7cd7399dd93a7c1c12ec67738ef11352570afaf61",
+      "state": "menu-open",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 102656,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-home-skip-link-focus.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "1d90ca4cd3845f4951e7ae7d9e9a45da669e7d64409218cd807f53d1f13162b5",
+      "state": "skip-link-focus",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 230134,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-privacy-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/privacy/",
+      "sha256": "63f71012d3653fd701ea74c4bc27642a4b9712727f23bab8c016e0c7913f43b4",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 285206,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-publisher-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publisher/",
+      "sha256": "547bf362b1099b96bf75c774e30ecc1063741ad9d69ce709e6153cce04db6b9f",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 318601,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-toolkit-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/",
+      "sha256": "aa8b71026d0361661bd46854ca93d83a08466417d2bc64056fa6bf65abb026cd",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 384076,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "600-toolkit-risk-register-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/technology-risk-register/",
+      "sha256": "08d9870178b4616037522e2262254943a44726e71510d38558b66a82758e8db8",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 600
+      }
+    },
+    {
+      "actualStatus": 404,
+      "byteCount": 180719,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 404,
+      "fileName": "768-404-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publication-audit-route-that-does-not-exist/",
+      "sha256": "d40c063a65eaa5c9e99fadf01390b7a75b939f62c3473e5ed71907abdfdc83f1",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 198183,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-about-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/about/",
+      "sha256": "bc2713280eaedd7d169d924bc9b223ebc887b750dc3487fd08427f5451de0ae8",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 184271,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-advertising-disclosure-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/advertising-disclosure/",
+      "sha256": "087036fb3c1b5add5ed2496ef251c9a8f1790145048e9bdb54c0c09f9b9d9ad9",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1392957,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-article-ai-automation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/how-to-identify-business-tasks-for-automation/",
+      "sha256": "40eb63d0580d3976e96e3ff131cffd24dd922edf0107f6bc777a6e2ddfc32686",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1078682,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-article-phishing-response-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/respond-to-a-suspected-phishing-message/",
+      "sha256": "0222f8c0b7792ade0773f465a818c6de553ccfde9d75ac326bd673e8daa8714e",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1160603,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-article-saas-evaluation-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/evaluate-saas-with-a-practical-checklist/",
+      "sha256": "2d05089b937f739269adcc850a0e43eb917989432fcf8108d636f3156c1b5fa9",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1047679,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-article-shared-files-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/create-a-shared-file-and-folder-system/",
+      "sha256": "fcae008a234f91cecc233a2310683163e8c0f1510c0da7a8079fc0f610bf0e0b",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 1201620,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-article-software-tco-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/calculate-the-total-cost-of-business-software/",
+      "sha256": "e07521d4183b2d12bb13a7d7bbf3a9d3f5b30320b74df2767762ee73dcf2afdf",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 568936,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-articles-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/articles/",
+      "sha256": "67762ccba71737d0b11aa05a3151d35ae6dbcae2fd4d839e062efcc256776c74",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 243362,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-categories-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/",
+      "sha256": "16eef88d140a8826b42afeb6036a6f56331863fcbac62603f66a6a5c04a72ab1",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 229900,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-category-cybersecurity-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/categories/cybersecurity-data-protection/",
+      "sha256": "073fdf506eacdf1fe7fa3e824ee2d7b7b9392c710b97379d6dbad7a592e98776",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 157515,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-contact-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/contact/",
+      "sha256": "2ee27f5179fe79053ac16289a31214f3cf1cf33ebfd783418b10bc58642ae2cb",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 360848,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-editorial-standards-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/editorial-standards/",
+      "sha256": "ac03af4f2c5bbc28c636474ec5ef2ae7a91ab54dc0ef3d07cc7e27fefeb7cc7f",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 681459,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-home-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "e09bdc2834543f0c556314e91f6e984a7377bc5007dfb2951f087abacfb56683",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 71264,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-home-menu-open.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "e749d770eef2aab0acdbbeeee4e71eccf4811224fc444dbeca097fca18793e6f",
+      "state": "menu-open",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 113878,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-home-skip-link-focus.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/",
+      "sha256": "58f792facab26338933fef679c12d41d82c176398b90ee0db7f98cb197c7d87e",
+      "state": "skip-link-focus",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 236585,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-privacy-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/privacy/",
+      "sha256": "3c711ff4ef3b8898ab67fc4703f4ab62625e1562068dff220f00dcb7ec1076bd",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 293193,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-publisher-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/publisher/",
+      "sha256": "a6d7b93cf409dcf428d865a4e59336a472cadef3f97b08b8869ac839de94f3d9",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 315065,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-toolkit-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/",
+      "sha256": "be76964e3cab3e5715c9c2ffcf9ab3c6f896232be18187a69f79333b953451c1",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    },
+    {
+      "actualStatus": 200,
+      "byteCount": 371740,
+      "capturedAt": "2026-08-26T13:43:44.318Z",
+      "deploymentId": null,
+      "expectedGitSha": "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      "expectedStatus": 200,
+      "fileName": "768-toolkit-risk-register-full-page.png",
+      "origin": "http://127.0.0.1:4321",
+      "phase": "after-local",
+      "route": "/toolkit/technology-risk-register/",
+      "sha256": "726314c7f7986b619863d731d776c6b0119a27ea15bdd4e9307202bc67fedbc5",
+      "state": "full-page",
+      "viewport": {
+        "deviceScaleFactor": 1,
+        "height": 900,
+        "width": 768
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "actual": 404,
+      "evidence": "http",
+      "expected": 404,
+      "id": "ads-txt-absent",
+      "passed": true,
+      "route": "/ads.txt"
+    },
+    {
+      "actual": 404,
+      "evidence": "http",
+      "expected": 404,
+      "id": "cms-admin-absent",
+      "passed": true,
+      "route": "/admin/"
+    },
+    {
+      "actual": 404,
+      "evidence": "http",
+      "expected": 404,
+      "id": "cms-config-absent",
+      "passed": true,
+      "route": "/.pages.yml"
+    },
+    {
+      "actual": 404,
+      "evidence": "http",
+      "expected": 404,
+      "id": "cms-draft-absent",
+      "passed": true,
+      "route": "/articles/cms-fixture-minimum-draft/"
+    },
+    {
+      "actual": 404,
+      "evidence": "http",
+      "expected": 404,
+      "id": "cms-keystatic-absent",
+      "passed": true,
+      "route": "/keystatic/"
+    },
+    {
+      "actual": "absent",
+      "evidence": "dom",
+      "expected": "absent",
+      "id": "monetization-off",
+      "passed": true,
+      "route": "/"
+    }
+  ]
+}

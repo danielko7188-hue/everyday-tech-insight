@@ -26,7 +26,7 @@ type AuditCapture = Readonly<{
   actualStatus: number;
   byteCount: number;
   capturedAt: string;
-  deploymentId: string;
+  deploymentId: string | null;
   expectedGitSha: string;
   expectedStatus: number;
   fileName: string;
@@ -43,11 +43,20 @@ type AuditCapture = Readonly<{
 }>;
 
 type AuditManifest = Readonly<{
-  assertions: ReadonlyArray<Readonly<{ id: string; passed: boolean }>>;
+  assertions: ReadonlyArray<
+    Readonly<{
+      actual: number | string;
+      evidence: string;
+      expected: number | string;
+      id: string;
+      passed: boolean;
+      route: string;
+    }>
+  >;
   captureCount: number;
   capturedAt: string;
   captures: ReadonlyArray<AuditCapture>;
-  deploymentId: string;
+  deploymentId: string | null;
   expectedGitSha: string;
   origin: string;
   phase: string;
@@ -708,7 +717,7 @@ describe("publication operations documentation", () => {
     expect(hostedRoundTripBoundarySentences).toHaveLength(1);
   });
 
-  it("classifies the premium spatial evidence and future inventory without claiming unfinished phases", async () => {
+  it("classifies the premium spatial before evidence and future production inventory", async () => {
     const evidenceDirectory = path.join(
       root,
       "artifacts/site-audit/before/premium-spatial-2026-08-26",
@@ -873,7 +882,6 @@ describe("publication operations documentation", () => {
       /not (?:yet )?(?:generated|captured) or verified/i,
     );
     for (const ungeneratedPath of [
-      "artifacts/site-audit/after/premium-spatial-2026-08-26/local",
       "artifacts/site-audit/after/premium-spatial-2026-08-26/production",
       "artifacts/site-audit/runtime-verification/premium-spatial-2026-08-26-final",
     ]) {
@@ -887,6 +895,176 @@ describe("publication operations documentation", () => {
     expect(technicalQa).toMatch(
       /Purple Signal[^\n]{0,100}(?:historical|dated|separate)/i,
     );
+  });
+
+  it("deeply validates the immutable premium spatial local evidence", async () => {
+    const evidenceRelativePath =
+      "artifacts/site-audit/after/premium-spatial-2026-08-26/local";
+    const evidenceDirectory = path.join(root, evidenceRelativePath);
+    const [manifestText, directoryEntries] = await Promise.all([
+      read(`${evidenceRelativePath}/audit-manifest.json`),
+      readdir(evidenceDirectory),
+    ]);
+    const manifest = JSON.parse(manifestText) as AuditManifest;
+    const expectedPlan = buildCapturePlan({
+      origin: manifest.origin,
+      phase: "after-local",
+    });
+
+    expect(manifest).toMatchObject({
+      captureCount: 156,
+      capturedAt: "2026-08-26T13:43:44.318Z",
+      deploymentId: null,
+      expectedGitSha: "e955a6ad0d5c64002fe67a1b59308cd4d420f922",
+      origin: "http://127.0.0.1:4321",
+      phase: "after-local",
+    });
+    expect(expectedPlan).toHaveLength(156);
+    expect(manifest.captures).toHaveLength(expectedPlan.length);
+    expect(directoryEntries.toSorted()).toEqual(
+      [
+        "audit-manifest.json",
+        ...expectedPlan.map(({ fileName }) => fileName),
+      ].toSorted(),
+    );
+    expect(
+      manifest.captures.map(({ fileName }) => fileName).toSorted(),
+    ).toEqual(expectedPlan.map(({ fileName }) => fileName).toSorted());
+    expect(
+      findCaptureBindingErrors(manifest.captures, expectedPlan, manifest),
+    ).toEqual([]);
+
+    const recomputedFiles = await Promise.all(
+      manifest.captures.map(async (capture) => {
+        const bytes = await readFile(
+          path.join(evidenceDirectory, capture.fileName),
+        );
+        return {
+          byteCount: bytes.byteLength,
+          fileName: capture.fileName,
+          pngSignature: bytes.subarray(0, 8).toString("hex"),
+          sha256: createHash("sha256").update(bytes).digest("hex"),
+        };
+      }),
+    );
+    expect(
+      recomputedFiles.map(({ byteCount, fileName, sha256 }) => ({
+        byteCount,
+        fileName,
+        sha256,
+      })),
+    ).toEqual(
+      manifest.captures.map(({ byteCount, fileName, sha256 }) => ({
+        byteCount,
+        fileName,
+        sha256,
+      })),
+    );
+    expect(recomputedFiles.every(({ byteCount }) => byteCount > 8)).toBe(true);
+    expect(
+      recomputedFiles.every(
+        ({ pngSignature }) => pngSignature === "89504e470d0a1a0a",
+      ),
+    ).toBe(true);
+    expect(new Set(recomputedFiles.map(({ fileName }) => fileName)).size).toBe(
+      156,
+    );
+    expect(new Set(recomputedFiles.map(({ sha256 }) => sha256)).size).toBe(156);
+    expect(
+      recomputedFiles.every(({ sha256 }) => /^[a-f0-9]{64}$/.test(sha256)),
+    ).toBe(true);
+
+    const stateCounts = Object.fromEntries(
+      ["full-page", "menu-open", "skip-link-focus"].map((state) => [
+        state,
+        manifest.captures.filter((capture) => capture.state === state).length,
+      ]),
+    );
+    expect(stateCounts).toEqual({
+      "full-page": 144,
+      "menu-open": 4,
+      "skip-link-focus": 8,
+    });
+    expect(
+      manifest.captures.filter(
+        ({ actualStatus, expectedStatus }) =>
+          actualStatus === 200 && expectedStatus === 200,
+      ),
+    ).toHaveLength(148);
+    expect(
+      manifest.captures.filter(
+        ({ actualStatus, expectedStatus }) =>
+          actualStatus === 404 && expectedStatus === 404,
+      ),
+    ).toHaveLength(8);
+
+    expect(manifest.assertions.map(({ id, route }) => ({ id, route }))).toEqual(
+      [
+        { id: "ads-txt-absent", route: "/ads.txt" },
+        { id: "cms-admin-absent", route: "/admin/" },
+        { id: "cms-config-absent", route: "/.pages.yml" },
+        {
+          id: "cms-draft-absent",
+          route: "/articles/cms-fixture-minimum-draft/",
+        },
+        { id: "cms-keystatic-absent", route: "/keystatic/" },
+        { id: "monetization-off", route: "/" },
+      ],
+    );
+    expect(
+      manifest.assertions.every(
+        ({ actual, expected, passed }) => passed && actual === expected,
+      ),
+    ).toBe(true);
+  });
+
+  it("documents local evidence without claiming unfinished production phases", async () => {
+    const localManifest = JSON.parse(
+      await read(
+        "artifacts/site-audit/after/premium-spatial-2026-08-26/local/audit-manifest.json",
+      ),
+    ) as AuditManifest;
+    const documents = new Map([
+      ["README.md", await read("README.md")],
+      ["docs/TECHNICAL_QA.md", await read("docs/TECHNICAL_QA.md")],
+    ]);
+
+    for (const [documentName, document] of documents) {
+      for (const fact of [
+        "premium-spatial-2026-08-26",
+        localManifest.capturedAt,
+        localManifest.origin,
+        localManifest.expectedGitSha,
+        `${localManifest.captureCount} PNGs`,
+        "148 matching HTTP 200",
+        "8 expected 404",
+        "156 unique SHA-256 hashes",
+        "6/6 safety assertions",
+      ]) {
+        expect(document, `${documentName}: ${fact}`).toContain(fact);
+      }
+      expect(document, documentName).toMatch(
+        /after-local[^\n]{0,300}local evidence only[^\n]{0,80}not deployment evidence/i,
+      );
+      expect(document, documentName).toMatch(
+        /after-production[^\n]{0,100}(?:planned and unverified|unverified and planned)[^\n]{0,80}156 PNGs/i,
+      );
+      expect(document, documentName).toMatch(
+        /runtime-verification[^\n]{0,100}(?:planned and unverified|unverified and planned)[^\n]{0,80}156 PNGs/i,
+      );
+    }
+
+    expect(
+      await pathExists(
+        "artifacts/site-audit/after/premium-spatial-2026-08-26/local",
+      ),
+    ).toBe(true);
+    for (const ungeneratedPath of [
+      "artifacts/site-audit/after/premium-spatial-2026-08-26/production",
+      "artifacts/site-audit/runtime-verification/premium-spatial-2026-08-26-final",
+    ]) {
+      expect(await pathExists(ungeneratedPath), ungeneratedPath).toBe(false);
+    }
   });
 
   it("keeps the premium spatial release in exact ads-off mode", async () => {
