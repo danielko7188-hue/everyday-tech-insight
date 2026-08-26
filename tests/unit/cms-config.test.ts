@@ -34,6 +34,7 @@ const expectedFieldOrder = [
   "intendedAudience",
   "readerOutcome",
   "verificationStatus",
+  "featured",
   "datePublished",
   "dateModified",
   "lastReviewed",
@@ -105,6 +106,7 @@ describe("Pages CMS configuration", () => {
         fields: [
           "title",
           "status",
+          "featured",
           "category",
           "contentType",
           "datePublished",
@@ -182,10 +184,16 @@ describe("Pages CMS configuration", () => {
         ({ name }: CmsConfig) => name === "canonicalOverride",
       ),
     ).toBe(false);
-    expect(
-      collection.fields.some(({ name }: CmsConfig) => name === "featured"),
-    ).toBe(false);
-    expect(collection.view.fields).not.toContain("featured");
+    expect(field(config, "featured")).toMatchObject({
+      label: "Legacy featured marker (read-only)",
+      type: "boolean",
+      readonly: true,
+      default: false,
+      description: expect.stringMatching(
+        /compatibility.*does not control homepage placement.*curation registry/i,
+      ),
+    });
+    expect(collection.view.fields).toContain("featured");
     expect(field(config, "relatedArticles").default).toEqual([]);
     expect(field(config, "noindex").default).toBe(true);
   });
@@ -339,13 +347,20 @@ describe("Pages CMS configuration", () => {
 
   it("rejects hosted outcome language in recursively nested strings", async () => {
     const config = structuredClone(await validConfig());
-    field(field(config, "sourceList"), "publisher").description =
+    const sourceList = field(config, "sourceList");
+    const sourceListIndex = config.content[0].fields.findIndex(
+      ({ name }: CmsConfig) => name === "sourceList",
+    );
+    const publisherIndex = sourceList.fields.findIndex(
+      ({ name }: CmsConfig) => name === "publisher",
+    );
+    field(sourceList, "publisher").description =
       "This CMS guarantees secure hosted authentication";
 
     expect(validatePagesCmsConfig(config)).toContainEqual(
       expect.objectContaining({
         code: "hosted-outcome-language",
-        location: "content[0].fields[21].fields[1].description",
+        location: `content[0].fields[${sourceListIndex}].fields[${publisherIndex}].description`,
       }),
     );
   });

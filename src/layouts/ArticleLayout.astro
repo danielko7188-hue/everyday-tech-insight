@@ -6,6 +6,7 @@ import ArticleEvidence from "../components/ArticleEvidence.astro";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import EditorialVisual from "../components/EditorialVisual.astro";
 import FitSummary from "../components/FitSummary.astro";
+import GuidePreparation from "../components/GuidePreparation.astro";
 import SourceList from "../components/SourceList.astro";
 import StoryMeta from "../components/StoryMeta.astro";
 import TableOfContents from "../components/TableOfContents.astro";
@@ -205,6 +206,8 @@ const formatDate = (date: string) =>
               </aside>
             )
           }
+
+          <GuidePreparation sources={data.sourceList} />
 
           <SourceList sources={data.sourceList} />
         </div>

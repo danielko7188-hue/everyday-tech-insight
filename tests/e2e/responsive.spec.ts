@@ -269,6 +269,95 @@ for (const viewport of [
   });
 }
 
+test("desktop homepage keeps the complete publication promise above the fold", async ({
+  page,
+}) => {
+  const viewport = { width: 1440, height: 900 };
+  await page.setViewportSize(viewport);
+  await page.goto("/");
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+
+  const heading = await page.locator(".home-opening__promise h1").boundingBox();
+  const summary = await page
+    .locator(".home-opening__promise .lead-summary")
+    .boundingBox();
+  expect(heading).not.toBeNull();
+  expect(summary).not.toBeNull();
+  expect(heading!.y + heading!.height).toBeLessThanOrEqual(viewport.height);
+  expect(summary!.y + summary!.height).toBeLessThanOrEqual(viewport.height);
+  expect(summary!.y).toBeGreaterThan(heading!.y + heading!.height);
+});
+
+test("dense article contents stay compact below the desktop reading layout", async ({
+  page,
+}) => {
+  const denseArticle = (await readArticleRecords())
+    .filter(({ data }) => data.status === "published")
+    .map(({ body, data }) => ({
+      depthThreeHeadingCount:
+        String(body ?? "").match(/^###\s+/gm)?.length ?? 0,
+      path: `/articles/${data.slug}/`,
+    }))
+    .sort(
+      (left, right) =>
+        right.depthThreeHeadingCount - left.depthThreeHeadingCount ||
+        left.path.localeCompare(right.path, "en"),
+    )[0];
+  test.skip(
+    !denseArticle || denseArticle.depthThreeHeadingCount === 0,
+    "No current published article has depth-three contents to compact.",
+  );
+
+  for (const width of [390, 768]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(denseArticle!.path);
+
+    const contents = page.locator(".table-of-contents");
+    const sublists = contents.locator(".table-of-contents__sublist");
+    await expect(sublists).not.toHaveCount(0);
+    expect(
+      await sublists.evaluateAll((items) =>
+        items.every((item) => getComputedStyle(item).display === "none"),
+      ),
+    ).toBe(true);
+
+    const geometry = await contents.evaluate((element) => {
+      const list = element.querySelector(":scope > ol")!;
+      return {
+        height: element.getBoundingClientRect().height,
+        columns: getComputedStyle(list).gridTemplateColumns.split(/\s+/).length,
+      };
+    });
+    expect(geometry.columns).toBe(2);
+    expect(geometry.height).toBeLessThanOrEqual(340);
+  }
+});
+
+test("desktop toolkit introduces its first worksheet before the initial fold", async ({
+  page,
+}) => {
+  const viewport = { width: 1440, height: 900 };
+  await page.setViewportSize(viewport);
+  await page.goto("/toolkit/");
+
+  const firstTitle = await page
+    .locator(".toolkit-card h2")
+    .first()
+    .boundingBox();
+  expect(firstTitle).not.toBeNull();
+  expect(firstTitle!.y + firstTitle!.height).toBeLessThanOrEqual(
+    viewport.height,
+  );
+
+  const grid = await page.locator(".toolkit-grid").boundingBox();
+  const safety = await page.locator(".toolkit-safety-note").boundingBox();
+  expect(grid).not.toBeNull();
+  expect(safety).not.toBeNull();
+  expect(safety!.y).toBeGreaterThan(grid!.y + grid!.height);
+});
+
 test("390px Toolkit details use visible stacked field cards without a horizontal primary guide", async ({
   page,
 }) => {
@@ -680,60 +769,84 @@ test("shared chrome uses the balanced 900px header breakpoint", async ({
   }
 });
 
-test("open tablet menu expands as an opaque full-width row without overflow", async ({
+test("open mobile menu keeps its control anchored while expanding an opaque panel below", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 899, height: 900 });
-  await page.goto("/categories/ai-automation/");
+  for (const width of [390, 768, 899]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/categories/ai-automation/");
 
-  const identityRow = page.locator(".site-header__identity-row");
-  const menu = page.locator(".site-header__mobile-menu");
-  const summary = menu.locator("summary");
-  const closedHeight = (await identityRow.boundingBox())?.height ?? 0;
+    const identityRow = page.locator(".site-header__identity-row");
+    const menu = page.locator(".site-header__mobile-menu");
+    const summary = menu.locator("summary");
+    const closedRow = await identityRow.boundingBox();
+    const closedSummary = await summary.boundingBox();
+    expect(closedRow).not.toBeNull();
+    expect(closedSummary).not.toBeNull();
 
-  await summary.focus();
-  await page.keyboard.press("Enter");
-  await expect(menu).toHaveAttribute("open", "");
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await expect(menu).toHaveAttribute("open", "");
+    await expect(summary).toContainText("Close");
 
-  const geometry = await page.evaluate(() => {
-    const row = document.querySelector<HTMLElement>(
-      ".site-header__identity-row",
-    )!;
-    const details = document.querySelector<HTMLElement>(
-      ".site-header__mobile-menu",
-    )!;
-    const summaryElement = details.querySelector<HTMLElement>("summary")!;
-    const navElement = details.querySelector<HTMLElement>("nav")!;
-    const rowBox = row.getBoundingClientRect();
-    const detailsBox = details.getBoundingClientRect();
-    const summaryBox = summaryElement.getBoundingClientRect();
-    const navBox = navElement.getBoundingClientRect();
-    const navStyles = getComputedStyle(navElement);
-    return {
-      documentWidth: document.documentElement.scrollWidth,
-      viewportWidth: document.documentElement.clientWidth,
-      rowHeight: rowBox.height,
-      detailsLeft: detailsBox.left,
-      detailsRight: detailsBox.right,
-      rowLeft: rowBox.left,
-      rowRight: rowBox.right,
-      summaryBottom: summaryBox.bottom,
-      navTop: navBox.top,
-      navBottom: navBox.bottom,
-      rowBottom: rowBox.bottom,
-      navPosition: navStyles.position,
-      navBackground: navStyles.backgroundColor,
-    };
-  });
+    const geometry = await page.evaluate(() => {
+      const row = document.querySelector<HTMLElement>(
+        ".site-header__identity-row",
+      )!;
+      const details = document.querySelector<HTMLElement>(
+        ".site-header__mobile-menu",
+      )!;
+      const summaryElement = details.querySelector<HTMLElement>("summary")!;
+      const navElement = details.querySelector<HTMLElement>("nav")!;
+      const markElement = row.querySelector<HTMLElement>(".site-header__mark")!;
+      const rowBox = row.getBoundingClientRect();
+      const summaryBox = summaryElement.getBoundingClientRect();
+      const navBox = navElement.getBoundingClientRect();
+      const markBox = markElement.getBoundingClientRect();
+      const navStyles = getComputedStyle(navElement);
+      const markHitTarget = document.elementFromPoint(
+        markBox.left + markBox.width / 2,
+        markBox.top + markBox.height / 2,
+      );
+      return {
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+        rowHeight: rowBox.height,
+        rowLeft: rowBox.left,
+        rowRight: rowBox.right,
+        rowBottom: rowBox.bottom,
+        summaryTop: summaryBox.top,
+        summaryRight: summaryBox.right,
+        summaryBottom: summaryBox.bottom,
+        navLeft: navBox.left,
+        navRight: navBox.right,
+        navTop: navBox.top,
+        navBottom: navBox.bottom,
+        navPosition: navStyles.position,
+        navBackground: navStyles.backgroundColor,
+        markRemainsInteractive: Boolean(
+          markHitTarget?.closest(".site-header__mark"),
+        ),
+      };
+    });
 
-  expect(geometry.rowHeight).toBeGreaterThan(closedHeight + 100);
-  expect(geometry.detailsLeft).toBeCloseTo(geometry.rowLeft, 0);
-  expect(geometry.detailsRight).toBeCloseTo(geometry.rowRight, 0);
-  expect(geometry.navTop).toBeGreaterThanOrEqual(geometry.summaryBottom);
-  expect(geometry.navBottom).toBeLessThanOrEqual(geometry.rowBottom + 1);
-  expect(geometry.navPosition).toBe("static");
-  expect(geometry.navBackground).not.toBe("rgba(0, 0, 0, 0)");
-  expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+    const closedBandBottom = closedRow!.y + closedRow!.height;
+    expect(geometry.rowHeight).toBeGreaterThan(closedRow!.height + 100);
+    expect(geometry.summaryTop).toBeCloseTo(closedSummary!.y, 0);
+    expect(geometry.summaryBottom).toBeCloseTo(
+      closedSummary!.y + closedSummary!.height,
+      0,
+    );
+    expect(geometry.summaryRight).toBeCloseTo(geometry.rowRight, 0);
+    expect(geometry.navLeft).toBeCloseTo(geometry.rowLeft, 0);
+    expect(geometry.navRight).toBeCloseTo(geometry.rowRight, 0);
+    expect(geometry.navTop).toBeGreaterThanOrEqual(closedBandBottom - 1);
+    expect(geometry.navBottom).toBeLessThanOrEqual(geometry.rowBottom + 1);
+    expect(geometry.navPosition).toBe("static");
+    expect(geometry.navBackground).not.toBe("rgba(0, 0, 0, 0)");
+    expect(geometry.markRemainsInteractive).toBe(true);
+    expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+  }
 });
 
 test("mobile footer keeps four navigation groups in two equal columns", async ({

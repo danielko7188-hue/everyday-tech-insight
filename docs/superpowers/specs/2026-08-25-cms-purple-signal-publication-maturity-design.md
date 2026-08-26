@@ -132,6 +132,7 @@ Mobile:
 
 - 64–72px identity row with a 44px menu control.
 - Native semantic menu behavior is preserved, with an explicit Menu/Close state.
+- Opening the menu adds navigation below the identity row without shifting the Menu/Close control from its top-right position.
 - Guides and Toolkit appear first, then topics and publication links.
 - No full-screen animation; no scroll leak or focus trap.
 
@@ -171,6 +172,7 @@ Mobile:
 - Four columns only at wide widths, 2×2 at tablet, one column at mobile.
 - One semantic TOC; sticky only when viewport space permits.
 - Light article body at approximately 44rem with underlined links, accessible tables, notes, figures, sources, corrections, and related guides.
+- A compact “How this guide was prepared” module appears before Sources. It reports stored source count and access dates, identifies editorial synthesis, explicitly avoids first-hand-results or completed-review claims, and links to the AI-assisted workflow, Sources, and Corrections.
 
 ### Toolkit
 
@@ -238,7 +240,7 @@ Pages CMS -> GitHub Markdown/media -> Astro validation/build -> Vercel preview/p
 
 `.pages.yml` provides:
 
-- List fields in this order: `title`, `status`, `category`, `contentType`, `datePublished`, `lastReviewed`.
+- List fields in this order: `title`, `status`, `featured`, `category`, `contentType`, `datePublished`, `lastReviewed`.
 - Search fields: `title`, `slug`, `summary`, `category`, `status`, `contentType`.
 - Sort fields: `datePublished`, `lastReviewed`, `title`, `category`, `status`; default publication-date descending.
 - Plain-language helper descriptions.
@@ -253,7 +255,7 @@ Pages CMS -> GitHub Markdown/media -> Astro validation/build -> Vercel preview/p
 - Empty date defaults so a CMS action does not manufacture publication or review dates.
 - No canonical override field; each public canonical URL is derived from and validated against its route.
 
-The legacy `featured` frontmatter key remains accepted by the content schema and preserved by `settings.content.merge: true`, but Pages CMS does not expose an editor control for it. Homepage placement is maintained in the reviewed `src/data/editorial.ts` curation registry, so an editable `featured` toggle would imply an effect it does not have.
+The legacy `featured` frontmatter key remains accepted by the content schema and preserved by `settings.content.merge: true`. Pages CMS exposes it as a read-only boolean field and list column so editors can see existing state without being offered a misleading control. It has no homepage effect: placement is maintained in the reviewed `src/data/editorial.ts` curation registry.
 
 The collection uses `filename.template: "{fields.slug}.md"`, `filename.field: false`, `subfolders: false`, `operations: { create: true, rename: false, delete: false }`, and app commit identity. Slug is editable while drafting, but the CMS cannot lock it only after creation. Therefore the guide states that slug becomes immutable after the first commit, rename remains disabled, and QA rejects filename/slug mismatch. Any later URL change is a reviewed Git operation with redirect analysis.
 

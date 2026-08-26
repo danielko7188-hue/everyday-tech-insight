@@ -26,6 +26,7 @@ content:
       fields:
         - title
         - status
+        - featured
         - category
         - contentType
         - datePublished
@@ -160,6 +161,12 @@ content:
         description: Keep unverified until the stated evidence work has actually been completed.
         options:
           values: [unverified, source-checked, tested]
+      - name: featured
+        label: Legacy featured marker (read-only)
+        type: boolean
+        readonly: true
+        default: false
+        description: Preserved for frontmatter compatibility. This marker does not control homepage placement, which is maintained in the reviewed editorial curation registry.
       - name: datePublished
         label: Date published
         type: date

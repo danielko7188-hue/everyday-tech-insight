@@ -138,7 +138,11 @@ interface ArticleSourceRecord {
     featured: boolean;
     dateModified?: string;
     relatedArticles: string[];
-    sourceList: Array<{ url: string }>;
+    sourceList: Array<{
+      url: string;
+      publisher: string;
+      accessed: string;
+    }>;
     visual: {
       type: string;
       key: string;
@@ -256,6 +260,7 @@ test("home explains the publication and links all five categories", async ({
   ).toBeVisible();
   await expect(page.getByText(/source-backed guides/i).first()).toBeVisible();
   await expect(page.getByText(/without product hype/i)).toBeVisible();
+  await expect(page.getByText(/independent, source-backed/i)).toHaveCount(0);
 
   for (const category of categories) {
     await expect(
@@ -1299,6 +1304,40 @@ test("article surfaces its evidence boundary near the headline", async ({
   expect(evidenceBox!.y).toBeLessThanOrEqual(heroBox!.y + heroBox!.height + 1);
 });
 
+test("article explains its preparation method without implying human or first-hand review", async ({
+  page,
+}) => {
+  skipWhenNoRepresentativeArticle();
+  await page.goto(`/articles/${articleSlug}/`);
+
+  const preparation = page.getByRole("region", {
+    name: "How this guide was prepared",
+  });
+  await expect(preparation).toBeVisible();
+  await expect(preparation).toContainText(
+    `${representativeArticle!.data.sourceList.length} cited sources`,
+  );
+  await expect(preparation).toContainText(/recorded source access date/i);
+  await expect(preparation).toContainText(/editorial synthesis/i);
+  await expect(preparation).toContainText(
+    /does not report first-hand product testing.*completed business result/i,
+  );
+  await expect(preparation).toContainText(
+    /does not establish human or expert approval/i,
+  );
+  await expect(preparation.locator("time")).toHaveCount(
+    new Set(
+      representativeArticle!.data.sourceList.map(({ accessed }) => accessed),
+    ).size,
+  );
+  await expect(
+    preparation.getByRole("link", { name: "AI-assisted workflow" }),
+  ).toHaveAttribute("href", "/editorial-standards/#ai-assisted-workflow");
+  await expect(
+    preparation.getByRole("link", { name: "Sources" }),
+  ).toHaveAttribute("href", "#sources");
+});
+
 test("article emits one semantic fit summary in the raw DOM", async ({
   page,
 }) => {
@@ -1517,7 +1556,10 @@ test("trust pages are reachable and state the public evidence boundary", async (
     page.getByText(/does not currently run advertising/i),
   ).toBeVisible();
   await expect(
-    page.getByText(/affiliate|sponsored compensation/i),
+    page.getByText(/no affiliate-link.*integrations/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/does not establish.*off-site compensation.*product/i),
   ).toBeVisible();
 
   await page.goto("/editorial-standards/");
@@ -1527,6 +1569,14 @@ test("trust pages are reachable and state the public evidence boundary", async (
   await expect(
     page.getByText(/do not purchase favorable conclusions/i),
   ).toBeVisible();
+  await expect(
+    page.getByText(
+      /automated.*checks.*do not prove.*claim-level human review/i,
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/material current claims are rechecked before publication/i),
+  ).toHaveCount(0);
   await expect(
     page.getByText(/AI tools assisted this initial project/i),
   ).toBeVisible();

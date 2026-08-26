@@ -12,17 +12,20 @@ The safest current implementation is monetization mode `off`: no publisher ID, a
 
 - The Git-backed article lifecycle is `draft -> review -> published -> archived`; only `published` records may enter public routes, navigation, feeds, sitemaps, related guides, or generated social images.
 - Pages CMS configuration and repository validation exist, while no public `/admin/`, `/keystatic/`, or CMS runtime is added to the site.
+- Pages CMS exposes the legacy `featured` marker in the guide list and field panel as read-only. It does not control homepage placement; reviewed curation data remains authoritative.
 - The structured editorial source contains 18 owner gates and a 15-guide content-quality queue. Every current owner gate and guide-specific human release gate remains unresolved rather than being presented as complete.
 - Managed article media is validated before publication and only referenced media from published guides is emitted. This technical validation does not establish authorship, license, attribution sufficiency, or publication rights.
 - The public-repository safety model is explicit: committed source and editorial records are publicly visible, and confidential owner, account, legal, review, or rights evidence must stay outside Git.
+- Each article includes a “How this guide was prepared” module that reports stored source evidence and explicitly distinguishes editorial synthesis from first-hand testing, completed business results, and human or expert approval.
 - The advertising disclosure and privacy language describe the disabled implementation. Candidate code commit `95ab2fde3bc3973d6f42715dea480a72145c6644` and the later `main` candidate `830f2c99bcf98a95946a54ce2e62e444194fae2c` each completed a fresh local `npm run qa` gate. These technical results do not establish owner approval or AdSense eligibility.
 
-### Observed in production
+### Observed in production — dated snapshot
 
-- Canonical target: `https://everyday-tech-insight.vercel.app/`.
+- Verified canonical: `https://everyday-tech-insight.vercel.app/`. Every later release still requires exact-SHA live validation; the observations below do not automatically describe a newer deployment.
 - GitHub-first production deployment `dpl_Cqnru4yBwkQ1pmr6S971hd85EveH` reached `READY` from `main` commit `a921e08f1655aec184e386131573ceecb66b0721`. Vercel metadata identifies the source as GitHub Git, the ref as `main`, and the canonical alias as `everyday-tech-insight.vercel.app`.
 - The exact-commit production smoke passed 46 routes and 30 root-relative assets, including security headers, canonical/structured metadata parity, RSS/sitemap behavior, 404 behavior, CMS-route absence, monetization-off output, and Git SHA match.
 - The production capture manifest records 97 unique PNG hashes, 92 expected/actual 200 responses, 5 expected/actual 404 responses, and six passing CMS/monetization-absence assertions. Every production PNG exactly matched the corresponding inspected local image.
+- This committed deployment evidence is a dated snapshot. Final verification for a later evidence commit belongs in the Git-ignored runtime-verification directory so recording it does not create an evidence-commit recursion.
 - The previous deployment `dpl_A4prJX9FUrtzkBcw8bGRhS3qHW75` at commit `6473acaa64c64a64de6d3d1e6900cdad9a52d06c` remains the directly recorded rollback baseline; it is no longer the canonical release.
 
 ### Owner action
@@ -49,7 +52,7 @@ Google's current eligibility guidance says applicants need their own high-qualit
 
 Google provides site-connection methods using account-specific code, a meta tag, or an account-generated `ads.txt` record. Those values must come from the real account; this repository intentionally contains none. See [Connect your site to AdSense](https://support.google.com/adsense/answer/7584263?hl=en), [Find your publisher ID](https://support.google.com/adsense/answer/105516?hl=en), and [Ads.txt FAQs](https://support.google.com/adsense/answer/9785052?hl=en).
 
-For relevant ad traffic in the EEA, the UK, or Switzerland, Google documents certified-CMP requirements and consent obligations. The actual decision depends on the future ad configuration, visitors, jurisdictions, and legal review. No cosmetic consent banner is added while optional advertising, analytics, and storage code remain disabled. See [Google consent-management requirements](https://support.google.com/adsense/answer/13554020?hl=en) and [Set up and manage your CMP](https://support.google.com/adsense/answer/7670013?hl=en).
+For relevant ad traffic in the EEA, the UK, or Switzerland, Google documents certified-CMP requirements and consent obligations. The actual decision depends on the future ad configuration, visitors, jurisdictions, and legal review. No cosmetic consent banner is added while optional advertising, analytics, and storage code remain disabled. See [Google consent-management requirements](https://support.google.com/adsense/answer/13554116?hl=en) and [Set up and manage your CMP](https://support.google.com/adsense/answer/7670013?hl=en).
 
 ## Engineering controls before any future monetization
 

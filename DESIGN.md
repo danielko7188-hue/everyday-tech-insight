@@ -107,6 +107,7 @@ The article metadata selects one of thirteen supported visual families and a sta
 
 - Desktop uses a deep-purple publication identity/utility row followed by five topic links on a distinct dark surface.
 - Mobile uses native `details` and `summary` semantics.
+- Opening the mobile menu adds navigation below the identity row without moving the Menu/Close control; the control retains the same top-right position at mobile and tablet widths.
 - Active routes use `aria-current` plus a visible accent rule.
 - No search control appears until a real static search destination exists and is tested.
 
@@ -133,6 +134,7 @@ The article metadata selects one of thirteen supported visual families and a sta
 - Headers contain real category/content-type labels, headline, deck, publication-name byline, genuine dates, computed reading time, and a story-specific informative visual. The visual remains available at mobile widths and must not cause horizontal overflow.
 - The at-a-glance module presents four factual fields: Business problem, Technology focus, Intended reader, and What you will produce.
 - Article evidence exposes only measured facts: cited-source count and links to standards and corrections. It does not expose the internal `lastReviewed` field until a real reviewer and review date are recorded in the authoritative editorial record. At tablet width it uses a compact grid, expanding to one desktop row only when there is enough space.
+- A compact “How this guide was prepared” module appears before Sources. It reports only the stored source count and access dates, identifies the work as editorial synthesis, explicitly avoids claiming first-hand results or completed human/expert review, and links to the AI-assisted workflow, Sources, and Corrections.
 - The Business Technology Fit module and a single table-of-contents content structure are generated from real content. CSS changes its placement responsively without duplicating its heading/link structure in the document.
 - Markdown tables sit inside named, keyboard-focusable horizontal regions and retain a 16px minimum text size on narrow screens.
 - Body links remain visibly underlined, and sources, corrections, truthful byline boundaries, and explicit related-article relationships remain prominent.
@@ -150,6 +152,12 @@ The article metadata selects one of thirteen supported visual families and a sta
 - The Toolkit landing page exposes exactly four typed resources with outcome, detail, related-guide, and direct CSV actions.
 - Each detail route explains purpose, audience, when to use, when not to use, field definitions, limitation, data notice, related guide, and download without claiming an observed result.
 - Stacked semantic field cards are the primary mobile guide. A wide-only table may supplement them, but the primary 390px experience must not require horizontal scrolling.
+
+### CMS editorial boundary
+
+- Pages CMS lists the legacy `featured` boolean as a read-only field so existing frontmatter remains visible to editors without implying an editorial control that does not exist.
+- The `featured` marker has no homepage effect. Homepage placement remains controlled by the reviewed `src/data/editorial.ts` curation registry.
+- No public CMS route, script, credential, or configuration is added to the generated site.
 
 ## Advertising boundary
 

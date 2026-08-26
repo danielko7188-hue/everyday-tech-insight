@@ -1,0 +1,49 @@
+---
+import { site } from "../data/site";
+import type { ArticleSource } from "../utils/content-contract";
+import { formatPublicationDate } from "../utils/presentation";
+
+interface Props {
+  sources: ArticleSource[];
+}
+
+const { sources } = Astro.props;
+const accessDates = [
+  ...new Set(sources.map(({ accessed }) => accessed)),
+].sort();
+const sourceLabel = `${sources.length} cited ${sources.length === 1 ? "source" : "sources"}`;
+const dateLabel = `Recorded source access ${accessDates.length === 1 ? "date" : "dates"}`;
+---
+
+<section class="guide-preparation" aria-labelledby="guide-preparation-heading">
+  <p class="eyebrow">Evidence boundary</p>
+  <h2 id="guide-preparation-heading">How this guide was prepared</h2>
+  <p>
+    This guide is editorial synthesis built from <strong>{sourceLabel}</strong>.
+    {dateLabel}: {
+      accessDates.map((accessed, index) => (
+        <Fragment>
+          {index > 0 && ", "}
+          <time datetime={accessed}>
+            {formatPublicationDate(accessed, {
+              timeZone: site.timeZone,
+              locale: site.locale,
+            })}
+          </time>
+        </Fragment>
+      ))
+    }.
+  </p>
+  <p>
+    It does not report first-hand product testing or a completed business
+    result. This record does not establish human or expert approval; follow the
+    guide's stated limitations and escalation boundaries.
+  </p>
+  <p class="guide-preparation__links">
+    Read the <a href="/editorial-standards/#ai-assisted-workflow"
+      >AI-assisted workflow</a
+    >, review the <a href="#sources">Sources</a>, or use the <a
+      href="/corrections/">corrections process</a
+    >.
+  </p>
+</section>

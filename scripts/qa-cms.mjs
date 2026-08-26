@@ -63,6 +63,7 @@ const FIELD_ORDER = [
   "intendedAudience",
   "readerOutcome",
   "verificationStatus",
+  "featured",
   "datePublished",
   "dateModified",
   "lastReviewed",
@@ -97,6 +98,7 @@ const FIELD_TYPES = new Map([
   ["intendedAudience", "text"],
   ["readerOutcome", "text"],
   ["verificationStatus", "select"],
+  ["featured", "boolean"],
   ["datePublished", "date"],
   ["dateModified", "date"],
   ["lastReviewed", "date"],
@@ -167,6 +169,10 @@ const FIELD_HELPERS = new Map([
   [
     "verificationStatus",
     "Keep unverified until the stated evidence work has actually been completed.",
+  ],
+  [
+    "featured",
+    "Preserved for frontmatter compatibility. This marker does not control homepage placement, which is maintained in the reviewed editorial curation registry.",
   ],
   [
     "datePublished",
@@ -242,6 +248,7 @@ const VIEW = {
   fields: [
     "title",
     "status",
+    "featured",
     "category",
     "contentType",
     "datePublished",

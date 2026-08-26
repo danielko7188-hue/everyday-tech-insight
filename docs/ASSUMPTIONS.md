@@ -12,12 +12,13 @@ Date recorded: 2026-08-21
 - Advertising, analytics, affiliate, sponsorship, consent-management, and tracking integrations are disabled.
 - Vercel is the authorized production target for this release. Replit support is limited to import, development preview, and documented static-build compatibility.
 - `site.config.mjs` is the single canonical-origin source consumed by Astro, runtime metadata, generated robots, and release QA.
+- `https://everyday-tech-insight.vercel.app/` is the verified production canonical. That observation does not carry forward automatically: every release still requires direct live validation against its exact deployed Git SHA.
 
-## Assumptions to verify during deployment
+## Checks required for every deployment
 
-- `https://everyday-tech-insight.vercel.app/` is the expected production canonical. It is not confirmed until Vercel assigns the hostname and production checks pass.
 - The GitHub repository remains public so visitors can open contact and correction issues without receiving a dead link. Repository visibility and issue settings must be checked after the push.
 - The generated output remains fully static and requires no runtime environment variables.
+- The canonical alias, deployed Git SHA, route and asset behavior, security headers, metadata parity, CMS-route absence, and monetization-off state must be observed again on the new deployment before it is described as production-verified.
 
 If Vercel assigns a different production hostname, stop and update the one canonical `url` value in `site.config.mjs`, rerun full QA, commit, push, and redeploy before treating the deployment as production.
 

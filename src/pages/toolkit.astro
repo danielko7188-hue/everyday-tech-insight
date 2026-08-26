@@ -31,21 +31,11 @@ const articles = await getCollection("articles");
           team can adapt, review, and retain.
         </p>
       </header>
-      <p>
+      <p class="toolkit-introduction">
         Each CSV contains headers only. Make a working copy, define the
         business's scales and evidence rules, assign a real owner, and preserve
-        the completed record with the decision it supports.
-      </p>
-      <p class="notice">
-        These are blank editorial templates, not completed assessments, observed
-        business results, legal advice, security certification, or proof that a
-        control works. Adapt them to the real workflow and obtain qualified
-        review where the consequences require it. Never put passwords, tokens,
-        recovery keys, authentication secrets, or raw confidential data in these
-        files. Record only the minimum necessary reference, custodian, approved
-        storage location, or access procedure, and protect completed copies
-        under the referenced data's access, retention, and secure disposal
-        rules.
+        the completed record with the decision it supports. A worksheet records
+        a review; it does not certify the decision or the control.
       </p>
       <div class="toolkit-grid">
         {
@@ -60,6 +50,23 @@ const articles = await getCollection("articles");
           ))
         }
       </div>
+      <aside
+        class="toolkit-safety-note notice"
+        aria-labelledby="toolkit-safety-heading"
+      >
+        <h2 id="toolkit-safety-heading">Use the worksheets safely</h2>
+        <p>
+          These are blank editorial templates, not completed assessments,
+          observed business results, legal advice, security certification, or
+          proof that a control works. Adapt them to the real workflow and obtain
+          qualified review where the consequences require it. Never put
+          passwords, tokens, recovery keys, authentication secrets, or raw
+          confidential data in these files. Record only the minimum necessary
+          reference, custodian, approved storage location, or access procedure,
+          and protect completed copies under the referenced data's access,
+          retention, and secure disposal rules.
+        </p>
+      </aside>
     </article>
   </div>
 </BaseLayout>
