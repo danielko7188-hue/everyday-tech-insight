@@ -5,6 +5,7 @@ import path from "node:path";
 export const BUILD_GIT_SHA_META_NAME = "eti-build-git-sha";
 
 const FULL_GIT_SHA_PATTERN = /^[a-f\d]{40}$/;
+const MAX_VERCEL_CONFIG_DIFF_LENGTH = 2_000;
 // Exact tracked repository-only paths removed by the committed .vercelignore.
 // New deployment exclusions must be reviewed here instead of becoming a broad
 // provider-context dirty-tree bypass.
@@ -96,6 +97,36 @@ function runBuildGitCommand(
   return output;
 }
 
+function boundedVercelConfigDiff(
+  repositoryRoot,
+  unexpectedStatusLines,
+  verifiedVercelGitBuild,
+  execFileSyncImpl,
+) {
+  const hasModifiedVercelConfig = unexpectedStatusLines.some(
+    (line) => line.slice(3) === "vercel.json" && line.slice(0, 2).includes("M"),
+  );
+  if (!verifiedVercelGitBuild || !hasModifiedVercelConfig) return "";
+
+  let diff;
+  try {
+    diff = runBuildGitCommand(
+      repositoryRoot,
+      ["diff", "--no-ext-diff", "--unified=3", "--", "vercel.json"],
+      execFileSyncImpl,
+      "Could not inspect the modified Vercel config.",
+    ).trim();
+  } catch {
+    return "\nVercel config diff: [unavailable]";
+  }
+  if (diff.length === 0) return "\nVercel config diff: [no textual diff]";
+
+  const boundedDiff = diff.slice(0, MAX_VERCEL_CONFIG_DIFF_LENGTH);
+  const suffix =
+    diff.length > MAX_VERCEL_CONFIG_DIFF_LENGTH ? "\n[truncated]" : "";
+  return `\nVercel config diff:\n${boundedDiff}${suffix}`;
+}
+
 /**
  * @param {{
  *   env?: Record<string, string | undefined>,
@@ -185,8 +216,14 @@ export function resolveBuildGitSha(options) {
     const remainingCount = unexpectedStatusLines.length - 10;
     const diagnosticSuffix =
       remainingCount > 0 ? `, plus ${remainingCount} more` : "";
+    const vercelConfigDiff = boundedVercelConfigDiff(
+      resolvedRepositoryRoot,
+      unexpectedStatusLines,
+      verifiedVercelGitBuild,
+      execFileSyncImpl,
+    );
     throw new Error(
-      `Build source tree is not clean; commit or remove tracked and untracked non-ignored changes before building. Unexpected entries: ${diagnosticEntries}${diagnosticSuffix}.`,
+      `Build source tree is not clean; commit or remove tracked and untracked non-ignored changes before building. Unexpected entries: ${diagnosticEntries}${diagnosticSuffix}.${vercelConfigDiff}`,
     );
   }
 

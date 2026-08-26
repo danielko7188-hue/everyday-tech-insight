@@ -325,6 +325,44 @@ describe("public build provenance", () => {
     ).toThrow(/unexpected entries: M package-lock\.json/i);
   });
 
+  it("includes a bounded tracked diff only for the public Vercel config", () => {
+    const diff = [
+      "diff --git a/vercel.json b/vercel.json",
+      "--- a/vercel.json",
+      "+++ b/vercel.json",
+      "@@ -1,3 +1,4 @@",
+      " {",
+      `+  "installCommand": "npm ci",`,
+      `   "framework": "astro"`,
+      " }",
+      "x".repeat(4_000),
+    ].join("\n");
+    const calls: string[][] = [];
+
+    expect(() =>
+      resolveBuildGitSha({
+        env: VERCEL_GIT_BUILD_ENVIRONMENT,
+        execFileSyncImpl: (_command, args) => {
+          calls.push(args);
+          if (args[0] === "rev-parse") return `${VERCEL_SHA}\n`;
+          if (args[0] === "status") return " M vercel.json\n";
+          if (args[0] === "diff") return diff;
+          return "";
+        },
+        pathExistsImpl: () => true,
+        repositoryRoot: "C:/vercel/path0",
+      }),
+    ).toThrow(/Vercel config diff:[\s\S]*installCommand[\s\S]*truncated/i);
+
+    expect(calls).toContainEqual([
+      "diff",
+      "--no-ext-diff",
+      "--unified=3",
+      "--",
+      "vercel.json",
+    ]);
+  });
+
   it.each([
     ["missing CI", { VERCEL: "1", VERCEL_ENV: "production" }],
     ["missing Vercel indicator", { CI: "1", VERCEL_ENV: "production" }],
