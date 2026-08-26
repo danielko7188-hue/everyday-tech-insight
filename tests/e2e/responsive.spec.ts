@@ -456,6 +456,65 @@ test("wide homepage lead keeps automation on one rendered line", async ({
   expect(wordRectCount).toBe(1);
 });
 
+test("wide homepage topic cards keep long words intact", async ({ page }) => {
+  for (const width of [1280, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 1080 });
+    await page.goto("/");
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+
+    const cybersecurityRectCount = await page
+      .locator(
+        '.topic-directory--compact li[data-category="cybersecurity-data-protection"] > a span:first-child',
+      )
+      .evaluate((label) => {
+        const textNode = label.firstChild;
+        if (!(textNode instanceof Text)) return 0;
+
+        const targetWord = "Cybersecurity";
+        const targetStart = textNode.data.indexOf(targetWord);
+        if (targetStart < 0) return 0;
+
+        const range = document.createRange();
+        range.setStart(textNode, targetStart);
+        range.setEnd(textNode, targetStart + targetWord.length);
+        return range.getClientRects().length;
+      });
+
+    expect(cybersecurityRectCount, `${width}px`).toBe(1);
+
+    const cardMetrics = await page
+      .locator(".topic-directory--compact li")
+      .evaluateAll((cards) =>
+        cards.map((card) => {
+          const cardBox = card.getBoundingClientRect();
+          const countBox = card
+            .querySelector("a span:last-child")!
+            .getBoundingClientRect();
+          return {
+            cardLeft: cardBox.left,
+            cardRight: cardBox.right,
+            countLeft: countBox.left,
+            countRight: countBox.right,
+            countTop: countBox.top,
+          };
+        }),
+      );
+    const countTops = cardMetrics.map(({ countTop }) => countTop);
+    expect(Math.max(...countTops) - Math.min(...countTops), `${width}px`).toBe(
+      0,
+    );
+    expect(
+      cardMetrics.every(
+        ({ cardLeft, cardRight, countLeft, countRight }) =>
+          countLeft >= cardLeft && countRight <= cardRight,
+      ),
+      `${width}px`,
+    ).toBe(true);
+  }
+});
+
 test("tablet article evidence keeps each supported label on one line", async ({
   page,
 }) => {

@@ -3940,6 +3940,25 @@ strong {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
+  .topic-directory--compact li > a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    justify-content: start;
+    gap: var(--space-2);
+  }
+
+  .topic-directory--compact li > a span:first-child {
+    min-block-size: 3.45em;
+    hyphens: none;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .topic-directory--compact li > a span:last-child {
+    justify-self: end;
+  }
+
   .article-hero {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
