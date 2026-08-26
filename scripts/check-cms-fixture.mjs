@@ -844,18 +844,21 @@ export async function runCmsLifecycleFixture({
   );
 }
 
-async function withIsolatedCmsWorktree({ projectRoot }, operation) {
+export async function withIsolatedCmsWorktree(
+  { projectRoot, signalControl },
+  operation,
+) {
   if (typeof operation !== "function") {
     throw new TypeError("Isolated CMS worktree operation must be callable.");
   }
   const resolvedProjectRoot = path.resolve(projectRoot);
+  signalControl?.throwIfSignaled();
   resolveBuildGitSha({ repositoryRoot: resolvedProjectRoot });
+  signalControl?.throwIfSignaled();
 
-  const temporaryRoot = await mkdtemp(
-    path.join(tmpdir(), "eti-cms-fixture-worktree-"),
-  );
-  const worktreeRoot = path.join(temporaryRoot, "checkout");
-  const linkedNodeModules = path.join(worktreeRoot, "node_modules");
+  let temporaryRoot;
+  let worktreeRoot;
+  let linkedNodeModules;
   let worktreeCreated = false;
   let nodeModulesLinked = false;
   let result;
@@ -863,12 +866,19 @@ async function withIsolatedCmsWorktree({ projectRoot }, operation) {
   const cleanupErrors = [];
 
   try {
+    temporaryRoot = await mkdtemp(
+      path.join(tmpdir(), "eti-cms-fixture-worktree-"),
+    );
+    worktreeRoot = path.join(temporaryRoot, "checkout");
+    linkedNodeModules = path.join(worktreeRoot, "node_modules");
+    signalControl?.throwIfSignaled();
     await runGitCommand(
       resolvedProjectRoot,
       ["worktree", "add", "--detach", "--quiet", worktreeRoot, "HEAD"],
       "Unable to create an isolated CMS fixture worktree.",
     );
     worktreeCreated = true;
+    signalControl?.throwIfSignaled();
 
     const sourceNodeModules = path.join(resolvedProjectRoot, "node_modules");
     const nodeModulesStats = await lstat(sourceNodeModules);
@@ -877,12 +887,14 @@ async function withIsolatedCmsWorktree({ projectRoot }, operation) {
         `CMS fixture check requires installed dependencies: ${sourceNodeModules}`,
       );
     }
+    signalControl?.throwIfSignaled();
     await symlink(
       sourceNodeModules,
       linkedNodeModules,
       process.platform === "win32" ? "junction" : "dir",
     );
     nodeModulesLinked = true;
+    signalControl?.throwIfSignaled();
     result = await operation(worktreeRoot);
   } catch (error) {
     operationError = error;
@@ -914,10 +926,12 @@ async function withIsolatedCmsWorktree({ projectRoot }, operation) {
         cleanupErrors.push(error);
       }
     }
-    try {
-      await rm(temporaryRoot, { force: true, recursive: true });
-    } catch (error) {
-      cleanupErrors.push(error);
+    if (temporaryRoot) {
+      try {
+        await rm(temporaryRoot, { force: true, recursive: true });
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
     }
   }
 
@@ -941,13 +955,45 @@ async function withIsolatedCmsWorktree({ projectRoot }, operation) {
 export async function runIsolatedCmsLifecycleFixture({
   projectRoot = repositoryRoot,
   baseEnvironment = process.env,
+  processTarget = process,
+  reemitSignal = (signal) => reemitCmsFixtureSignal(signal, { processTarget }),
 } = {}) {
-  let deferredSignal;
+  if (
+    !processTarget ||
+    typeof processTarget.on !== "function" ||
+    typeof processTarget.off !== "function"
+  ) {
+    throw new TypeError("Signal process target must support on() and off().");
+  }
+  if (typeof reemitSignal !== "function") {
+    throw new TypeError("Signal re-emitter must be a function.");
+  }
+
+  let receivedSignal;
   let result;
   let operationError;
+  const signalHandlers = new Map(
+    ["SIGINT", "SIGTERM"].map((signal) => [
+      signal,
+      () => {
+        receivedSignal ??= signal;
+      },
+    ]),
+  );
+  const signalControl = {
+    throwIfSignaled() {
+      if (receivedSignal) {
+        throw new CmsFixtureSignalError(receivedSignal);
+      }
+    },
+  };
+  for (const [signal, handler] of signalHandlers) {
+    processTarget.on(signal, handler);
+  }
+
   try {
     result = await withIsolatedCmsWorktree(
-      { projectRoot },
+      { projectRoot, signalControl },
       async (isolatedProjectRoot) =>
         runCmsLifecycleFixture({
           projectRoot: isolatedProjectRoot,
@@ -966,17 +1012,22 @@ export async function runIsolatedCmsLifecycleFixture({
             });
           },
           signalOptions: {
+            processTarget,
             reemitSignal: (signal) => {
-              deferredSignal = signal;
+              receivedSignal ??= signal;
             },
           },
         }),
     );
   } catch (error) {
     operationError = error;
+  } finally {
+    for (const [signal, handler] of signalHandlers) {
+      processTarget.off(signal, handler);
+    }
   }
 
-  if (deferredSignal) reemitCmsFixtureSignal(deferredSignal);
+  if (receivedSignal) reemitSignal(receivedSignal);
   if (operationError) throw operationError;
   return result;
 }

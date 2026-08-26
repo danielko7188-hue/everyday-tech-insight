@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -7,12 +8,14 @@ import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  CmsFixtureSignalError,
   createCmsLifecycleFixtures,
   reemitCmsFixtureSignal,
   resolveCmsFixtureBuildEnvironment,
   resolveNpmBuildInvocation,
   runCmsLifecycleFixture,
   validateCmsBuildOutput,
+  withIsolatedCmsWorktree,
   withTemporaryArticleFixtures,
 } from "../../scripts/check-cms-fixture.mjs";
 import {
@@ -39,6 +42,38 @@ function temporaryRoot(prefix: string): string {
   const root = mkdtempSync(path.join(tmpdir(), prefix));
   temporaryRoots.push(root);
   return root;
+}
+
+function runFixtureGit(projectRoot: string, args: string[]): string {
+  return execFileSync("git", args, {
+    cwd: projectRoot,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+}
+
+async function createCleanWorktreeRepository(): Promise<string> {
+  const projectRoot = temporaryRoot("eti-cms-worktree-source-");
+  runFixtureGit(projectRoot, ["init", "--quiet"]);
+  runFixtureGit(projectRoot, ["config", "core.autocrlf", "false"]);
+  await writeFile(path.join(projectRoot, ".gitignore"), "node_modules/\n");
+  await writeFile(path.join(projectRoot, "seed.txt"), "clean fixture\n");
+  await mkdir(path.join(projectRoot, "node_modules"));
+  runFixtureGit(projectRoot, ["add", "--", ".gitignore", "seed.txt"]);
+  runFixtureGit(projectRoot, [
+    "-c",
+    "user.name=CMS Fixture Test",
+    "-c",
+    "user.email=cms-fixture@example.invalid",
+    "-c",
+    "commit.gpgsign=false",
+    "commit",
+    "--quiet",
+    "--no-gpg-sign",
+    "-m",
+    "fixture",
+  ]);
+  return projectRoot;
 }
 
 function tryCreateDirectoryLink(target: string, linkPath: string): boolean {
@@ -82,6 +117,54 @@ describe("CMS lifecycle build fixture", () => {
     });
     expect(environment).not.toHaveProperty("VERCEL_GIT_COMMIT_SHA");
     expect(environment).not.toHaveProperty("PUBLIC_VERCEL_GIT_COMMIT_SHA");
+  });
+
+  it("removes its filesystem and Git worktree registration when interrupted after setup", async () => {
+    const projectRoot = await createCleanWorktreeRepository();
+    const worktreesBefore = runFixtureGit(projectRoot, [
+      "worktree",
+      "list",
+      "--porcelain",
+    ]);
+    const temporaryEntriesBefore = new Set(
+      (await readdir(tmpdir())).filter((name) =>
+        name.startsWith("eti-cms-fixture-worktree-"),
+      ),
+    );
+    const operation = vi.fn();
+    let checkpoints = 0;
+
+    await expect(
+      withIsolatedCmsWorktree(
+        {
+          projectRoot,
+          signalControl: {
+            throwIfSignaled() {
+              checkpoints += 1;
+              if (checkpoints === 6) {
+                throw new CmsFixtureSignalError("SIGINT");
+              }
+            },
+          },
+        },
+        operation,
+      ),
+    ).rejects.toMatchObject({
+      code: "CMS_FIXTURE_SIGNAL",
+      signal: "SIGINT",
+    });
+
+    expect(operation).not.toHaveBeenCalled();
+    expect(runFixtureGit(projectRoot, ["status", "--porcelain=v1"])).toBe("");
+    expect(
+      runFixtureGit(projectRoot, ["worktree", "list", "--porcelain"]),
+    ).toBe(worktreesBefore);
+    const newTemporaryEntries = (await readdir(tmpdir())).filter(
+      (name) =>
+        name.startsWith("eti-cms-fixture-worktree-") &&
+        !temporaryEntriesBefore.has(name),
+    );
+    expect(newTemporaryEntries).toEqual([]);
   });
 
   it("launches npm through Node on Windows instead of spawning a .cmd shim", () => {
