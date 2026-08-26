@@ -870,7 +870,7 @@ describe("publication operations documentation", () => {
     ).length;
     expect(technicalQa).toMatch(
       new RegExp(
-        `planned[^\\n]{0,80}after[^\\n]{0,80}runtime[^\\n]{0,80}${plannedAfterCount} PNGs`,
+        `after-production[^\\n]{0,100}${plannedAfterCount} PNGs[^\\n]{0,100}runtime-verification[^\\n]{0,100}${plannedAfterCount} PNGs`,
         "i",
       ),
     );
@@ -908,10 +908,16 @@ describe("publication operations documentation", () => {
       readdir(evidenceDirectory),
     ]);
     const manifest = JSON.parse(manifestText) as AuditManifest;
-    const expectedPlan = buildCapturePlan({
+    const expandedPlan = buildCapturePlan({
       origin: manifest.origin,
       phase: "after-local",
     });
+    const historicalFileNames = new Set(
+      manifest.captures.map(({ fileName }) => fileName),
+    );
+    const expectedPlan = expandedPlan.filter(({ fileName }) =>
+      historicalFileNames.has(fileName),
+    );
 
     expect(Object.keys(manifest).toSorted()).toEqual(
       [
@@ -935,6 +941,7 @@ describe("publication operations documentation", () => {
       phase: "after-local",
       schemaVersion: 1,
     });
+    expect(expandedPlan).toHaveLength(228);
     expect(expectedPlan).toHaveLength(156);
     expect(manifest.captures).toHaveLength(expectedPlan.length);
     expect(directoryEntries.toSorted()).toEqual(
@@ -1145,10 +1152,10 @@ describe("publication operations documentation", () => {
         /after-local[^\n]{0,300}local evidence only[^\n]{0,80}not deployment evidence/i,
       );
       expect(document, documentName).toMatch(
-        /after-production[^\n]{0,100}(?:planned and unverified|unverified and planned)[^\n]{0,80}156 PNGs/i,
+        /after-production[^\n]{0,100}(?:planned and unverified|unverified and planned)[^\n]{0,80}228 PNGs/i,
       );
       expect(document, documentName).toMatch(
-        /runtime-verification[^\n]{0,100}(?:planned and unverified|unverified and planned)[^\n]{0,80}156 PNGs/i,
+        /runtime-verification[^\n]{0,100}(?:planned and unverified|unverified and planned)[^\n]{0,80}228 PNGs/i,
       );
     }
 

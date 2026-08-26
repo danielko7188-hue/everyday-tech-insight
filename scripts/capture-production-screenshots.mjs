@@ -61,8 +61,28 @@ export const AFTER_CAPTURE_ROUTES = Object.freeze([
   Object.freeze({ alias: "articles", path: "/articles/", status: 200 }),
   Object.freeze({ alias: "categories", path: "/categories/", status: 200 }),
   Object.freeze({
+    alias: "category-ai-automation",
+    path: "/categories/ai-automation/",
+    status: 200,
+  }),
+  Object.freeze({
+    alias: "category-business-software",
+    path: "/categories/business-software/",
+    status: 200,
+  }),
+  Object.freeze({
     alias: "category-cybersecurity",
     path: "/categories/cybersecurity-data-protection/",
+    status: 200,
+  }),
+  Object.freeze({
+    alias: "category-digital-operations",
+    path: "/categories/digital-operations/",
+    status: 200,
+  }),
+  Object.freeze({
+    alias: "category-technology-strategy",
+    path: "/categories/technology-strategy/",
     status: 200,
   }),
   ...(REPRESENTATIVE_ARTICLE_PATHS.primary
@@ -112,8 +132,23 @@ export const AFTER_CAPTURE_ROUTES = Object.freeze([
     : []),
   Object.freeze({ alias: "toolkit", path: "/toolkit/", status: 200 }),
   Object.freeze({
+    alias: "toolkit-automation-candidate-screen",
+    path: "/toolkit/automation-candidate-screen/",
+    status: 200,
+  }),
+  Object.freeze({
+    alias: "toolkit-saas-evaluation-evidence-sheet",
+    path: "/toolkit/saas-evaluation-evidence-sheet/",
+    status: 200,
+  }),
+  Object.freeze({
     alias: "toolkit-risk-register",
     path: "/toolkit/technology-risk-register/",
+    status: 200,
+  }),
+  Object.freeze({
+    alias: "toolkit-backup-restore-test-log",
+    path: "/toolkit/backup-restore-test-log/",
     status: 200,
   }),
   Object.freeze({ alias: "about", path: "/about/", status: 200 }),
@@ -123,6 +158,7 @@ export const AFTER_CAPTURE_ROUTES = Object.freeze([
     path: "/editorial-standards/",
     status: 200,
   }),
+  Object.freeze({ alias: "corrections", path: "/corrections/", status: 200 }),
   Object.freeze({ alias: "privacy", path: "/privacy/", status: 200 }),
   Object.freeze({
     alias: "advertising-disclosure",
@@ -130,6 +166,7 @@ export const AFTER_CAPTURE_ROUTES = Object.freeze([
     status: 200,
   }),
   Object.freeze({ alias: "contact", path: "/contact/", status: 200 }),
+  Object.freeze({ alias: "sitemap", path: "/sitemap/", status: 200 }),
   Object.freeze({
     alias: "404",
     path: "/publication-audit-route-that-does-not-exist/",

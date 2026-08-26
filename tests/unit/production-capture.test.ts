@@ -15,6 +15,7 @@ import { isAbsolute, join, relative, resolve } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { buildAuditManifest } from "../../scripts/write-audit-manifest.mjs";
 import {
   AFTER_CAPTURE_ROUTES,
   BEFORE_CAPTURE_ROUTES,
@@ -459,7 +460,7 @@ describe("production screenshot capture contract", () => {
     expect(browserUsed).toBe(false);
   });
 
-  it("defines the release evidence ID, eight widths, the representative before routes, and exact full after routes", () => {
+  it("defines the exact unique 27-route after inventory", () => {
     expect(RELEASE_EVIDENCE_ID).toBe("premium-spatial-2026-08-26");
     expect(CAPTURE_PHASES).toEqual([
       "before",
@@ -496,26 +497,73 @@ describe("production screenshot capture contract", () => {
         status: 404,
       },
     ]);
-    expect(AFTER_CAPTURE_ROUTES.map(({ path }) => path)).toEqual([
+    const afterAliases = AFTER_CAPTURE_ROUTES.map(({ alias }) => alias);
+    const afterPaths = AFTER_CAPTURE_ROUTES.map(({ path }) => path);
+    expect(afterAliases).toEqual([
+      "home",
+      "articles",
+      "categories",
+      "category-ai-automation",
+      "category-business-software",
+      "category-cybersecurity",
+      "category-digital-operations",
+      "category-technology-strategy",
+      "article-ai-automation",
+      "article-saas-evaluation",
+      "article-phishing-response",
+      "article-shared-files",
+      "article-software-tco",
+      "toolkit",
+      "toolkit-automation-candidate-screen",
+      "toolkit-saas-evaluation-evidence-sheet",
+      "toolkit-risk-register",
+      "toolkit-backup-restore-test-log",
+      "about",
+      "publisher",
+      "editorial-standards",
+      "corrections",
+      "privacy",
+      "advertising-disclosure",
+      "contact",
+      "sitemap",
+      "404",
+    ]);
+    expect(afterPaths).toEqual([
       "/",
       "/articles/",
       "/categories/",
+      "/categories/ai-automation/",
+      "/categories/business-software/",
       "/categories/cybersecurity-data-protection/",
+      "/categories/digital-operations/",
+      "/categories/technology-strategy/",
       "/articles/how-to-identify-business-tasks-for-automation/",
       "/articles/evaluate-saas-with-a-practical-checklist/",
       "/articles/respond-to-a-suspected-phishing-message/",
       "/articles/create-a-shared-file-and-folder-system/",
       "/articles/calculate-the-total-cost-of-business-software/",
       "/toolkit/",
+      "/toolkit/automation-candidate-screen/",
+      "/toolkit/saas-evaluation-evidence-sheet/",
       "/toolkit/technology-risk-register/",
+      "/toolkit/backup-restore-test-log/",
       "/about/",
       "/publisher/",
       "/editorial-standards/",
+      "/corrections/",
       "/privacy/",
       "/advertising-disclosure/",
       "/contact/",
+      "/sitemap/",
       "/publication-audit-route-that-does-not-exist/",
     ]);
+    expect(AFTER_CAPTURE_ROUTES).toHaveLength(27);
+    expect(new Set(afterAliases).size).toBe(27);
+    expect(new Set(afterPaths).size).toBe(27);
+    expect(
+      AFTER_CAPTURE_ROUTES.filter(({ status }) => status === 200),
+    ).toHaveLength(26);
+    expect(AFTER_CAPTURE_ROUTES.at(-1)?.status).toBe(404);
     expect(CAPTURE_ROUTES).toBe(AFTER_CAPTURE_ROUTES);
   });
 
@@ -540,7 +588,7 @@ describe("production screenshot capture contract", () => {
     );
   });
 
-  it("builds the exact 156-image after inventory including keyboard states", () => {
+  it("builds the exact 228-image after inventory including keyboard states", () => {
     const productionPlan = buildCapturePlan({
       origin: "https://publication.example",
       phase: "after-production",
@@ -555,8 +603,8 @@ describe("production screenshot capture contract", () => {
     });
     const fileNames = productionPlan.map(({ fileName }) => fileName);
 
-    expect(productionPlan).toHaveLength(156);
-    expect(new Set(fileNames).size).toBe(156);
+    expect(productionPlan).toHaveLength(228);
+    expect(new Set(fileNames).size).toBe(228);
     expect(
       productionPlan
         .filter(({ state }) => state === "menu-open")
@@ -569,10 +617,53 @@ describe("production screenshot capture contract", () => {
     ).toEqual(CAPTURE_WIDTHS);
     expect(
       productionPlan.filter(({ state }) => state === "full-page"),
-    ).toHaveLength(AFTER_CAPTURE_ROUTES.length * CAPTURE_WIDTHS.length);
+    ).toHaveLength(216);
     expect(localPlan.map(({ fileName }) => fileName)).toEqual(fileNames);
     expect(runtimePlan.map(({ fileName }) => fileName)).toEqual(fileNames);
-    expect(runtimePlan).toHaveLength(156);
+    expect(runtimePlan).toHaveLength(228);
+  });
+
+  it("materializes the exact 228-row after capture manifest", () => {
+    const plan = buildCapturePlan({
+      origin: "https://publication.example",
+      phase: "after-production",
+    });
+    const manifest = buildAuditManifest({
+      assertions: [],
+      captureRecords: plan.map(({ fileName, status }, index) => ({
+        actualStatus: status,
+        byteCount: index + 1,
+        fileName,
+        sha256: index.toString(16).padStart(64, "0"),
+      })),
+      capturedAt: "2026-08-26T12:00:00.000Z",
+      deploymentId: "dpl_capture_manifest_fixture",
+      expectedGitSha: "0123456789abcdef0123456789abcdef01234567",
+      origin: "https://publication.example",
+      phase: "after-production",
+      plan,
+    });
+
+    expect(manifest.captureCount).toBe(228);
+    expect(manifest.captures).toHaveLength(228);
+    expect(
+      new Set(manifest.captures.map(({ fileName }) => fileName)).size,
+    ).toBe(228);
+    expect(
+      [...new Set(manifest.captures.map(({ route }) => route))].sort(),
+    ).toEqual(AFTER_CAPTURE_ROUTES.map(({ path }) => path).sort());
+    expect(
+      Object.fromEntries(
+        ["full-page", "menu-open", "skip-link-focus"].map((state) => [
+          state,
+          manifest.captures.filter((capture) => capture.state === state).length,
+        ]),
+      ),
+    ).toEqual({
+      "full-page": 216,
+      "menu-open": 4,
+      "skip-link-focus": 8,
+    });
   });
 
   it("omits nullable representative routes instead of generating /null captures", () => {
@@ -597,7 +688,7 @@ describe("production screenshot capture contract", () => {
     });
 
     expect(beforePlan).toHaveLength(56);
-    expect(afterPlan).toHaveLength(116);
+    expect(afterPlan).toHaveLength(188);
     expect(
       [...beforePlan, ...afterPlan].filter(({ alias }) =>
         alias.startsWith("article-"),
@@ -826,7 +917,7 @@ describe("production screenshot capture contract", () => {
         `artifacts/site-audit/runtime-verification/${RELEASE_EVIDENCE_ID}-final`,
       ),
     );
-    expect(runtimePaths.expectedFileNames).toHaveLength(156);
+    expect(runtimePaths.expectedFileNames).toHaveLength(228);
     expect(
       readFileSync(new URL("../../.gitignore", import.meta.url), "utf8"),
     ).toMatch(/^artifacts\/site-audit\/runtime-verification\/$/m);
