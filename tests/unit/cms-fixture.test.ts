@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createCmsLifecycleFixtures,
   reemitCmsFixtureSignal,
+  resolveCmsFixtureBuildEnvironment,
   resolveNpmBuildInvocation,
   runCmsLifecycleFixture,
   validateCmsBuildOutput,
@@ -62,6 +63,27 @@ function tryCreateDirectoryLink(target: string, linkPath: string): boolean {
 }
 
 describe("CMS lifecycle build fixture", () => {
+  it("binds an isolated fixture build to its temporary commit instead of inherited deployment provenance", () => {
+    const fixtureGitSha = "0123456789abcdef0123456789abcdef01234567";
+    const environment = resolveCmsFixtureBuildEnvironment({
+      baseEnvironment: {
+        CI: "true",
+        GITHUB_SHA: "1111111111111111111111111111111111111111",
+        PUBLIC_VERCEL_GIT_COMMIT_SHA:
+          "2222222222222222222222222222222222222222",
+        VERCEL_GIT_COMMIT_SHA: "3333333333333333333333333333333333333333",
+      },
+      fixtureGitSha,
+    });
+
+    expect(environment).toMatchObject({
+      CI: "true",
+      GITHUB_SHA: fixtureGitSha,
+    });
+    expect(environment).not.toHaveProperty("VERCEL_GIT_COMMIT_SHA");
+    expect(environment).not.toHaveProperty("PUBLIC_VERCEL_GIT_COMMIT_SHA");
+  });
+
   it("launches npm through Node on Windows instead of spawning a .cmd shim", () => {
     expect(
       resolveNpmBuildInvocation({

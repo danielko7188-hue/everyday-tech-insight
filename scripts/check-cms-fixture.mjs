@@ -1,14 +1,19 @@
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import {
   lstat,
+  mkdtemp,
   readFile,
   readdir,
   realpath,
   rm,
+  symlink,
+  unlink,
   writeFile,
 } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 
 import { dump as dumpYaml } from "js-yaml";
 
@@ -18,6 +23,9 @@ import {
   validateArticleSlug,
 } from "./new-article.mjs";
 import { readArticleRecords } from "./qa-content.mjs";
+import { resolveBuildGitSha } from "../src/utils/build-provenance.mjs";
+
+const execFileAsync = promisify(execFile);
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -50,6 +58,104 @@ export const CMS_FIXTURE_SLUGS = [
   "cms-fixture-structural-review",
   "cms-fixture-complete-archived",
 ];
+const FULL_GIT_SHA_PATTERN = /^[a-f\d]{40}$/;
+const BUILD_PROVENANCE_ENVIRONMENT_NAMES = [
+  "VERCEL_GIT_COMMIT_SHA",
+  "PUBLIC_VERCEL_GIT_COMMIT_SHA",
+  "GITHUB_SHA",
+];
+
+function validateFullGitSha(candidate, label) {
+  if (typeof candidate !== "string" || !FULL_GIT_SHA_PATTERN.test(candidate)) {
+    throw new Error(`${label} must be a full lowercase 40-character SHA.`);
+  }
+  return candidate;
+}
+
+export function resolveCmsFixtureBuildEnvironment({
+  baseEnvironment = process.env,
+  fixtureGitSha,
+}) {
+  if (!baseEnvironment || typeof baseEnvironment !== "object") {
+    throw new TypeError("CMS fixture base environment must be an object.");
+  }
+  const environment = { ...baseEnvironment };
+  for (const variableName of BUILD_PROVENANCE_ENVIRONMENT_NAMES) {
+    delete environment[variableName];
+  }
+  environment.GITHUB_SHA = validateFullGitSha(
+    fixtureGitSha,
+    "CMS fixture Git SHA",
+  );
+  return environment;
+}
+
+async function runGitCommand(projectRoot, args, failureMessage) {
+  try {
+    const result = await execFileAsync("git", args, {
+      cwd: projectRoot,
+      encoding: "utf8",
+      maxBuffer: 16 * 1024 * 1024,
+      windowsHide: true,
+    });
+    return result.stdout;
+  } catch (cause) {
+    throw new Error(failureMessage, { cause });
+  }
+}
+
+function relativeGitTargets(projectRoot, targets) {
+  const resolvedRoot = path.resolve(projectRoot);
+  return targets.map((target) => {
+    const relative = path.relative(resolvedRoot, path.resolve(target));
+    if (
+      relative === "" ||
+      relative === ".." ||
+      relative.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(relative)
+    ) {
+      throw new Error("CMS fixture commit target escapes its worktree.");
+    }
+    return relative.split(path.sep).join("/");
+  });
+}
+
+async function commitCmsFixtureInputs(projectRoot, targets) {
+  const relativeTargets = relativeGitTargets(projectRoot, targets);
+  await runGitCommand(
+    projectRoot,
+    ["add", "--", ...relativeTargets],
+    "Unable to stage isolated CMS fixture inputs.",
+  );
+  await runGitCommand(
+    projectRoot,
+    [
+      "-c",
+      "user.name=Everyday Tech Insight QA",
+      "-c",
+      "user.email=qa@example.invalid",
+      "-c",
+      "commit.gpgsign=false",
+      "commit",
+      "--quiet",
+      "--no-verify",
+      "--no-gpg-sign",
+      "-m",
+      "test: isolated CMS lifecycle fixtures",
+      "--",
+      ...relativeTargets,
+    ],
+    "Unable to commit isolated CMS fixture inputs.",
+  );
+  const fixtureGitSha = (
+    await runGitCommand(
+      projectRoot,
+      ["rev-parse", "--verify", "HEAD"],
+      "Unable to resolve the isolated CMS fixture commit.",
+    )
+  ).trim();
+  return validateFullGitSha(fixtureGitSha, "CMS fixture Git SHA");
+}
 
 function serializeArticle(data, body) {
   const frontmatter = dumpYaml(data, {
@@ -669,13 +775,20 @@ export function resolveNpmBuildInvocation({
   };
 }
 
-export async function runProductionBuild({ projectRoot, signalControl }) {
+export async function runProductionBuild({
+  projectRoot,
+  signalControl,
+  environment = process.env,
+}) {
+  if (!environment || typeof environment !== "object") {
+    throw new TypeError("CMS fixture build environment must be an object.");
+  }
   signalControl?.throwIfSignaled();
   await new Promise((resolve, reject) => {
     const { command, args } = resolveNpmBuildInvocation();
     const child = spawn(command, args, {
       cwd: projectRoot,
-      env: process.env,
+      env: environment,
       stdio: "inherit",
       windowsHide: true,
     });
@@ -701,6 +814,7 @@ export async function runProductionBuild({ projectRoot, signalControl }) {
 export async function runCmsLifecycleFixture({
   projectRoot = repositoryRoot,
   runBuild = runProductionBuild,
+  signalOptions,
 } = {}) {
   const articlesDirectory = path.join(
     projectRoot,
@@ -713,8 +827,12 @@ export async function runCmsLifecycleFixture({
   const fixtures = createCmsLifecycleFixturesFromRecords(verifiedRecords);
   return withTemporaryArticleFixtures(
     { articlesDirectory, fixtures },
-    async (_targets, signalControl) => {
-      await runBuild({ projectRoot, signalControl });
+    async (targets, signalControl) => {
+      await runBuild({
+        fixtureTargets: targets,
+        projectRoot,
+        signalControl,
+      });
       return validateCmsBuildOutput({
         projectRoot,
         expectedPublishedSlugs,
@@ -722,11 +840,149 @@ export async function runCmsLifecycleFixture({
         fixtureTitles: fixtures.map(({ title }) => title),
       });
     },
+    signalOptions,
   );
 }
 
+async function withIsolatedCmsWorktree({ projectRoot }, operation) {
+  if (typeof operation !== "function") {
+    throw new TypeError("Isolated CMS worktree operation must be callable.");
+  }
+  const resolvedProjectRoot = path.resolve(projectRoot);
+  resolveBuildGitSha({ repositoryRoot: resolvedProjectRoot });
+
+  const temporaryRoot = await mkdtemp(
+    path.join(tmpdir(), "eti-cms-fixture-worktree-"),
+  );
+  const worktreeRoot = path.join(temporaryRoot, "checkout");
+  const linkedNodeModules = path.join(worktreeRoot, "node_modules");
+  let worktreeCreated = false;
+  let nodeModulesLinked = false;
+  let result;
+  let operationError;
+  const cleanupErrors = [];
+
+  try {
+    await runGitCommand(
+      resolvedProjectRoot,
+      ["worktree", "add", "--detach", "--quiet", worktreeRoot, "HEAD"],
+      "Unable to create an isolated CMS fixture worktree.",
+    );
+    worktreeCreated = true;
+
+    const sourceNodeModules = path.join(resolvedProjectRoot, "node_modules");
+    const nodeModulesStats = await lstat(sourceNodeModules);
+    if (!nodeModulesStats.isDirectory()) {
+      throw new Error(
+        `CMS fixture check requires installed dependencies: ${sourceNodeModules}`,
+      );
+    }
+    await symlink(
+      sourceNodeModules,
+      linkedNodeModules,
+      process.platform === "win32" ? "junction" : "dir",
+    );
+    nodeModulesLinked = true;
+    result = await operation(worktreeRoot);
+  } catch (error) {
+    operationError = error;
+  } finally {
+    if (nodeModulesLinked) {
+      try {
+        const linkedStats = await lstat(linkedNodeModules);
+        if (!linkedStats.isSymbolicLink()) {
+          cleanupErrors.push(
+            new Error(
+              "Refusing to remove a node_modules path that is not the owned worktree link.",
+            ),
+          );
+        } else {
+          await unlink(linkedNodeModules);
+        }
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
+    }
+    if (worktreeCreated) {
+      try {
+        await runGitCommand(
+          resolvedProjectRoot,
+          ["worktree", "remove", "--force", worktreeRoot],
+          "Unable to remove the isolated CMS fixture worktree.",
+        );
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
+    }
+    try {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+  }
+
+  if (cleanupErrors.length > 0) {
+    const cleanupError = new AggregateError(
+      cleanupErrors,
+      "Unable to fully clean the isolated CMS fixture worktree.",
+    );
+    if (operationError) {
+      throw new AggregateError(
+        [operationError, cleanupError],
+        "CMS fixture operation and worktree cleanup both failed.",
+      );
+    }
+    throw cleanupError;
+  }
+  if (operationError) throw operationError;
+  return result;
+}
+
+export async function runIsolatedCmsLifecycleFixture({
+  projectRoot = repositoryRoot,
+  baseEnvironment = process.env,
+} = {}) {
+  let deferredSignal;
+  let result;
+  let operationError;
+  try {
+    result = await withIsolatedCmsWorktree(
+      { projectRoot },
+      async (isolatedProjectRoot) =>
+        runCmsLifecycleFixture({
+          projectRoot: isolatedProjectRoot,
+          runBuild: async ({ fixtureTargets, signalControl }) => {
+            const fixtureGitSha = await commitCmsFixtureInputs(
+              isolatedProjectRoot,
+              fixtureTargets,
+            );
+            await runProductionBuild({
+              environment: resolveCmsFixtureBuildEnvironment({
+                baseEnvironment,
+                fixtureGitSha,
+              }),
+              projectRoot: isolatedProjectRoot,
+              signalControl,
+            });
+          },
+          signalOptions: {
+            reemitSignal: (signal) => {
+              deferredSignal = signal;
+            },
+          },
+        }),
+    );
+  } catch (error) {
+    operationError = error;
+  }
+
+  if (deferredSignal) reemitCmsFixtureSignal(deferredSignal);
+  if (operationError) throw operationError;
+  return result;
+}
+
 async function main() {
-  const result = await runCmsLifecycleFixture();
+  const result = await runIsolatedCmsLifecycleFixture();
   console.log(
     `CMS fixture: PASS (${result.publicArticleRoutes} public article routes; ${result.checkedFixtures} nonpublic lifecycle fixtures excluded).`,
   );
