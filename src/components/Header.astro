@@ -57,7 +57,7 @@ const categoryCurrentState = (slug: CategorySlug) => {
         <span class="site-header__close-label">Close</span>
       </summary>
       <nav aria-label="Mobile navigation">
-        <ul>
+        <ul aria-label="Publication sections">
           <li>
             <a
               href="/articles/"
@@ -76,6 +76,8 @@ const categoryCurrentState = (slug: CategorySlug) => {
               >About</a
             >
           </li>
+        </ul>
+        <ul aria-label="Business technology topics">
           {
             categories.map((category) => (
               <li>

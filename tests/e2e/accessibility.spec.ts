@@ -462,25 +462,40 @@ test("390px native menu opens from the keyboard and exposes every topic", async 
   ).toHaveAttribute("aria-current", "page");
 });
 
-test("mobile article navigation exposes one unambiguous current location", async ({
+test("mobile article navigation separates section and topic current locations", async ({
   page,
 }) => {
   skipWhenNoRepresentativeArticle();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(articlePath!);
 
-  const mobileList = page.locator(
-    'header.site-header nav[aria-label="Mobile navigation"] ul',
+  const mobileMenu = page.locator(".site-header__mobile-menu");
+  await mobileMenu.locator("summary").click();
+  await expect(mobileMenu).toHaveAttribute("open", "");
+
+  const mobileNavigation = page.locator(
+    'header.site-header nav[aria-label="Mobile navigation"]',
   );
-  await expect(mobileList.locator("[aria-current]")).toHaveCount(1);
+  const sectionList = mobileNavigation.getByRole("list", {
+    name: "Publication sections",
+  });
+  const topicList = mobileNavigation.getByRole("list", {
+    name: "Business technology topics",
+  });
+
+  await expect(sectionList).toBeVisible();
+  await expect(topicList).toBeVisible();
+  await expect(sectionList.locator("[aria-current]")).toHaveCount(1);
+  await expect(topicList.locator("[aria-current]")).toHaveCount(1);
+  await expect(sectionList.locator('a[href="/articles/"]')).toHaveAttribute(
+    "aria-current",
+    "location",
+  );
   await expect(
-    mobileList.locator(
+    topicList.locator(
       `a[href="/categories/${representativeArticle!.category}/"]`,
     ),
   ).toHaveAttribute("aria-current", "location");
-  await expect(mobileList.locator('a[href="/articles/"]')).not.toHaveAttribute(
-    "aria-current",
-  );
 });
 
 test("article body links are visibly underlined and keyboard focus is visible", async ({

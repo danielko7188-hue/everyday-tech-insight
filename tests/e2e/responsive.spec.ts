@@ -849,7 +849,7 @@ test("open mobile menu keeps its control anchored while expanding an opaque pane
   }
 });
 
-test("mobile footer keeps four navigation groups in two equal columns", async ({
+test("mobile footer keeps six navigation groups in two equal columns", async ({
   page,
 }) => {
   for (const width of [360, 390]) {
@@ -869,7 +869,7 @@ test("mobile footer keeps four navigation groups in two equal columns", async ({
 
     expect(footerGrid.columns, `${width}px computed columns`).toHaveLength(2);
     expect(new Set(footerGrid.items.map(({ left }) => left)).size).toBe(2);
-    expect(footerGrid.items).toHaveLength(4);
+    expect(footerGrid.items).toHaveLength(6);
     const firstColumnWidth = footerGrid.columns[0];
     expect(firstColumnWidth).toBeDefined();
     if (!firstColumnWidth)

@@ -463,6 +463,10 @@ strong {
   border-block-start: 1px solid var(--color-rule);
 }
 
+.site-header__mobile-menu ul + ul {
+  border-block-start: 1px solid var(--color-rule);
+}
+
 .site-header__mobile-menu a {
   display: flex;
   min-block-size: 2.75rem;
@@ -2728,6 +2732,10 @@ strong {
 }
 
 .site-header__mobile-menu li + li {
+  border-color: var(--brand-rule-dark);
+}
+
+.site-header__mobile-menu ul + ul {
   border-color: var(--brand-rule-dark);
 }
 
