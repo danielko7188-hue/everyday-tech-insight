@@ -1,0 +1,38 @@
+---
+import type { ToolkitResource } from "../data/toolkit";
+
+interface Props {
+  resource: ToolkitResource;
+}
+
+const { resource } = Astro.props;
+const groups = [
+  resource.fields.slice(0, 3),
+  resource.fields.slice(3, 6),
+  resource.fields.slice(6, 8),
+];
+---
+
+<section
+  class="toolkit-structure"
+  data-toolkit-structure
+  aria-labelledby={`${resource.id}-structure`}
+>
+  <p class="eyebrow">Structure preview</p>
+  <h2 id={`${resource.id}-structure`}>Field-guide sequence</h2>
+  <p>The field-guide labels are shown below in their existing order.</p>
+  <ol class="toolkit-structure__groups">
+    {
+      groups.map((fields, groupIndex) => (
+        <li data-toolkit-structure-group>
+          <p>{`Group ${groupIndex + 1}`}</p>
+          <ol start={groupIndex * 3 + 1}>
+            {fields.map((field) => (
+              <li data-toolkit-structure-field>{field.name}</li>
+            ))}
+          </ol>
+        </li>
+      ))
+    }
+  </ol>
+</section>

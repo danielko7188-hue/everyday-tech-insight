@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { toolkitResources } from "../../src/data/toolkit";
+
 const toolkitWidths = [390, 600, 768, 1024, 1440] as const;
 const compactActionWidths = new Set<number>([390, 600]);
 
@@ -212,3 +214,194 @@ test("Toolkit action links accommodate long editorial labels without overflow", 
     ),
   ).toBeLessThanOrEqual(0);
 });
+
+const articlePath =
+  "/articles/how-to-identify-business-tasks-for-automation/" as const;
+const toolkitDetailPath = "/toolkit/automation-candidate-screen/" as const;
+const spatialWidths = [320, 390, 600, 768, 1024, 1280, 1440, 1920] as const;
+
+test("homepage renders one local three-plane signal after its promise", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const signal = page.locator(
+    ".home-opening__promise > .lead-summary + [data-signal-field]",
+  );
+  await expect(signal).toHaveCount(1);
+  await expect(signal).toHaveAttribute("aria-hidden", "true");
+  await expect(signal.locator("[data-signal-plane]")).toHaveCount(3);
+  await expect(signal.locator("svg")).toHaveCount(1);
+  await expect(signal.locator("use")).toHaveCount(0);
+  await expect(page.locator("[data-signal-field]")).toHaveCount(1);
+  await expect(page.locator("[data-editorial-visual] use")).toHaveCount(8);
+});
+
+test("article reading progress is the inert first article child", async ({
+  page,
+}) => {
+  await page.goto(articlePath);
+
+  const progress = page.locator(
+    ".article-page > [data-reading-progress]:first-child",
+  );
+  await expect(progress).toHaveCount(1);
+  await expect(progress).toHaveAttribute("aria-hidden", "true");
+  await expect(progress).toHaveCSS("pointer-events", "none");
+  await expect(progress.locator("span")).toHaveCount(1);
+});
+
+for (const resource of toolkitResources) {
+  test(`${resource.title} previews every real field once and in order`, async ({
+    page,
+  }) => {
+    await page.goto(resource.detailHref);
+
+    const preview = page.locator("[data-toolkit-structure]");
+    await expect(preview).toHaveCount(1);
+    await expect(preview.locator("[data-toolkit-structure-group]")).toHaveCount(
+      3,
+    );
+
+    const fieldLabels = await preview
+      .locator("[data-toolkit-structure-field]")
+      .allTextContents();
+    expect(fieldLabels.map((label) => label.trim())).toEqual(
+      resource.fields.map(({ name }) => name),
+    );
+  });
+}
+
+test("404 provides the complete branded recovery route set", async ({
+  page,
+}) => {
+  const response = await page.goto("/purple-signal-page-not-found/");
+  expect(response?.status()).toBe(404);
+
+  const signal = page.locator("[data-signal-field='compact']");
+  const recovery = page.getByRole("navigation", { name: "Continue browsing" });
+  await expect(signal).toHaveCount(1);
+  await expect(recovery).toHaveCount(1);
+  expect(
+    await signal.evaluate((element) => {
+      const recoveryActions = document.querySelector(".not-found-actions");
+      return (
+        recoveryActions !== null &&
+        Boolean(
+          element.compareDocumentPosition(recoveryActions) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+        )
+      );
+    }),
+  ).toBe(true);
+
+  const links = await recovery.locator("a").evaluateAll((elements) =>
+    elements.map((element) => ({
+      href: element.getAttribute("href"),
+      label: element.textContent?.trim(),
+    })),
+  );
+  expect(links).toEqual([
+    { href: "/", label: "Home" },
+    { href: "/articles/", label: "Guides" },
+    { href: "/categories/", label: "Topics" },
+    { href: "/toolkit/", label: "Toolkit" },
+  ]);
+});
+
+test("spatial pages preserve the zero-executable-script contract", async ({
+  page,
+}) => {
+  for (const route of [
+    "/",
+    articlePath,
+    toolkitDetailPath,
+    "/purple-signal-page-not-found/",
+  ]) {
+    const response = await page.goto(route);
+    expect(response?.status(), route).toBe(
+      route === "/purple-signal-page-not-found/" ? 404 : 200,
+    );
+    await expect(page.locator("script[src]"), route).toHaveCount(0);
+    await expect(
+      page.locator('script:not([type="application/ld+json"])'),
+      route,
+    ).toHaveCount(0);
+  }
+});
+
+test("reduced motion leaves every spatial enhancement static", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  const signalStyles = await page
+    .locator("[data-signal-plane]")
+    .evaluateAll((elements) =>
+      elements.map((element) => {
+        const style = getComputedStyle(element);
+        return {
+          animationDuration: style.animationDuration,
+          transform: style.transform,
+          transitionDuration: style.transitionDuration,
+        };
+      }),
+    );
+  expect(
+    signalStyles.every(
+      ({ animationDuration, transform, transitionDuration }) =>
+        Number.parseFloat(animationDuration) <= 0.000001 &&
+        transform === "none" &&
+        Number.parseFloat(transitionDuration) <= 0.000001,
+    ),
+  ).toBe(true);
+
+  await page.goto(articlePath);
+  await expect(page.locator("[data-reading-progress]")).toHaveCSS(
+    "display",
+    "none",
+  );
+});
+
+for (const width of spatialWidths) {
+  test(`spatial route families stay balanced at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+
+    for (const route of ["/", articlePath, toolkitDetailPath, "/404.html"]) {
+      await page.goto(route);
+      const geometry = await page.locator("main").evaluate((main) => {
+        const box = main.getBoundingClientRect();
+        return {
+          documentOverflow:
+            document.documentElement.scrollWidth - window.innerWidth,
+          mainLeft: box.left,
+          mainRight: box.right,
+          visibleSpatialOverflow: Array.from(
+            main.querySelectorAll<HTMLElement>(
+              "[data-signal-field], [data-reading-progress], [data-toolkit-structure]",
+            ),
+          )
+            .filter((element) => element.getClientRects().length > 0)
+            .map((element) => {
+              const spatialBox = element.getBoundingClientRect();
+              return {
+                left: spatialBox.left,
+                right: spatialBox.right,
+              };
+            }),
+        };
+      });
+
+      expect(geometry.documentOverflow, route).toBeLessThanOrEqual(0);
+      expect(geometry.mainLeft, route).toBeGreaterThanOrEqual(-1);
+      expect(geometry.mainRight, route).toBeLessThanOrEqual(width + 1);
+      for (const item of geometry.visibleSpatialOverflow) {
+        expect(item.left, route).toBeGreaterThanOrEqual(-1);
+        expect(item.right, route).toBeLessThanOrEqual(width + 1);
+      }
+    }
+  });
+}

@@ -1,5 +1,6 @@
 ---
 import Breadcrumbs from "../components/Breadcrumbs.astro";
+import ToolkitStructurePreview from "../components/ToolkitStructurePreview.astro";
 import type { ToolkitResource } from "../data/toolkit";
 import { site } from "../data/site";
 import BaseLayout from "./BaseLayout.astro";
@@ -41,6 +42,8 @@ const description = resource.purpose;
           }
         </nav>
       </header>
+
+      <ToolkitStructurePreview resource={resource} />
 
       <section aria-labelledby={`${resource.id}-purpose`}>
         <h2 id={`${resource.id}-purpose`}>Purpose</h2>

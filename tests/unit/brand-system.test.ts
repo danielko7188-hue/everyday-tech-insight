@@ -10,6 +10,9 @@ const css = readFileSync(
   "utf8",
 );
 
+const source = (path: string) =>
+  readFileSync(join(process.cwd(), ...path.split("/")), "utf8");
+
 const requiredTokens = {
   "--brand-night": "#0d0618",
   "--brand-deep": "#17102a",
@@ -117,6 +120,65 @@ describe("Purple Signal brand system", () => {
       /\.surface-light[\s\S]*:focus-visible[\s\S]*--brand-focus-light/,
     );
     expect(css).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
+  });
+
+  it("defines the semantic 4px-derived spatial spacing contract", () => {
+    const semanticSpacing = {
+      "--space-section-mobile": "var\\(--space-12\\)",
+      "--space-section-tablet": "var\\(--space-16\\)",
+      "--space-section-wide": "var\\(--space-20\\)",
+      "--space-heading-body": "var\\(--space-6\\)",
+      "--space-card-major": "var\\(--space-6\\)",
+      "--space-card-compact": "var\\(--space-5\\)",
+      "--space-grid-standard": "var\\(--space-6\\)",
+      "--space-grid-compact": "var\\(--space-4\\)",
+    } as const;
+
+    for (const [name, value] of Object.entries(semanticSpacing)) {
+      expect(css, name).toMatch(new RegExp(`${name}\\s*:\\s*${value}\\s*;`));
+    }
+  });
+
+  it("uses native static-first spatial motion with complete fallback controls", () => {
+    expect(css).toMatch(
+      /@view-transition\s*\{\s*navigation\s*:\s*auto\s*;\s*\}/,
+    );
+    expect(css).toMatch(/@media\s*\(prefers-reduced-motion:\s*no-preference\)/);
+    expect(css).toMatch(/@supports\s*\(animation-timeline:\s*scroll\(\)\)/);
+    expect(css).toMatch(/@supports\s*\(animation-timeline:\s*view\(\)\)/);
+    expect(css).toMatch(/@media\s*\(prefers-reduced-data:\s*reduce\)/);
+    expect(css).toMatch(/@media\s*\(pointer:\s*coarse\)/);
+    expect(css).toMatch(/@media\s*\(update:\s*slow\)/);
+    expect(css).not.toMatch(
+      /animation(?:-iteration-count)?\s*:[^;]*\binfinite\b/i,
+    );
+
+    const noPreferenceBlock = css.match(
+      /@media\s*\(prefers-reduced-motion:\s*no-preference\)\s*\{[\s\S]*?(?=\n@media|\s*$)/,
+    )?.[0];
+    expect(noPreferenceBlock).toBeTruthy();
+    expect(noPreferenceBlock).toMatch(/::view-transition-old\(root\)/);
+    expect(noPreferenceBlock).toMatch(/::view-transition-new\(root\)/);
+    expect(noPreferenceBlock).toMatch(/200ms/);
+  });
+
+  it("keeps spatial components local, inert, and free of executable scripts", () => {
+    for (const path of [
+      "src/components/SignalField.astro",
+      "src/components/ReadingProgress.astro",
+      "src/components/ToolkitStructurePreview.astro",
+    ]) {
+      const component = source(path);
+      expect(component, path).not.toMatch(/<script(?:\s|>)/i);
+      expect(component, path).not.toMatch(
+        /ClientRouter|three|webgl|lenis|motion/i,
+      );
+    }
+
+    const signal = source("src/components/SignalField.astro");
+    expect(signal).toContain("data-signal-field");
+    expect(signal).not.toContain("data-editorial-visual");
+    expect(signal).not.toMatch(/<use(?:\s|>)/i);
   });
 
   it("removes the retired orange and beige visual palette", () => {

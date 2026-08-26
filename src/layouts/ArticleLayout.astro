@@ -7,6 +7,7 @@ import Breadcrumbs from "../components/Breadcrumbs.astro";
 import EditorialVisual from "../components/EditorialVisual.astro";
 import FitSummary from "../components/FitSummary.astro";
 import GuidePreparation from "../components/GuidePreparation.astro";
+import ReadingProgress from "../components/ReadingProgress.astro";
 import SourceList from "../components/SourceList.astro";
 import StoryMeta from "../components/StoryMeta.astro";
 import TableOfContents from "../components/TableOfContents.astro";
@@ -72,6 +73,7 @@ const formatDate = (date: string) =>
     />
 
     <article class="article-page">
+      <ReadingProgress />
       <header
         class="article-hero"
         data-category={category.slug}

@@ -1,4 +1,5 @@
 ---
+import SignalField from "../components/SignalField.astro";
 import { trustPages } from "../data/trust-pages";
 import TrustPageLayout from "../layouts/TrustPageLayout.astro";
 
@@ -6,9 +7,11 @@ const page = trustPages.notFound;
 ---
 
 <TrustPageLayout page={page}>
+  <SignalField variant="compact" />
   <nav class="not-found-actions" aria-label="Continue browsing">
     <a href="/">Home</a>
     <a href="/articles/">Guides</a>
     <a href="/categories/">Topics</a>
+    <a href="/toolkit/">Toolkit</a>
   </nav>
 </TrustPageLayout>
