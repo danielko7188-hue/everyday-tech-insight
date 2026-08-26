@@ -263,6 +263,14 @@ describe("static deployment configuration", () => {
     expect(vercelConfig).not.toHaveProperty("redirects");
   });
 
+  it("uses a clean deterministic dependency install on Vercel", () => {
+    const vercelConfig = readJson("../../vercel.json") as {
+      installCommand?: string;
+    };
+
+    expect(vercelConfig.installCommand).toBe("npm ci");
+  });
+
   it("does not allow inline executable scripts in the production CSP", () => {
     const vercelConfig = readJson("../../vercel.json") as {
       headers?: Array<{
