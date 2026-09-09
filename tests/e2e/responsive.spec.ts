@@ -854,98 +854,129 @@ test("mobile menu uses a short CSS-only reveal and removes it for reduced motion
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/");
-  // Measure a painted closed state so the first opening can transition from it.
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    for (let frame = 0; frame < 2; frame += 1) {
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() => resolve()),
-      );
-    }
-  });
+  for (const inputMethod of ["pointer", "keyboard"] as const) {
+    await test.step(inputMethod, async () => {
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      await page.goto("/");
+      // Measure a painted closed state so the first opening can transition from it.
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        for (let frame = 0; frame < 2; frame += 1) {
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => resolve()),
+          );
+        }
+      });
 
-  const menu = page.locator(".site-header__mobile-menu");
-  const reveal = await menu.evaluate((details) => {
-    const style = getComputedStyle(details, "::details-content");
-    return {
-      duration: Math.max(
-        ...style.transitionDuration
-          .split(",")
-          .map(
-            (value) =>
-              Number.parseFloat(value) * (value.includes("ms") ? 1 : 1000),
+      const menu = page.locator(".site-header__mobile-menu");
+      const reveal = await menu.evaluate((details) => {
+        const style = getComputedStyle(details, "::details-content");
+        return {
+          duration: Math.max(
+            ...style.transitionDuration
+              .split(",")
+              .map(
+                (value) =>
+                  Number.parseFloat(value) * (value.includes("ms") ? 1 : 1000),
+              ),
           ),
-      ),
-      properties: style.transitionProperty
-        .split(",")
-        .map((value) => value.trim()),
-      supported: CSS.supports("selector(details::details-content)"),
-    };
-  });
+          properties: style.transitionProperty
+            .split(",")
+            .map((value) => value.trim()),
+          supported: CSS.supports("selector(details::details-content)"),
+        };
+      });
 
-  expect(reveal.supported).toBe(true);
-  expect(reveal.duration).toBeGreaterThan(0);
-  expect(reveal.duration).toBeLessThanOrEqual(200);
-  expect(reveal.properties).toEqual(
-    expect.arrayContaining(["block-size", "opacity"]),
-  );
-
-  const revealFrames = await menu.evaluate(async (details) => {
-    const detailsElement = details as HTMLDetailsElement;
-    const readFrame = () => {
-      const style = getComputedStyle(detailsElement, "::details-content");
-      return {
-        blockSize: Number.parseFloat(style.blockSize),
-        opacity: Number.parseFloat(style.opacity),
-      };
-    };
-    const closed = readFrame();
-    detailsElement.querySelector("summary")?.click();
-    const opening = [];
-    for (let frame = 0; frame < 12; frame += 1) {
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() => resolve()),
+      expect(reveal.supported).toBe(true);
+      expect(reveal.duration).toBeGreaterThan(0);
+      expect(reveal.duration).toBeLessThanOrEqual(200);
+      expect(reveal.properties).toEqual(
+        expect.arrayContaining(["block-size", "opacity"]),
       );
-      opening.push(readFrame());
-    }
-    await new Promise((resolve) => setTimeout(resolve, 220));
-    return {
-      closed,
-      opening,
-      opened: readFrame(),
-      open: detailsElement.open,
-    };
-  });
 
-  expect(revealFrames.open).toBe(true);
-  expect(revealFrames.closed.blockSize).toBe(0);
-  expect(revealFrames.closed.opacity).toBe(0);
-  expect(
-    revealFrames.opening.some(
-      ({ blockSize }) =>
-        blockSize > 0 && blockSize < revealFrames.opened.blockSize,
-    ),
-  ).toBe(true);
-  expect(
-    revealFrames.opening.some(({ opacity }) => opacity > 0 && opacity < 1),
-  ).toBe(true);
-  expect(revealFrames.opened.opacity).toBe(1);
-  await expect(menu.locator("nav")).toBeVisible();
+      const revealProbe = await menu.evaluateHandle((details) => {
+        const detailsElement = details as HTMLDetailsElement;
+        const readFrame = () => {
+          const style = getComputedStyle(detailsElement, "::details-content");
+          return {
+            blockSize: Number.parseFloat(style.blockSize),
+            opacity: Number.parseFloat(style.opacity),
+          };
+        };
+        const closed = readFrame();
+        type Frame = ReturnType<typeof readFrame>;
+        const completion = new Promise<{
+          opening: Frame[];
+          opened: Frame;
+          open: boolean;
+          trusted: boolean;
+        }>((resolve) => {
+          detailsElement.querySelector("summary")!.addEventListener(
+            "click",
+            async (event) => {
+              const opening: Frame[] = [];
+              for (let frame = 0; frame < 12; frame += 1) {
+                await new Promise<void>((next) =>
+                  requestAnimationFrame(() => next()),
+                );
+                opening.push(readFrame());
+              }
+              await new Promise((next) => setTimeout(next, 220));
+              resolve({
+                opening,
+                opened: readFrame(),
+                open: detailsElement.open,
+                trusted: event.isTrusted,
+              });
+            },
+            { once: true },
+          );
+        });
+        return { closed, completion };
+      });
+      // Native focus and input are part of the user's interaction. A synthetic DOM
+      // click bypasses them and can skip Chromium's first ::details-content transition.
+      if (inputMethod === "pointer") await menu.locator("summary").click();
+      else {
+        await menu.locator("summary").focus();
+        await page.keyboard.press("Enter");
+      }
+      const revealFrames = await revealProbe.evaluate(async (probe) => ({
+        closed: probe.closed,
+        ...(await probe.completion),
+      }));
+      await revealProbe.dispose();
 
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  const reducedDuration = await menu.evaluate((details) =>
-    Math.max(
-      ...getComputedStyle(details, "::details-content")
-        .transitionDuration.split(",")
-        .map(
-          (value) =>
-            Number.parseFloat(value) * (value.includes("ms") ? 1 : 1000),
+      expect(revealFrames.trusted).toBe(true);
+      expect(revealFrames.open).toBe(true);
+      expect(revealFrames.closed.blockSize).toBe(0);
+      expect(revealFrames.closed.opacity).toBe(0);
+      expect(
+        revealFrames.opening.some(
+          ({ blockSize }) =>
+            blockSize > 0 && blockSize < revealFrames.opened.blockSize,
         ),
-    ),
-  );
-  expect(reducedDuration).toBeLessThanOrEqual(0.001);
+      ).toBe(true);
+      expect(
+        revealFrames.opening.some(({ opacity }) => opacity > 0 && opacity < 1),
+      ).toBe(true);
+      expect(revealFrames.opened.opacity).toBe(1);
+      await expect(menu.locator("nav")).toBeVisible();
+
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      const reducedDuration = await menu.evaluate((details) =>
+        Math.max(
+          ...getComputedStyle(details, "::details-content")
+            .transitionDuration.split(",")
+            .map(
+              (value) =>
+                Number.parseFloat(value) * (value.includes("ms") ? 1 : 1000),
+            ),
+        ),
+      );
+      expect(reducedDuration).toBeLessThanOrEqual(0.001);
+    });
+  }
 });
 
 test("open mobile menu keeps its control anchored while expanding an opaque panel below", async ({
