@@ -72,39 +72,43 @@ const storyDate = resolveStoryDate(article.data, dateMode);
   }
 
   <div class="article-card__copy">
-    <StoryMeta
-      categoryName={category.name}
-      categorySlug={category.slug}
-      contentType={article.data.contentType}
-      publicationDate={storyDate.date}
-      dateLabel={storyDate.label}
-      readingMinutes={readingMinutes}
-      compact={treatment.compactMeta}
-      showContentType={showFullMeta || variant !== "compact"}
-      showDate={showDate}
-      showCategory={!hideCategory}
-    />
-    <Heading class="article-card__title">
-      <a href={`/articles/${article.data.slug}/`}>
-        {article.data.title}{" "}<span
-          class="article-card__link-indicator"
-          aria-hidden="true">→</span
-        >
-      </a>
-    </Heading>
-    {
-      treatment.showPromise && (
-        <p class="article-card__promise">{article.data.guidePromise}</p>
-      )
-    }
-    {
-      treatment.showDeliverable && (
-        <p class="article-card__deliverable">
-          <strong>What you will produce</strong>
-          <span>{article.data.deliverable}</span>
-        </p>
-      )
-    }
+    <div class="article-card__heading">
+      <StoryMeta
+        categoryName={category.name}
+        categorySlug={category.slug}
+        contentType={article.data.contentType}
+        publicationDate={storyDate.date}
+        dateLabel={storyDate.label}
+        readingMinutes={readingMinutes}
+        compact={treatment.compactMeta}
+        showContentType={showFullMeta || variant !== "compact"}
+        showDate={showDate}
+        showCategory={!hideCategory}
+      />
+      <Heading class="article-card__title">
+        <a href={`/articles/${article.data.slug}/`}>
+          {article.data.title}{" "}<span
+            class="article-card__link-indicator"
+            aria-hidden="true">→</span
+          >
+        </a>
+      </Heading>
+    </div>
+    <div class="article-card__details">
+      {
+        treatment.showPromise && (
+          <p class="article-card__promise">{article.data.guidePromise}</p>
+        )
+      }
+      {
+        treatment.showDeliverable && (
+          <p class="article-card__deliverable">
+            <strong>What you will produce</strong>
+            <span>{article.data.deliverable}</span>
+          </p>
+        )
+      }
+    </div>
   </div>
   {
     cover && (

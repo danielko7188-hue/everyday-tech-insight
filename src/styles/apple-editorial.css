@@ -212,6 +212,11 @@ body .site-header__mark .publication-mark__name {
   gap: 2.5rem;
 }
 
+.article-card__heading,
+.article-card__details {
+  display: contents;
+}
+
 /* Covers carry atmosphere; the title is the only story link. */
 .editorial-cover {
   min-inline-size: 0;
@@ -239,7 +244,7 @@ body .site-header__mark .publication-mark__name {
 .editorial-cover figcaption {
   padding-block: 0.625rem 0;
   color: var(--color-muted);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 1.4;
 }
 
@@ -770,6 +775,44 @@ body .site-header__mark .publication-mark__name {
   }
 }
 
+@media (max-width: 56.24rem) {
+  :is(.home-opening, .category-compact)
+    .article-card--lead
+    .article-card__copy {
+    display: contents;
+  }
+
+  :is(.home-opening, .category-compact)
+    .article-card--lead
+    :is(.article-card__heading, .article-card__details) {
+    display: block;
+    min-inline-size: 0;
+    padding: 1.5rem;
+  }
+
+  .article-card--lead .article-card__heading {
+    grid-row: 1;
+  }
+
+  .article-card--lead .editorial-cover {
+    grid-row: 2;
+  }
+
+  .article-card--lead .article-card__details {
+    grid-row: 3;
+  }
+
+  :is(.home-opening, .category-compact)
+    .article-card--lead
+    .article-card__title {
+    margin-block-end: 0;
+  }
+
+  .article-card--lead .editorial-cover figcaption {
+    padding-block-end: 0;
+  }
+}
+
 @media (max-width: 22.49rem) {
   :root {
     --page-gutter: 1rem;
@@ -782,6 +825,12 @@ body .site-header__mark .publication-mark__name {
   :is(.home-opening, .category-compact)
     .article-card--lead
     .article-card__copy {
+    padding: 1.25rem;
+  }
+
+  :is(.home-opening, .category-compact)
+    .article-card--lead
+    :is(.article-card__heading, .article-card__details) {
     padding: 1.25rem;
   }
 }
