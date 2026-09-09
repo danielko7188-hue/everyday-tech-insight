@@ -182,11 +182,11 @@ describe("homepage Toolkit selection", () => {
 describe("category accents", () => {
   it("uses one exact accent registry for every category record", () => {
     expect(categoryAccents).toEqual({
-      "ai-automation": "#6e3cbc",
+      "ai-automation": "#0066cc",
       "business-software": "#0066cc",
-      "cybersecurity-data-protection": "#216e4e",
-      "digital-operations": "#9a4a00",
-      "technology-strategy": "#4141a5",
+      "cybersecurity-data-protection": "#0066cc",
+      "digital-operations": "#0066cc",
+      "technology-strategy": "#0066cc",
     } satisfies Record<CategorySlug, string>);
     expect(
       Object.fromEntries(categories.map(({ slug, accent }) => [slug, accent])),

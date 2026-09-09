@@ -10,9 +10,9 @@ Implemented surfaces include the local `SignalField` on the homepage and 404, CS
 
 ## Current publication boundary
 
-The September 9, 2026 Editorial Clarity revision supersedes the August purple visual direction only. Light neutral surfaces, Source Sans 3 typography, restrained blue links, quieter navigation, generous spacing, and original decorative artwork establish the new identity. This is an independent publication design inspired by Apple's visual restraint, not an Apple clone or affiliation. The nine-guide homepage, informative article diagrams, owner-only publishing controls, and monetization-off state remain intact.
+The September 9, 2026 Apple editorial direction supersedes the remaining purple category accents, boxed introductions and narrow interface typography of the earlier Editorial Clarity revision. Native Apple-style sans typography, a neutral-blue palette, unboxed topic introductions, restrained controls and purposeful spacing define the current direction. The licensed local Source Sans font remains available for explanatory diagrams and deterministic social-image generation. This is an independent publication, not an Apple clone or affiliation. The nine-guide homepage, informative article diagrams, owner-only publishing controls, and monetization-off state remain intact.
 
-See the [design contract](docs/DESIGN_REDESIGN_2026-09-09.md), [artwork provenance](docs/EDITORIAL_ART_PROVENANCE_2026-09-09.md), and [current AdSense review](docs/ADSENSE_REVIEW_2026-09-09.md). Four articles received substantive clarity or worked-example updates. Fresh release checks and exact-SHA deployment evidence are required for this revision; the August observations below do not certify it.
+See the [current design contract](docs/superpowers/specs/2026-09-09-apple-editorial-direction-design.md), [artwork provenance](docs/EDITORIAL_ART_PROVENANCE_2026-09-09.md), and [current AdSense review](docs/ADSENSE_REVIEW_2026-09-09.md). Four articles received substantive clarity or worked-example updates in the earlier September release. Fresh release checks and exact-SHA deployment evidence are required for this revision; earlier observations do not certify it.
 
 - Public byline: `Everyday Tech Insight`, a publication name only.
 - Production canonical: `https://everyday-tech-insight.vercel.app/`.

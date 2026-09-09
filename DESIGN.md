@@ -1,8 +1,8 @@
 # Everyday Tech Insight Design System
 
-## Current direction — Editorial Clarity, September 9, 2026
+## Current direction — Apple editorial, September 9, 2026
 
-The owner requested an Apple-inspired shift toward visual restraint. The current design contract is [Editorial Clarity](docs/DESIGN_REDESIGN_2026-09-09.md): white and light-gray surfaces, charcoal text, restrained blue controls, Source Sans 3 throughout, clear hierarchy, generous spacing, and original decorative concept art. This supersedes the palette, serif typography, dark chrome, and homepage decoration described below. It does not supersede accessibility, truthful content, owner-only publishing, or monetization safeguards. Apple trademarks and assets are not used.
+The owner explicitly requested removal of the remaining WEKA-like styling and a closer apple.com feel. The current [Apple editorial contract](docs/superpowers/specs/2026-09-09-apple-editorial-direction-design.md) uses native Apple-style sans typography, white and light-gray surfaces, charcoal text, blue-only category/action accents, unboxed topic introductions and restrained resource controls. It supersedes the narrow interface typography, colored motifs and repeated containers of the earlier [Editorial Clarity contract](docs/DESIGN_REDESIGN_2026-09-09.md), as well as the historical August styling below. Licensed Source Sans remains for diagram and generated-image metrics. Accessibility, truthful content, owner-only publishing and monetization safeguards are unchanged. Apple trademarks, imagery and proprietary web fonts are not copied.
 
 ## Historical August design contract
 
