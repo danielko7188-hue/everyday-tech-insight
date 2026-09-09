@@ -15,6 +15,7 @@ intendedAudience: "Small-business decision makers comparing software options or 
 readerOutcome: "Produce a transparent cost range for a defined period, show major assumptions and cost drivers, and compare options on the same operating scenario."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
+dateModified: "2026-09-09"
 featured: true
 summary: "Choose a horizon, model normal and stress scenarios, include loaded labor, and show contingent exit exposure separately unless exit occurs within the horizon."
 visual:
@@ -146,6 +147,24 @@ Place contingent exit exposure in a separate line outside the scenario total whe
 
 Highlight the variables that change the decision: adoption, migration complexity, required plan tier, internal support time, integration count, growth, and exit difficulty. Do not let a precise spreadsheet hide weak inputs.
 
+## Worked example: the lower subscription is not the lower total
+
+**Illustrative assumptions, not vendor prices or measured business results.** A team is comparing two fictional services for 12 users over 36 months. Assume the seat count and prices stay constant, both meet the same essential requirements, and internal work is valued at a loaded rate of $40 per hour.
+
+| Three-year cost                                                          |    Option A |    Option B |
+| ------------------------------------------------------------------------ | ----------: | ----------: |
+| Monthly subscription per user                                            |         $18 |         $26 |
+| Licenses: 12 users × monthly price × 36 months                           |      $7,776 |     $11,232 |
+| Setup: 80 hours for A, 30 hours for B, at $40/hour                       |      $3,200 |      $1,200 |
+| Administration: 6 hours/month for A, 2 for B, at $40/hour, for 36 months |      $8,640 |      $2,880 |
+| Modeled cost including internal labor                                    | **$19,616** | **$15,312** |
+
+Option B costs $3,456 more in subscriptions, but the assumed setup and administration effort costs $7,760 less. Its modeled total is therefore $4,304 lower. Internal labor is a capacity cost here; reducing it does not automatically produce an equivalent cash saving.
+
+The conclusion depends on those effort estimates. If both options instead require two hours of administration per month, A's total becomes $13,856 and B remains $15,312: A is then $1,456 lower. That reversal identifies the next useful test—measure the recurring administrative work in a pilot before treating B's apparent advantage as established.
+
+This simplified example excludes taxes, discounts, add-ons, growth, downtime, price changes, and accounting treatment. It assumes continued use throughout the period, so no exit occurs within the total. A real comparison must add applicable costs and report contingent exit exposure separately. Replace each illustrative input with a quote, observed workload, or clearly recorded assumption.
+
 ## Pair cost with outcome and risk
 
 Lowest total cost is not always best. Compare the cost range with the required business outcome, evidence from a pilot, security and privacy gates, accessibility, resilience, and strategic dependence. A candidate that fails a must-have control should not win because its average cost is lower.
@@ -157,3 +176,5 @@ Document who owns the estimate, source date, quote validity, exclusions, and app
 This framework does not determine accounting treatment, tax effects, legal obligations, future vendor pricing, or actual productivity gains. It is not a substitute for an accountant, lawyer, security specialist, or current contract review. NIST cloud guidance does not validate a provider’s portability.
 
 The honest result is a transparent range tied to a defined operating scenario. Leaders should be able to trace every important number to a quote, observed task, measured sample, or clearly labeled assumption.
+
+_Updated September 9, 2026: Added a fictional cost comparison and sensitivity check to demonstrate how labor assumptions can change the decision._

@@ -888,10 +888,14 @@ describe("publication operating guide", () => {
       "utf8",
     );
     const disclosure =
-      "Everyday Tech Insight is a publication-name byline, not an identified person or legal organization; the name never represents a person.";
+      "Everyday Tech Insight is the publication-name byline for these guides, not an individual author.";
 
     expect(layout.replace(/\s+/g, " ").split(disclosure)).toHaveLength(2);
     expect(layout.match(/byline-notice/g)).toHaveLength(1);
+    expect(layout).toMatch(/href="\/editorial-standards\/"/);
+    expect(layout).toMatch(
+      /source selection, AI assistance, and review limitations/,
+    );
     expect(layout).not.toMatch(/@type["']?\s*:\s*["'](?:Person|Organization)/);
   });
 

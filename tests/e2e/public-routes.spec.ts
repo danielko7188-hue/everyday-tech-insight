@@ -15,6 +15,8 @@ import {
   selectFeaturedToolkitResource,
 } from "../../src/data/editorial";
 import { toolkitResources } from "../../src/data/toolkit";
+import { estimateReadingTime } from "../../src/utils/presentation";
+import { expectedArticleTableCount } from "./helpers/article-tables";
 
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
 
@@ -126,6 +128,7 @@ const toolkitRouteExpectations = [
 }));
 
 interface ArticleSourceRecord {
+  body: string;
   data: {
     status: string;
     category: string;
@@ -260,7 +263,11 @@ test("home explains the publication and links all five categories", async ({
     }),
   ).toBeVisible();
   await expect(page.getByText(/source-backed guides/i).first()).toBeVisible();
-  await expect(page.getByText(/without product hype/i)).toBeVisible();
+  await expect(
+    page.locator(".home-opening__promise .lead-summary"),
+  ).toContainText(
+    /choose better software, protect business data, and put technology to work/i,
+  );
   await expect(page.getByText(/independent, source-backed/i)).toHaveCount(0);
 
   for (const category of categories) {
@@ -270,7 +277,7 @@ test("home explains the publication and links all five categories", async ({
   }
 });
 
-test("Purple Signal home uses one lead, two supports, nine guide destinations, and five topic motifs", async ({
+test("Editorial Clarity home uses one lead, two supports, nine guide destinations, and five topic motifs", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -297,7 +304,39 @@ test("Purple Signal home uses one lead, two supports, nine guide destinations, a
     const box = await visual.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.height).toBeGreaterThanOrEqual(96);
-    expect(box!.height).toBeLessThanOrEqual(240);
+    expect(box!.height).toBeLessThanOrEqual(360);
+    await expect(visual.locator("svg.editorial-visual")).toHaveAttribute(
+      "preserveAspectRatio",
+      "xMidYMid meet",
+    );
+    const proportions = await visual
+      .locator("svg.editorial-visual")
+      .evaluate((svg) => {
+        const box = svg.getBoundingClientRect();
+        const viewBox = (svg as SVGSVGElement).viewBox.baseVal;
+        const matrix = (svg as SVGSVGElement).getScreenCTM()!;
+        const topLeft = new DOMPoint(viewBox.x, viewBox.y).matrixTransform(
+          matrix,
+        );
+        const bottomRight = new DOMPoint(
+          viewBox.x + viewBox.width,
+          viewBox.y + viewBox.height,
+        ).matrixTransform(matrix);
+        return {
+          scaleX: matrix.a,
+          scaleY: matrix.d,
+          left: topLeft.x,
+          top: topLeft.y,
+          right: bottomRight.x,
+          bottom: bottomRight.y,
+          box,
+        };
+      });
+    expect(proportions.scaleX).toBeCloseTo(proportions.scaleY, 4);
+    expect(proportions.left).toBeGreaterThanOrEqual(proportions.box.left - 1);
+    expect(proportions.top).toBeGreaterThanOrEqual(proportions.box.top - 1);
+    expect(proportions.right).toBeLessThanOrEqual(proportions.box.right + 1);
+    expect(proportions.bottom).toBeLessThanOrEqual(proportions.box.bottom + 1);
   }
 
   const homeArticleHrefs = await page
@@ -660,7 +699,7 @@ test("home publishes only the approved nine-guide curation", async ({
   ).toBe(true);
 
   const featuredGuidance = page.getByRole("region", {
-    name: "Featured guidance",
+    name: "A clearer place to start.",
   });
   const latestGuides = page.getByRole("region", {
     name: "Latest guides",
@@ -947,7 +986,7 @@ test("category directory visuals resolve their local symbol definitions", async 
   ).toHaveCount(0);
   await expect(
     page.getByText(
-      "Each topic keeps every published guide together around a distinct decision focus.",
+      "Find practical guidance on software, automation, security, daily operations, and technology planning.",
     ),
   ).toBeVisible();
   await expect(page.getByText(/every reviewed, published guide/i)).toHaveCount(
@@ -1138,7 +1177,7 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
   await expect(hero.locator("[data-editorial-visual]")).toBeVisible();
   await expect(hero.locator("svg.editorial-visual")).toHaveAttribute(
     "preserveAspectRatio",
-    "xMidYMid slice",
+    "xMidYMid meet",
   );
   const { visual } = representativeArticleMetadata!;
   const informativeVisual = hero.locator(
@@ -1168,16 +1207,25 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
   }
 
   const storyMeta = hero.getByRole("list", { name: "Story details" });
-  await expect(storyMeta).toContainText(
+  await expect(storyMeta.locator(".story-meta__type")).toHaveText(
     representativeArticle!.data.contentType.replace(/^./, (value) =>
       value.toUpperCase(),
     ),
   );
-  await expect(storyMeta).toContainText(/\b\d+ min read\b/);
+  const readingTime = storyMeta
+    .getByRole("listitem")
+    .filter({ hasText: /^\d+ min read$/ });
+  await expect(readingTime).toHaveCount(1);
+  await expect(readingTime).toHaveText(
+    `${estimateReadingTime(representativeArticle!.body)} min read`,
+  );
+  await expect(storyMeta.locator("time")).toHaveCount(0);
   await expect(
-    storyMeta.locator(
-      `time[datetime="${representativeArticleMetadata!.datePublished}"]`,
-    ),
+    hero
+      .locator(".article-facts")
+      .locator(
+        `time[datetime="${representativeArticleMetadata!.datePublished}"]`,
+      ),
   ).toHaveCount(1);
   await expect(
     storyMeta.getByRole("link", { name: representativeCategory!.name }),
@@ -1193,11 +1241,18 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
     }),
   ).toBeVisible();
   await expect(article.getByRole("region", { name: "Sources" })).toBeVisible();
-  await expect(
-    article.getByRole("region", { name: "About the publication byline" }),
-  ).toContainText(
-    /publication-name byline.*not.*identified person.*legal organization.*never represents a person/i,
+  const bylineBox = article.getByRole("region", {
+    name: "About the publication byline",
+  });
+  await expect(bylineBox).toContainText(
+    /publication-name byline for these guides, not an individual author/i,
   );
+  await expect(bylineBox).toContainText(
+    /AI assistance, and review limitations/i,
+  );
+  await expect(
+    bylineBox.getByRole("link", { name: "Read about our editorial approach" }),
+  ).toHaveAttribute("href", "/editorial-standards/");
 
   const relatedGuides = article.locator("section.related-articles");
   const publishedSlugs = new Set(
@@ -1319,13 +1374,13 @@ test("article explains its preparation method without implying human or first-ha
   await expect(preparation).toContainText(
     `${representativeArticle!.data.sourceList.length} cited sources`,
   );
-  await expect(preparation).toContainText(/recorded source access date/i);
+  await expect(preparation).toContainText(/source access dates?:/i);
   await expect(preparation).toContainText(/editorial synthesis/i);
   await expect(preparation).toContainText(
     /does not report first-hand product testing.*completed business result/i,
   );
   await expect(preparation).toContainText(
-    /does not establish human or expert approval/i,
+    /consult the editorial standards for AI assistance and the current human-review limitations/i,
   );
   await expect(preparation.locator("time")).toHaveCount(
     new Set(
@@ -1430,8 +1485,14 @@ test("publication byline links to its truthful profile and published article ind
     name: "About the publication byline",
   });
   await expect(bylineBox).toContainText(
-    /publication-name byline.*not.*identified person.*legal organization.*never represents a person/i,
+    /publication-name byline for these guides, not an individual author/i,
   );
+  await expect(bylineBox).toContainText(
+    /AI assistance, and review limitations/i,
+  );
+  await expect(
+    bylineBox.getByRole("link", { name: "Read about our editorial approach" }),
+  ).toHaveAttribute("href", "/editorial-standards/");
   await expect(
     bylineBox.getByRole("link", { name: "Contact" }),
   ).toHaveAttribute("href", "/contact/");
@@ -1460,7 +1521,7 @@ test("publisher intro foregrounds its audience and practical guides", async ({
   );
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    /small-business decision makers.*published practical technology guides/i,
+    /practical technology guides.*publication byline.*editorial contact channel/i,
   );
   const intro = page.locator(".trust-page__intro");
   await expect(intro.locator(".eyebrow")).toHaveText(
@@ -1489,7 +1550,7 @@ test("publisher lists published work before its identity boundary", async ({
   await expect(identity).toHaveCount(1);
   await expect(
     identity.locator("#publisher-identity-boundary-heading"),
-  ).toHaveText("Publication identity boundary");
+  ).toHaveText("The publication byline");
 
   const publishedPrecedesIdentity = await published.evaluate(
     (publishedSection, identitySelector) => {
@@ -1532,36 +1593,39 @@ test("trust pages are reachable and state the public evidence boundary", async (
 
   await page.goto("/publisher/");
   await expect(
-    page.getByText(/publication name, not a legal entity/i),
+    page.getByText(/publication-name byline.*rather than a named author/i),
   ).toBeVisible();
-  await expect(page.getByText(/does not claim.*credentials/i)).toBeVisible();
+  await expect(
+    page.getByText(/do not report first-hand product testing/i),
+  ).toBeVisible();
 
   await page.goto("/privacy/");
   await expect(
+    page.getByText(/own code does not load analytics or advertising services/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Vercel processing request, device, network, diagnostic/i),
+  ).toBeVisible();
+  await expect(
     page.getByText(
-      /validated integration state disables both analytics and advertising/i,
+      /does not set cookies or store information in your browser's local or session storage/i,
     ),
   ).toBeVisible();
   await expect(
-    page.getByText(/does not load analytics or advertising services/i),
-  ).toBeVisible();
-  await expect(
-    page.getByText(/Vercel may process request, device, network, diagnostic/i),
-  ).toBeVisible();
-  await expect(
-    page.getByText(/implementation state dated August 25, 2026/i),
-  ).toBeVisible();
-  await expect(page.getByText(/reviewed on August 25, 2026/i)).toHaveCount(0);
+    page.getByText(/reviewed on|implementation state dated/i),
+  ).toHaveCount(0);
 
   await page.goto("/advertising-disclosure/");
   await expect(
-    page.getByText(/does not currently run advertising/i),
+    page.getByText(/Display advertising is disabled/i),
   ).toBeVisible();
   await expect(
     page.getByText(/no affiliate-link.*integrations/i),
   ).toBeVisible();
   await expect(
-    page.getByText(/does not establish.*off-site compensation.*product/i),
+    page.getByText(
+      /does not establish the existence or absence of arrangements outside it/i,
+    ),
   ).toBeVisible();
 
   await page.goto("/editorial-standards/");
@@ -1573,24 +1637,36 @@ test("trust pages are reachable and state the public evidence boundary", async (
   ).toBeVisible();
   await expect(
     page.getByText(
-      /automated.*checks.*do not prove.*claim-level human review/i,
+      /completed human editorial review of all guides has not been documented/i,
     ),
   ).toBeVisible();
   await expect(
     page.getByText(/material current claims are rechecked before publication/i),
   ).toHaveCount(0);
   await expect(
-    page.getByText(/AI tools assisted this initial project/i),
+    page.getByText(/AI tools assisted these guides and this website/i),
   ).toBeVisible();
-  await expect(page.getByText(/human or expert review/i)).toBeVisible();
+  await expect(
+    page.getByText(/must not be read as expert-approved advice/i),
+  ).toBeVisible();
 
   await page.goto("/contact/");
   await expect(page.locator(".trust-page > p").first()).toContainText(
     "corrections process first.",
   );
+  await expect(
+    page.getByText(/GitHub account is required to open an issue/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/issue tracker is public.*Do not post private information/i),
+  ).toBeVisible();
 
   await page.goto("/corrections/");
-  await expect(page.getByText(/does not silently backdate/i)).toBeVisible();
+  await expect(
+    page.getByText(
+      /Dates are not changed merely to make a guide appear newer/i,
+    ),
+  ).toBeVisible();
   await expect(page.getByText(/minor typographical/i)).toBeVisible();
   await expect(
     page.getByText(/may not receive a formal update note/i),
@@ -1598,20 +1674,23 @@ test("trust pages are reachable and state the public evidence boundary", async (
   await expect(page.getByText(/transparent correction note/i)).toBeVisible();
 });
 
-test("markdown tables render once inside a named keyboard region", async ({
+test("every source Markdown table renders once inside its own named keyboard region", async ({
   page,
 }) => {
   skipWhenNoTableArticle();
   await page.goto(tableArticlePath!);
 
-  const table = page.locator("article.article-page table");
-  const region = page.getByRole("region", { name: "Scrollable data table" });
-  await expect(table).toHaveCount(1);
-  await expect(region).toHaveCount(1);
-  await expect(region).toHaveAttribute("data-horizontal-scroll", "");
-  await expect(region).toHaveAttribute("tabindex", "0");
-  await expect(region.locator(":scope > table")).toHaveCount(1);
-  await expect(region.locator(".table-scroll")).toHaveCount(0);
+  const expectedCount = await expectedArticleTableCount(tableArticlePath!);
+  const tables = page.locator("article.article-page table");
+  const regions = page.getByRole("region", { name: "Scrollable data table" });
+  await expect(tables).toHaveCount(expectedCount);
+  await expect(regions).toHaveCount(expectedCount);
+  for (const region of await regions.all()) {
+    await expect(region).toHaveAttribute("data-horizontal-scroll", "");
+    await expect(region).toHaveAttribute("tabindex", "0");
+    await expect(region.locator(":scope > table")).toHaveCount(1);
+    await expect(region.locator(".table-scroll")).toHaveCount(0);
+  }
 });
 
 test("every public HTML route has one H1 and unique core metadata", async ({

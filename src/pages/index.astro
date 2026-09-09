@@ -87,15 +87,24 @@ const websiteStructuredData = {
           <p class="eyebrow">Practical business technology</p>
           <h1>Make technology decisions you can explain.</h1>
           <p class="lead-summary">
-            Practical, source-backed guides for choosing, securing, and
-            governing the tools your business relies on, without product hype.
+            Source-backed guides to choose better software, protect business
+            data, and put technology to work.
           </p>
+          <div class="home-opening__actions">
+            <a class="button-primary" href="/articles/">Explore the guides</a>
+            <a href="/toolkit/"
+              >Get a practical worksheet <span aria-hidden="true"> →</span></a
+            >
+          </div>
           <SignalField variant="hero" />
         </div>
         <section class="front-page" aria-labelledby="front-page-heading">
-          <h2 id="front-page-heading" class="visually-hidden">
-            Featured guidance
-          </h2>
+          <div class="front-page__heading">
+            <h2 id="front-page-heading">A clearer place to start.</h2>
+            <a href="/articles/"
+              >All guides <span aria-hidden="true"> →</span></a
+            >
+          </div>
           <div class="front-page__lead">
             {
               leadArticle && (
@@ -155,7 +164,7 @@ const websiteStructuredData = {
       <SectionHeading
         eyebrow="Start with the essentials"
         title="Practical foundations"
-        description="Begin with a bounded guide that produces a useful record, test, or decision."
+        description="Make progress with a useful checklist, a small test, or a clear decision."
         href="/articles/"
         linkLabel="View all guides"
         id="start-here-heading"

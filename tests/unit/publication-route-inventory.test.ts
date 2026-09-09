@@ -38,7 +38,7 @@ describe("current-published representative route inventory", () => {
         "/articles/create-a-shared-file-and-folder-system/",
       strategyCost: "/articles/calculate-the-total-cost-of-business-software/",
       backup: "/articles/back-up-business-files-with-the-3-2-1-method/",
-      table: "/articles/create-a-simple-technology-risk-register/",
+      table: "/articles/calculate-the-total-cost-of-business-software/",
     });
   });
 

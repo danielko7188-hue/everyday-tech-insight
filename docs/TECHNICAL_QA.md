@@ -70,14 +70,19 @@ The checker deduplicates article source URLs and every external HTTP(S) anchor r
 - Thresholds: Performance at least 90; Accessibility, Best Practices, and SEO at least 95.
 - Stale Lighthouse output is cleared at startup. Raw reports and a status/form-factor-labeled `summary.json` are first written to a pending directory and then replace ignored `.lighthouseci/` atomically, so an interrupted run cannot leave an apparently current success summary. The runner owns the Launcher instance before readiness polling, applies bounded startup polling, and uses one idempotent cleanup path for normal completion, launch failure, `SIGINT`, and `SIGTERM`. Signal protection stays installed through browser/server/profile cleanup and report publication or discard.
 
-### Visual release evidence
+### Current visual verification contract
 
 - The serial `visual-chromium` project owns only `visual-regression.spec.ts`; the regular Chromium project excludes it.
 - It compares 34 reviewed states on each supported test platform: nine full-page routes at 390, 768, and 1440 CSS pixels, Toolkit full-page states at the additional 600 and 1024px review widths, two keyboard-open menu viewport states, and three keyboard-focused skip-link viewport states. Windows and Linux references are committed separately, for 68 baseline files.
-- Captures use a fixed 900px viewport height, DPR 1, light mode, `en-US`, `America/Los_Angeles`, reduced motion, both local faces loaded, one animation frame, disabled animation, hidden caret, and CSS-scale screenshots.
+- Captures use a fixed 900px viewport height, DPR 1, light mode, `en-US`, `America/Los_Angeles`, reduced motion, the local Source Sans 3 display and interface weights loaded, one animation frame, disabled animation, hidden caret, and CSS-scale screenshots.
 - Snapshot paths include the test file, snapshot argument, Playwright project, and platform. The documented tolerance is `maxDiffPixelRatio: 0.001`; it is not a license to accept an unexplained visual change.
 - Console errors, page errors, failed requests, and cross-origin requests fail the visual run. The intentional missing route permits only its expected primary 404 resource message.
 - `capture:production` requires `--origin`, `--phase`, and the exact expected 40-character Git SHA. `before`, `after-production`, and `runtime-verification` require a deployment ID and canonical HTTPS origin; `after-local` requires a canonical `http://127.0.0.1[:port]` origin and forbids a deployment ID.
+
+### Historical August 26 release evidence
+
+The following dated observations describe the August release, including its then-pending final capture. They are retained as history, not current September status.
+
 - Release `premium-spatial-2026-08-26` uses 320, 390, 600, 768, 1024, 1280, 1440, and 1920px capture widths. Its completed before baseline contains 64 PNGs across 8 routes and 8 widths: 56 matching HTTP 200 responses, 8 expected 404 responses, 64 unique SHA-256 hashes, and 6/6 safety assertions.
 - The before manifest was captured at `2026-08-26T09:36:03.617Z` from `https://everyday-tech-insight.vercel.app` for Git SHA `af8dd44843860f3a055c76f934c02ae389ec1a81` and deployment `dpl_CptkBhg1Q5Gw7dCD11et1bw66HPd`.
 - The expanded after-local capture completed at `2026-08-26T16:58:13.990Z` from `http://127.0.0.1:4321` for exact source SHA `679bc6c23313e29693c68aec0acdce111fe2fb0e`: 228 PNGs, 220 matching HTTP 200 responses, 8 expected 404 responses, 228 unique SHA-256 hashes, and 6/6 safety assertions. It comprises 27 routes × 8 widths = 216 full-page PNGs, 4 menu states at 320, 390, 600, and 768px, and 8 skip-link states. Representative mobile and desktop outputs, menu-open, focus, Toolkit, trust, sitemap, and 404 states were inspected. This after-local result is local evidence only and is not deployment evidence.

@@ -1226,7 +1226,7 @@ describe("publication operations documentation", () => {
     );
   }, 30_000);
 
-  it("documents local and production evidence without claiming runtime verification", async () => {
+  it("preserves dated August local and production evidence without presenting its pending runtime capture as current status", async () => {
     const [localManifest, productionManifest] = (await Promise.all(
       ["local", "production"].map(async (scope) =>
         JSON.parse(
@@ -1241,7 +1241,15 @@ describe("publication operations documentation", () => {
       ["docs/TECHNICAL_QA.md", await read("docs/TECHNICAL_QA.md")],
     ]);
 
-    for (const [documentName, document] of documents) {
+    for (const [documentName, fullDocument] of documents) {
+      const historical = fullDocument.match(
+        /(?:^|\r?\n)### Historical August 26 release evidence\r?\n([\s\S]*?)(?=\r?\n#{1,3} |$)/,
+      )?.[1];
+      expect(
+        historical,
+        `${documentName}: dated August evidence section`,
+      ).toBeDefined();
+      const document = historical ?? "";
       for (const fact of [
         "premium-spatial-2026-08-26",
         localManifest.capturedAt,
@@ -1398,8 +1406,9 @@ describe("publication operations documentation", () => {
     expect(combined).not.toMatch(
       /(?:guaranteed|guarantees) (?:AdSense )?approval/i,
     );
-    expect(trustPages).toMatch(
-      /privacy:[\s\S]*implementation state dated August 25, 2026/i,
+    expect(trustPages).toMatch(/privacy:[\s\S]*title: `Privacy policy \|/);
+    expect(trustPages).not.toMatch(
+      /privacy:[\s\S]*implementation state dated/i,
     );
     expect(trustPages).not.toMatch(
       /privacy:[\s\S]*reviewed on August 25, 2026/i,

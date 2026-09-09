@@ -14,36 +14,37 @@ const source = (path: string) =>
   readFileSync(join(process.cwd(), ...path.split("/")), "utf8");
 
 const requiredTokens = {
-  "--brand-night": "#0d0618",
-  "--brand-deep": "#17102a",
-  "--brand-surface-dark": "#24143d",
-  "--brand-ink": "#171221",
-  "--brand-paper": "#faf8ff",
-  "--brand-mist": "#f4f0ff",
+  "--brand-night": "#1d1d1f",
+  "--brand-deep": "#242426",
+  "--brand-surface-dark": "#343436",
+  "--brand-ink": "#1d1d1f",
+  "--brand-paper": "#ffffff",
+  "--brand-mist": "#f5f5f7",
   "--brand-white": "#ffffff",
-  "--brand-violet": "#7c3aed",
-  "--brand-violet-dark": "#5b21b6",
-  "--brand-violet-light": "#a78bfa",
-  "--brand-lavender": "#c4b5fd",
-  "--brand-magenta": "#d946ef",
-  "--brand-pink": "#ec4899",
-  "--brand-rule-light": "#ddd6fe",
-  "--brand-rule-dark": "#3a2e51",
-  "--brand-boundary": "#756884",
-  "--brand-text-muted-light": "#5b5566",
-  "--brand-text-muted-dark": "#c9c3d8",
-  "--brand-focus-dark": "#fde047",
-  "--brand-focus-light": "#5b21b6",
+  "--brand-accent": "#0066cc",
+  "--brand-violet": "#0066cc",
+  "--brand-violet-dark": "#0055aa",
+  "--brand-violet-light": "#9ac8ff",
+  "--brand-lavender": "#d7eaff",
+  "--brand-magenta": "#0066cc",
+  "--brand-pink": "#0066cc",
+  "--brand-rule-light": "#d2d2d7",
+  "--brand-rule-dark": "#515154",
+  "--brand-boundary": "#86868b",
+  "--brand-text-muted-light": "#515154",
+  "--brand-text-muted-dark": "#d2d2d7",
+  "--brand-focus-dark": "#9ac8ff",
+  "--brand-focus-light": "#0066cc",
   "--brand-error": "#b42318",
   "--brand-success": "#166534",
 } as const;
 
 const requiredCategoryAccents = {
-  "ai-automation": "#6d28d9",
-  "business-software": "#4338ca",
-  "cybersecurity-data-protection": "#a21caf",
-  "digital-operations": "#5b21b6",
-  "technology-strategy": "#be185d",
+  "ai-automation": "#6e3cbc",
+  "business-software": "#0066cc",
+  "cybersecurity-data-protection": "#216e4e",
+  "digital-operations": "#9a4a00",
+  "technology-strategy": "#4141a5",
 } as const;
 
 function channel(value: string): number {
@@ -68,20 +69,17 @@ function contrast(foreground: string, background: string): number {
   return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
 }
 
-describe("Purple Signal brand system", () => {
-  it("defines the approved exact token contract and limited gradient", () => {
+describe("Editorial Clarity brand system", () => {
+  it("defines the neutral surface and restrained blue action token contract", () => {
     for (const [name, value] of Object.entries(requiredTokens)) {
       expect(css, name).toMatch(
         new RegExp(`${name}\\s*:\\s*${value.replace("#", "\\#")}\\s*;`, "i"),
       );
     }
 
-    expect(css).toMatch(
-      /--brand-gradient\s*:\s*linear-gradient\(\s*135deg,\s*#7c3aed 0%,\s*#a855f7 48%,\s*#d946ef 100%\s*\)/i,
-    );
-    expect(
-      (css.match(/var\(--brand-gradient\)/g) ?? []).length,
-    ).toBeLessThanOrEqual(8);
+    expect(css).not.toMatch(/--brand-gradient\s*:|var\(--brand-gradient\)/i);
+    expect(css).toMatch(/--font-display\s*:\s*"Source Sans 3 Variable"/);
+    expect(css).not.toMatch(/font-family:\s*"Newsreader Variable"/);
   });
 
   it("uses the coherent category family", () => {
@@ -90,15 +88,15 @@ describe("Purple Signal brand system", () => {
 
   it("records passing and deliberately prohibited contrast pairings", () => {
     const passingPairs = [
-      ["#ffffff", "#0d0618", 7],
-      ["#ffffff", "#7c3aed", 4.5],
-      ["#c4b5fd", "#0d0618", 7],
-      ["#c9c3d8", "#24143d", 4.5],
-      ["#171221", "#faf8ff", 7],
-      ["#5b5566", "#faf8ff", 4.5],
-      ["#5b21b6", "#faf8ff", 4.5],
-      ["#171221", "#d946ef", 4.5],
-      ["#fde047", "#0d0618", 3],
+      ["#1d1d1f", "#ffffff", 7],
+      ["#1d1d1f", "#f5f5f7", 7],
+      ["#515154", "#ffffff", 4.5],
+      ["#515154", "#f5f5f7", 4.5],
+      ["#0066cc", "#ffffff", 4.5],
+      ["#0066cc", "#f5f5f7", 4.5],
+      ["#ffffff", "#0066cc", 4.5],
+      ["#d2d2d7", "#343436", 4.5],
+      ["#9ac8ff", "#343436", 3],
     ] as const;
 
     for (const [foreground, background, threshold] of passingPairs) {
@@ -108,8 +106,11 @@ describe("Purple Signal brand system", () => {
       ).toBeGreaterThanOrEqual(threshold);
     }
 
-    expect(contrast("#ffffff", "#d946ef")).toBeLessThan(4.5);
-    expect(contrast("#fde047", "#faf8ff")).toBeLessThan(3);
+    for (const accent of Object.values(requiredCategoryAccents)) {
+      expect(contrast(accent, "#ffffff"), accent).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(contrast("#d2d2d7", "#ffffff")).toBeLessThan(4.5);
+    expect(contrast("#9ac8ff", "#ffffff")).toBeLessThan(3);
   });
 
   it("provides contextual focus and reduced-motion contracts", () => {
@@ -146,9 +147,9 @@ describe("Purple Signal brand system", () => {
     expect(css).toMatch(/@media\s*\(prefers-reduced-motion:\s*no-preference\)/);
     expect(css).toMatch(/@supports\s*\(animation-timeline:\s*scroll\(\)\)/);
     expect(css).toMatch(/@supports\s*\(animation-timeline:\s*view\(\)\)/);
-    expect(css).toMatch(/@media\s*\(prefers-reduced-data:\s*reduce\)/);
-    expect(css).toMatch(/@media\s*\(pointer:\s*coarse\)/);
-    expect(css).toMatch(/@media\s*\(update:\s*slow\)/);
+    expect(css).toMatch(/@media[^{}]*\(prefers-reduced-data:\s*reduce\)/);
+    expect(css).toMatch(/@media[^{}]*\(pointer:\s*coarse\)/);
+    expect(css).toMatch(/@media[^{}]*\(update:\s*slow\)/);
     expect(css).not.toMatch(
       /animation(?:-iteration-count)?\s*:[^;]*\binfinite\b/i,
     );
@@ -181,7 +182,7 @@ describe("Purple Signal brand system", () => {
     expect(signal).not.toMatch(/<use(?:\s|>)/i);
   });
 
-  it("removes the retired orange and beige visual palette", () => {
+  it("removes the retired orange, beige, and dominant purple visual palettes", () => {
     for (const retired of [
       "#d84a2f",
       "#8f2f20",
@@ -189,6 +190,10 @@ describe("Purple Signal brand system", () => {
       "#f2efe7",
       "#fffdf8",
       "#c9c5ba",
+      "#0d0618",
+      "#7c3aed",
+      "#d946ef",
+      "#faf8ff",
     ]) {
       expect(css.toLowerCase()).not.toContain(retired);
     }

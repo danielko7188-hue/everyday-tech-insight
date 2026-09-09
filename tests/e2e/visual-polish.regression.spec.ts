@@ -3,8 +3,8 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 const headlineCases = [
   {
     path: "/categories/",
-    heading: "Explore the five‑topic operating picture",
-    token: "five‑topic",
+    heading: "Choose a topic",
+    token: "topic",
   },
   {
     path: "/articles/crm-vs-project-management-software/",
@@ -104,7 +104,7 @@ async function assertNoPageOverflow(page: Page, width: number) {
 }
 
 for (const width of [320, 390, 768, 1440] as const) {
-  test(`hyphenated headline tokens stay intact without overflow at ${width}px`, async ({
+  test(`headline words and hyphenated terms stay intact without overflow at ${width}px`, async ({
     page,
   }) => {
     test.setTimeout(60_000);
@@ -270,11 +270,11 @@ test("visited editorial links use an accessible distinct color while controls re
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   }
 
-  for (const stableControlColor of [
+  for (const stableNavigationColor of [
     result.footerVisited,
     result.headerVisited,
-    result.primaryActionVisited,
   ]) {
-    expect(stableControlColor).toBe("var(--brand-white)");
+    expect(stableNavigationColor).toBe("var(--brand-ink)");
   }
+  expect(result.primaryActionVisited).toBe("var(--brand-white)");
 });

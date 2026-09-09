@@ -6,6 +6,7 @@ import {
   REPRESENTATIVE_ARTICLES,
 } from "../../scripts/publication-route-inventory.mjs";
 import { categories } from "../../src/data/categories";
+import { expectedArticleTableCount } from "./helpers/article-tables";
 
 const representativeArticlePath = REPRESENTATIVE_ARTICLE_PATHS.primary;
 const representativeArticle = REPRESENTATIVE_ARTICLES.primary;
@@ -249,7 +250,7 @@ for (const viewport of [
   { width: 390, height: 844 },
   { width: 1440, height: 900 },
 ]) {
-  test(`homepage lead headline is visible at ${viewport.width}px`, async ({
+  test(`homepage explains its purpose and offers a browse action before scrolling at ${viewport.width}px`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
@@ -258,11 +259,32 @@ for (const viewport of [
       await document.fonts.ready;
     });
 
-    const box = await page
+    const promise = page.locator(".home-opening__promise");
+    for (const element of [
+      promise.locator("h1"),
+      promise.locator(".lead-summary"),
+      promise.locator('a[href="/articles/"]'),
+    ]) {
+      await expect(element).toBeVisible();
+      const box = await element.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.y).toBeGreaterThanOrEqual(0);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+    }
+
+    const browseAction = promise.locator('a[href="/articles/"]');
+    const actionBox = await browseAction.boundingBox();
+    expect(actionBox!.height).toBeGreaterThanOrEqual(44);
+    expect(actionBox!.width).toBeGreaterThanOrEqual(44);
+
+    const featuredTitle = await page
       .locator(".front-page__lead .article-card__title")
       .boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+    expect(featuredTitle).not.toBeNull();
+    expect(
+      featuredTitle!.y + featuredTitle!.height,
+      "the lead guide remains reachable within one short scroll after the introduction",
+    ).toBeLessThanOrEqual(1200);
     expect(
       await page.locator("main").evaluate((main) => main.scrollHeight),
     ).toBeLessThan(viewport.width === 390 ? 11_000 : 7_000);
@@ -832,89 +854,129 @@ test("mobile menu uses a short CSS-only reveal and removes it for reduced motion
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/");
+  for (const inputMethod of ["pointer", "keyboard"] as const) {
+    await test.step(inputMethod, async () => {
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      await page.goto("/");
+      // Measure a painted closed state so the first opening can transition from it.
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        for (let frame = 0; frame < 2; frame += 1) {
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => resolve()),
+          );
+        }
+      });
 
-  const menu = page.locator(".site-header__mobile-menu");
-  const reveal = await menu.evaluate((details) => {
-    const style = getComputedStyle(details, "::details-content");
-    return {
-      duration: Math.max(
-        ...style.transitionDuration
-          .split(",")
-          .map(
-            (value) =>
-              Number.parseFloat(value) * (value.includes("ms") ? 1 : 1000),
+      const menu = page.locator(".site-header__mobile-menu");
+      const reveal = await menu.evaluate((details) => {
+        const style = getComputedStyle(details, "::details-content");
+        return {
+          duration: Math.max(
+            ...style.transitionDuration
+              .split(",")
+              .map(
+                (value) =>
+                  Number.parseFloat(value) * (value.includes("ms") ? 1 : 1000),
+              ),
           ),
-      ),
-      properties: style.transitionProperty
-        .split(",")
-        .map((value) => value.trim()),
-      supported: CSS.supports("selector(details::details-content)"),
-    };
-  });
+          properties: style.transitionProperty
+            .split(",")
+            .map((value) => value.trim()),
+          supported: CSS.supports("selector(details::details-content)"),
+        };
+      });
 
-  expect(reveal.supported).toBe(true);
-  expect(reveal.duration).toBeGreaterThan(0);
-  expect(reveal.duration).toBeLessThanOrEqual(200);
-  expect(reveal.properties).toEqual(
-    expect.arrayContaining(["block-size", "opacity"]),
-  );
-
-  const revealFrames = await menu.evaluate(async (details) => {
-    const detailsElement = details as HTMLDetailsElement;
-    const readFrame = () => {
-      const style = getComputedStyle(detailsElement, "::details-content");
-      return {
-        blockSize: Number.parseFloat(style.blockSize),
-        opacity: Number.parseFloat(style.opacity),
-      };
-    };
-    const closed = readFrame();
-    detailsElement.querySelector("summary")?.click();
-    const opening = [];
-    for (let frame = 0; frame < 12; frame += 1) {
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() => resolve()),
+      expect(reveal.supported).toBe(true);
+      expect(reveal.duration).toBeGreaterThan(0);
+      expect(reveal.duration).toBeLessThanOrEqual(200);
+      expect(reveal.properties).toEqual(
+        expect.arrayContaining(["block-size", "opacity"]),
       );
-      opening.push(readFrame());
-    }
-    await new Promise((resolve) => setTimeout(resolve, 220));
-    return {
-      closed,
-      opening,
-      opened: readFrame(),
-      open: detailsElement.open,
-    };
-  });
 
-  expect(revealFrames.open).toBe(true);
-  expect(revealFrames.closed.blockSize).toBe(0);
-  expect(revealFrames.closed.opacity).toBe(0);
-  expect(
-    revealFrames.opening.some(
-      ({ blockSize }) =>
-        blockSize > 0 && blockSize < revealFrames.opened.blockSize,
-    ),
-  ).toBe(true);
-  expect(
-    revealFrames.opening.some(({ opacity }) => opacity > 0 && opacity < 1),
-  ).toBe(true);
-  expect(revealFrames.opened.opacity).toBe(1);
-  await expect(menu.locator("nav")).toBeVisible();
+      const revealProbe = await menu.evaluateHandle((details) => {
+        const detailsElement = details as HTMLDetailsElement;
+        const readFrame = () => {
+          const style = getComputedStyle(detailsElement, "::details-content");
+          return {
+            blockSize: Number.parseFloat(style.blockSize),
+            opacity: Number.parseFloat(style.opacity),
+          };
+        };
+        const closed = readFrame();
+        type Frame = ReturnType<typeof readFrame>;
+        const completion = new Promise<{
+          opening: Frame[];
+          opened: Frame;
+          open: boolean;
+          trusted: boolean;
+        }>((resolve) => {
+          detailsElement.querySelector("summary")!.addEventListener(
+            "click",
+            async (event) => {
+              const opening: Frame[] = [];
+              for (let frame = 0; frame < 12; frame += 1) {
+                await new Promise<void>((next) =>
+                  requestAnimationFrame(() => next()),
+                );
+                opening.push(readFrame());
+              }
+              await new Promise((next) => setTimeout(next, 220));
+              resolve({
+                opening,
+                opened: readFrame(),
+                open: detailsElement.open,
+                trusted: event.isTrusted,
+              });
+            },
+            { once: true },
+          );
+        });
+        return { closed, completion };
+      });
+      // Native focus and input are part of the user's interaction. A synthetic DOM
+      // click bypasses them and can skip Chromium's first ::details-content transition.
+      if (inputMethod === "pointer") await menu.locator("summary").click();
+      else {
+        await menu.locator("summary").focus();
+        await page.keyboard.press("Enter");
+      }
+      const revealFrames = await revealProbe.evaluate(async (probe) => ({
+        closed: probe.closed,
+        ...(await probe.completion),
+      }));
+      await revealProbe.dispose();
 
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  const reducedDuration = await menu.evaluate((details) =>
-    Math.max(
-      ...getComputedStyle(details, "::details-content")
-        .transitionDuration.split(",")
-        .map(
-          (value) =>
-            Number.parseFloat(value) * (value.includes("ms") ? 1 : 1000),
+      expect(revealFrames.trusted).toBe(true);
+      expect(revealFrames.open).toBe(true);
+      expect(revealFrames.closed.blockSize).toBe(0);
+      expect(revealFrames.closed.opacity).toBe(0);
+      expect(
+        revealFrames.opening.some(
+          ({ blockSize }) =>
+            blockSize > 0 && blockSize < revealFrames.opened.blockSize,
         ),
-    ),
-  );
-  expect(reducedDuration).toBeLessThanOrEqual(0.001);
+      ).toBe(true);
+      expect(
+        revealFrames.opening.some(({ opacity }) => opacity > 0 && opacity < 1),
+      ).toBe(true);
+      expect(revealFrames.opened.opacity).toBe(1);
+      await expect(menu.locator("nav")).toBeVisible();
+
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      const reducedDuration = await menu.evaluate((details) =>
+        Math.max(
+          ...getComputedStyle(details, "::details-content")
+            .transitionDuration.split(",")
+            .map(
+              (value) =>
+                Number.parseFloat(value) * (value.includes("ms") ? 1 : 1000),
+            ),
+        ),
+      );
+      expect(reducedDuration).toBeLessThanOrEqual(0.001);
+    });
+  }
 });
 
 test("open mobile menu keeps its control anchored while expanding an opaque panel below", async ({
@@ -1073,34 +1135,41 @@ test("mobile tables use a readable contained horizontal region", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(tableArticlePath!);
 
-  const region = page.getByRole("region", { name: "Scrollable data table" });
-  await expect(region).toHaveCount(1);
-  await expect(region).toHaveAttribute("tabindex", "0");
-  const geometry = await region.evaluate((element) => {
-    const table = element.querySelector("table")!;
-    const regionBox = element.getBoundingClientRect();
-    const styles = getComputedStyle(element);
-    const tableStyles = getComputedStyle(table);
-    return {
-      documentWidth: document.documentElement.scrollWidth,
-      viewportWidth: document.documentElement.clientWidth,
-      regionLeft: regionBox.left,
-      regionRight: regionBox.right,
-      overflowX: styles.overflowX,
-      fontSize: Number.parseFloat(tableStyles.fontSize),
-      tableLayout: tableStyles.tableLayout,
-      tableWidth: table.scrollWidth,
-      regionWidth: element.clientWidth,
-    };
-  });
+  const regions = page.getByRole("region", { name: "Scrollable data table" });
+  await expect(regions).toHaveCount(
+    await expectedArticleTableCount(tableArticlePath!),
+  );
+  for (const region of await regions.all()) {
+    await expect(region).toHaveAttribute("tabindex", "0");
+    await expect(region.locator(":scope > table")).toHaveCount(1);
+    const geometry = await region.evaluate((element) => {
+      const table = element.querySelector("table")!;
+      const regionBox = element.getBoundingClientRect();
+      const styles = getComputedStyle(element);
+      const tableStyles = getComputedStyle(table);
+      return {
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+        regionLeft: regionBox.left,
+        regionRight: regionBox.right,
+        overflowX: styles.overflowX,
+        fontSize: Number.parseFloat(tableStyles.fontSize),
+        tableLayout: tableStyles.tableLayout,
+        tableWidth: table.scrollWidth,
+        regionWidth: element.clientWidth,
+      };
+    });
 
-  expect(geometry.overflowX).toBe("auto");
-  expect(geometry.fontSize).toBeGreaterThanOrEqual(16);
-  expect(geometry.tableLayout).toBe("auto");
-  expect(geometry.tableWidth).toBeGreaterThan(geometry.regionWidth);
-  expect(geometry.regionLeft).toBeGreaterThanOrEqual(-1);
-  expect(geometry.regionRight).toBeLessThanOrEqual(geometry.viewportWidth + 1);
-  expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+    expect(geometry.overflowX).toBe("auto");
+    expect(geometry.fontSize).toBeGreaterThanOrEqual(16);
+    expect(geometry.tableLayout).toBe("auto");
+    expect(geometry.tableWidth).toBeGreaterThan(geometry.regionWidth);
+    expect(geometry.regionLeft).toBeGreaterThanOrEqual(-1);
+    expect(geometry.regionRight).toBeLessThanOrEqual(
+      geometry.viewportWidth + 1,
+    );
+    expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+  }
 });
 
 test("200 percent zoom equivalent reflows header, article navigation, table, and footer", async ({
@@ -1124,18 +1193,25 @@ test("200 percent zoom equivalent reflows header, article navigation, table, and
   ).toBeVisible();
 
   const toc = page.getByRole("navigation", { name: "On this page" });
-  const tableRegion = page.getByRole("region", {
+  const tableRegions = page.getByRole("region", {
     name: "Scrollable data table",
   });
   const footer = page.locator("footer.site-footer");
   await expect(toc).toBeVisible();
-  await expect(tableRegion).toBeVisible();
+  await expect(tableRegions).toHaveCount(
+    await expectedArticleTableCount(tableArticlePath!),
+  );
+  const tableRegionList = await tableRegions.all();
+  for (const tableRegion of tableRegionList)
+    await expect(tableRegion).toBeVisible();
   await expect(footer).toBeVisible();
 
   for (const [label, locator] of [
     ["header", page.locator("header.site-header")],
     ["mobile menu", menu],
-    ["table region", tableRegion],
+    ...tableRegionList.map(
+      (region, index) => [`table region ${index + 1}`, region] as const,
+    ),
     ["footer", footer],
   ] as const) {
     const box = await locator.boundingBox();

@@ -335,21 +335,46 @@ async function navigateAndProbeRootViewTransition(
   );
 }
 
-test("homepage renders one local three-plane signal after its promise", async ({
+test("homepage renders one local decorative responsive image after its promise", async ({
   page,
 }) => {
   await page.goto("/");
 
-  const signal = page.locator(
-    ".home-opening__promise > .lead-summary + [data-signal-field]",
-  );
+  const signal = page.locator(".home-opening [data-signal-field='hero']");
   await expect(signal).toHaveCount(1);
   await expect(signal).toHaveAttribute("aria-hidden", "true");
-  await expect(signal.locator("[data-signal-plane]")).toHaveCount(3);
-  await expect(signal.locator("svg")).toHaveCount(1);
+  await expect(signal.locator("picture")).toHaveCount(1);
+  await expect(signal.locator("source[type='image/avif']")).toHaveCount(1);
+  const artwork = signal.locator("img");
+  await expect(artwork).toHaveCount(1);
+  await expect(artwork).toHaveAttribute("alt", "");
+  await expect(artwork).toHaveAttribute("src", /^\/.*\.webp$/);
+  await expect(artwork).toHaveAttribute("srcset", /480w.*960w.*1536w/);
+  const artworkState = await artwork.evaluate((image: HTMLImageElement) => ({
+    complete: image.complete,
+    height: image.naturalHeight,
+    local: new URL(image.currentSrc).origin === window.location.origin,
+    width: image.naturalWidth,
+  }));
+  expect(artworkState.complete).toBe(true);
+  expect(artworkState.local).toBe(true);
+  expect(artworkState.width).toBeGreaterThan(0);
+  expect(artworkState.height).toBeGreaterThan(0);
+  await expect(signal.locator("svg, script, iframe, video")).toHaveCount(0);
+  await expect(signal.locator("a, button, input, [tabindex]")).toHaveCount(0);
   await expect(signal.locator("use")).toHaveCount(0);
   await expect(page.locator("[data-signal-field]")).toHaveCount(1);
   await expect(page.locator("[data-editorial-visual] use")).toHaveCount(8);
+  expect(
+    await page.locator(".home-opening__promise h1").evaluate((heading) => {
+      const artwork = document.querySelector("[data-signal-field='hero']");
+      return Boolean(
+        artwork &&
+        heading.compareDocumentPosition(artwork) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    }),
+  ).toBe(true);
 });
 
 test("article reading progress is the inert first article child", async ({
@@ -536,11 +561,16 @@ test("reduced motion leaves every spatial enhancement static", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
-
-  const signalStyles = await page
-    .locator("[data-signal-plane]")
-    .evaluateAll((elements) =>
+  for (const [route, elementCount] of [
+    ["/", 1],
+    ["/404.html", 4],
+  ] as const) {
+    await page.goto(route);
+    const enhancements = page.locator(
+      "[data-signal-field], [data-signal-plane]",
+    );
+    await expect(enhancements).toHaveCount(elementCount);
+    const signalStyles = await enhancements.evaluateAll((elements) =>
       elements.map((element) => {
         const style = getComputedStyle(element);
         return {
@@ -550,14 +580,15 @@ test("reduced motion leaves every spatial enhancement static", async ({
         };
       }),
     );
-  expect(
-    signalStyles.every(
-      ({ animationDuration, transform, transitionDuration }) =>
-        Number.parseFloat(animationDuration) <= 0.000001 &&
-        transform === "none" &&
-        Number.parseFloat(transitionDuration) <= 0.000001,
-    ),
-  ).toBe(true);
+    expect(
+      signalStyles.every(
+        ({ animationDuration, transform, transitionDuration }) =>
+          Number.parseFloat(animationDuration) <= 0.000001 &&
+          transform === "none" &&
+          Number.parseFloat(transitionDuration) <= 0.000001,
+      ),
+    ).toBe(true);
+  }
 
   await page.goto(articlePath);
   await expect(page.locator("[data-reading-progress]")).toHaveCSS(

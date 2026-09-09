@@ -15,6 +15,7 @@ intendedAudience: "Small-business owners and operations leaders comparing a SaaS
 readerOutcome: "Create a gated requirements list, run a controlled product evaluation, record unverified claims, and make a defensible buy, revise, or reject decision."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
+dateModified: "2026-09-09"
 featured: false
 summary: "Turn business needs into test scenarios, treat security and exit requirements as gates, verify the purchased plan, and record evidence instead of relying on a demo."
 visual:
@@ -130,6 +131,27 @@ For every gated requirement, use one of four labels:
 
 Include evidence location, reviewer, date, applicable plan, limitations, and open action. An unanswered must-have is not a pass.
 
+## Worked example: turn an export promise into a decision
+
+**Fictional illustration, not an evaluation of a real vendor.** Suppose a team needs to retain customer-support records after leaving a service. A statement that “CSV export is included” is a provider assertion. The business requirement is more specific: a permitted administrator must be able to read the case history and its required attachments outside the service.
+
+An illustrative evidence row could look like this:
+
+| Field                | Illustrative entry                                                                                                                            |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Requirement          | Preserve case history and required attachments after departure.                                                                               |
+| Priority             | Must meet before purchase.                                                                                                                    |
+| Scope                | A fictional candidate plan; administrator role; synthetic data only.                                                                          |
+| Test scenario        | Export three sample cases, including a closed case and one with an attachment; inspect the output outside the service.                        |
+| Acceptance condition | Required fields retain their meaning, and each attachment opens without access to the original account.                                       |
+| Sample finding       | Case rows export, but the attachment is only a link that requires the original account.                                                       |
+| Result               | Fail for this scenario; the required attachment has not been preserved independently.                                                         |
+| Follow-up            | Ask about a supported attachment download, test it on the same plan, and revise the effort estimate if a separate migration step is required. |
+
+The finding does not mean the fictional service has no export feature. It means the demonstrated export does not yet satisfy this team's requirement. A documented workaround might change the decision, but it must be tested and its labor, permissions, and costs included.
+
+Three synthetic cases are useful for exposing this particular gap; they do not establish complete migration of a large production account. A real evaluation should also exercise the business's relevant volumes, record types, permissions, and relationships. Use the [SaaS evaluation evidence sheet](/toolkit/saas-evaluation-evidence-sheet/) to keep requirements, observations, limitations, and follow-up together.
+
 ## Make the decision and preserve the boundary
 
 Approve only if every must-have gate passes, material risks have an owner and treatment, the ongoing administrator exists, the cost range is acceptable, and the exit path is workable. A revise decision may narrow scope or require another test. A reject decision is appropriate when a critical requirement depends on an unsupported workaround or an unverified promise.
@@ -137,3 +159,5 @@ Approve only if every must-have gate passes, material risks have an owner and tr
 The limitations are important: a short evaluation cannot prove continuous security, availability, legal compliance, vendor viability, or future product behavior. CISA guidance does not certify a product, and this checklist is not a substitute for legal, privacy, accessibility, security, accounting, or procurement advice.
 
 The strongest output is a small evidence packet: requirements, scenarios, results, permission matrix, data map, source documents, cost model, exit test, risks, and approval record. That packet remains useful after the sales presentation ends.
+
+_Updated September 9, 2026: Added a fictional export-evaluation example showing how an advertised feature can still fail a business requirement._

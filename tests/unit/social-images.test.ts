@@ -22,6 +22,7 @@ import {
   SOCIAL_IMAGE_RECORDS,
   SOCIAL_IMAGE_WIDTH,
   generateSocialImages,
+  layoutSocialHeadline,
   renderSocialSvg,
 } from "../../scripts/generate-social-images.mjs";
 
@@ -131,9 +132,11 @@ async function importGeneratorWithFixture({
   );
   const fixtureArticles = join(fixtureRoot, "src", "content", "articles");
   const fixtureFonts = join(fixtureRoot, "public", "fonts");
+  const fixtureRenderFonts = join(fixtureRoot, "scripts", "assets", "fonts");
   mkdirSync(join(fixtureRoot, "scripts"), { recursive: true });
   mkdirSync(fixtureArticles, { recursive: true });
   mkdirSync(fixtureFonts, { recursive: true });
+  mkdirSync(fixtureRenderFonts, { recursive: true });
 
   const productionScript = join(
     process.cwd(),
@@ -143,6 +146,16 @@ async function importGeneratorWithFixture({
   writeFileSync(
     fixtureScript,
     generatorSourceTransform(readFileSync(productionScript, "utf8")),
+  );
+  copyFileSync(
+    join(
+      process.cwd(),
+      "scripts",
+      "assets",
+      "fonts",
+      "source-sans-3-variable-english.ttf",
+    ),
+    join(fixtureRenderFonts, "source-sans-3-variable-english.ttf"),
   );
   copyFileSync(
     join(
@@ -198,13 +211,22 @@ describe("social image portfolio", () => {
     );
   });
 
-  it("renders the Purple Signal identity without the retired publication palette", () => {
+  it("renders the Editorial Clarity identity without the retired publication palette", () => {
     const svg = renderSocialSvg(SOCIAL_IMAGE_RECORDS[0]!);
 
-    for (const color of ["#0d0618", "#7c3aed", "#d946ef", "#faf8ff"]) {
+    for (const color of ["#1d1d1f", "#0066cc", "#ffffff", "#f5f5f7"]) {
       expect(svg.toLowerCase()).toContain(color);
     }
-    for (const retired of ["#d84a2f", "#f4efe4", "#fffdf8", "#171918"]) {
+    for (const retired of [
+      "#d84a2f",
+      "#f4efe4",
+      "#fffdf8",
+      "#171918",
+      "#0d0618",
+      "#7c3aed",
+      "#d946ef",
+      "#faf8ff",
+    ]) {
       expect(svg.toLowerCase()).not.toContain(retired);
     }
   });
@@ -234,7 +256,7 @@ describe("social image portfolio", () => {
     }
   });
 
-  it("escapes supplied text and embeds only the bundled local publication font", () => {
+  it("escapes supplied text and renders bundled local font glyphs without fallback text", () => {
     const svg = renderSocialSvg({
       accent: "#0f746c",
       alt: "Test alt",
@@ -249,29 +271,70 @@ describe("social image portfolio", () => {
     expect(svg).toContain("&amp;");
     expect(svg).toContain("&quot;quoted&quot;");
     expect(svg).toContain("Research &amp; &lt;testing&gt;");
-    expect(svg).toContain("data:font/woff2;base64,");
+    expect(svg).toContain("data-headline-line");
+    expect(svg).toContain("<path");
+    expect(svg).not.toMatch(/<text(?:\s|>)/i);
     expect(svg).not.toContain("<script>");
     expect(svg).not.toMatch(/Math\.random|Date\.now|url\(https?:/);
   });
 
-  it("keeps every headline line inside the copy column", () => {
-    const article = SOCIAL_IMAGE_RECORDS.find(
-      ({ fileName }) =>
-        fileName ===
-        "article-how-to-identify-business-tasks-for-automation.png",
+  it("keeps every actual headline glyph inside its copy column without truncating titles", () => {
+    for (const record of SOCIAL_IMAGE_RECORDS) {
+      const layout = layoutSocialHeadline(record.title);
+      expect(layout.x).toBe(72);
+      expect(layout.width).toBe(744);
+      expect(layout.lines.length).toBeGreaterThan(0);
+      expect(layout.lines.length).toBeLessThanOrEqual(4);
+      expect(
+        layout.lines.map(({ text }: { text: string }) => text).join(" "),
+      ).toBe(record.title.replace(/\s+/g, " ").trim());
+      for (const line of layout.lines) {
+        expect(
+          line.width,
+          `${record.fileName}: ${line.text}`,
+        ).toBeLessThanOrEqual(layout.width);
+        expect(
+          line.inkLeft,
+          `${record.fileName}: left ink boundary`,
+        ).toBeGreaterThanOrEqual(0);
+        expect(
+          line.inkRight,
+          `${record.fileName}: right ink boundary`,
+        ).toBeLessThanOrEqual(layout.width);
+      }
+      expect(
+        layout.y + (layout.lines.length - 1) * layout.lineHeight,
+        `${record.fileName}: headline bottom baseline`,
+      ).toBeLessThanOrEqual(490);
+      const svg = renderSocialSvg(record);
+      const renderedLines = [
+        ...svg.matchAll(/<g\b(?=[^>]*data-headline-line="true")[^>]*>/g),
+      ].map(([tag]) => {
+        const attribute = (name: string) =>
+          Number(tag.match(new RegExp(`${name}="([^"]+)"`))?.[1]);
+        return {
+          width: attribute("data-line-width"),
+          inkLeft: attribute("data-ink-left"),
+          inkRight: attribute("data-ink-right"),
+        };
+      });
+      expect(renderedLines).toEqual(
+        layout.lines.map(
+          (line: { width: number; inkLeft: number; inkRight: number }) => ({
+            width: line.width,
+            inkLeft: layout.x + line.inkLeft,
+            inkRight: layout.x + line.inkRight,
+          }),
+        ),
+      );
+      expect(svg).toContain('<rect x="872"');
+    }
+  });
+
+  it("rejects a title that cannot fit rather than silently clipping or ellipsizing it", () => {
+    expect(() => layoutSocialHeadline("Unbroken".repeat(100))).toThrow(
+      /cannot fit completely/i,
     );
-    expect(article).toBeDefined();
-
-    const svg = renderSocialSvg(article!);
-    const headlineLines = [
-      ...svg.matchAll(/<tspan x="78"[^>]*>([^<]+)<\/tspan>/g),
-    ].map((match) => match[1] ?? "");
-
-    expect(headlineLines.length).toBeGreaterThan(1);
-    expect(
-      Math.max(...headlineLines.map((line) => line.length)),
-    ).toBeLessThanOrEqual(20);
-    expect(svg).toContain('<rect x="750"');
   });
 
   it("writes exact-size deterministic PNGs and removes stale social images", async () => {

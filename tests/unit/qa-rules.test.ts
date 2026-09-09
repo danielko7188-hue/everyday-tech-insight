@@ -1420,29 +1420,36 @@ describe("built-output QA rules", () => {
     ).toContain("monetization-off");
   });
 
-  it("requires privacy and disclosure wording to match the active mode", () => {
-    const fixture = validBuiltFixture();
-    for (const fileName of [
-      "privacy/index.html",
-      "advertising-disclosure/index.html",
-    ]) {
-      fixture.files.set(
-        fileName,
-        fixture.files
-          .get(fileName)!
-          .replaceAll("No advertising", "Advertising wording drifted"),
+  it.each([
+    ["privacy/index.html", "privacyState"],
+    ["advertising-disclosure/index.html", "disclosureState"],
+    ["advertising-disclosure/index.html", "approvalBoundary"],
+  ] as const)(
+    "requires %s %s wording to match the active mode",
+    (fileName, copyKey) => {
+      const fixture = validBuiltFixture();
+      const requiredCopy = integrationPublicCopy(siteConfig.integrations)[
+        copyKey
+      ];
+      const original = fixture.files.get(fileName)!;
+      expect(original).toContain(requiredCopy);
+      const mutated = original.replaceAll(
+        requiredCopy,
+        "Integration wording drifted.",
       );
-    }
+      expect(mutated).not.toBe(original);
+      fixture.files.set(fileName, mutated);
 
-    expect(
-      validateBuiltOutput({
-        files: fixture.files,
-        articles: fixture.articles,
-        categorySlugs: [...categorySlugs],
-        siteUrl,
-      }).map(({ code }) => code),
-    ).toContain("monetization-copy");
-  });
+      expect(
+        validateBuiltOutput({
+          files: fixture.files,
+          articles: fixture.articles,
+          categorySlugs: [...categorySlugs],
+          siteUrl,
+        }).map(({ code }) => code),
+      ).toContain("monetization-copy");
+    },
+  );
 
   it("propagates exact managed-image tuple validation through full built-output QA", () => {
     const fixture = validBuiltFixture();

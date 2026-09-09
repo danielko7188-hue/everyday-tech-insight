@@ -121,7 +121,7 @@ const description = category.description;
             <SectionHeading
               eyebrow="Published guidance"
               title="All guides in this topic"
-              description={`All ${formatGuideCount(categoryEdition.articles.length, `published ${category.name}`)} appear once. Homepage-featured guides come first; the rest follow the newest substantive article event, title, and slug.`}
+              description={`Choose from ${formatGuideCount(categoryEdition.articles.length)} to find a practical next step.`}
               id="category-compact-heading"
             />
             <ol class="category-compact__list">
@@ -142,8 +142,8 @@ const description = category.description;
           <section class="empty-category" aria-labelledby="scope-heading">
             <h2 id="scope-heading">Current scope</h2>
             <p>
-              This topic currently has no published guide. Only published
-              entries that satisfy the site content contract appear here.
+              There are no guides in this topic yet.{" "}
+              <a href="/articles/">Browse all guides</a> for related guidance.
             </p>
           </section>
         )
@@ -155,7 +155,7 @@ const description = category.description;
           <SectionHeading
             eyebrow="Published guidance"
             title="A guided topic edition"
-            description={`All ${formatGuideCount(articles.length, `published ${category.name}`)} appear once. A featured guide leads when present; otherwise the newest guide leads.`}
+            description={`Explore ${formatGuideCount(articles.length)} with clear steps, useful decision tools, and limitations to consider.`}
             id="category-editorial-heading"
           />
           <div
@@ -218,7 +218,7 @@ const description = category.description;
           <SectionHeading
             eyebrow="Complete topic archive"
             title="Browse the full topic collection"
-            description={`All ${formatGuideCount(articles.length, `published ${category.name}`)} remain available once across a three-guide priority opening, the next three recent guides, and the complete archive.`}
+            description={`Browse ${formatGuideCount(articles.length)} and find the guidance that fits your next decision.`}
             id="category-archive-heading"
           />
           {categoryEdition.featured.length > 0 && (

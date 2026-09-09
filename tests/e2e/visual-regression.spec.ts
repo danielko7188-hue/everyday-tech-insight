@@ -97,7 +97,7 @@ async function stabilizePage(page: Page): Promise<void> {
 
   const fontState = await page.evaluate(async () => {
     const publicationFace = await document.fonts.load(
-      '600 16px "Newsreader Variable"',
+      '600 16px "Source Sans 3 Variable"',
       "Publication",
     );
     const interfaceFace = await document.fonts.load(
@@ -115,7 +115,10 @@ async function stabilizePage(page: Page): Promise<void> {
     };
   });
 
-  expect(fontState.publicationFace, "local Newsreader face").toBeGreaterThan(0);
+  expect(
+    fontState.publicationFace,
+    "local Source Sans 3 display face",
+  ).toBeGreaterThan(0);
   expect(fontState.interfaceFace, "local Source Sans 3 face").toBeGreaterThan(
     0,
   );

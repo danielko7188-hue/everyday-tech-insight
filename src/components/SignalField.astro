@@ -11,37 +11,60 @@ const { variant = "hero" } = Astro.props;
   data-signal-field={variant}
   aria-hidden="true"
 >
-  <svg viewBox="0 0 640 360" focusable="false">
-    <g
-      class="signal-field__plane signal-field__plane--rear"
-      data-signal-plane="rear"
-    >
-      <path d="M42 92H196L238 50H402L448 96H598"></path>
-      <path d="M72 284H206L254 236H402L454 288H574"></path>
-      <circle cx="42" cy="92" r="5"></circle>
-      <circle cx="598" cy="96" r="5"></circle>
-      <circle cx="72" cy="284" r="5"></circle>
-      <circle cx="574" cy="288" r="5"></circle>
-    </g>
-    <g
-      class="signal-field__plane signal-field__plane--middle"
-      data-signal-plane="middle"
-    >
-      <rect x="116" y="130" width="132" height="84" rx="12"></rect>
-      <rect x="392" y="130" width="132" height="84" rx="12"></rect>
-      <path d="M248 172H392"></path>
-      <circle cx="320" cy="172" r="11"></circle>
-    </g>
-    <g
-      class="signal-field__plane signal-field__plane--front"
-      data-signal-plane="front"
-    >
-      <path d="M182 130L248 82H392L458 130"></path>
-      <path d="M182 214L248 262H392L458 214"></path>
-      <circle cx="248" cy="82" r="7"></circle>
-      <circle cx="392" cy="82" r="7"></circle>
-      <circle cx="248" cy="262" r="7"></circle>
-      <circle cx="392" cy="262" r="7"></circle>
-    </g>
-  </svg>
+  {
+    variant === "hero" ? (
+      <picture>
+        <source
+          type="image/avif"
+          srcset="/images/editorial/clarity-480.avif 480w, /images/editorial/clarity-960.avif 960w, /images/editorial/clarity-1536.avif 1536w"
+          sizes="(min-width: 640px) 576px, 92vw"
+        />
+        <img
+          src="/images/editorial/clarity-960.webp"
+          srcset="/images/editorial/clarity-480.webp 480w, /images/editorial/clarity-960.webp 960w, /images/editorial/clarity-1536.webp 1536w"
+          sizes="(min-width: 640px) 576px, 92vw"
+          alt=""
+          width="1536"
+          height="1024"
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </picture>
+    ) : (
+      <svg viewBox="0 0 640 360" focusable="false">
+        <g
+          class="signal-field__plane signal-field__plane--rear"
+          data-signal-plane="rear"
+        >
+          <path d="M42 92H196L238 50H402L448 96H598" />
+          <path d="M72 284H206L254 236H402L454 288H574" />
+          <circle cx="42" cy="92" r="5" />
+          <circle cx="598" cy="96" r="5" />
+          <circle cx="72" cy="284" r="5" />
+          <circle cx="574" cy="288" r="5" />
+        </g>
+        <g
+          class="signal-field__plane signal-field__plane--middle"
+          data-signal-plane="middle"
+        >
+          <rect x="116" y="130" width="132" height="84" rx="12" />
+          <rect x="392" y="130" width="132" height="84" rx="12" />
+          <path d="M248 172H392" />
+          <circle cx="320" cy="172" r="11" />
+        </g>
+        <g
+          class="signal-field__plane signal-field__plane--front"
+          data-signal-plane="front"
+        >
+          <path d="M182 130L248 82H392L458 130" />
+          <path d="M182 214L248 262H392L458 214" />
+          <circle cx="248" cy="82" r="7" />
+          <circle cx="392" cy="82" r="7" />
+          <circle cx="248" cy="262" r="7" />
+          <circle cx="392" cy="262" r="7" />
+        </g>
+      </svg>
+    )
+  }
 </div>

@@ -15,6 +15,7 @@ intendedAudience: "Small-business employees, owners, and administrators who need
 readerOutcome: "Pause the request, verify it through a known channel, report it safely, and take proportionate containment steps if information or access was exposed."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
+dateModified: "2026-09-09"
 featured: false
 summary: "Do not use the message to verify itself, report it through a known channel, and treat clicks, credentials, payments, or malware as escalating incident conditions."
 visual:
@@ -56,7 +57,7 @@ After reporting, use the email service’s supported phishing-report function if
 
 Stop interacting with the page or file. Do not try to investigate by clicking further. Report what happened, including the device, account, time, message, link or attachment type, and anything observed. Do not delete the evidence unless the response owner instructs it.
 
-If an attachment ran, software installed, an unexpected prompt appeared, or the device behaves abnormally, disconnect it from the network when doing so will not create a safety or operational hazard. Use a known clean device or phone to contact the responsible person. Avoid turning the device back on, running random cleanup utilities, or continuing work until the response owner assesses it.
+If an attachment ran, software installed, an unexpected prompt appeared, or the device behaves abnormally, disconnect it from the network when doing so will not create a safety or operational hazard. Use a known clean device or phone to contact the responsible person. Keep the device isolated. Do not reconnect it, restart it, run cleanup utilities, or resume work until the response owner gives instructions.
 
 A click does not always mean compromise, and no visible symptom does not prove safety. The appropriate response depends on what executed, browser and device state, account sessions, and available logs.
 
@@ -112,3 +113,5 @@ Test the reporting route. Employees should know whom to contact when email itsel
 This playbook does not prove a device or account is clean. It is not a substitute for forensic analysis, legal advice, regulatory assessment, insurance requirements, or provider-specific recovery. If critical systems, sensitive data, privileged accounts, money, safety, or continuing attacker activity may be involved, obtain qualified help promptly.
 
 The business goal is to make the correct first action easy: pause, verify independently, report without fear, and escalate based on what actually happened. A well-rehearsed route limits damage more reliably than asking each employee to investigate alone.
+
+_Updated September 9, 2026: Clarified that isolating a device from the network does not instruct the reader to shut it down or restart it; further action follows the incident owner's instructions._

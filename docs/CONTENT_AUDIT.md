@@ -1,5 +1,18 @@
 # Initial Content Audit
 
+## Current length snapshot — 2026-09-09
+
+This length-only snapshot reflects the current 15 launch guides after substantive updates to the total-cost, AI-output evaluation, SaaS checklist, and phishing-response articles. It does not repeat the historical source checks or establish human editorial acceptance. The August audit and its recorded results are preserved below.
+
+| Measure                                                 |      Result |
+| ------------------------------------------------------- | ----------: |
+| Total article body whitespace-delimited Markdown tokens |      18,461 |
+| Body whitespace-token range                             | 1,030–1,671 |
+
+These values use the same trimmed, nonempty whitespace-delimited Markdown-token calculation as the historical audit. Reader-visible prose is measured separately in `editorial-operations.yml`; length is not a Google AdSense approval threshold or evidence of content quality.
+
+## Historical audit — 2026-08-21
+
 **Audit date:** 2026-08-21
 
 **Scope:** `src/content/articles/*.md`

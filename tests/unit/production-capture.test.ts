@@ -461,7 +461,7 @@ describe("production screenshot capture contract", () => {
   });
 
   it("defines the exact unique 27-route after inventory", () => {
-    expect(RELEASE_EVIDENCE_ID).toBe("premium-spatial-2026-08-26");
+    expect(RELEASE_EVIDENCE_ID).toBe("editorial-clarity-2026-09-09");
     expect(CAPTURE_PHASES).toEqual([
       "before",
       "after-local",
@@ -884,7 +884,7 @@ describe("production screenshot capture contract", () => {
 
   it("maps phases to fixed versioned evidence directories", () => {
     const repositoryRoot = createTemporaryRoot("eti-capture-paths-");
-    expect(RELEASE_EVIDENCE_ID).toBe("premium-spatial-2026-08-26");
+    expect(RELEASE_EVIDENCE_ID).toBe("editorial-clarity-2026-09-09");
     expect(createCapturePaths(repositoryRoot, "before").outputDirectory).toBe(
       resolve(
         repositoryRoot,
