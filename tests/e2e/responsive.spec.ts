@@ -283,8 +283,8 @@ for (const viewport of [
     expect(featuredTitle).not.toBeNull();
     expect(
       featuredTitle!.y + featuredTitle!.height,
-      "the lead guide remains reachable within one short scroll after the introduction",
-    ).toBeLessThanOrEqual(1200);
+      "the complete lead guide title is visible within the story-led opening",
+    ).toBeLessThanOrEqual(780);
     expect(
       await page.locator("main").evaluate((main) => main.scrollHeight),
     ).toBeLessThan(viewport.width === 390 ? 11_000 : 7_000);
@@ -585,7 +585,7 @@ test("publication mark keeps the full name visible on one line at every required
   }
 });
 
-test("At a glance uses one mobile column, two tablet columns, and four wide columns", async ({
+test("expanded At a glance uses one mobile column and two reading-width columns", async ({
   page,
 }) => {
   skipWhenNoRepresentativeArticle();
@@ -593,11 +593,18 @@ test("At a glance uses one mobile column, two tablet columns, and four wide colu
     { width: 390, columns: 1 },
     { width: 767, columns: 1 },
     { width: 768, columns: 2 },
-    { width: 1440, columns: 4 },
+    { width: 1440, columns: 2 },
   ]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(representativeArticlePath!);
 
+    const fit = page.locator("details.fit-summary");
+    await expect(fit).not.toHaveAttribute("open");
+    await fit.locator("summary").click();
+    await expect(fit).toHaveAttribute("open", "");
+    await expect(fit.locator("dd")).toHaveCount(4);
+    for (const value of await fit.locator("dd").all())
+      await expect(value).toBeVisible();
     const renderedColumns = await page
       .locator(".fit-summary dl")
       .evaluate(
@@ -685,7 +692,7 @@ test("compact story metadata stays inside its card at tablet width", async ({
 });
 
 for (const categorySlug of categorySlugs) {
-  test(`${categorySlug} compact directory balances every published guide without a forced lead`, async ({
+  test(`${categorySlug} compact edition keeps one lead and every supporting guide inside the viewport`, async ({
     page,
   }) => {
     const publishedGuideCount = (await readArticleRecords()).filter(
@@ -705,8 +712,15 @@ for (const categorySlug of categorySlugs) {
       });
 
       await expect(page.locator(".category-hero__lead")).toHaveCount(0);
-      const cards = page.locator(".category-compact .article-card--compact");
+      const cards = page.locator(".category-compact .article-card");
       await expect(cards).toHaveCount(publishedGuideCount);
+      await expect(
+        page.locator(".category-compact .article-card--lead"),
+      ).toHaveCount(1);
+      await expect(
+        page.locator(".category-compact .article-card--compact"),
+      ).toHaveCount(publishedGuideCount - 1);
+      await expect(cards.first()).toHaveClass(/article-card--lead/);
       const boxes = await cards.evaluateAll((elements) =>
         elements.map((element) => {
           const box = element.getBoundingClientRect();
@@ -722,7 +736,7 @@ for (const categorySlug of categorySlugs) {
   });
 }
 
-test("mobile article keeps its informative visual and one compact fit summary before the reading body", async ({
+test("mobile article keeps its informative reading-column visual and one native fit disclosure before the body", async ({
   page,
 }) => {
   skipWhenNoRepresentativeArticle();
@@ -736,15 +750,22 @@ test("mobile article keeps its informative visual and one compact fit summary be
     await document.fonts.ready;
   });
 
-  const visual = page.locator(".article-hero__visual");
+  const visual = page.locator(
+    ".article-reading-layout__content > .article-hero__visual",
+  );
+  await expect(page.locator(".article-hero .article-hero__visual")).toHaveCount(
+    0,
+  );
   await expect(visual).toBeVisible();
   await expect(
     visual.locator(
       `figure[data-visual-key="${representativeArticle!.visual.key}"] svg[role="img"]`,
     ),
   ).toBeVisible();
-  const fit = page.locator("section.fit-summary");
+  const fit = page.locator("details.fit-summary");
   await expect(fit).toBeVisible();
+  await expect(fit).not.toHaveAttribute("open");
+  await expect(fit.locator("summary")).toBeVisible();
   await expect(page.locator(".fit-summary")).toHaveCount(1);
   await expect(
     page.locator(".fit-summary--desktop, .fit-summary--mobile"),

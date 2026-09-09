@@ -277,7 +277,7 @@ test("home explains the publication and links all five categories", async ({
   }
 });
 
-test("Apple editorial home keeps one lead, two supports, nine guide destinations, and five text-led topics", async ({
+test("cover-led editorial home keeps one lead, two supports, nine guide destinations, and five text-led topics", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -295,48 +295,29 @@ test("Apple editorial home keeps one lead, two supports, nine guide destinations
   await expect(
     page.locator(".front-page__support .article-card--feature"),
   ).toHaveCount(2);
-  const supportVisuals = page.locator(
-    ".front-page__support .article-card--feature .article-card__visual",
-  );
-  await expect(supportVisuals).toHaveCount(2);
-  for (const visual of await supportVisuals.all()) {
-    await expect(visual).toBeVisible();
-    const box = await visual.boundingBox();
+  const covers = page.locator(".front-page .article-card .editorial-cover");
+  await expect(covers).toHaveCount(3);
+  for (const cover of await covers.all()) {
+    await expect(cover).toBeVisible();
+    const box = await cover.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.height).toBeGreaterThanOrEqual(96);
-    expect(box!.height).toBeLessThanOrEqual(360);
-    await expect(visual.locator("svg.editorial-visual")).toHaveAttribute(
-      "preserveAspectRatio",
-      "xMidYMid meet",
+    const image = cover.locator("img");
+    await image.scrollIntoViewIfNeeded();
+    await expect(image).toHaveAttribute("alt", "");
+    await expect(image).toHaveAttribute("src", /^\/images\/editorial\//);
+    await expect(image).toHaveAttribute("width", "1536");
+    await expect(image).toHaveAttribute("height", "1024");
+    await expect
+      .poll(() =>
+        image.evaluate(
+          (node: HTMLImageElement) => node.complete && node.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await expect(cover.locator("figcaption")).toHaveText(
+      "AI-generated editorial illustration",
     );
-    const proportions = await visual
-      .locator("svg.editorial-visual")
-      .evaluate((svg) => {
-        const box = svg.getBoundingClientRect();
-        const viewBox = (svg as SVGSVGElement).viewBox.baseVal;
-        const matrix = (svg as SVGSVGElement).getScreenCTM()!;
-        const topLeft = new DOMPoint(viewBox.x, viewBox.y).matrixTransform(
-          matrix,
-        );
-        const bottomRight = new DOMPoint(
-          viewBox.x + viewBox.width,
-          viewBox.y + viewBox.height,
-        ).matrixTransform(matrix);
-        return {
-          scaleX: matrix.a,
-          scaleY: matrix.d,
-          left: topLeft.x,
-          top: topLeft.y,
-          right: bottomRight.x,
-          bottom: bottomRight.y,
-          box,
-        };
-      });
-    expect(proportions.scaleX).toBeCloseTo(proportions.scaleY, 4);
-    expect(proportions.left).toBeGreaterThanOrEqual(proportions.box.left - 1);
-    expect(proportions.top).toBeGreaterThanOrEqual(proportions.box.top - 1);
-    expect(proportions.right).toBeLessThanOrEqual(proportions.box.right + 1);
-    expect(proportions.bottom).toBeLessThanOrEqual(proportions.box.bottom + 1);
   }
 
   const homeArticleHrefs = await page
@@ -396,7 +377,7 @@ test("archive and category pages expose every guide promise once without manufac
     String(aiArticles.length),
   );
   await expect(
-    page.locator(".category-compact__list .article-card--compact"),
+    page.locator(".category-compact__list .article-card"),
   ).toHaveCount(aiArticles.length);
   await expect(
     page.locator(".category-compact__list .article-card__promise"),
@@ -449,16 +430,12 @@ test("editorial pages ship only the local visual symbols they render", async ({
     .evaluateAll((uses) =>
       uses.map((use) => use.getAttribute("href")).filter(Boolean),
     );
-  expect(homeReferences).toHaveLength(8);
-  expect(new Set(homeReferences).size).toBe(8);
-  await expect(page.locator("body > svg > symbol")).toHaveCount(8);
-  for (const reference of homeReferences) {
-    await expect(page.locator(`symbol${reference}`)).toHaveCount(1);
-  }
+  expect(homeReferences).toHaveLength(0);
+  await expect(page.locator("body > svg > symbol")).toHaveCount(0);
 
   await page.goto(`/articles/${articleSlug}/`);
   const articleReference = await page
-    .locator(".article-hero__visual use")
+    .locator(".article-reading-layout__content > .article-hero__visual use")
     .getAttribute("href");
   expect(articleReference).toBeTruthy();
   await expect(page.locator("body > svg > symbol")).toHaveCount(1);
@@ -1074,7 +1051,7 @@ test("a substantively revised article exposes its distinct modification date", a
   ).toHaveAttribute("content", revisedArticle.data.dateModified!);
 });
 
-test("the AI category uses the compact branch with complete published membership and no lead card", async ({
+test("the AI category uses the compact branch with one cover lead and complete published membership", async ({
   page,
 }) => {
   const articleRecords = (await readArticleRecords()) as ArticleSourceRecord[];
@@ -1090,12 +1067,10 @@ test("the AI category uses the compact branch with complete published membership
 
   const hero = page.locator('.category-hero[data-category="ai-automation"]');
   await expect(hero).toBeVisible();
-  await expect(hero.locator("[data-editorial-visual]")).toBeHidden();
+  await expect(hero.locator("[data-editorial-visual]")).toHaveCount(0);
   await expect(hero.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(hero.locator(".page-deck")).toBeVisible();
-  await expect(
-    hero.locator(".category-hero__visual svg.editorial-visual"),
-  ).toHaveAttribute("preserveAspectRatio", "xMidYMid meet");
+  await expect(hero.locator(".category-hero__visual")).toHaveCount(0);
   const categoryAccent = await hero.evaluate((element) =>
     getComputedStyle(element).getPropertyValue("--category-accent").trim(),
   );
@@ -1111,11 +1086,11 @@ test("the AI category uses the compact branch with complete published membership
     "compact",
   );
   await expect(hero.locator(".category-hero__lead")).toHaveCount(0);
-  await expect(page.locator(".article-card--lead")).toHaveCount(0);
+  await expect(page.locator(".article-card--lead")).toHaveCount(1);
   await expect(page.locator(".article-card--feature")).toHaveCount(0);
   await expect(
     page.locator(".category-compact .article-card--compact"),
-  ).toHaveCount(expectedArticleHrefs.length);
+  ).toHaveCount(expectedArticleHrefs.length - 1);
 
   const articleHrefs = await page
     .locator('main a[href^="/articles/"]')
@@ -1126,8 +1101,10 @@ test("the AI category uses the compact branch with complete published membership
     );
   expect(articleHrefs).toEqual(expectedArticleHrefs);
   expect(new Set(articleHrefs).size).toBe(articleHrefs.length);
-  const storyCards = page.locator(".category-compact .article-card--compact");
+  const storyCards = page.locator(".category-compact .article-card");
   await expect(storyCards).toHaveCount(expectedArticleHrefs.length);
+  await expect(storyCards.first()).toHaveClass(/article-card--lead/);
+  await expect(storyCards.first().locator(".editorial-cover")).toHaveCount(1);
   for (let index = 0; index < expectedArticleHrefs.length; index += 1) {
     const storyMeta = storyCards
       .nth(index)
@@ -1140,17 +1117,23 @@ test("the AI category uses the compact branch with complete published membership
     );
     await expect(
       storyMeta.getByRole("link", { name: "AI & Automation" }),
-    ).toHaveAttribute("href", "/categories/ai-automation/");
+    ).toHaveCount(0);
   }
 });
 
-test("category routes use one visual anchor and distinct guide links", async ({
+test("category routes use one decorative cover and distinct guide links", async ({
   page,
 }) => {
   for (const category of categories) {
     await page.goto(`/categories/${category.slug}/`);
 
-    await expect(page.locator("main [data-editorial-visual]")).toHaveCount(1);
+    await expect(page.locator("main [data-editorial-visual]")).toHaveCount(0);
+    await expect(page.locator("body > svg > symbol")).toHaveCount(0);
+    await expect(page.locator("main .editorial-cover")).toHaveCount(1);
+    await expect(page.locator("main .editorial-cover img")).toHaveAttribute(
+      "alt",
+      "",
+    );
     const categoryPage = page.locator(".category-page");
     await expect(categoryPage).toHaveAttribute("data-guide-count", /^\d+$/);
     const sourceGuideCount = Number(
@@ -1179,13 +1162,17 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
 
   const article = page.locator("article.article-page");
   const hero = article.locator(".article-hero");
-  await expect(hero.locator("[data-editorial-visual]")).toBeVisible();
-  await expect(hero.locator("svg.editorial-visual")).toHaveAttribute(
+  const readingVisual = article.locator(
+    ".article-reading-layout__content > .article-hero__visual",
+  );
+  await expect(hero.locator(".article-hero__visual")).toHaveCount(0);
+  await expect(readingVisual).toBeVisible();
+  await expect(readingVisual.locator("svg.editorial-visual")).toHaveAttribute(
     "preserveAspectRatio",
     "xMidYMid meet",
   );
   const { visual } = representativeArticleMetadata!;
-  const informativeVisual = hero.locator(
+  const informativeVisual = readingVisual.locator(
     `figure[data-visual-key="${visual.key}"][data-visual-type="${visual.type}"]`,
   );
   await expect(informativeVisual).toBeVisible();
@@ -1407,8 +1394,9 @@ test("article emits one semantic fit summary in the raw DOM", async ({
   await page.goto(`/articles/${articleSlug}/`);
 
   const article = page.locator("article.article-page");
-  const fitSummary = article.locator("section.fit-summary");
+  const fitSummary = article.locator("details.fit-summary");
   await expect(fitSummary).toHaveCount(1);
+  await expect(fitSummary).not.toHaveAttribute("open");
   await expect(
     article.locator(".fit-summary--desktop, .fit-summary--mobile"),
   ).toHaveCount(0);
@@ -1417,6 +1405,10 @@ test("article emits one semantic fit summary in the raw DOM", async ({
   await expect(fitSummary.locator("dl")).toHaveCount(1);
   await expect(fitSummary.locator("dt")).toHaveCount(4);
   await expect(fitSummary.locator("dd")).toHaveCount(4);
+  await fitSummary.locator("summary").click();
+  await expect(fitSummary).toHaveAttribute("open", "");
+  for (const value of await fitSummary.locator("dd").all())
+    await expect(value).toBeVisible();
   await expect(
     fitSummary.getByText("When to use this guide", { exact: true }),
   ).toBeVisible();

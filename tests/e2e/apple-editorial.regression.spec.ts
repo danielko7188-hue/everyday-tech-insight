@@ -24,7 +24,7 @@ async function expectNoOverflow(page: Page) {
 }
 
 for (const width of [320, 390, 768, 1440]) {
-  test(`native typography and unboxed category introduction at ${width}px`, async ({
+  test(`editorial typography and unboxed category introduction at ${width}px`, async ({
     page,
   }, testInfo) => {
     await page.setViewportSize({ width, height: 900 });
@@ -42,16 +42,14 @@ for (const width of [320, 390, 768, 1440]) {
     ]) {
       await expect
         .soft(page.locator(selector).first())
-        .toHaveCSS(
-          "font-family",
-          /-apple-system.*BlinkMacSystemFont.*Helvetica Neue.*Arial/,
-        );
+        .toHaveCSS("font-family", /Instrument Sans Variable/);
     }
     const hero = page.locator(".category-hero");
     await expect.soft(hero).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
     await expect.soft(hero).toHaveCSS("border-radius", "0px");
-    await expect.soft(page.locator(".category-hero__visual")).toBeHidden();
-    await expect(page.locator(".category-hero__copy > p")).toHaveCount(3);
+    await expect(page.locator(".category-hero__visual")).toHaveCount(0);
+    await expect(page.locator(".category-hero__copy > p")).toHaveCount(1);
+    await expect(hero.locator(".eyebrow")).toHaveCount(0);
     const compactBar = await page
       .locator(".article-card--compact")
       .first()
@@ -113,9 +111,11 @@ for (const width of [320, 390, 768, 1440]) {
       // Wait for the native details closing transition before measuring the page.
       await expect
         .poll(() =>
-          firstGuide.evaluate((element) => element.getBoundingClientRect().top),
+          firstGuide.evaluate(
+            (element) => element.getBoundingClientRect().bottom,
+          ),
         )
-        .toBeLessThan(850);
+        .toBeLessThanOrEqual(780);
     }
     await expectNoOverflow(page);
   });
@@ -139,7 +139,7 @@ for (const width of [320, 390, 768, 1440]) {
 }
 
 for (const width of [390, 1440]) {
-  test(`home promise and actions lead a frameless editorial opening at ${width}px`, async ({
+  test(`home promise and actions introduce an early cover-led story at ${width}px`, async ({
     page,
   }, testInfo) => {
     const height = width === 390 ? 844 : 900;
@@ -156,20 +156,29 @@ for (const width of [390, 1440]) {
       const bounds = await page.locator(selector).boundingBox();
       expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(height);
     }
-    const art = page.locator(".signal-field--hero");
-    await expect(art.locator("img")).toBeVisible();
-    await expect.soft(art).toHaveCSS("border-radius", "0px");
-    expect((await art.boundingBox())!.height).toBeLessThanOrEqual(
-      width < 768 ? 241 : 281,
-    );
+    await expect(page.locator(".signal-field--hero")).toHaveCount(0);
     const lead = page.locator(".front-page__lead .article-card");
-    expect(
-      (await lead.locator(".article-card__title").boundingBox())!.y,
-    ).toBeLessThanOrEqual(1200);
+    const titleBox = await lead.locator(".article-card__title").boundingBox();
+    expect(titleBox).not.toBeNull();
+    expect(titleBox!.y + titleBox!.height).toBeLessThanOrEqual(780);
+    const cover = lead.locator(".editorial-cover");
+    const image = cover.locator("img");
+    await expect(image).toBeVisible();
+    await expect(image).toHaveAttribute("alt", "");
+    await expect
+      .poll(() =>
+        image.evaluate(
+          (node: HTMLImageElement) => node.complete && node.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await expect(cover.locator("figcaption")).toHaveText(
+      "AI-generated editorial illustration",
+    );
     await lead.hover();
     await expect.soft(lead).toHaveCSS("transform", "none");
     await expect.soft(lead).toHaveCSS("box-shadow", "none");
-    await expect.soft(lead).toHaveCSS("border-radius", "0px");
+    await expect.soft(lead).toHaveCSS("border-radius", "20px");
     for (const motif of await page.locator(".topic-directory__motif").all())
       await expect.soft(motif).toBeHidden();
     await expect(page.locator(".topic-directory--compact li > a")).toHaveCount(

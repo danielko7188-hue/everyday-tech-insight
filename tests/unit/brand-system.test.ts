@@ -79,9 +79,7 @@ describe("Apple editorial brand system", () => {
     }
 
     expect(css).not.toMatch(/--brand-gradient\s*:|var\(--brand-gradient\)/i);
-    expect(css).toMatch(
-      /--font-body\s*:\s*-apple-system,\s*BlinkMacSystemFont/,
-    );
+    expect(css).toMatch(/--font-body\s*:\s*"Instrument Sans Variable"/);
     expect(css).toMatch(/--font-display\s*:\s*var\(--font-body\)/);
     expect(css).not.toMatch(/font-family:\s*"Newsreader Variable"/);
     expect(source("src/layouts/BaseLayout.astro")).toMatch(
