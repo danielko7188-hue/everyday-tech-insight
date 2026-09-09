@@ -3,7 +3,6 @@ import { getCollection } from "astro:content";
 
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import EditorialVisual from "../../components/EditorialVisual.astro";
-import SectionHeading from "../../components/SectionHeading.astro";
 import { categories } from "../../data/categories";
 import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
@@ -34,8 +33,8 @@ const description =
       <p class="eyebrow">Topic directory</p>
       <h1>Business technology categories</h1>
       <p class="page-deck">
-        Move from a business question to practical guidance organized around the
-        problem, technology, risk, and next decision.
+        Five areas of practical guidance. Start with the question your business
+        needs to answer.
       </p>
     </header>
 
@@ -43,11 +42,9 @@ const description =
       class="category-directory"
       aria-labelledby="category-directory-heading"
     >
-      <SectionHeading
-        title="Choose a topic"
-        description="Find practical guidance on software, automation, security, daily operations, and technology planning."
-        id="category-directory-heading"
-      />
+      <h2 class="visually-hidden" id="category-directory-heading">
+        Choose a topic
+      </h2>
       <ol class="category-directory__list">
         {
           categories.map((category) => {

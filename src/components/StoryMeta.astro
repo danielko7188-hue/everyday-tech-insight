@@ -78,12 +78,12 @@ const minutes = Math.max(1, Math.ceil(readingMinutes));
     flex: 0 0 auto;
     align-items: baseline;
     gap: 0.75rem;
+    margin: 0;
     white-space: nowrap;
   }
 
-  .story-meta li + li::before {
-    color: var(--brand-boundary, #756884);
-    content: "/";
+  .story-meta li + li {
+    margin-block-start: 0;
   }
 
   .story-meta .story-meta__category {

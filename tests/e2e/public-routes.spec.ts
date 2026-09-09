@@ -565,7 +565,7 @@ test("toolkit landing publishes four outcome-led cards with detail, guide, and C
       "Record produced: ",
     );
     await expect(
-      card.getByRole("link", { name: "View worksheet guide" }),
+      card.getByRole("link", { name: "Open worksheet instructions" }),
     ).toHaveAttribute("href", `/toolkit/${expected.id}/`);
     const guideLink = card.getByRole("link", { name: expected.guideLabel });
     if (publishedArticleSlugs.has(expected.articleSlug)) {
