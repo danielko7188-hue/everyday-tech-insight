@@ -228,6 +228,44 @@ test("404 keeps recovery links while omitting its ornamental circuit field", asy
 });
 
 for (const width of [390, 1440]) {
+  test(`worksheet introductions align navigation and use a fine divider at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    for (const slug of [
+      "automation-candidate-screen",
+      "saas-evaluation-evidence-sheet",
+      "technology-risk-register",
+      "backup-restore-test-log",
+    ]) {
+      await openPage(page, `/toolkit/${slug}/`, testInfo);
+      const intro = page.locator(".toolkit-detail__intro");
+      const divider = await intro.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          width: style.borderBottomWidth,
+          color: style.borderBottomColor,
+        };
+      });
+      expect
+        .soft(divider, slug)
+        .toEqual({ width: "1px", color: "rgb(210, 210, 215)" });
+      const introBox = await intro.boundingBox();
+      const breadcrumbBox = await page
+        .getByRole("navigation", { name: "Breadcrumb", exact: true })
+        .boundingBox();
+      expect(introBox).not.toBeNull();
+      expect(breadcrumbBox).not.toBeNull();
+      expect
+        .soft(Math.abs(introBox!.x - breadcrumbBox!.x), slug)
+        .toBeLessThanOrEqual(1);
+      expect
+        .soft(Math.abs(introBox!.width - breadcrumbBox!.width), slug)
+        .toBeLessThanOrEqual(1);
+      await expectNoOverflow(page);
+    }
+  });
+
   test(`every worksheet field and structure group uses a plain neutral separator at ${width}px`, async ({
     page,
   }, testInfo) => {

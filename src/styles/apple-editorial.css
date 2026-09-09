@@ -390,6 +390,14 @@ body .site-header__mark .publication-mark__name {
   padding: 0;
 }
 
+.page-shell:has(> .toolkit-detail) > .breadcrumbs {
+  max-inline-size: 62rem;
+}
+
+.toolkit-detail__intro {
+  border-block-end: 1px solid var(--color-rule);
+}
+
 .toolkit-page .toolkit-card__copy h2 {
   margin-block-end: 1rem;
   font-size: 1.75rem;
