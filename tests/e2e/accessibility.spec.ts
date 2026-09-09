@@ -338,7 +338,7 @@ for (const route of [
   });
 }
 
-test("story visuals are named while category fallback art remains decorative", async ({
+test("story visuals are named while retired category art stays hidden and decorative", async ({
   page,
 }) => {
   skipWhenNoRepresentativeArticle();
@@ -353,7 +353,7 @@ test("story visuals are named while category fallback art remains decorative", a
 
   await page.goto(categoryPath);
   const fallbackVisual = page.locator(".category-hero__visual svg");
-  await expect(fallbackVisual).toBeVisible();
+  await expect(fallbackVisual).toBeHidden();
   await expect(fallbackVisual).toHaveAttribute("aria-hidden", "true");
   await expect(page.locator('.category-hero__visual [role="img"]')).toHaveCount(
     0,

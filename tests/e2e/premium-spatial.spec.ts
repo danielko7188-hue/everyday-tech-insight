@@ -3,7 +3,6 @@ import { expect, test, type Page } from "@playwright/test";
 import { toolkitResources } from "../../src/data/toolkit";
 
 const toolkitWidths = [390, 600, 768, 1024, 1440] as const;
-const compactActionWidths = new Set<number>([390, 600]);
 
 type ToolkitGeometry = {
   actionBottom: number;
@@ -23,6 +22,8 @@ type ToolkitGeometry = {
     textCenterDelta: number;
   }[];
   primaryContentDelta: number;
+  primaryRightInset: number;
+  primaryWidthRatio: number;
 };
 
 async function readToolkitGeometry(page: Page): Promise<ToolkitGeometry[]> {
@@ -83,10 +84,10 @@ async function readToolkitGeometry(page: Page): Promise<ToolkitGeometry[]> {
             };
           },
         ),
-        primaryContentDelta: Math.max(
-          Math.abs(primaryBox.left - actionContentLeft),
-          Math.abs(primaryBox.right - actionContentRight),
-        ),
+        primaryContentDelta: Math.abs(primaryBox.left - actionContentLeft),
+        primaryRightInset: actionContentRight - primaryBox.right,
+        primaryWidthRatio:
+          primaryBox.width / (actionContentRight - actionContentLeft),
       };
     }),
   );
@@ -125,13 +126,14 @@ for (const width of toolkitWidths) {
     await expect(cards).toHaveCount(4);
 
     const geometry = await readToolkitGeometry(page);
-    const expectedColumns = compactActionWidths.has(width) ? 1 : 2;
 
     for (const item of geometry) {
       expect(item.actionDisplay).toBe("grid");
-      expect(item.actionColumns).toBe(expectedColumns);
+      expect(item.actionColumns).toBe(1);
       expect(item.actionOverflow).toBeLessThanOrEqual(0);
       expect(item.primaryContentDelta).toBeLessThanOrEqual(1);
+      expect(item.primaryRightInset).toBeGreaterThanOrEqual(0);
+      expect(item.primaryWidthRatio).toBeLessThan(0.94);
       expect(item.links.length).toBeGreaterThanOrEqual(2);
 
       for (const link of item.links) {
@@ -154,8 +156,8 @@ for (const width of toolkitWidths) {
       expect(secondaryLinks.length).toBeGreaterThanOrEqual(1);
       for (const secondary of secondaryLinks) {
         expect(secondary.justify).toBe("flex-start");
-        expect(secondary.paddingInlineStart).toBeGreaterThanOrEqual(12);
-        expect(secondary.paddingInlineEnd).toBeGreaterThanOrEqual(12);
+        expect(secondary.paddingInlineStart).toBe(0);
+        expect(secondary.paddingInlineEnd).toBe(0);
         expect(secondary.textAlign).toBe("start");
       }
     }
