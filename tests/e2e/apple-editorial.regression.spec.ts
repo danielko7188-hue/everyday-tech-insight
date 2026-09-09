@@ -1,8 +1,13 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 
-async function openPage(page: Page, path: string, testInfo: TestInfo) {
+async function openPage(
+  page: Page,
+  path: string,
+  testInfo: TestInfo,
+  status = 200,
+) {
   const response = await page.goto(path);
-  expect(response?.status()).toBe(path === "/404/" ? 404 : 200);
+  expect(response?.status()).toBe(status);
   const expectedGitSha = testInfo.project.metadata.expectedGitSha;
   if (typeof expectedGitSha === "string") {
     await expect(
@@ -105,11 +110,12 @@ for (const width of [320, 390, 768, 1440]) {
       const firstGuide = page
         .locator(".category-compact__list .article-card__title")
         .first();
-      expect(
-        await firstGuide.evaluate(
-          (element) => element.getBoundingClientRect().top,
-        ),
-      ).toBeLessThan(850);
+      // Wait for the native details closing transition before measuring the page.
+      await expect
+        .poll(() =>
+          firstGuide.evaluate((element) => element.getBoundingClientRect().top),
+        )
+        .toBeLessThan(850);
     }
     await expectNoOverflow(page);
   });
@@ -215,7 +221,7 @@ test("404 keeps recovery links while omitting its ornamental circuit field", asy
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await openPage(page, "/404/", testInfo);
+  await openPage(page, "/apple-editorial-not-found/", testInfo, 404);
   await expect.soft(page.locator(".signal-field--compact")).toBeHidden();
   await expect(page.locator(".not-found-actions a")).toHaveCount(4);
   await expectNoOverflow(page);
