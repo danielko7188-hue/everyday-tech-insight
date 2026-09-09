@@ -32,7 +32,7 @@ Files: `src/data/categories.ts`, `scripts/generate-social-images.mjs`, generated
 Implementation verification at `6ae8fbe`: all 233 functional browser cases pass. Independent specification review passed the repeated-item cascade correction; rendered checks additionally caught and fixed worksheet breadcrumb alignment and its heavy divider with two new regressions covering all four resources. Full release evidence is recorded separately under `.gstack/apple-direction-2026-09-09/` so deployment receipts can name the exact frozen commit without changing its tracked source.
 
 - [x] Independent spec review, then code-quality review. Resolve findings, rerun relevant checks and re-review.
-- [ ] Inspect before/after native screenshots, then update intended Windows/Linux visual references. Preserve all older dated release evidence.
+- [x] Inspect before/after native screenshots, then update intended Windows/Linux visual references. Preserve all older dated release evidence.
 - [ ] Run `npm run qa` on the exact final candidate; require all gates pass without relaxed thresholds. Push a `codex/` branch and open the normal protected PR.
 - [ ] Require GitHub checks, merge normally, verify Vercel READY identity and exact merged SHA. Rebuild final main and run strict production smoke, new live regressions and eight-width runtime captures.
 - [ ] Write an observed release receipt, link the live site, and distinguish verified tests from subjective design judgment and external approval decisions.
