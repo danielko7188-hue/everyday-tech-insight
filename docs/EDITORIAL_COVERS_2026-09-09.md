@@ -30,4 +30,4 @@ Use case: product-mockup. One restrained luxury editorial still life about the t
 
 ## Validation
 
-`tests/unit/editorial-cover-assets.test.ts` checks all30 delivery candidates, exact dimensions and format, no alpha, each below250KB, and distinct full-size illustrations across the five topics. Browser checks separately establish actual loading, visible credit and responsive layout. An image test is not an originality, legal or AdSense approval determination.
+`tests/unit/editorial-cover-assets.test.ts` fully decodes all30 delivery candidates and five originals, checks exact dimensions and format, no delivery alpha, each delivery below250KB, distinct full-size illustrations, and exact manifest inventory, byte counts and SHA-256 hashes. Corrupted in-memory AVIF fixtures establish that header metadata alone does not validate a complete image. Browser checks separately establish actual loading, visible credit and responsive layout. An image test is not an originality, legal or AdSense approval determination.
