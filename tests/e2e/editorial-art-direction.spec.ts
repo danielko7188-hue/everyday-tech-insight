@@ -1,9 +1,11 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 
+import { readArticleRecords } from "../../scripts/qa-content.mjs";
 import { categorySlugs } from "../../src/data/categories";
-import { homepageCuration } from "../../src/data/editorial";
+import { resolveHomepageCuration } from "../../src/data/editorial";
 
 const articlePath = "/articles/how-to-identify-business-tasks-for-automation/";
+const expectedHome = resolveHomepageCuration(await readArticleRecords());
 
 async function openPage(page: Page, path: string, testInfo: TestInfo) {
   const response = await page.goto(path);
@@ -60,6 +62,10 @@ for (const width of [390, 1440]) {
     const size = await lead.evaluate((element) =>
       parseFloat(getComputedStyle(element).fontSize),
     );
+    await testInfo.attach("opening-geometry", {
+      body: JSON.stringify({ width, title: bounds, fontSize: size }),
+      contentType: "application/json",
+    });
     expect(size).toBeGreaterThanOrEqual(width === 390 ? 24 : 40);
     expect(size).toBeLessThanOrEqual(width === 390 ? 32 : 48);
     const destinations = await page
@@ -68,9 +74,9 @@ for (const width of [390, 1440]) {
     expect(destinations).toHaveLength(9);
     expect(new Set(destinations).size).toBe(9);
     expect(destinations).toEqual(
-      Object.values(homepageCuration)
+      Object.values(expectedHome)
         .flat()
-        .map((slug) => `/articles/${slug}/`),
+        .map(({ data }) => `/articles/${data.slug}/`),
     );
     await assertCovers(page, 3);
   });
@@ -95,6 +101,10 @@ for (const width of [390, 1440]) {
       );
       expect(new Set(destinations).size).toBe(3);
       const first = await titles.first().boundingBox();
+      await testInfo.attach("opening-geometry", {
+        body: JSON.stringify({ width, category, title: first }),
+        contentType: "application/json",
+      });
       expect(first!.y + first!.height).toBeLessThanOrEqual(780);
       await expect(
         page.locator(".category-compact .story-meta__category"),
@@ -142,9 +152,12 @@ test("fit details open with the keyboard and retain every field", async ({
     0,
   );
   await page.evaluate(() => window.scrollTo(0, 0));
-  expect((await page.locator(".article-body").boundingBox())!.y).toBeLessThan(
-    1400,
-  );
+  const proseTop = (await page.locator(".article-body").boundingBox())!.y;
+  await testInfo.attach("article-opening-geometry", {
+    body: JSON.stringify({ width: 390, proseTop }),
+    contentType: "application/json",
+  });
+  expect(proseTop).toBeLessThan(1400);
 });
 
 test("closed fit details print all guidance without a script", async ({
