@@ -1,5 +1,11 @@
 # Local web-font subsets
 
+## Current interface face
+
+Instrument Sans Variable 5.3.0 is imported directly from the pinned package's upright Latin WOFF2 and emitted as a local hashed build asset. It is not one of the historical subsets below. Its complete, unmodified copyright notice and OFL-1.1 license are distributed as `LICENSE-instrument-sans.txt`.
+
+## Retained diagram and historical faces
+
 These WOFF2 files are self-hosted subsets of the pinned Fontsource 5.3.0 packages in `package.json`:
 
 - `newsreader-variable-english.woff2`: Newsreader Variable, normal style, weight range 600–800.
