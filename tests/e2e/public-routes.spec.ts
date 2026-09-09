@@ -277,7 +277,7 @@ test("home explains the publication and links all five categories", async ({
   }
 });
 
-test("Editorial Clarity home uses one lead, two supports, nine guide destinations, and five topic motifs", async ({
+test("Apple editorial home keeps one lead, two supports, nine guide destinations, and five text-led topics", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -358,6 +358,9 @@ test("Editorial Clarity home uses one lead, two supports, nine guide destination
   await expect(topicEntries).toHaveCount(5);
   for (const entry of await topicEntries.all()) {
     await expect(entry.locator('svg[aria-hidden="true"]')).toHaveCount(1);
+    await expect(entry.locator('svg[aria-hidden="true"]')).toBeHidden();
+    await expect(entry.getByRole("link")).toBeVisible();
+    await expect(entry.locator("p")).toBeVisible();
   }
 });
 
@@ -1087,7 +1090,9 @@ test("the AI category uses the compact branch with complete published membership
 
   const hero = page.locator('.category-hero[data-category="ai-automation"]');
   await expect(hero).toBeVisible();
-  await expect(hero.locator("[data-editorial-visual]")).toBeVisible();
+  await expect(hero.locator("[data-editorial-visual]")).toBeHidden();
+  await expect(hero.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(hero.locator(".page-deck")).toBeVisible();
   await expect(
     hero.locator(".category-hero__visual svg.editorial-visual"),
   ).toHaveAttribute("preserveAspectRatio", "xMidYMid meet");

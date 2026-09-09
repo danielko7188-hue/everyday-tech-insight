@@ -113,16 +113,25 @@ async function stabilizePage(page: Page): Promise<void> {
     return {
       interfaceFace: interfaceFace.length,
       publicationFace: publicationFace.length,
+      bodyFont: getComputedStyle(document.body).fontFamily,
+      headingFont: getComputedStyle(document.querySelector("h1")!).fontFamily,
     };
   });
 
   expect(
     fontState.publicationFace,
-    "local Source Sans 3 display face",
+    "local Source Sans 3 diagram face at weight 600",
   ).toBeGreaterThan(0);
-  expect(fontState.interfaceFace, "local Source Sans 3 face").toBeGreaterThan(
-    0,
-  );
+  expect(
+    fontState.interfaceFace,
+    "local Source Sans 3 diagram face at weight 400",
+  ).toBeGreaterThan(0);
+  for (const family of [fontState.bodyFont, fontState.headingFont]) {
+    expect(family).toMatch(
+      /-apple-system.*BlinkMacSystemFont.*Helvetica Neue.*Arial/,
+    );
+    expect(family).not.toContain("Source Sans");
+  }
 }
 
 async function materializeDeferredContent(page: Page): Promise<void> {

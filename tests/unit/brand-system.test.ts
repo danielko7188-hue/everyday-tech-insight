@@ -5,10 +5,11 @@ import { describe, expect, it } from "vitest";
 
 import { categoryAccents } from "../../src/data/categories";
 
-const css = readFileSync(
-  join(process.cwd(), "src", "styles", "global.css"),
-  "utf8",
-);
+const css = ["global.css", "apple-editorial.css"]
+  .map((file) =>
+    readFileSync(join(process.cwd(), "src", "styles", file), "utf8"),
+  )
+  .join("\n");
 
 const source = (path: string) =>
   readFileSync(join(process.cwd(), ...path.split("/")), "utf8");
@@ -69,7 +70,7 @@ function contrast(foreground: string, background: string): number {
   return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
 }
 
-describe("Editorial Clarity brand system", () => {
+describe("Apple editorial brand system", () => {
   it("defines the neutral surface and restrained blue action token contract", () => {
     for (const [name, value] of Object.entries(requiredTokens)) {
       expect(css, name).toMatch(
@@ -78,8 +79,14 @@ describe("Editorial Clarity brand system", () => {
     }
 
     expect(css).not.toMatch(/--brand-gradient\s*:|var\(--brand-gradient\)/i);
-    expect(css).toMatch(/--font-display\s*:\s*"Source Sans 3 Variable"/);
+    expect(css).toMatch(
+      /--font-body\s*:\s*-apple-system,\s*BlinkMacSystemFont/,
+    );
+    expect(css).toMatch(/--font-display\s*:\s*var\(--font-body\)/);
     expect(css).not.toMatch(/font-family:\s*"Newsreader Variable"/);
+    expect(source("src/layouts/BaseLayout.astro")).toMatch(
+      /import "\.\.\/styles\/global\.css";\s*import "\.\.\/styles\/apple-editorial\.css";/,
+    );
   });
 
   it("uses the coherent category family", () => {
@@ -95,6 +102,8 @@ describe("Editorial Clarity brand system", () => {
       ["#0066cc", "#ffffff", 4.5],
       ["#0066cc", "#f5f5f7", 4.5],
       ["#ffffff", "#0066cc", 4.5],
+      ["#004080", "#ffffff", 4.5],
+      ["#004080", "#f5f5f7", 4.5],
       ["#d2d2d7", "#343436", 4.5],
       ["#9ac8ff", "#343436", 3],
     ] as const;
