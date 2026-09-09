@@ -3799,6 +3799,22 @@ h1 {
     text-underline-offset: 0.3em;
   }
 }
+@media (min-width: 48rem) and (max-width: 67.49rem) {
+  /* Informative diagrams need reading space, not thumbnail proportions. */
+  .article-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .article-hero__copy,
+  .article-hero__visual {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .article-hero__visual {
+    inline-size: 100%;
+    max-inline-size: var(--reading-max);
+    justify-self: center;
+  }
+}
 @media (min-width: 67.5rem) {
   .front-page {
     grid-template-columns: minmax(0, 1fr);

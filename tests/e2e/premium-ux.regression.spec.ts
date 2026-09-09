@@ -238,3 +238,67 @@ for (const width of [768, 1440]) {
     }
   });
 }
+
+test("tablet informative diagrams use the reading width instead of a thumbnail column", async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  await openPage(
+    page,
+    "/articles/back-up-business-files-with-the-3-2-1-method/",
+    testInfo,
+  );
+  const layout = await page.locator(".article-hero").evaluate((hero) => {
+    const copy = hero
+      .querySelector(".article-hero__copy")!
+      .getBoundingClientRect();
+    const figure = hero
+      .querySelector(".article-hero__visual")!
+      .getBoundingClientRect();
+    return {
+      copyBottom: copy.bottom,
+      copyWidth: copy.width,
+      figureTop: figure.top,
+      figureWidth: figure.width,
+    };
+  });
+  expect(layout.figureWidth).toBeGreaterThanOrEqual(layout.copyWidth * 0.9);
+  expect(layout.figureWidth).toBeGreaterThan(600);
+  expect(layout.figureTop).toBeGreaterThanOrEqual(layout.copyBottom);
+});
+
+test("native contents navigation survives cold deferred article layout", async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openPage(
+    page,
+    "/articles/back-up-business-files-with-the-3-2-1-method/",
+    testInfo,
+  );
+  const contents = page.locator(".table-of-contents");
+  const heading = page.getByRole("heading", {
+    name: "Run a representative restore test",
+    exact: true,
+  });
+  await contents
+    .getByRole("link", {
+      name: "Run a representative restore test",
+      exact: true,
+    })
+    .click();
+  await expect(page).toHaveURL(/#run-a-representative-restore-test$/);
+  await expect(heading).toBeInViewport();
+  await expect(contents).toBeInViewport({ ratio: 1 });
+  // Navigate again using the untouched DOM after deferred prose is encountered.
+  await contents.getByRole("link").first().click();
+  await contents
+    .getByRole("link", {
+      name: "Run a representative restore test",
+      exact: true,
+    })
+    .click();
+  await expect(heading).toBeInViewport();
+  await expect(contents).toBeInViewport({ ratio: 1 });
+});

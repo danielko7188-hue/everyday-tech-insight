@@ -20,7 +20,7 @@ The live baseline is `f6e21b94f7ca459626dbb0524d209259948104f8`. Read-only brows
 - Story metadata has no inherited sibling offsets or ornamental slash separators. Normal article prose lists retain their spacing.
 - Category introductions retain meaningful descriptions and purpose text; the first guide title appears within the initial 900px viewport at 390px and 1440px widths.
 - One semantic contents tree follows desktop reading in sufficiently tall viewports; mobile and short viewports remain static. Anchors still reach the correct heading.
-- Backup-diagram text fits its associated boxes. Preserve the meaning and caption.
+- Backup-diagram text fits its associated boxes. Preserve the meaning and caption. Informative article diagrams stack below the introduction at tablet widths, where the former side column made their labels smaller than on phones.
 - Paired toolkit cards align their primary actions using shared layout tracks, not fixed content heights. Use distinct labels for worksheet instructions and the related article.
 - No invented identity, publishing claims, external scripts, ad activation, or change to owner-only publication controls. This is a UX improvement, not a guarantee of AdSense approval or universal perfection.
 
