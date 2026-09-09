@@ -12,6 +12,7 @@ interface Props {
   compact?: boolean;
   showContentType?: boolean;
   showDate?: boolean;
+  showCategory?: boolean;
   dateLabel?: "Published" | "Updated";
 }
 
@@ -24,6 +25,7 @@ const {
   compact = false,
   showContentType = true,
   showDate = true,
+  showCategory = true,
   dateLabel,
 } = Astro.props;
 
@@ -45,9 +47,13 @@ const minutes = Math.max(1, Math.ceil(readingMinutes));
   aria-label="Story details"
 >
   {showContentType && <li class="story-meta__type">{contentTypeLabel}</li>}
-  <li class="story-meta__category">
-    <a href={`/categories/${categorySlug}/`}>{categoryName}</a>
-  </li>
+  {
+    showCategory && (
+      <li class="story-meta__category">
+        <a href={`/categories/${categorySlug}/`}>{categoryName}</a>
+      </li>
+    )
+  }
   {
     showDate && (
       <li class="story-meta__date">

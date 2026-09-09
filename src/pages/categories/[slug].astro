@@ -3,13 +3,8 @@ import { getCollection } from "astro:content";
 
 import ArticleCard from "../../components/ArticleCard.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
-import EditorialVisual from "../../components/EditorialVisual.astro";
 import SectionHeading from "../../components/SectionHeading.astro";
-import {
-  categories,
-  type CategoryRecord,
-  type CategorySlug,
-} from "../../data/categories";
+import { categories, type CategoryRecord } from "../../data/categories";
 import { partitionCategoryEdition } from "../../data/editorial";
 import { site } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
@@ -18,19 +13,6 @@ import {
   formatGuideCount,
   type PublishedArticleEntry,
 } from "../../utils/published-articles";
-
-const categoryPurposes: Record<CategorySlug, string> = {
-  "ai-automation":
-    "Use this section to decide where automation can remove repeat work without hiding judgment, accountability, or operational risk.",
-  "business-software":
-    "Use this section to compare software against real workflows, ownership cost, data portability, and the effort required to change later.",
-  "cybersecurity-data-protection":
-    "Use this section to turn broad security concerns into prioritized safeguards for accounts, devices, vendors, and business data.",
-  "digital-operations":
-    "Use this section to make routine digital work easier to hand off, verify, recover, and improve as the business changes.",
-  "technology-strategy":
-    "Use this section to connect technology spending and governance to business priorities, constraints, and measurable decisions.",
-};
 
 export async function getStaticPaths() {
   const publishedArticles = filterPublishedArticles(
@@ -75,7 +57,6 @@ const description = category.description;
   socialImagePath={`/social/category-${category.slug}.png`}
   socialImageAlt={`Social preview for the ${category.name} topic.`}
   activeCategory={category.slug}
-  editorialVisualSymbolIds={[category.slug]}
 >
   <div
     class="page-shell category-page"
@@ -96,18 +77,8 @@ const description = category.description;
       style={`--category-accent: ${category.accent};`}
     >
       <div class="category-hero__copy">
-        <p class="eyebrow">Business technology topic</p>
         <h1>{category.name}</h1>
         <p class="page-deck">{category.description}</p>
-        <p>{categoryPurposes[category.slug]}</p>
-      </div>
-      <div class="category-hero__visual" data-editorial-visual>
-        <EditorialVisual
-          category={category.slug}
-          slug={`${category.slug}-category`}
-          ratio="wide"
-          fit="contain"
-        />
       </div>
     </header>
 
@@ -118,21 +89,20 @@ const description = category.description;
             class="category-compact"
             aria-labelledby="category-compact-heading"
           >
-            <SectionHeading
-              eyebrow="Published guidance"
-              title="All guides in this topic"
-              description={`Choose from ${formatGuideCount(categoryEdition.articles.length)} to find a practical next step.`}
-              id="category-compact-heading"
-            />
+            <h2 class="category-compact__heading" id="category-compact-heading">
+              {formatGuideCount(categoryEdition.articles.length)} in this topic
+            </h2>
             <ol class="category-compact__list">
-              {categoryEdition.articles.map((article) => (
+              {categoryEdition.articles.map((article, index) => (
                 <li>
                   <ArticleCard
                     article={article}
-                    variant="compact"
+                    variant={index === 0 ? "lead" : "compact"}
                     headingLevel={3}
                     showVisual={false}
                     showFullMeta={true}
+                    cover={index === 0}
+                    hideCategory
                   />
                 </li>
               ))}

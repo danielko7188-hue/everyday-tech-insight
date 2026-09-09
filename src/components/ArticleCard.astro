@@ -8,6 +8,7 @@ import {
   type StoryTreatment,
 } from "../utils/presentation";
 import type { PublishedArticleEntry } from "../utils/published-articles";
+import EditorialCover from "./EditorialCover.astro";
 import EditorialVisual from "./EditorialVisual.astro";
 import StoryMeta from "./StoryMeta.astro";
 
@@ -18,6 +19,8 @@ interface Props {
   showVisual?: boolean;
   showFullMeta?: boolean;
   dateMode?: StoryDateMode;
+  cover?: boolean;
+  hideCategory?: boolean;
 }
 
 const {
@@ -27,6 +30,8 @@ const {
   showVisual: showVisualOverride,
   showFullMeta: showFullMetaOverride,
   dateMode = "published",
+  cover = false,
+  hideCategory = false,
 } = Astro.props;
 const Heading = `h${headingLevel}` as "h2" | "h3";
 const category = categoriesBySlug.get(article.data.category);
@@ -45,12 +50,16 @@ const storyDate = resolveStoryDate(article.data, dateMode);
 ---
 
 <article
-  class:list={["article-card", `article-card--${variant}`]}
+  class:list={[
+    "article-card",
+    `article-card--${variant}`,
+    { "article-card--cover": cover },
+  ]}
   data-category={category.slug}
   style={`--category-accent: ${category.accent};`}
 >
   {
-    showVisual && (
+    showVisual && !cover && (
       <div class="article-card__visual" data-editorial-visual>
         <EditorialVisual
           category={category.slug}
@@ -73,6 +82,7 @@ const storyDate = resolveStoryDate(article.data, dateMode);
       compact={treatment.compactMeta}
       showContentType={showFullMeta || variant !== "compact"}
       showDate={showDate}
+      showCategory={!hideCategory}
     />
     <Heading class="article-card__title">
       <a href={`/articles/${article.data.slug}/`}>
@@ -96,4 +106,13 @@ const storyDate = resolveStoryDate(article.data, dateMode);
       )
     }
   </div>
+  {
+    cover && (
+      <EditorialCover
+        category={category.slug}
+        eager={variant === "lead"}
+        class={variant === "lead" ? undefined : "editorial-cover--supporting"}
+      />
+    )
+  }
 </article>
