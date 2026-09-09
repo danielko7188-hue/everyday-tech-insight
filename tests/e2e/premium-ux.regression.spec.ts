@@ -113,15 +113,25 @@ for (const width of [320, 390, 768]) {
         const box = element.getBoundingClientRect();
         return {
           height: box.height,
-          targetIsLink:
-            document
-              .elementFromPoint(box.right - 16, box.bottom - 16)
-              ?.closest("a") === element.querySelector("a"),
         };
       });
       expect(metric.height).toBeLessThan(250);
-      expect(metric.targetIsLink).toBe(true);
+      // Offscreen home sections use content-visibility: auto; wait for paint.
+      await expect
+        .poll(() =>
+          card.evaluate((element) => {
+            const box = element.getBoundingClientRect();
+            return (
+              document
+                .elementFromPoint(box.right - 16, box.bottom - 16)
+                ?.closest("a") === element.querySelector("a")
+            );
+          }),
+        )
+        .toBe(true);
     }
+    await cards.first().click({ position: { x: 20, y: 20 } });
+    await expect(page).toHaveURL(/\/categories\/ai-automation\/$/);
   });
 }
 
