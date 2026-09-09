@@ -986,7 +986,7 @@ test("category directory visuals resolve their local symbol definitions", async 
   ).toHaveCount(0);
   await expect(
     page.getByText(
-      "Each topic keeps every published guide together around a distinct decision focus.",
+      "Find practical guidance on software, automation, security, daily operations, and technology planning.",
     ),
   ).toBeVisible();
   await expect(page.getByText(/every reviewed, published guide/i)).toHaveCount(
