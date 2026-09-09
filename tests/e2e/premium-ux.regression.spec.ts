@@ -41,7 +41,7 @@ for (const width of [320, 390, 768, 1440]) {
     expect(
       Math.max(...layout.widths) - Math.min(...layout.widths),
     ).toBeLessThan(1);
-    if (width >= 768) expect(layout.tops[0]).toBeCloseTo(layout.tops[1], 0);
+    if (width >= 768) expect(layout.tops[0]).toBeCloseTo(layout.tops[1]!, 0);
     else expect(Math.max(...layout.heights)).toBeLessThan(300);
 
     for (const entry of await entries.all()) {
@@ -82,6 +82,7 @@ for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await openPage(page, "/articles/", testInfo);
     const metadata = page.locator(".story-meta").first();
+    await expect(metadata.locator("li")).toHaveCount(4);
     await expect(metadata.locator("time")).toHaveCount(1);
     await expect(metadata).toContainText("min read");
     const metrics = await metadata.locator("li").evaluateAll((items) =>
@@ -95,7 +96,7 @@ for (const width of [320, 390, 768, 1440]) {
       expect(item.margin).toBe("0px");
       expect(item.separator).not.toContain("/");
     }
-    if (width >= 390) expect(metrics[0].top).toBeCloseTo(metrics[1].top, 0);
+    if (width >= 390) expect(metrics[0]!.top).toBeCloseTo(metrics[1]!.top, 0);
   });
 }
 
@@ -229,9 +230,9 @@ for (const width of [768, 1440]) {
       })),
     );
     for (const offset of [0, 2]) {
-      expect(positions[offset].top).toBeCloseTo(positions[offset + 1].top, 0);
-      expect(positions[offset].actionTop).toBeCloseTo(
-        positions[offset + 1].actionTop,
+      expect(positions[offset]!.top).toBeCloseTo(positions[offset + 1]!.top, 0);
+      expect(positions[offset]!.actionTop).toBeCloseTo(
+        positions[offset + 1]!.actionTop,
         0,
       );
     }
