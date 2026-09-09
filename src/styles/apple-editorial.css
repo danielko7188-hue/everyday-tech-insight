@@ -1,0 +1,484 @@
+/* Owner-directed Apple editorial presentation. Content and native controls stay intact. */
+:root {
+  --font-body:
+    -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-body);
+  --brand-visited: #004080;
+}
+
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* These components declare their own font family in scoped styles. */
+body .publication-mark .publication-mark__name,
+body .publication-mark .publication-mark__initials,
+:root body .story-meta,
+body .section-heading .section-heading__eyebrow {
+  font-family: var(--font-body);
+}
+
+/* Preserve the measured type geometry of informative diagrams only. */
+symbol,
+svg[role="img"] {
+  --font-body: "Source Sans 3 Variable", "Segoe UI", Arial, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.eyebrow,
+body .section-heading .section-heading__eyebrow,
+.toolkit-card__type,
+.category-directory__count,
+.fit-summary__when-label,
+.fit-summary dt,
+.table-of-contents > p,
+.how-we-work__items h3 {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.eyebrow::before,
+.section-heading__eyebrow::before,
+.article-card--compact::before {
+  display: none;
+  content: none;
+}
+
+.site-header {
+  background: #ffffff;
+}
+
+.site-header__identity-row {
+  min-block-size: 3.5rem;
+  padding-block: 0.375rem;
+}
+
+.site-header__mark {
+  min-block-size: 2.75rem;
+}
+
+body .site-header__mark .publication-mark__initials {
+  inline-size: 1.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.625rem;
+}
+
+body .site-header__mark .publication-mark__name {
+  font-size: clamp(0.875rem, 3.95vw, 1.125rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.site-header__mobile-menu summary {
+  min-inline-size: 3.75rem;
+  padding-inline: 0.5rem;
+  border: 0;
+  border-radius: 0;
+  font-weight: 400;
+}
+
+.site-header__mobile-menu[open] summary {
+  inset-block-start: 0.375rem;
+}
+
+.site-header__mobile-menu[open] nav {
+  margin-block-start: 3.125rem;
+}
+
+.site-header__mobile-menu nav {
+  background: #ffffff;
+}
+
+.site-header__mobile-menu a[aria-current],
+.site-header__topics a[aria-current] {
+  border-color: transparent;
+  color: var(--brand-accent);
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 0.35em;
+}
+
+.page-intro h1,
+.trust-content h1 {
+  font-size: clamp(2.25rem, 4.5vw, 4rem);
+  line-height: 1.08;
+}
+
+.page-deck,
+.lead-summary,
+.article-summary {
+  letter-spacing: -0.015em;
+}
+
+/* A compact, frameless opening brings the guides up to the promise. */
+.home-opening__promise {
+  padding-block-start: clamp(2.5rem, 5vw, 4rem);
+  margin-block-end: 2.5rem;
+}
+
+.home-opening__promise h1 {
+  max-inline-size: 19ch;
+  margin-block: 0.75rem 1.25rem;
+  font-size: clamp(2.375rem, 5.2vw, 4.5rem);
+  font-weight: 600;
+  line-height: 1.04;
+}
+
+.home-opening__promise .lead-summary {
+  max-inline-size: 47ch;
+  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+  line-height: 1.45;
+}
+
+.home-opening__actions {
+  margin-block-start: 1.25rem;
+  gap: 0.5rem 1.5rem;
+}
+
+.button-primary,
+.toolkit-card__primary,
+.toolkit-detail__actions a:first-child {
+  font-weight: 400;
+}
+
+.signal-field--hero {
+  inline-size: min(100%, 26.25rem);
+  max-block-size: 17.5rem;
+  margin-block-start: 0.75rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.signal-field--hero img {
+  max-block-size: 17.5rem;
+  object-fit: contain;
+}
+
+.front-page {
+  gap: 2rem;
+  padding-block-start: 2rem;
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.front-page__heading h2 {
+  font-size: clamp(1.75rem, 2.7vw, 2.5rem);
+}
+
+.home-opening .article-card,
+.home-opening .article-card__copy,
+.home-opening .article-card__visual,
+.home-opening .editorial-visual__caption {
+  border-radius: 0;
+  background: transparent;
+}
+
+.home-opening .article-card {
+  overflow: visible;
+}
+
+.home-opening .article-card__copy,
+.home-opening .article-card--lead .article-card__copy,
+.home-opening .article-card--feature .article-card__copy {
+  padding: 0;
+}
+
+.home-opening .article-card--lead {
+  gap: 2rem;
+}
+
+.home-opening .article-card--feature {
+  gap: 1.5rem;
+  padding-block-start: 2rem;
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.home-opening .article-card--lead .article-card__title {
+  font-size: clamp(1.75rem, 2.7vw, 2.5rem);
+}
+
+.home-opening .article-card--feature .article-card__title {
+  font-size: clamp(1.5rem, 2vw, 1.875rem);
+}
+
+.article-card__visual,
+.article-hero__visual {
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.article-hero__visual .editorial-visual__caption,
+.home-opening .editorial-visual__caption {
+  padding-inline: 0;
+  border-block-start: 1px solid var(--color-rule);
+  background: transparent;
+}
+
+/* Topic names, guide counts and descriptions replace decorative circuit tiles. */
+.category-hero__visual,
+.category-directory__visual,
+.topic-directory__motif,
+.signal-field--compact {
+  display: none;
+}
+
+.category-hero {
+  display: block;
+  padding: 1.5rem 0 2.5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.category-hero__copy {
+  max-inline-size: 56rem;
+}
+
+.category-hero__copy h1 {
+  max-inline-size: 22ch;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 1.05;
+}
+
+.category-hero__copy .page-deck {
+  max-inline-size: 54ch;
+  margin-block: 1.5rem 1rem;
+  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+}
+
+.category-hero__copy > :last-child {
+  max-inline-size: 65ch;
+  font-size: 1rem;
+}
+
+.category-hero + .category-compact {
+  padding-block-start: 2rem;
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.topic-directory--compact li,
+.category-directory__entry,
+.category-directory__list > li:first-child .category-directory__entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+  border: 0;
+  border-block-start: 1px solid var(--color-rule);
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.topic-directory--compact li > a,
+.topic-directory--compact li > p {
+  grid-column: 1;
+}
+
+.topic-directory--compact li > a {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.topic-directory--compact li > a span:first-child {
+  min-block-size: 0;
+}
+
+.topic-directory--compact li > p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.category-directory__copy h3 {
+  font-size: clamp(1.375rem, 2vw, 1.625rem);
+}
+
+.category-directory__copy {
+  align-self: start;
+}
+
+.featured-toolkit__body,
+.toolkit-hero {
+  padding: 1.5rem 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.featured-toolkit__body {
+  border-block-start: 1px solid var(--color-rule);
+}
+
+/* One surface per reading aid, with no nested panel decoration. */
+.fit-summary,
+.guide-preparation,
+.article-toolkit-callout,
+.byline-notice,
+.notice,
+.article-body blockquote,
+.trust-content .toolkit-structure {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.fit-summary__when,
+.trust-content .toolkit-structure__groups > li,
+.trust-content .toolkit-field-card {
+  padding-inline: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.fit-summary__when {
+  padding-block-start: 0;
+}
+
+.trust-content .toolkit-structure__groups > li {
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.trust-content .toolkit-field-card {
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.article-hero h1 {
+  font-size: clamp(2rem, 4.3vw, 3.75rem);
+  font-weight: 600;
+  line-height: 1.08;
+}
+
+.article-body {
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+
+.table-of-contents > p {
+  font-size: 0.9375rem;
+}
+
+.toolkit-grid {
+  column-gap: 3rem;
+}
+
+.toolkit-card {
+  padding-block-start: 1.5rem;
+  border: 0;
+  border-block-start: 1px solid var(--color-rule);
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.toolkit-card__copy {
+  padding: 0;
+}
+
+.toolkit-page .toolkit-card__copy h2 {
+  margin-block-end: 1rem;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.toolkit-card__actions {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 0 0 1.5rem;
+  border: 0;
+}
+
+.toolkit-card__actions > .toolkit-card__primary {
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  justify-self: start;
+  padding: 0.65rem 1.125rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.toolkit-card__actions > a:not(.toolkit-card__primary) {
+  padding-inline: 0;
+  font-weight: 400;
+}
+
+/* Quiet color feedback only; no raised cards or animated decorative depth. */
+.home-opening :is(.article-card--lead, .article-card--feature),
+.home-opening
+  :is(.article-card--lead, .article-card--feature):is(:hover, :focus-within),
+.topic-directory--compact li,
+.topic-directory--compact li:is(:hover, :focus-within),
+.category-directory__entry,
+.category-directory__entry:is(:hover, :focus-within) {
+  transform: none;
+  box-shadow: none;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
+}
+
+@media (min-width: 56.25rem) {
+  .site-header__identity-row {
+    min-block-size: 3.25rem;
+    padding-block: 0.25rem;
+  }
+
+  .site-header__topics {
+    background: transparent;
+  }
+
+  .site-header__topics a {
+    min-block-size: 2.75rem;
+  }
+}
+
+@media (min-width: 67.5rem) {
+  .home-opening .article-card--lead {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 3rem;
+  }
+
+  .topic-directory--compact ol {
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .home-opening__promise h1 {
+    max-inline-size: 17ch;
+    font-size: clamp(2.125rem, 9.75vw, 2.75rem);
+  }
+
+  .signal-field--hero,
+  .signal-field--hero img {
+    max-block-size: 15rem;
+  }
+
+  .category-hero {
+    padding-block: 0.5rem 2rem;
+  }
+
+  .category-hero__copy h1 {
+    font-size: clamp(2.25rem, 10.25vw, 2.75rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-opening .article-card,
+  .topic-directory--compact li,
+  .category-directory__entry {
+    transition: none;
+  }
+}
