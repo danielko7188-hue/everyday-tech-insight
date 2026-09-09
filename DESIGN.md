@@ -1,5 +1,13 @@
 # Everyday Tech Insight Design System
 
+## Current direction — Editorial Clarity, September 9, 2026
+
+The owner requested an Apple-inspired shift toward visual restraint. The current design contract is [Editorial Clarity](docs/DESIGN_REDESIGN_2026-09-09.md): white and light-gray surfaces, charcoal text, restrained blue controls, Source Sans 3 throughout, clear hierarchy, generous spacing, and original decorative concept art. This supersedes the palette, serif typography, dark chrome, and homepage decoration described below. It does not supersede accessibility, truthful content, owner-only publishing, or monetization safeguards. Apple trademarks and assets are not used.
+
+## Historical August design contract
+
+The remainder records the previous approved visual system for historical context; it is not the current visual specification.
+
 ## Status and scope
 
 This document records the approved **Purple Signal / A Balanced Signal** editorial system for the Astro publication. It governs the static site only. It does not authorize changes to the separate Blogger theme, live publishing, analytics, advertising, consent tooling, or AdSense configuration.

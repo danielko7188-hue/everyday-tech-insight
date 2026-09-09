@@ -10,6 +10,10 @@ Implemented surfaces include the local `SignalField` on the homepage and 404, CS
 
 ## Current publication boundary
 
+The September 9, 2026 Editorial Clarity revision supersedes the August purple visual direction only. Light neutral surfaces, Source Sans 3 typography, restrained blue links, quieter navigation, generous spacing, and original decorative artwork establish the new identity. This is an independent publication design inspired by Apple's visual restraint, not an Apple clone or affiliation. The nine-guide homepage, informative article diagrams, owner-only publishing controls, and monetization-off state remain intact.
+
+See the [design contract](docs/DESIGN_REDESIGN_2026-09-09.md), [artwork provenance](docs/EDITORIAL_ART_PROVENANCE_2026-09-09.md), and [current AdSense review](docs/ADSENSE_REVIEW_2026-09-09.md). Four articles received substantive clarity or worked-example updates. Fresh release checks and exact-SHA deployment evidence are required for this revision; the August observations below do not certify it.
+
 - Public byline: `Everyday Tech Insight`, a publication name only.
 - Production canonical: `https://everyday-tech-insight.vercel.app/`.
 - Contact and corrections: the public GitHub issue tracker linked from the site.
@@ -99,6 +103,10 @@ npm run capture:production -- --origin https://production.example --phase after-
 ```
 
 Set `$fullGitSha` and `$vercelDeploymentId` from the exact pushed commit and authenticated Vercel deployment metadata. The command validates the explicit HTTPS origin and release metadata and verifies protected CMS/advertising routes remain exact non-redirecting 404s.
+
+### Historical August 26 release evidence
+
+The following dated observations describe the August release, including its then-pending final capture. They are retained as history, not current September status.
 
 For release `premium-spatial-2026-08-26`, the expanded after-local capture completed at `2026-08-26T16:58:13.990Z` from `http://127.0.0.1:4321` for exact source SHA `679bc6c23313e29693c68aec0acdce111fe2fb0e`: 228 PNGs, 220 matching HTTP 200 responses, 8 expected 404 responses, 228 unique SHA-256 hashes, and 6/6 safety assertions. It covers 27 routes across all eight required widths (216 full-page states), four keyboard-open menu states at 320, 390, 600, and 768px, and eight focused skip-link states. This after-local result is local evidence only and is not deployment evidence.
 

@@ -15,6 +15,7 @@ intendedAudience: "Small-business teams evaluating a bounded AI drafting, classi
 readerOutcome: "Build a small evaluation set, score results consistently, measure review burden and harmful errors, and make a documented go, revise, or stop decision."
 verificationStatus: "source-checked"
 datePublished: "2026-08-21"
+dateModified: "2026-09-09"
 featured: false
 summary: "Define the task and failure costs, freeze representative cases, score outputs with a task-specific rubric, and include human correction time in the decision."
 visual:
@@ -131,6 +132,23 @@ An overall average can hide a dangerous subgroup. If normal cases pass and every
 
 Record uncertainty. A small case set does not prove future reliability, and a source-checked evaluation plan is not the same as a completed product test. Do not describe unrun cases or unmeasured savings as results.
 
+## Worked example: an average can hide the reason to pause
+
+**Fictional illustration, not results from a product test.** Imagine a 20-case pilot that drafts customer replies from approved facts. The acceptance rule prohibits inventing a refund promise, even if someone could correct it before sending. The cases are classified once, after review:
+
+| Outcome                            |  Cases | Share of the 20-case set |
+| ---------------------------------- | -----: | -----------------------: |
+| Accepted without correction        |     12 |                      60% |
+| Accepted after minor correction    |      5 |                      25% |
+| Rejected and requiring a new draft |      3 |                      15% |
+| Total                              | **20** |                 **100%** |
+
+One of the three rejected drafts invents a refund promise. That critical failure is a subset of the rejected cases, not a twenty-first case. Reporting only “85% accepted” would conceal both the five corrections and the failure of an explicit release condition.
+
+The decision record should say that 17 of 20 drafts were usable after review, only 12 needed no correction, and one critical error prevents expansion under the predefined rule. A reasonable next step is to revise the workflow and retest with both a preserved decision set and additional cases that challenge refund and commitment handling. Fixing the single example does not demonstrate that the failure class is controlled.
+
+No time-saving conclusion follows from these counts. The team must also record preparation, review, correction, rejected-work replacement, and escalation time, then compare the complete workflow with its baseline. The small fictional set demonstrates the reporting method; it does not estimate how any AI service performs.
+
 ## Decide go, revise, or stop
 
 Set thresholds before the final run. A decision record can use:
@@ -146,3 +164,5 @@ Set thresholds before the final run. A decision record can use:
 A pilot cannot establish universal accuracy, legal compliance, absence of bias, security, or performance under every future condition. It is not a substitute for specialist assessment where decisions affect rights, safety, employment, credit, health, or other consequential outcomes. Vendor benchmarks do not replace testing the intended workflow.
 
 The honest deliverable is the case set, rubric, outputs, scores, review-time record, exceptions, and decision boundary. Those artifacts let a small team distinguish repeatable evidence from enthusiasm and decide what must be tested next.
+
+_Updated September 9, 2026: Added a fictional scorecard showing why acceptance rate and critical failures must be reported separately._

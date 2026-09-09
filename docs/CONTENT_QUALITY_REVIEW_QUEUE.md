@@ -41,7 +41,7 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 - `title`: How to calculate the total cost of business software
 - `category`: technology-strategy
 - `publicationStatus`: published
-- `wordCount`: 1314
+- `wordCount`: 1630
 - `reader`: Small-business decision makers comparing software options or deciding whether to renew, replace, consolidate, build, or keep a current process.
 - `businessNeed`: Subscription price can look affordable while implementation, internal labor, required add-ons, administration, change, downtime, and exit remain uncounted.
 - `guidePromise`: Compare software using the full cost of implementation, labor, operation, change, and exit—not subscription price alone.
@@ -50,14 +50,14 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 - `sourceUrls`: https://digital.gov/guides/pra/estimate-burden | https://csrc.nist.gov/pubs/sp/800/146/final
 - `sourceSuitability`: Official government burden-estimation guidance and NIST cloud guidance support labor and lifecycle scope; neither source proves a vendor price, tax treatment, forecast, or business-specific total.
 - `sourceLastChecked`: UNKNOWN
-- `originalMethod`: Establish a common time horizon, record visible and hidden cost layers, separate expected cost from contingent exit exposure, and compare ranges with an assumptions register.
+- `originalMethod`: Establish a common time horizon, record visible and hidden cost layers, separate expected cost from contingent exit exposure, and compare ranges with an assumptions register. The September 9 revision adds a clearly fictional two-option calculation and a labor-assumption sensitivity check; neither is a measured vendor result.
 - `originalVisual`: cost-stack / software-cost-stack — separates license, implementation, labor, operations, change, and contingent exit exposure.
 - `toolkitContribution`: No mapped Toolkit worksheet; the guide's cost range and assumptions register remain a described working record.
 - `claimRisks`: Cost categories may appear financially complete despite omitted taxes, financing, opportunity cost, contract escalation, downtime probability, regional labor rates, or accounting treatment.
 - `repetitionRisks`: Assumption-register language overlaps pilot and SaaS-evaluation guidance; this guide must preserve its defined horizon and quantified cost focus.
 - `evidenceLimits`: The sources justify considering burden and cloud lifecycle factors but provide no measured cost inputs for a reader's product, staff, implementation, or exit.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the software-cost-stack tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1314 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove financial accuracy, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1630 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove financial accuracy, rights, or human acceptance. The September 9 fictional example's arithmetic was recomputed, without validating its invented assumptions for a real business.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: CONDITIONAL — a finance, procurement, tax, or accounting reviewer is needed before using the method for consequential budgeting, reporting, or contract decisions.
 - `recommendation`: KEEP AS A PLANNING FRAMEWORK — retain the range-based comparison, but do not present it as an accounting, tax, or investment calculation without qualified review.
@@ -196,7 +196,7 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 - `title`: How to evaluate AI output quality in a small-team pilot
 - `category`: ai-automation
 - `publicationStatus`: published
-- `wordCount`: 1160
+- `wordCount`: 1442
 - `reader`: Small-business teams evaluating a bounded AI drafting, classification, extraction, or summarization use before operational rollout.
 - `businessNeed`: A small team can mistake a few impressive AI examples for dependable performance because it has no defined cases, rubric, baseline, or stop rule.
 - `guidePromise`: Test AI output against representative cases, a defined rubric, a baseline, and the real time required for human correction.
@@ -205,14 +205,14 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 - `sourceUrls`: https://airc.nist.gov/airmf-resources/playbook/measure/ | https://airc.nist.gov/airmf-resources/playbook/manage/
 - `sourceSuitability`: Official government AI risk framework guidance supports measurement, monitoring, response, and governance scope; it does not validate this rubric, sample, product, model, or result.
 - `sourceLastChecked`: UNKNOWN
-- `originalMethod`: Define the task and baseline, freeze representative cases, score explicit criteria and harmful errors, measure correction effort, document exceptions, and apply a predeclared stop rule.
+- `originalMethod`: Define the task and baseline, freeze representative cases, score explicit criteria and harmful errors, measure correction effort, document exceptions, and apply a predeclared stop rule. The September 9 revision adds a clearly fictional 20-case scorecard separating unchanged, corrected, and rejected output, with a critical failure counted within the rejected cases.
 - `originalVisual`: comparison / ai-quality-scorecard — compares baseline and AI-assisted output across review criteria, harmful errors, correction effort, and stop conditions.
 - `toolkitContribution`: No mapped Toolkit worksheet; the scorecard and recommendation are described records without a downloadable template.
 - `claimRisks`: A small or unrepresentative sample can hide rare harmful errors, model drift, subgroup effects, confidentiality exposure, reviewer disagreement, or changing product behavior.
 - `repetitionRisks`: Pilot controls overlap the 30-day pilot and automation-candidate guides; this article must remain specific to output-quality measurement and correction effort.
 - `evidenceLimits`: NIST guidance supports evaluation discipline but supplies no evidence that a model, prompt, dataset, rubric, baseline, or observed score is adequate for the reader's use.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the ai-quality-scorecard tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1160 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove AI performance, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1442 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove AI performance, rights, or human acceptance. The September 9 fictional scorecard's counts and percentages were recomputed; no real pilot or time saving is claimed.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — an AI evaluation and use-case domain expert should review sampling, rubric validity, harmful-error treatment, privacy, and the decision threshold.
 - `recommendation`: KEEP WITH MEASUREMENT CAVEATS — retain the baseline-and-correction method while refusing any generalized quality claim not supported by a real, reviewed pilot.
@@ -227,7 +227,7 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 - `title`: How to evaluate SaaS with a practical checklist
 - `category`: business-software
 - `publicationStatus`: published
-- `wordCount`: 1085
+- `wordCount`: 1423
 - `reader`: Small-business owners and operations leaders comparing a SaaS purchase that will hold important work or business data.
 - `businessNeed`: A polished software demonstration can hide workflow gaps, weak controls, administrative burden, plan restrictions, and a costly exit path.
 - `guidePromise`: Turn business requirements into test scenarios and verify workflow, security, data, administration, and exit claims before buying.
@@ -243,7 +243,7 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 - `repetitionRisks`: Data exit overlaps the lock-in guide and cost overlaps total-cost guidance; this article must stay a cross-functional acquisition evidence gate.
 - `evidenceLimits`: CISA guidance supports buyer diligence but does not prove any vendor claim, service level, privacy term, control operation, integration, support quality, or portability result.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the saas-evidence-checklist tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1085 reader-visible Markdown prose words, three HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove vendor assurance, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1423 reader-visible Markdown prose words, three HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove vendor assurance, rights, or human acceptance. The September 9 revision adds a clearly fictional export-evidence record showing why an account-dependent attachment link leaves a requirement unresolved; no real vendor test is claimed.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — security, privacy, legal, procurement, data, and operations specialists should review consequential evidence and contract-dependent claims.
 - `recommendation`: KEEP AS A DUE-DILIGENCE SHELL — retain the evidence-first sequence, but never convert checklist completion into a product endorsement or assurance conclusion.
@@ -320,7 +320,7 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 - `title`: How to respond to a suspected phishing message
 - `category`: cybersecurity-data-protection
 - `publicationStatus`: published
-- `wordCount`: 1092
+- `wordCount`: 1126
 - `reader`: Small-business employees, owners, and administrators who need an immediate, plain-language response to a suspicious email, text, call, or login page.
 - `businessNeed`: Employees may act on urgency, verify through attacker-controlled contact details, or hide a mistake when the business lacks a clear phishing response route.
 - `guidePromise`: Verify a suspicious request through a known channel and escalate containment based on clicks, credentials, payments, or exposed data.
@@ -336,7 +336,7 @@ An empty `sourceLastChecked` renders as `UNKNOWN`; `reviewedBy` and `reviewedAt`
 - `repetitionRisks`: Verification and access-control language overlaps MFA guidance; this article must remain a time-sensitive message-to-incident triage flow.
 - `evidenceLimits`: FTC guidance supports protective principles but cannot determine whether a message is malicious, what was exposed, whether containment succeeded, or which legal and contractual notices apply.
 - `mediaRights`: OWNER RIGHTS REVIEW REQUIRED — automation validates the phishing-response-workflow tuple but does not establish authorship, license, or publication rights.
-- `automationReview`: Repository-observable checks cover published schema, 1092 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove incident outcomes, rights, or human acceptance.
+- `automationReview`: Repository-observable checks cover published schema, 1126 reader-visible Markdown prose words, two HTTPS source records, cited URLs, visual shape, and route eligibility; this does not prove incident outcomes, rights, or human acceptance. The September 9 revision clarifies keeping a device isolated and avoiding reconnection, restart, cleanup, or resumed work until the response owner gives instructions.
 - `humanEditorialReview`: OWNER REVIEW REQUIRED
 - `expertReviewNeeded`: YES — a security incident responder and, when data, money, people, or notice duties are implicated, legal, privacy, finance, or insurance specialists should review actions.
 - `recommendation`: KEEP WITH INCIDENT ESCALATION EMPHASIS — retain the calm first-response flow while making every consequential action subordinate to the actual incident owner and specialist advice.

@@ -8,6 +8,7 @@ export default [
     ignores: [
       ".astro/**",
       ".gstack/**",
+      ".worktrees/**",
       ".vercel/**",
       "coverage/**",
       "dist/**",

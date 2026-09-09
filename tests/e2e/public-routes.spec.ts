@@ -270,7 +270,7 @@ test("home explains the publication and links all five categories", async ({
   }
 });
 
-test("Purple Signal home uses one lead, two supports, nine guide destinations, and five topic motifs", async ({
+test("Editorial Clarity home uses one lead, two supports, nine guide destinations, and five topic motifs", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -1319,13 +1319,13 @@ test("article explains its preparation method without implying human or first-ha
   await expect(preparation).toContainText(
     `${representativeArticle!.data.sourceList.length} cited sources`,
   );
-  await expect(preparation).toContainText(/recorded source access date/i);
+  await expect(preparation).toContainText(/source access dates?:/i);
   await expect(preparation).toContainText(/editorial synthesis/i);
   await expect(preparation).toContainText(
     /does not report first-hand product testing.*completed business result/i,
   );
   await expect(preparation).toContainText(
-    /does not establish human or expert approval/i,
+    /consult the editorial standards for AI assistance and the current human-review limitations/i,
   );
   await expect(preparation.locator("time")).toHaveCount(
     new Set(
@@ -1460,7 +1460,7 @@ test("publisher intro foregrounds its audience and practical guides", async ({
   );
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    /small-business decision makers.*published practical technology guides/i,
+    /practical technology guides.*publication byline.*editorial contact channel/i,
   );
   const intro = page.locator(".trust-page__intro");
   await expect(intro.locator(".eyebrow")).toHaveText(
@@ -1489,7 +1489,7 @@ test("publisher lists published work before its identity boundary", async ({
   await expect(identity).toHaveCount(1);
   await expect(
     identity.locator("#publisher-identity-boundary-heading"),
-  ).toHaveText("Publication identity boundary");
+  ).toHaveText("The publication byline");
 
   const publishedPrecedesIdentity = await published.evaluate(
     (publishedSection, identitySelector) => {
@@ -1532,36 +1532,39 @@ test("trust pages are reachable and state the public evidence boundary", async (
 
   await page.goto("/publisher/");
   await expect(
-    page.getByText(/publication name, not a legal entity/i),
+    page.getByText(/publication-name byline.*rather than a named author/i),
   ).toBeVisible();
-  await expect(page.getByText(/does not claim.*credentials/i)).toBeVisible();
+  await expect(
+    page.getByText(/do not report first-hand product testing/i),
+  ).toBeVisible();
 
   await page.goto("/privacy/");
   await expect(
+    page.getByText(/own code does not load analytics or advertising services/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Vercel processing request, device, network, diagnostic/i),
+  ).toBeVisible();
+  await expect(
     page.getByText(
-      /validated integration state disables both analytics and advertising/i,
+      /does not set cookies or store information in your browser's local or session storage/i,
     ),
   ).toBeVisible();
   await expect(
-    page.getByText(/does not load analytics or advertising services/i),
-  ).toBeVisible();
-  await expect(
-    page.getByText(/Vercel may process request, device, network, diagnostic/i),
-  ).toBeVisible();
-  await expect(
-    page.getByText(/implementation state dated August 25, 2026/i),
-  ).toBeVisible();
-  await expect(page.getByText(/reviewed on August 25, 2026/i)).toHaveCount(0);
+    page.getByText(/reviewed on|implementation state dated/i),
+  ).toHaveCount(0);
 
   await page.goto("/advertising-disclosure/");
   await expect(
-    page.getByText(/does not currently run advertising/i),
+    page.getByText(/Display advertising is disabled/i),
   ).toBeVisible();
   await expect(
     page.getByText(/no affiliate-link.*integrations/i),
   ).toBeVisible();
   await expect(
-    page.getByText(/does not establish.*off-site compensation.*product/i),
+    page.getByText(
+      /does not establish the existence or absence of arrangements outside it/i,
+    ),
   ).toBeVisible();
 
   await page.goto("/editorial-standards/");
@@ -1573,24 +1576,36 @@ test("trust pages are reachable and state the public evidence boundary", async (
   ).toBeVisible();
   await expect(
     page.getByText(
-      /automated.*checks.*do not prove.*claim-level human review/i,
+      /completed human editorial review of all guides has not been documented/i,
     ),
   ).toBeVisible();
   await expect(
     page.getByText(/material current claims are rechecked before publication/i),
   ).toHaveCount(0);
   await expect(
-    page.getByText(/AI tools assisted this initial project/i),
+    page.getByText(/AI tools assisted these guides and this website/i),
   ).toBeVisible();
-  await expect(page.getByText(/human or expert review/i)).toBeVisible();
+  await expect(
+    page.getByText(/must not be read as expert-approved advice/i),
+  ).toBeVisible();
 
   await page.goto("/contact/");
   await expect(page.locator(".trust-page > p").first()).toContainText(
     "corrections process first.",
   );
+  await expect(
+    page.getByText(/GitHub account is required to open an issue/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/issue tracker is public.*Do not post private information/i),
+  ).toBeVisible();
 
   await page.goto("/corrections/");
-  await expect(page.getByText(/does not silently backdate/i)).toBeVisible();
+  await expect(
+    page.getByText(
+      /Dates are not changed merely to make a guide appear newer/i,
+    ),
+  ).toBeVisible();
   await expect(page.getByText(/minor typographical/i)).toBeVisible();
   await expect(
     page.getByText(/may not receive a formal update note/i),

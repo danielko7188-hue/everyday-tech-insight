@@ -249,7 +249,7 @@ for (const viewport of [
   { width: 390, height: 844 },
   { width: 1440, height: 900 },
 ]) {
-  test(`homepage lead headline is visible at ${viewport.width}px`, async ({
+  test(`homepage explains its purpose and offers a browse action before scrolling at ${viewport.width}px`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
@@ -258,11 +258,32 @@ for (const viewport of [
       await document.fonts.ready;
     });
 
-    const box = await page
+    const promise = page.locator(".home-opening__promise");
+    for (const element of [
+      promise.locator("h1"),
+      promise.locator(".lead-summary"),
+      promise.locator('a[href="/articles/"]'),
+    ]) {
+      await expect(element).toBeVisible();
+      const box = await element.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.y).toBeGreaterThanOrEqual(0);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+    }
+
+    const browseAction = promise.locator('a[href="/articles/"]');
+    const actionBox = await browseAction.boundingBox();
+    expect(actionBox!.height).toBeGreaterThanOrEqual(44);
+    expect(actionBox!.width).toBeGreaterThanOrEqual(44);
+
+    const featuredTitle = await page
       .locator(".front-page__lead .article-card__title")
       .boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+    expect(featuredTitle).not.toBeNull();
+    expect(
+      featuredTitle!.y + featuredTitle!.height,
+      "the lead guide remains reachable within one short scroll after the introduction",
+    ).toBeLessThanOrEqual(1200);
     expect(
       await page.locator("main").evaluate((main) => main.scrollHeight),
     ).toBeLessThan(viewport.width === 390 ? 11_000 : 7_000);

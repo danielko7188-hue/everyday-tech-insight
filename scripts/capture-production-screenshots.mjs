@@ -25,7 +25,7 @@ export const CAPTURE_WIDTHS = Object.freeze([
   320, 390, 600, 768, 1024, 1280, 1440, 1920,
 ]);
 export const CAPTURE_HEIGHT = 900;
-export const RELEASE_EVIDENCE_ID = "premium-spatial-2026-08-26";
+export const RELEASE_EVIDENCE_ID = "editorial-clarity-2026-09-09";
 export const BEFORE_CAPTURE_ROUTES = Object.freeze([
   Object.freeze({ alias: "home", path: "/", status: 200 }),
   Object.freeze({ alias: "articles", path: "/articles/", status: 200 }),
@@ -1053,7 +1053,6 @@ async function stabilizePage(page) {
   });
   await page.evaluate(async () => {
     await Promise.all([
-      globalThis.document.fonts.load('1rem "Newsreader Variable"'),
       globalThis.document.fonts.load('1rem "Source Sans 3 Variable"'),
       globalThis.document.fonts.ready,
     ]);

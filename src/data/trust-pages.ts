@@ -63,7 +63,7 @@ export const trustPages = {
     path: trustNavigationByKey.publisher.path,
     title: `Publisher and practical guides | ${site.name}`,
     description:
-      "Learn what Everyday Tech Insight publishes for small-business decision makers, browse its published practical technology guides, and review its public identity boundary.",
+      "Explore Everyday Tech Insight's practical technology guides and learn about the publication byline, sourcing approach, and editorial contact channel.",
     breadcrumbLabel: trustNavigationByKey.publisher.label,
     eyebrow: "Publication purpose and guides",
     heading: "Publisher",
@@ -101,23 +101,23 @@ export const trustPages = {
   },
   privacy: {
     path: trustNavigationByKey.privacy.path,
-    title: `Privacy practices for this static site | ${site.name}`,
+    title: `Privacy policy | ${site.name}`,
     description:
-      "A factual description of the static site's current cookies, storage, analytics, advertising, contact, hosting, and public GitHub issue practices.",
+      "How Everyday Tech Insight handles browsing, cookies, hosting requests, and public GitHub contact, with links to the relevant platform privacy notices.",
     breadcrumbLabel: trustNavigationByKey.privacy.label,
     eyebrow: "Current site behavior",
     heading: "Privacy",
-    deck: "This notice documents the static site's implementation state dated August 25, 2026.",
+    deck: "How browsing this website and using its public contact channel affect your information.",
   },
   advertisingDisclosure: {
     path: trustNavigationByKey.advertisingDisclosure.path,
     title: `Advertising and compensation disclosure | ${site.name}`,
     description:
-      "The current advertising, affiliate, sponsorship, compensation, and AdSense status of the Everyday Tech Insight static publication.",
+      "Current advertising and affiliate practices at Everyday Tech Insight, how source links are used, and how commercial relationships must be disclosed.",
     breadcrumbLabel: trustNavigationByKey.advertisingDisclosure.label,
     eyebrow: "Current commercial status",
     heading: "Advertising disclosure",
-    deck: "Everyday Tech Insight does not currently run advertising on this static site.",
+    deck: "Everyday Tech Insight does not currently display advertising on this website.",
   },
   notFound: {
     path: "/404.html",

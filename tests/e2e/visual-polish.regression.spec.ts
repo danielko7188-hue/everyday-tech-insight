@@ -270,11 +270,11 @@ test("visited editorial links use an accessible distinct color while controls re
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   }
 
-  for (const stableControlColor of [
+  for (const stableNavigationColor of [
     result.footerVisited,
     result.headerVisited,
-    result.primaryActionVisited,
   ]) {
-    expect(stableControlColor).toBe("var(--brand-white)");
+    expect(stableNavigationColor).toBe("var(--brand-ink)");
   }
+  expect(result.primaryActionVisited).toBe("var(--brand-white)");
 });

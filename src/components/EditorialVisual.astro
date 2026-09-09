@@ -24,7 +24,7 @@ const {
   slug,
   visual,
   ratio = "landscape",
-  fit = "cover",
+  fit = "contain",
   sizeClass,
   class: className,
 } = Astro.props;
@@ -51,7 +51,7 @@ const rotation = [0, 4, -5, 7][variant] ?? 0;
 const accent = categoryAccents[category];
 const visualStyle = `--editorial-accent: ${accent}; --editorial-ratio: ${aspectRatios[ratio]};`;
 const preserveAspectRatio =
-  fit === "contain" ? "xMidYMid meet" : "xMidYMid slice";
+  visual || fit === "contain" ? "xMidYMid meet" : "xMidYMid slice";
 const titleId = visual ? `editorial-visual-${visual.key}-title` : undefined;
 const descriptionId = visual
   ? `editorial-visual-${visual.key}-description`
@@ -93,7 +93,6 @@ const motifTransform: Record<CategorySlug, string> = {
         <title id={titleId}>{visual.alt}</title>
         <desc id={descriptionId}>{visual.caption ?? visual.alt}</desc>
         <rect class="editorial-visual__paper" width="720" height="480" />
-        <path class="editorial-visual__rule" d="M48 48H672M48 432H672" />
         <use href={`#${visual.key}`} />
       </svg>
       {visual.caption && (
@@ -119,7 +118,6 @@ const motifTransform: Record<CategorySlug, string> = {
       data-variant={variant}
     >
       <rect class="editorial-visual__paper" width="720" height="480" />
-      <path class="editorial-visual__rule" d="M48 48H672M48 432H672" />
       <g transform={motifTransform[category]}>
         <use href={`#${category}`} />
       </g>
@@ -134,7 +132,7 @@ const motifTransform: Record<CategorySlug, string> = {
     aspect-ratio: var(--editorial-ratio);
     overflow: hidden;
     color: var(--editorial-accent);
-    background: var(--brand-paper, #faf8ff);
+    background: var(--brand-paper, #ffffff);
   }
 
   .editorial-visual-figure {
@@ -143,25 +141,15 @@ const motifTransform: Record<CategorySlug, string> = {
   }
 
   .editorial-visual__caption {
-    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-    border-block-start: 1px solid var(--brand-boundary, #756884);
-    color: var(--brand-text-muted-light, #5b5566);
+    padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+    border-block-start: 1px solid var(--brand-rule-light, #d2d2d7);
+    color: var(--brand-text-muted-light, #515154);
     font-size: 0.875rem;
     line-height: 1.45;
     overflow-wrap: anywhere;
   }
 
   .editorial-visual__paper {
-    fill: var(--brand-paper, #faf8ff);
-  }
-
-  .editorial-visual__rule {
-    vector-effect: non-scaling-stroke;
-  }
-
-  .editorial-visual__rule {
-    fill: none;
-    stroke: var(--brand-boundary, #756884);
-    stroke-width: 2;
+    fill: var(--brand-paper, #ffffff);
   }
 </style>

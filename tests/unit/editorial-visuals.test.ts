@@ -17,7 +17,7 @@ const symbolSource = readFileSync(
   "utf8",
 );
 
-describe("Purple Signal editorial visuals", () => {
+describe("Editorial Clarity explanatory visuals", () => {
   it("defines exactly 15 typed and structurally distinct story symbols", () => {
     expect(EDITORIAL_VISUAL_KEYS).toHaveLength(15);
     expect(new Set(EDITORIAL_VISUAL_KEYS).size).toBe(15);
@@ -49,7 +49,7 @@ describe("Purple Signal editorial visuals", () => {
     expect(visualSource).toContain("data-visual-type");
   });
 
-  it("uses Purple Signal surfaces and meaningful boundaries, not retired colors", () => {
+  it("uses semantic paper surfaces and meaningful boundaries, not retired colors", () => {
     const source = `${visualSource}\n${symbolSource}`.toLowerCase();
     expect(source).toContain("var(--brand-boundary");
     expect(source).toContain("var(--brand-paper");

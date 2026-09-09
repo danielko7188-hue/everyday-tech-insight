@@ -120,11 +120,11 @@ describe("advertising-off public and source safety", () => {
 
     expect(copy).toEqual({
       approvalBoundary:
-        "Google alone decides whether a site is approved for AdSense; this release makes no approval claim.",
+        "Google alone decides AdSense approval. This website does not claim to have been approved.",
       disclosureState:
-        "Display advertising is disabled. No advertising integration, publisher identifier, verification marker, seller file, or display unit is active in this release.",
+        "Display advertising is disabled. This website does not load advertising services or show ad units.",
       privacyState:
-        "The publication's validated integration state disables both analytics and advertising. Its site code does not load analytics or advertising services.",
+        "This website's own code does not load analytics or advertising services.",
     });
     expect(Object.isFrozen(copy)).toBe(true);
     expect(`${copy.privacyState} ${copy.disclosureState}`).not.toMatch(

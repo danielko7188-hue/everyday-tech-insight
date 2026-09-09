@@ -12,6 +12,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { load as loadYaml } from "js-yaml";
+import { create as createFont } from "fontkitten";
 import sharp from "sharp";
 
 export const SOCIAL_IMAGE_WIDTH = 1200;
@@ -45,35 +46,99 @@ export const SOCIAL_IMAGE_MANIFEST_PATH = path.join(
 const fontData = readFileSync(
   path.join(
     repositoryRoot,
-    "public",
+    "scripts",
+    "assets",
     "fonts",
-    "source-sans-3-variable-english.woff2",
+    "source-sans-3-variable-english.ttf",
   ),
-).toString("base64");
+);
+const sourceFont = createFont(fontData);
+const fontSourceSha256 = createHash("sha256").update(fontData).digest("hex");
+const fontWeights = new Map();
+
+function fontAtWeight(weight) {
+  if (!fontWeights.has(weight)) {
+    fontWeights.set(weight, sourceFont.getVariation({ wght: weight }));
+  }
+  return fontWeights.get(weight);
+}
+
+function glyphsForText(text, font) {
+  return Array.from(text, (character) => {
+    const codePoint = character.codePointAt(0);
+    // The local English subset omits nonbreaking hyphen; its visible glyph
+    // is identical to the bundled hyphen while the accessible text stays exact.
+    const glyphCodePoint = codePoint === 0x2011 ? 0x2d : codePoint;
+    if (!font.hasGlyphForCodePoint(glyphCodePoint)) {
+      throw new Error(
+        `The bundled social font has no glyph for U+${codePoint.toString(16).toUpperCase()}.`,
+      );
+    }
+    return font.glyphForCodePoint(glyphCodePoint);
+  });
+}
+
+function textMetrics(text, fontSize, weight, letterSpacing = 0) {
+  const font = fontAtWeight(weight);
+  const scale = fontSize / font.unitsPerEm;
+  let advance = 0;
+  let inkLeft = 0;
+  let inkRight = 0;
+  const glyphs = glyphsForText(text, font).map((glyph) => {
+    const position = advance;
+    if (Number.isFinite(glyph.bbox.minX)) {
+      inkLeft = Math.min(inkLeft, position + glyph.bbox.minX * scale);
+      inkRight = Math.max(inkRight, position + glyph.bbox.maxX * scale);
+    }
+    advance += glyph.advanceWidth * scale + letterSpacing;
+    return { glyph, position };
+  });
+  return {
+    glyphs,
+    inkLeft,
+    inkRight: inkRight - inkLeft,
+    scale,
+    width: Math.max(inkRight, advance - letterSpacing) - inkLeft,
+  };
+}
+
+function outlinedText(
+  text,
+  { x, y, fontSize, weight, fill, letterSpacing = 0, headline = false },
+) {
+  const metrics = textMetrics(text, fontSize, weight, letterSpacing);
+  const paths = metrics.glyphs
+    .map(
+      ({ glyph, position }) =>
+        `<path transform="translate(${x + position - metrics.inkLeft} ${y}) scale(${metrics.scale} ${-metrics.scale})" d="${glyph.path.toSVG()}"/>`,
+    )
+    .join("");
+  return `<g data-glyph-font="Source Sans 3" data-font-weight="${weight}"${headline ? ' data-headline-line="true"' : ""} data-line-width="${metrics.width}" data-ink-left="${x}" data-ink-right="${x + metrics.inkRight}" aria-label="${escapeXml(text)}" fill="${escapeXml(fill)}">${paths}</g>`;
+}
 
 const categoryRecords = [
   {
-    accent: "#6d28d9",
+    accent: "#6e3cbc",
     name: "AI & Automation",
     slug: "ai-automation",
   },
   {
-    accent: "#4338ca",
+    accent: "#0066cc",
     name: "Business Software & SaaS",
     slug: "business-software",
   },
   {
-    accent: "#a21caf",
+    accent: "#216e4e",
     name: "Cybersecurity & Data Protection",
     slug: "cybersecurity-data-protection",
   },
   {
-    accent: "#5b21b6",
+    accent: "#9a4a00",
     name: "Digital Operations & Productivity",
     slug: "digital-operations",
   },
   {
-    accent: "#be185d",
+    accent: "#4141a5",
     name: "Technology Decisions & Strategy",
     slug: "technology-strategy",
   },
@@ -166,7 +231,7 @@ export function selectPublishedArticleFrontmatter(records) {
 export const SOCIAL_IMAGE_RECORDS = Object.freeze(
   [
     {
-      accent: "#7c3aed",
+      accent: "#0066cc",
       alt: "Everyday Tech Insight practical business technology guidance.",
       categoryName: "Practical business technology",
       fileName: "default.png",
@@ -196,13 +261,16 @@ function escapeXml(value) {
     .replaceAll("'", "&apos;");
 }
 
-function wrapText(value, lineLength, maximumLines) {
+function wrapText(value, maximumWidth, fontSize) {
   const words = String(value).trim().split(/\s+/);
   const lines = [];
   let current = "";
   for (const word of words) {
     const candidate = current ? `${current} ${word}` : word;
-    if (candidate.length <= lineLength || current === "") {
+    if (
+      textMetrics(candidate, fontSize, 700, -1.4).width <= maximumWidth ||
+      current === ""
+    ) {
       current = candidate;
       continue;
     }
@@ -210,75 +278,84 @@ function wrapText(value, lineLength, maximumLines) {
     current = word;
   }
   if (current) lines.push(current);
-  if (lines.length <= maximumLines) return lines;
+  return lines;
+}
 
-  const visible = lines.slice(0, maximumLines);
-  visible[maximumLines - 1] =
-    `${visible[maximumLines - 1].replace(/[.\s]+$/, "")}…`;
-  return visible;
+export function layoutSocialHeadline(title) {
+  const width = 744;
+  for (const fontSize of [64, 60, 56, 52, 48, 44, 40]) {
+    const lines = wrapText(title, width, fontSize).map((text) => {
+      const metrics = textMetrics(text, fontSize, 700, -1.4);
+      return {
+        text,
+        width: metrics.width,
+        inkLeft: 0,
+        inkRight: metrics.inkRight,
+      };
+    });
+    if (lines.length <= 4 && lines.every((line) => line.width <= width)) {
+      return { fontSize, lineHeight: 66, lines, width, x: 72, y: 259 };
+    }
+  }
+  throw new Error(
+    "Social headline cannot fit completely inside its four-line copy column.",
+  );
 }
 
 function visualGeometry(visualKey, accent) {
   const bytes = createHash("sha256").update(visualKey).digest();
-  const points = Array.from({ length: 5 }, (_unused, index) => ({
-    x: 785 + ((bytes[index] * 13) % 305),
-    y: 150 + ((bytes[index + 5] * 11) % 330),
-  }));
-  const pathData = points
-    .map(({ x, y }, index) => `${index === 0 ? "M" : "L"} ${x} ${y}`)
-    .join(" ");
-
   return `<g data-visual-key="${escapeXml(visualKey)}">
-    <rect x="750" y="102" width="372" height="426" rx="28" fill="#24143d" stroke="#756884" stroke-width="3"/>
-    <path d="${pathData}" fill="none" stroke="${escapeXml(accent)}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-    ${points
+    <rect x="872" y="156" width="256" height="316" rx="24" fill="#f5f5f7"/>
+    <rect x="904" y="190" width="192" height="248" rx="16" fill="#ffffff" stroke="#d2d2d7" stroke-width="2"/>
+    <path d="M930 229H1070" stroke="#d2d2d7" stroke-width="2"/>
+    ${Array.from({ length: 3 }, (_unused, index) => ({
+      y: 270 + index * 56,
+      lineWidth: 65 + (bytes[index] % 39),
+    }))
       .map(
-        ({ x, y }, index) =>
-          `<circle cx="${x}" cy="${y}" r="${18 + (bytes[index + 10] % 13)}" fill="${index % 2 === 0 ? escapeXml(accent) : "#faf8ff"}" stroke="#c4b5fd" stroke-width="3"/>`,
+        ({ y, lineWidth }) =>
+          `<circle cx="937" cy="${y}" r="9" fill="${escapeXml(accent)}"/>
+    <path d="M964 ${y}H${964 + lineWidth}" stroke="#86868b" stroke-width="3" stroke-linecap="round"/>`,
       )
       .join("\n    ")}
   </g>`;
 }
 
 export function renderSocialSvg(record) {
-  const titleLines = wrapText(record.title, 20, 4);
-  const titleSize = titleLines.length > 3 ? 52 : 60;
-  const titleMarkup = titleLines
-    .map(
-      (line, index) =>
-        `<tspan x="78" dy="${index === 0 ? 0 : 68}">${escapeXml(line)}</tspan>`,
+  const headline = layoutSocialHeadline(record.title);
+  const titleMarkup = headline.lines
+    .map(({ text }, index) =>
+      outlinedText(text, {
+        x: headline.x,
+        y: headline.y + index * headline.lineHeight,
+        fontSize: headline.fontSize,
+        weight: 700,
+        fill: "#1d1d1f",
+        letterSpacing: -1.4,
+        headline: true,
+      }),
     )
     .join("");
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${SOCIAL_IMAGE_WIDTH}" height="${SOCIAL_IMAGE_HEIGHT}" viewBox="0 0 ${SOCIAL_IMAGE_WIDTH} ${SOCIAL_IMAGE_HEIGHT}">
-  <style>
-    @font-face { font-family: "ETI Source"; src: url("data:font/woff2;base64,${fontData}") format("woff2"); font-weight: 200 900; }
-    text { font-family: "ETI Source"; }
-  </style>
-  <defs>
-    <linearGradient id="signal" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#7c3aed"/>
-      <stop offset="1" stop-color="#d946ef"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="630" fill="#0d0618"/>
-  <rect width="18" height="630" fill="url(#signal)"/>
-  <path d="M78 84 H690" stroke="#3a2e51" stroke-width="3"/>
-  <text x="78" y="62" fill="#faf8ff" font-size="27" font-weight="750" letter-spacing="1.4">EVERYDAY TECH INSIGHT</text>
-  <text x="78" y="150" fill="#c4b5fd" font-size="25" font-weight="720" letter-spacing="1">${escapeXml(record.categoryName)}</text>
-  <text x="78" y="232" fill="#faf8ff" font-size="${titleSize}" font-weight="730">${titleMarkup}</text>
-  <text x="78" y="564" fill="#c9c3d8" font-size="23">Practical guidance for small-business technology decisions</text>
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${SOCIAL_IMAGE_WIDTH}" height="${SOCIAL_IMAGE_HEIGHT}" viewBox="0 0 ${SOCIAL_IMAGE_WIDTH} ${SOCIAL_IMAGE_HEIGHT}" role="img" aria-labelledby="social-title social-description" data-font-sha256="${fontSourceSha256}">
+  <title id="social-title">${escapeXml(record.title)}</title>
+  <desc id="social-description">${escapeXml(record.alt)}</desc>
+  <rect width="1200" height="630" fill="#ffffff"/>
+  <rect x="72" y="58" width="40" height="40" rx="11" fill="#0066cc"/>
+  <path transform="translate(72 58) scale(.625)" d="M12 22H25V26H16V30H24V34H16V38H25V42H12ZM28 22H44V26H38V42H34V26H28ZM48 22H52V42H48Z" fill="#ffffff"/>
+  ${outlinedText("Everyday Tech Insight", { x: 128, y: 86, fill: "#1d1d1f", fontSize: 29, weight: 650, letterSpacing: -0.5 })}
+  ${outlinedText(record.categoryName, { x: 72, y: 177, fill: record.accent, fontSize: 25, weight: 650 })}
+  ${titleMarkup}
+  <path d="M72 532H1128" stroke="#d2d2d7" stroke-width="1"/>
+  ${outlinedText("Practical guidance. Clearer technology decisions.", { x: 72, y: 578, fill: "#515154", fontSize: 23, weight: 400 })}
   ${visualGeometry(record.visualKey, record.accent)}
 </svg>`;
 }
 
 function renderAppleIconSvg() {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
-  <defs><linearGradient id="signal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#d946ef"/></linearGradient></defs>
-  <rect width="180" height="180" rx="32" fill="#0d0618"/>
-  <rect x="18" y="18" width="144" height="144" rx="18" fill="none" stroke="#756884" stroke-width="8"/>
-  <rect x="18" y="18" width="18" height="144" rx="8" fill="url(#signal)"/>
-  <text x="58" y="108" fill="#faf8ff" font-family="sans-serif" font-size="48" font-weight="800" letter-spacing="2">ETI</text>
+  <rect width="180" height="180" rx="44" fill="#0066cc"/>
+  <path d="M34 62H71V73H46V85H68V96H46V107H71V118H34ZM79 62H124V73H107V118H96V73H79ZM135 62H147V118H135Z" fill="#ffffff"/>
 </svg>`;
 }
 
