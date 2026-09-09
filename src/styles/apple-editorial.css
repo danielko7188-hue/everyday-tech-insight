@@ -337,7 +337,9 @@ body .site-header__mark .publication-mark__name {
 
 .fit-summary__when,
 .trust-content .toolkit-structure__groups > li,
-.trust-content .toolkit-field-card {
+.trust-content .toolkit-structure__groups > li + li,
+.trust-content .toolkit-field-card,
+.trust-content .toolkit-field-card + .toolkit-field-card {
   padding-inline: 0;
   border-radius: 0;
   background: transparent;
@@ -347,11 +349,12 @@ body .site-header__mark .publication-mark__name {
   padding-block-start: 0;
 }
 
-.trust-content .toolkit-structure__groups > li {
-  border-block-start: 1px solid var(--color-rule);
-}
-
-.trust-content .toolkit-field-card {
+/* Match the legacy sibling selectors so every item shares one treatment. */
+.trust-content .toolkit-structure__groups > li,
+.trust-content .toolkit-structure__groups > li + li,
+.trust-content .toolkit-field-card,
+.trust-content .toolkit-field-card + .toolkit-field-card {
+  border: 0;
   border-block-start: 1px solid var(--color-rule);
 }
 
@@ -454,6 +457,10 @@ body .site-header__mark .publication-mark__name {
   .topic-directory--compact ol {
     gap: 2rem;
   }
+
+  .topic-directory--compact li > a span:first-child {
+    min-block-size: 3.9em;
+  }
 }
 
 @media (max-width: 47.99rem) {
@@ -473,6 +480,12 @@ body .site-header__mark .publication-mark__name {
 
   .category-hero__copy h1 {
     font-size: clamp(2.25rem, 10.25vw, 2.75rem);
+  }
+}
+
+@media (max-width: 22.49rem) {
+  .article-hero h1 {
+    font-size: 1.875rem;
   }
 }
 

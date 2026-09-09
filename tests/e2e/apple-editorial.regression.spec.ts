@@ -226,3 +226,49 @@ test("404 keeps recovery links while omitting its ornamental circuit field", asy
   await expect(page.locator(".not-found-actions a")).toHaveCount(4);
   await expectNoOverflow(page);
 });
+
+for (const width of [390, 1440]) {
+  test(`every worksheet field and structure group uses a plain neutral separator at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    await openPage(page, "/toolkit/backup-restore-test-log/", testInfo);
+    await expect(page.locator(".toolkit-field-card")).toHaveCount(8);
+    const styles = await page
+      .locator(".toolkit-field-card, .toolkit-structure__groups > li")
+      .evaluateAll((elements) =>
+        elements.map((element) => {
+          const style = getComputedStyle(element);
+          return {
+            label: element.querySelector("h3, p")?.textContent?.trim(),
+            topWidth: style.borderTopWidth,
+            topColor: style.borderTopColor,
+            rightWidth: style.borderRightWidth,
+            bottomWidth: style.borderBottomWidth,
+            leftWidth: style.borderLeftWidth,
+            background: style.backgroundColor,
+            radius: style.borderRadius,
+            paddingLeft: style.paddingLeft,
+          };
+        }),
+      );
+    expect(styles.length).toBeGreaterThan(8);
+    await testInfo.attach("all-worksheet-separators", {
+      body: JSON.stringify(styles, null, 2),
+      contentType: "application/json",
+    });
+    for (const style of styles) {
+      expect.soft(style, style.label).toMatchObject({
+        topWidth: "1px",
+        topColor: "rgb(210, 210, 215)",
+        rightWidth: "0px",
+        bottomWidth: "0px",
+        leftWidth: "0px",
+        background: "rgba(0, 0, 0, 0)",
+        radius: "0px",
+        paddingLeft: "0px",
+      });
+    }
+    await expectNoOverflow(page);
+  });
+}
