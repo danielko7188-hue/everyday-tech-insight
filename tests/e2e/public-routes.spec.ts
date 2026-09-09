@@ -986,7 +986,7 @@ test("category directory visuals resolve their local symbol definitions", async 
   ).toHaveCount(0);
   await expect(
     page.getByText(
-      "Find practical guidance on software, automation, security, daily operations, and technology planning.",
+      "Five areas of practical guidance. Start with the question your business needs to answer.",
     ),
   ).toBeVisible();
   await expect(page.getByText(/every reviewed, published guide/i)).toHaveCount(
