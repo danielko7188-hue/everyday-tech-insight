@@ -118,7 +118,7 @@ function outlinedText(
 
 const categoryRecords = [
   {
-    accent: "#6e3cbc",
+    accent: "#0066cc",
     name: "AI & Automation",
     slug: "ai-automation",
   },
@@ -128,17 +128,17 @@ const categoryRecords = [
     slug: "business-software",
   },
   {
-    accent: "#216e4e",
+    accent: "#0066cc",
     name: "Cybersecurity & Data Protection",
     slug: "cybersecurity-data-protection",
   },
   {
-    accent: "#9a4a00",
+    accent: "#0066cc",
     name: "Digital Operations & Productivity",
     slug: "digital-operations",
   },
   {
-    accent: "#4141a5",
+    accent: "#0066cc",
     name: "Technology Decisions & Strategy",
     slug: "technology-strategy",
   },

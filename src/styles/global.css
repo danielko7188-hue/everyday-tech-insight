@@ -22,7 +22,7 @@
   --brand-violet-dark: #0055aa;
   --brand-violet-light: #9ac8ff;
   --brand-lavender: #d7eaff;
-  --brand-visited: #663b80;
+  --brand-visited: #004080;
   --brand-magenta: #0066cc;
   --brand-pink: #0066cc;
   --brand-rule-light: #d2d2d7;
@@ -35,11 +35,11 @@
   --brand-error: #b42318;
   --brand-success: #166534;
   --brand-accent: #0066cc;
-  --category-ai: #6e3cbc;
+  --category-ai: #0066cc;
   --category-software: #0066cc;
-  --category-security: #216e4e;
-  --category-operations: #9a4a00;
-  --category-strategy: #4141a5;
+  --category-security: #0066cc;
+  --category-operations: #0066cc;
+  --category-strategy: #0066cc;
   --color-ink: var(--brand-ink);
   --color-soft-ink: var(--brand-text-muted-light);
   --color-canvas: var(--brand-paper);
