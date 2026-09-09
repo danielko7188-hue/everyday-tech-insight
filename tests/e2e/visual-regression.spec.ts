@@ -7,6 +7,7 @@ const viewportHeight = 900;
 const viewportWidths = [390, 768, 1440] as const;
 const routes = [
   { alias: "home", path: "/", status: 200 },
+  { alias: "category-directory", path: "/categories/", status: 200 },
   {
     alias: "category",
     path: "/categories/cybersecurity-data-protection/",
