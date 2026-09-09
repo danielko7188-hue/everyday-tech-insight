@@ -6,7 +6,7 @@ The site is built with Astro and contains five categories, fifteen practical gui
 
 The premium spatial layer remains zero executable client JavaScript. It uses native CSS `@view-transition { navigation: auto; }`, a custom root transition capped at 200ms, finite and scroll-linked progressive enhancement, and local SVG. It does not use Astro ClientRouter, Motion, Three.js, WebGL, Lenis, a remote presentation runtime, scroll hijacking, or a continuous or infinite loop. Static-first output and `prefers-reduced-motion`, `prefers-reduced-data`, `(pointer: coarse)`, and `(update: slow)` fallbacks preserve the complete experience.
 
-Implemented surfaces include the local `SignalField` on the homepage and 404, CSS-only reading progress on article pages, a real-data Toolkit structure preview on each Toolkit detail route, and a direct 404 Toolkit path. Required release-review widths are 320, 390, 600, 768, 1024, 1280, 1440, and 1920px.
+Implemented surfaces include a compact, frameless `SignalField` on the homepage, CSS-only reading progress on article pages, a real-data Toolkit structure preview on each Toolkit detail route, and direct 404 recovery links, including Toolkit. Decorative 404 and category motifs are hidden in the current Apple-inspired direction. Required release-review widths are 320, 390, 600, 768, 1024, 1280, 1440, and 1920px.
 
 ## Current publication boundary
 
