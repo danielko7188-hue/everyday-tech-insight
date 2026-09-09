@@ -27,7 +27,7 @@ const headingId = `toolkit-card-${resource.id}`;
   </div>
   <nav class="toolkit-card__actions" aria-label={`${resource.title} actions`}>
     <a class="toolkit-card__primary" href={resource.detailHref}
-      >View worksheet guide</a
+      >Open worksheet instructions</a
     >
     {showGuideLink && <a href={resource.guideHref}>{resource.guideLabel}</a>}
     <a href={resource.downloadHref} download>{resource.downloadLabel}</a>

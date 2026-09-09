@@ -565,7 +565,7 @@ test("toolkit landing publishes four outcome-led cards with detail, guide, and C
       "Record produced: ",
     );
     await expect(
-      card.getByRole("link", { name: "View worksheet guide" }),
+      card.getByRole("link", { name: "Open worksheet instructions" }),
     ).toHaveAttribute("href", `/toolkit/${expected.id}/`);
     const guideLink = card.getByRole("link", { name: expected.guideLabel });
     if (publishedArticleSlugs.has(expected.articleSlug)) {
@@ -986,7 +986,7 @@ test("category directory visuals resolve their local symbol definitions", async 
   ).toHaveCount(0);
   await expect(
     page.getByText(
-      "Find practical guidance on software, automation, security, daily operations, and technology planning.",
+      "Five areas of practical guidance. Start with the question your business needs to answer.",
     ),
   ).toBeVisible();
   await expect(page.getByText(/every reviewed, published guide/i)).toHaveCount(

@@ -576,17 +576,28 @@ const shouldRender = (symbolId: EditorialVisualSymbolId) =>
           <path d="M172 244H224V146H268M224 244V334H268M410 146H468V238H526M410 334H468V238" />
         </g>
         <path d="M558 132h54v84h-54zM570 260h30v74h-30z" fill="currentColor" />
-        <g fill="var(--brand-ink)" font-family="sans-serif" font-size="17">
-          <text x="80" y="342">
+        <g
+          fill="var(--brand-ink)"
+          font-family="var(--font-body, sans-serif)"
+          font-size="20"
+          text-anchor="middle"
+        >
+          <text x="116" y="342">
             Live data
           </text>
-          <text x="298" y="152">
-            Independent copy
+          <text x="339" y="140">
+            <tspan x="339">Independent</tspan>
+            <tspan x="339" dy="24">
+              copy
+            </tspan>
           </text>
-          <text x="300" y="340">
-            Second medium
+          <text x="339" y="328">
+            <tspan x="339">Second</tspan>
+            <tspan x="339" dy="24">
+              medium
+            </tspan>
           </text>
-          <text x="550" y="366">
+          <text x="585" y="366">
             Offsite
           </text>
         </g>
