@@ -73,8 +73,13 @@ describe("editorial cover delivery assets", () => {
         ["avif", "webp"].map((format) => `${slug}-${width}.${format}`),
       ),
     );
+    // The previous release's six clarity assets remain preserved beside the
+    // new covers; they are not part of this generation's provenance manifest.
+    const preservedLegacyFiles = [480, 960, 1536].flatMap((width) =>
+      ["avif", "webp"].map((format) => `clarity-${width}.${format}`),
+    );
     expect((await readdir("public/images/editorial")).sort()).toEqual(
-      [...expectedFiles].sort(),
+      [...expectedFiles, ...preservedLegacyFiles].sort(),
     );
     expect(
       manifest.flatMap(({ outputs }) => outputs.map(({ file }) => file)).sort(),
