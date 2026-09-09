@@ -15,6 +15,7 @@ import {
   selectFeaturedToolkitResource,
 } from "../../src/data/editorial";
 import { toolkitResources } from "../../src/data/toolkit";
+import { estimateReadingTime } from "../../src/utils/presentation";
 import { expectedArticleTableCount } from "./helpers/article-tables";
 
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
@@ -127,6 +128,7 @@ const toolkitRouteExpectations = [
 }));
 
 interface ArticleSourceRecord {
+  body: string;
   data: {
     status: string;
     category: string;
@@ -1205,16 +1207,25 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
   }
 
   const storyMeta = hero.getByRole("list", { name: "Story details" });
-  await expect(storyMeta).toContainText(
+  await expect(storyMeta.locator(".story-meta__type")).toHaveText(
     representativeArticle!.data.contentType.replace(/^./, (value) =>
       value.toUpperCase(),
     ),
   );
-  await expect(storyMeta).toContainText(/\b\d+ min read\b/);
+  const readingTime = storyMeta
+    .getByRole("listitem")
+    .filter({ hasText: /^\d+ min read$/ });
+  await expect(readingTime).toHaveCount(1);
+  await expect(readingTime).toHaveText(
+    `${estimateReadingTime(representativeArticle!.body)} min read`,
+  );
+  await expect(storyMeta.locator("time")).toHaveCount(0);
   await expect(
-    storyMeta.locator(
-      `time[datetime="${representativeArticleMetadata!.datePublished}"]`,
-    ),
+    hero
+      .locator(".article-facts")
+      .locator(
+        `time[datetime="${representativeArticleMetadata!.datePublished}"]`,
+      ),
   ).toHaveCount(1);
   await expect(
     storyMeta.getByRole("link", { name: representativeCategory!.name }),
@@ -1230,9 +1241,10 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
     }),
   ).toBeVisible();
   await expect(article.getByRole("region", { name: "Sources" })).toBeVisible();
-  await expect(
-    article.getByRole("region", { name: "About the publication byline" }),
-  ).toContainText(
+  const bylineBox = article.getByRole("region", {
+    name: "About the publication byline",
+  });
+  await expect(bylineBox).toContainText(
     /publication-name byline for these guides, not an individual author/i,
   );
   await expect(bylineBox).toContainText(
@@ -1473,8 +1485,14 @@ test("publication byline links to its truthful profile and published article ind
     name: "About the publication byline",
   });
   await expect(bylineBox).toContainText(
-    /publication-name byline.*not.*identified person.*legal organization.*never represents a person/i,
+    /publication-name byline for these guides, not an individual author/i,
   );
+  await expect(bylineBox).toContainText(
+    /AI assistance, and review limitations/i,
+  );
+  await expect(
+    bylineBox.getByRole("link", { name: "Read about our editorial approach" }),
+  ).toHaveAttribute("href", "/editorial-standards/");
   await expect(
     bylineBox.getByRole("link", { name: "Contact" }),
   ).toHaveAttribute("href", "/contact/");

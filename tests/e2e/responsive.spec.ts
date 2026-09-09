@@ -856,6 +856,15 @@ test("mobile menu uses a short CSS-only reveal and removes it for reduced motion
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/");
+  // Measure a painted closed state so the first opening can transition from it.
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    for (let frame = 0; frame < 2; frame += 1) {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve()),
+      );
+    }
+  });
 
   const menu = page.locator(".site-header__mobile-menu");
   const reveal = await menu.evaluate((details) => {
