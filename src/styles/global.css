@@ -426,7 +426,7 @@ strong {
 
 .site-header__mobile-menu[open] summary {
   position: absolute;
-  inset-block-start: var(--space-4);
+  inset-block-start: 0.625rem;
   inset-inline-end: 0;
   margin: 0;
   pointer-events: auto;
@@ -2766,6 +2766,12 @@ strong {
     block-size: auto;
     opacity: 1;
   }
+  @starting-style {
+    .site-header__mobile-menu[open]::details-content {
+      block-size: 0;
+      opacity: 0;
+    }
+  }
 }
 
 h1,
@@ -2821,8 +2827,8 @@ h1 {
   flex-direction: column;
   align-items: center;
   gap: 0;
-  padding-block: clamp(2.5rem, 5vw, 4.5rem) 0;
-  margin-block-end: var(--space-12);
+  padding-block: clamp(2.5rem, 4vw, 3rem) 0;
+  margin-block-end: var(--space-8);
   text-align: center;
 }
 .home-opening__promise h1 {
@@ -2871,13 +2877,14 @@ h1 {
   min-block-size: 2.75rem;
   font-weight: 600;
   text-decoration: none;
+  gap: 0.35rem;
 }
 .home-opening__actions > a:not(.button-primary):hover {
   text-decoration: underline;
 }
 .signal-field--hero {
-  inline-size: min(100%, 54rem);
-  margin: var(--space-6) auto 0;
+  inline-size: min(100%, 36rem);
+  margin: var(--space-4) auto 0;
   overflow: hidden;
   border-radius: 1.5rem;
 }
@@ -2888,9 +2895,7 @@ h1 {
   inline-size: 100%;
   block-size: auto;
   aspect-ratio: 3 / 2;
-  max-block-size: 22rem;
-  object-fit: cover;
-  object-position: 50% 54%;
+  object-fit: contain;
 }
 .front-page {
   display: grid;
@@ -2914,6 +2919,7 @@ h1 {
   min-block-size: 2.75rem;
   align-items: center;
   font-weight: 600;
+  gap: 0.35rem;
 }
 .front-page__support {
   display: grid;
@@ -3001,6 +3007,13 @@ h1 {
 }
 .article-card__title a {
   text-decoration: none;
+}
+.article-card__link-indicator {
+  display: inline-block;
+  color: var(--brand-accent);
+  font-size: 0.7em;
+  font-weight: 500;
+  white-space: nowrap;
 }
 .article-card__title a:hover {
   text-decoration: underline;
@@ -3749,9 +3762,6 @@ h1 {
   .signal-field--hero {
     margin-block-start: var(--space-4);
     border-radius: 1rem;
-  }
-  .signal-field--hero img {
-    max-block-size: 15rem;
   }
   .article-hero {
     gap: var(--space-6);

@@ -15,6 +15,7 @@ import {
   selectFeaturedToolkitResource,
 } from "../../src/data/editorial";
 import { toolkitResources } from "../../src/data/toolkit";
+import { expectedArticleTableCount } from "./helpers/article-tables";
 
 const absoluteSiteUrl = (path: string) => new URL(path, siteUrl).href;
 
@@ -260,7 +261,11 @@ test("home explains the publication and links all five categories", async ({
     }),
   ).toBeVisible();
   await expect(page.getByText(/source-backed guides/i).first()).toBeVisible();
-  await expect(page.getByText(/without product hype/i)).toBeVisible();
+  await expect(
+    page.locator(".home-opening__promise .lead-summary"),
+  ).toContainText(
+    /choose better software, protect business data, and put technology to work/i,
+  );
   await expect(page.getByText(/independent, source-backed/i)).toHaveCount(0);
 
   for (const category of categories) {
@@ -297,7 +302,39 @@ test("Editorial Clarity home uses one lead, two supports, nine guide destination
     const box = await visual.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.height).toBeGreaterThanOrEqual(96);
-    expect(box!.height).toBeLessThanOrEqual(240);
+    expect(box!.height).toBeLessThanOrEqual(360);
+    await expect(visual.locator("svg.editorial-visual")).toHaveAttribute(
+      "preserveAspectRatio",
+      "xMidYMid meet",
+    );
+    const proportions = await visual
+      .locator("svg.editorial-visual")
+      .evaluate((svg) => {
+        const box = svg.getBoundingClientRect();
+        const viewBox = (svg as SVGSVGElement).viewBox.baseVal;
+        const matrix = (svg as SVGSVGElement).getScreenCTM()!;
+        const topLeft = new DOMPoint(viewBox.x, viewBox.y).matrixTransform(
+          matrix,
+        );
+        const bottomRight = new DOMPoint(
+          viewBox.x + viewBox.width,
+          viewBox.y + viewBox.height,
+        ).matrixTransform(matrix);
+        return {
+          scaleX: matrix.a,
+          scaleY: matrix.d,
+          left: topLeft.x,
+          top: topLeft.y,
+          right: bottomRight.x,
+          bottom: bottomRight.y,
+          box,
+        };
+      });
+    expect(proportions.scaleX).toBeCloseTo(proportions.scaleY, 4);
+    expect(proportions.left).toBeGreaterThanOrEqual(proportions.box.left - 1);
+    expect(proportions.top).toBeGreaterThanOrEqual(proportions.box.top - 1);
+    expect(proportions.right).toBeLessThanOrEqual(proportions.box.right + 1);
+    expect(proportions.bottom).toBeLessThanOrEqual(proportions.box.bottom + 1);
   }
 
   const homeArticleHrefs = await page
@@ -660,7 +697,7 @@ test("home publishes only the approved nine-guide curation", async ({
   ).toBe(true);
 
   const featuredGuidance = page.getByRole("region", {
-    name: "Featured guidance",
+    name: "A clearer place to start.",
   });
   const latestGuides = page.getByRole("region", {
     name: "Latest guides",
@@ -1138,7 +1175,7 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
   await expect(hero.locator("[data-editorial-visual]")).toBeVisible();
   await expect(hero.locator("svg.editorial-visual")).toHaveAttribute(
     "preserveAspectRatio",
-    "xMidYMid slice",
+    "xMidYMid meet",
   );
   const { visual } = representativeArticleMetadata!;
   const informativeVisual = hero.locator(
@@ -1196,8 +1233,14 @@ test("article exposes editorial art, semantic story metadata, and explicit relat
   await expect(
     article.getByRole("region", { name: "About the publication byline" }),
   ).toContainText(
-    /publication-name byline.*not.*identified person.*legal organization.*never represents a person/i,
+    /publication-name byline for these guides, not an individual author/i,
   );
+  await expect(bylineBox).toContainText(
+    /AI assistance, and review limitations/i,
+  );
+  await expect(
+    bylineBox.getByRole("link", { name: "Read about our editorial approach" }),
+  ).toHaveAttribute("href", "/editorial-standards/");
 
   const relatedGuides = article.locator("section.related-articles");
   const publishedSlugs = new Set(
@@ -1613,20 +1656,23 @@ test("trust pages are reachable and state the public evidence boundary", async (
   await expect(page.getByText(/transparent correction note/i)).toBeVisible();
 });
 
-test("markdown tables render once inside a named keyboard region", async ({
+test("every source Markdown table renders once inside its own named keyboard region", async ({
   page,
 }) => {
   skipWhenNoTableArticle();
   await page.goto(tableArticlePath!);
 
-  const table = page.locator("article.article-page table");
-  const region = page.getByRole("region", { name: "Scrollable data table" });
-  await expect(table).toHaveCount(1);
-  await expect(region).toHaveCount(1);
-  await expect(region).toHaveAttribute("data-horizontal-scroll", "");
-  await expect(region).toHaveAttribute("tabindex", "0");
-  await expect(region.locator(":scope > table")).toHaveCount(1);
-  await expect(region.locator(".table-scroll")).toHaveCount(0);
+  const expectedCount = await expectedArticleTableCount(tableArticlePath!);
+  const tables = page.locator("article.article-page table");
+  const regions = page.getByRole("region", { name: "Scrollable data table" });
+  await expect(tables).toHaveCount(expectedCount);
+  await expect(regions).toHaveCount(expectedCount);
+  for (const region of await regions.all()) {
+    await expect(region).toHaveAttribute("data-horizontal-scroll", "");
+    await expect(region).toHaveAttribute("tabindex", "0");
+    await expect(region.locator(":scope > table")).toHaveCount(1);
+    await expect(region.locator(".table-scroll")).toHaveCount(0);
+  }
 });
 
 test("every public HTML route has one H1 and unique core metadata", async ({

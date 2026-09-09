@@ -5,6 +5,7 @@ import {
   REPRESENTATIVE_ARTICLE_PATHS,
   REPRESENTATIVE_ARTICLES,
 } from "../../scripts/publication-route-inventory.mjs";
+import { expectedArticleTableCount } from "./helpers/article-tables";
 
 const articlePath = REPRESENTATIVE_ARTICLE_PATHS.primary;
 const representativeArticle = REPRESENTATIVE_ARTICLES.primary;
@@ -528,19 +529,23 @@ test("article-card headlines keep a visible destination affordance without hover
 
   const headlineLink = page.locator(".article-card__title a").first();
   await expect(headlineLink).toBeVisible();
-  const decoration = await headlineLink.evaluate((element) => {
-    const styles = getComputedStyle(element);
-    return {
-      color: styles.color,
-      decorationColor: styles.textDecorationColor,
-      decorationLine: styles.textDecorationLine,
-    };
-  });
-  expect(decoration.decorationLine).toContain("underline");
-  expect(decoration.decorationColor).toBe(decoration.color);
+  await page.mouse.move(0, 0);
+  expect(
+    await headlineLink.evaluate((element) => element.matches(":hover")),
+  ).toBe(false);
+  await expect(headlineLink).toHaveAttribute(
+    "href",
+    /^\/articles\/[a-z0-9-]+\/$/,
+  );
+  const indicator = headlineLink.locator(".article-card__link-indicator");
+  await expect(indicator).toHaveCount(1);
+  await expect(indicator).toBeVisible();
+  await expect(indicator).toHaveAttribute("aria-hidden", "true");
+  await expect(indicator).toHaveText("→");
+  await expect(indicator).toHaveCSS("opacity", "1");
 });
 
-test("homepage editorial visual captions meet WCAG AA contrast on dark cards", async ({
+test("homepage editorial visual captions meet WCAG AA contrast on their card surfaces", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1200 });
@@ -659,7 +664,7 @@ test("footer navigation hover and keyboard focus use the light-surface focus col
   ).toBeGreaterThanOrEqual(4.5);
 });
 
-test("mobile article exposes one keyboard-accessible TOC and data table inside the page boundary", async ({
+test("mobile article exposes one keyboard-accessible TOC and every source table inside the page boundary", async ({
   page,
 }) => {
   skipWhenNoTableArticle();
@@ -676,17 +681,21 @@ test("mobile article exposes one keyboard-accessible TOC and data table inside t
   await reachByTab(page, firstTocLink, 40);
   await expect(firstTocLink).toBeFocused();
   await expectVisibleFocusIndicator(firstTocLink, firstTocLinkUnfocused);
-  const tableRegion = page.getByRole("region", {
+  const tableRegions = page.getByRole("region", {
     name: "Scrollable data table",
   });
-  await expect(tableRegion).toHaveCount(1);
-  await expect(tableRegion).toHaveAttribute("tabindex", "0");
-  await expect(tableRegion.locator("table")).toBeVisible();
-
-  const tableRegionUnfocused = await captureFocusAppearance(tableRegion);
-  await reachByTab(page, tableRegion, 80);
-  await expect(tableRegion).toBeFocused();
-  await expectVisibleFocusIndicator(tableRegion, tableRegionUnfocused);
+  await expect(tableRegions).toHaveCount(
+    await expectedArticleTableCount(tableArticlePath!),
+  );
+  for (const tableRegion of await tableRegions.all()) {
+    await expect(tableRegion).toHaveAttribute("tabindex", "0");
+    await expect(tableRegion.locator(":scope > table")).toHaveCount(1);
+    await expect(tableRegion.locator("table")).toBeVisible();
+    const tableRegionUnfocused = await captureFocusAppearance(tableRegion);
+    await reachByTab(page, tableRegion, 80);
+    await expect(tableRegion).toBeFocused();
+    await expectVisibleFocusIndicator(tableRegion, tableRegionUnfocused);
+  }
 
   const overflow = await page.evaluate(() => ({
     body: document.body.scrollWidth,

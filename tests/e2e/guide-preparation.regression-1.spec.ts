@@ -10,7 +10,7 @@ test("guide-preparation prose preserves the sentence boundary", async ({
 
   const preparation = page.locator(".guide-preparation");
   await expect(preparation).toContainText(
-    "3 cited sources. Recorded source access date:",
+    "3 cited sources. Source access date:",
   );
-  await expect(preparation).not.toContainText("sources.Recorded");
+  await expect(preparation).not.toContainText("sources.Source");
 });

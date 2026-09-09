@@ -75,7 +75,12 @@ const storyDate = resolveStoryDate(article.data, dateMode);
       showDate={showDate}
     />
     <Heading class="article-card__title">
-      <a href={`/articles/${article.data.slug}/`}>{article.data.title}</a>
+      <a href={`/articles/${article.data.slug}/`}>
+        {article.data.title}{" "}<span
+          class="article-card__link-indicator"
+          aria-hidden="true">→</span
+        >
+      </a>
     </Heading>
     {
       treatment.showPromise && (

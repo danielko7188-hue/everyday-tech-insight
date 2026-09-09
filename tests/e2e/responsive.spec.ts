@@ -6,6 +6,7 @@ import {
   REPRESENTATIVE_ARTICLES,
 } from "../../scripts/publication-route-inventory.mjs";
 import { categories } from "../../src/data/categories";
+import { expectedArticleTableCount } from "./helpers/article-tables";
 
 const representativeArticlePath = REPRESENTATIVE_ARTICLE_PATHS.primary;
 const representativeArticle = REPRESENTATIVE_ARTICLES.primary;
@@ -1094,34 +1095,41 @@ test("mobile tables use a readable contained horizontal region", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(tableArticlePath!);
 
-  const region = page.getByRole("region", { name: "Scrollable data table" });
-  await expect(region).toHaveCount(1);
-  await expect(region).toHaveAttribute("tabindex", "0");
-  const geometry = await region.evaluate((element) => {
-    const table = element.querySelector("table")!;
-    const regionBox = element.getBoundingClientRect();
-    const styles = getComputedStyle(element);
-    const tableStyles = getComputedStyle(table);
-    return {
-      documentWidth: document.documentElement.scrollWidth,
-      viewportWidth: document.documentElement.clientWidth,
-      regionLeft: regionBox.left,
-      regionRight: regionBox.right,
-      overflowX: styles.overflowX,
-      fontSize: Number.parseFloat(tableStyles.fontSize),
-      tableLayout: tableStyles.tableLayout,
-      tableWidth: table.scrollWidth,
-      regionWidth: element.clientWidth,
-    };
-  });
+  const regions = page.getByRole("region", { name: "Scrollable data table" });
+  await expect(regions).toHaveCount(
+    await expectedArticleTableCount(tableArticlePath!),
+  );
+  for (const region of await regions.all()) {
+    await expect(region).toHaveAttribute("tabindex", "0");
+    await expect(region.locator(":scope > table")).toHaveCount(1);
+    const geometry = await region.evaluate((element) => {
+      const table = element.querySelector("table")!;
+      const regionBox = element.getBoundingClientRect();
+      const styles = getComputedStyle(element);
+      const tableStyles = getComputedStyle(table);
+      return {
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+        regionLeft: regionBox.left,
+        regionRight: regionBox.right,
+        overflowX: styles.overflowX,
+        fontSize: Number.parseFloat(tableStyles.fontSize),
+        tableLayout: tableStyles.tableLayout,
+        tableWidth: table.scrollWidth,
+        regionWidth: element.clientWidth,
+      };
+    });
 
-  expect(geometry.overflowX).toBe("auto");
-  expect(geometry.fontSize).toBeGreaterThanOrEqual(16);
-  expect(geometry.tableLayout).toBe("auto");
-  expect(geometry.tableWidth).toBeGreaterThan(geometry.regionWidth);
-  expect(geometry.regionLeft).toBeGreaterThanOrEqual(-1);
-  expect(geometry.regionRight).toBeLessThanOrEqual(geometry.viewportWidth + 1);
-  expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+    expect(geometry.overflowX).toBe("auto");
+    expect(geometry.fontSize).toBeGreaterThanOrEqual(16);
+    expect(geometry.tableLayout).toBe("auto");
+    expect(geometry.tableWidth).toBeGreaterThan(geometry.regionWidth);
+    expect(geometry.regionLeft).toBeGreaterThanOrEqual(-1);
+    expect(geometry.regionRight).toBeLessThanOrEqual(
+      geometry.viewportWidth + 1,
+    );
+    expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+  }
 });
 
 test("200 percent zoom equivalent reflows header, article navigation, table, and footer", async ({
@@ -1145,18 +1153,25 @@ test("200 percent zoom equivalent reflows header, article navigation, table, and
   ).toBeVisible();
 
   const toc = page.getByRole("navigation", { name: "On this page" });
-  const tableRegion = page.getByRole("region", {
+  const tableRegions = page.getByRole("region", {
     name: "Scrollable data table",
   });
   const footer = page.locator("footer.site-footer");
   await expect(toc).toBeVisible();
-  await expect(tableRegion).toBeVisible();
+  await expect(tableRegions).toHaveCount(
+    await expectedArticleTableCount(tableArticlePath!),
+  );
+  const tableRegionList = await tableRegions.all();
+  for (const tableRegion of tableRegionList)
+    await expect(tableRegion).toBeVisible();
   await expect(footer).toBeVisible();
 
   for (const [label, locator] of [
     ["header", page.locator("header.site-header")],
     ["mobile menu", menu],
-    ["table region", tableRegion],
+    ...tableRegionList.map(
+      (region, index) => [`table region ${index + 1}`, region] as const,
+    ),
     ["footer", footer],
   ] as const) {
     const box = await locator.boundingBox();
