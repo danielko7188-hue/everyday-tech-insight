@@ -7,6 +7,26 @@ import { resolveHomepageCuration } from "../../src/data/editorial";
 const articlePath = "/articles/how-to-identify-business-tasks-for-automation/";
 const expectedHome = resolveHomepageCuration(await readArticleRecords());
 
+for (const width of [390, 640]) {
+  for (const path of ["/", "/categories/cybersecurity-data-protection/"]) {
+    test(`mobile lead puts its cover between headline and details at ${width}px on ${path}`, async ({
+      page,
+    }, testInfo) => {
+      await page.setViewportSize({ width, height: 900 });
+      await openPage(page, path, testInfo);
+      const lead = page.locator(".article-card--lead").first();
+      const headline = await lead.locator(".article-card__title").boundingBox();
+      const cover = await lead.locator(".editorial-cover img").boundingBox();
+      const promise = await lead
+        .locator(".article-card__promise")
+        .boundingBox();
+      expect(cover!.y).toBeGreaterThanOrEqual(headline!.y + headline!.height);
+      expect(cover!.y + cover!.height).toBeLessThanOrEqual(promise!.y);
+      if (width === 390) expect(cover!.y).toBeLessThan(620);
+    });
+  }
+}
+
 async function openPage(page: Page, path: string, testInfo: TestInfo) {
   const response = await page.goto(path);
   expect(response?.status()).toBe(200);
