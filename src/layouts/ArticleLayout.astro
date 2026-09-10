@@ -118,67 +118,7 @@ const formatDate = (date: string) =>
               : undefined}
           />
         </div>
-        <div
-          class="article-hero__visual"
-          data-editorial-visual={managedHeroImage ? undefined : true}
-          data-managed-hero-image={managedHeroImage ? true : undefined}
-        >
-          {
-            managedHeroImage ? (
-              <figure class="article-hero-image">
-                <img
-                  src={managedHeroImage.publicUrl}
-                  alt={managedHeroImage.alt}
-                  aria-hidden={managedHeroImage.decorative ? "true" : undefined}
-                  width={managedHeroImage.width}
-                  height={managedHeroImage.height}
-                  loading="eager"
-                  decoding="async"
-                />
-                {(managedHeroImage.caption ||
-                  managedHeroImage.credit ||
-                  managedHeroImage.license) && (
-                  <figcaption>
-                    {managedHeroImage.caption && (
-                      <span>{managedHeroImage.caption}</span>
-                    )}
-                    {managedHeroImage.credit && (
-                      <span>
-                        Image credit:{" "}
-                        {managedHeroImage.sourceUrl ? (
-                          <a href={managedHeroImage.sourceUrl}>
-                            {managedHeroImage.credit}
-                          </a>
-                        ) : (
-                          managedHeroImage.credit
-                        )}
-                      </span>
-                    )}
-                    {managedHeroImage.license && (
-                      <span>License: {managedHeroImage.license}</span>
-                    )}
-                  </figcaption>
-                )}
-              </figure>
-            ) : (
-              <EditorialVisual
-                category={category.slug}
-                slug={data.slug}
-                visual={data.visual}
-                ratio="wide"
-              />
-            )
-          }
-        </div>
       </header>
-
-      <FitSummary
-        businessProblem={data.businessProblem}
-        technologyFocus={data.technologyFocus}
-        intendedAudience={data.intendedAudience}
-        deliverable={data.deliverable}
-        whenToUse={data.whenToUse}
-      />
 
       <div class="article-reading-layout">
         <aside class="article-reading-layout__toc">
@@ -186,6 +126,67 @@ const formatDate = (date: string) =>
         </aside>
 
         <div class="article-reading-layout__content">
+          <FitSummary
+            businessProblem={data.businessProblem}
+            technologyFocus={data.technologyFocus}
+            intendedAudience={data.intendedAudience}
+            deliverable={data.deliverable}
+            whenToUse={data.whenToUse}
+          />
+          <div
+            class="article-hero__visual"
+            data-editorial-visual={managedHeroImage ? undefined : true}
+            data-managed-hero-image={managedHeroImage ? true : undefined}
+          >
+            {
+              managedHeroImage ? (
+                <figure class="article-hero-image">
+                  <img
+                    src={managedHeroImage.publicUrl}
+                    alt={managedHeroImage.alt}
+                    aria-hidden={
+                      managedHeroImage.decorative ? "true" : undefined
+                    }
+                    width={managedHeroImage.width}
+                    height={managedHeroImage.height}
+                    loading="eager"
+                    decoding="async"
+                  />
+                  {(managedHeroImage.caption ||
+                    managedHeroImage.credit ||
+                    managedHeroImage.license) && (
+                    <figcaption>
+                      {managedHeroImage.caption && (
+                        <span>{managedHeroImage.caption}</span>
+                      )}
+                      {managedHeroImage.credit && (
+                        <span>
+                          Image credit:{" "}
+                          {managedHeroImage.sourceUrl ? (
+                            <a href={managedHeroImage.sourceUrl}>
+                              {managedHeroImage.credit}
+                            </a>
+                          ) : (
+                            managedHeroImage.credit
+                          )}
+                        </span>
+                      )}
+                      {managedHeroImage.license && (
+                        <span>License: {managedHeroImage.license}</span>
+                      )}
+                    </figcaption>
+                  )}
+                </figure>
+              ) : (
+                <EditorialVisual
+                  category={category.slug}
+                  slug={data.slug}
+                  visual={data.visual}
+                  ratio="wide"
+                />
+              )
+            }
+          </div>
           <div class="article-body">
             <slot />
           </div>

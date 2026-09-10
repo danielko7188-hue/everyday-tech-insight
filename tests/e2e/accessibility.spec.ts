@@ -338,7 +338,7 @@ for (const route of [
   });
 }
 
-test("story visuals are named while retired category art stays hidden and decorative", async ({
+test("story visuals are named while category covers remain decorative and visibly credited", async ({
   page,
 }) => {
   skipWhenNoRepresentativeArticle();
@@ -352,12 +352,15 @@ test("story visuals are named while retired category art stays hidden and decora
   await expect(storyVisual).not.toHaveAttribute("aria-hidden", "true");
 
   await page.goto(categoryPath);
-  const fallbackVisual = page.locator(".category-hero__visual svg");
-  await expect(fallbackVisual).toBeHidden();
-  await expect(fallbackVisual).toHaveAttribute("aria-hidden", "true");
-  await expect(page.locator('.category-hero__visual [role="img"]')).toHaveCount(
-    0,
+  await expect(page.locator(".category-hero__visual")).toHaveCount(0);
+  const cover = page.locator(".editorial-cover");
+  await expect(cover).toHaveCount(1);
+  await expect(cover.locator("img")).toHaveAttribute("alt", "");
+  await expect(cover.getByRole("img")).toHaveCount(0);
+  await expect(cover.locator("figcaption")).toHaveText(
+    "AI-generated editorial illustration",
   );
+  await expect(cover.locator("figcaption")).toBeVisible();
 });
 
 test("desktop navigation landmarks have unique accessible names", async ({
@@ -545,25 +548,36 @@ test("article-card headlines keep a visible destination affordance without hover
   await expect(indicator).toHaveCSS("opacity", "1");
 });
 
-test("homepage editorial visual captions meet WCAG AA contrast on their card surfaces", async ({
+test("editorial cover credits and informative diagram captions meet WCAG AA contrast", async ({
   page,
 }) => {
+  skipWhenNoRepresentativeArticle();
   await page.setViewportSize({ width: 1440, height: 1200 });
-  await page.goto("/");
+  for (const { path, selector } of [
+    { path: "/", selector: ".home-opening .editorial-cover figcaption" },
+    {
+      path: articlePath!,
+      selector: ".article-reading-layout__content .editorial-visual__caption",
+    },
+  ]) {
+    await page.goto(path);
+    const captions = page.locator(selector);
+    expect(await captions.count()).toBeGreaterThan(0);
 
-  const captions = page.locator(".home-opening .editorial-visual__caption");
-  expect(await captions.count()).toBeGreaterThan(0);
+    for (const caption of await captions.all()) {
+      await expect(caption).toBeVisible();
+      const appearance = await captureFocusAppearance(caption);
+      const foreground = parseCssColor(appearance.color);
+      const background = appearance.ancestorBackgrounds
+        .map(parseCssColor)
+        .find((color): color is RgbaColor => Boolean(color && color.alpha > 0));
 
-  for (const caption of await captions.all()) {
-    const appearance = await captureFocusAppearance(caption);
-    const foreground = parseCssColor(appearance.color);
-    const background = appearance.ancestorBackgrounds
-      .map(parseCssColor)
-      .find((color): color is RgbaColor => Boolean(color && color.alpha > 0));
-
-    expect(foreground).not.toBeNull();
-    expect(background).not.toBeUndefined();
-    expect(contrastRatio(foreground!, background!)).toBeGreaterThanOrEqual(4.5);
+      expect(foreground).not.toBeNull();
+      expect(background).not.toBeUndefined();
+      expect(contrastRatio(foreground!, background!)).toBeGreaterThanOrEqual(
+        4.5,
+      );
+    }
   }
 });
 
@@ -730,12 +744,19 @@ test("mobile article exposes one semantic fit summary without a hidden duplicate
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(articlePath!);
 
-  const fitSummary = page.locator("section.fit-summary");
+  const fitSummary = page.locator("details.fit-summary");
   await expect(fitSummary).toHaveCount(1);
   await expect(fitSummary).toBeVisible();
+  await expect(fitSummary).not.toHaveAttribute("open");
   await expect(
     fitSummary.getByRole("heading", { level: 2, name: "At a glance" }),
   ).toBeVisible();
+  await fitSummary.locator("summary").focus();
+  await page.keyboard.press("Enter");
+  await expect(fitSummary).toHaveAttribute("open", "");
+  await expect(fitSummary.locator("dd")).toHaveCount(4);
+  for (const value of await fitSummary.locator("dd").all())
+    await expect(value).toBeVisible();
   await expect(
     fitSummary.getByText("Business problem", { exact: true }),
   ).toBeVisible();

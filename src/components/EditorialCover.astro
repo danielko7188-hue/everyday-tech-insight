@@ -1,0 +1,40 @@
+---
+import type { CategorySlug } from "../data/categories";
+import { editorialCovers } from "../data/editorial-covers";
+
+interface Props {
+  category: CategorySlug;
+  eager?: boolean;
+  class?: string;
+}
+
+const { category, eager = false, class: className } = Astro.props;
+const cover = editorialCovers[category];
+// Covers occupy one full mobile column, then half of the 1200px publication.
+const sizes = [
+  className?.split(" ").includes("editorial-cover--supporting")
+    ? "(min-width: 1264px) 580px, (min-width: 900px) calc((100vw - 104px) / 2)"
+    : "(min-width: 1264px) 600px, (min-width: 900px) calc((100vw - 64px) / 2)",
+  "(min-width: 768px) calc(100vw - 64px)",
+  "(max-width: 359px) calc(100vw - 32px)",
+  "calc(100vw - 40px)",
+].join(", ");
+---
+
+<figure class:list={["editorial-cover", className]}>
+  <picture>
+    <source type="image/avif" srcset={cover.avifSrcSet} sizes={sizes} />
+    <img
+      src={cover.src}
+      srcset={cover.webpSrcSet}
+      sizes={sizes}
+      alt=""
+      width={cover.width}
+      height={cover.height}
+      loading={eager ? "eager" : "lazy"}
+      fetchpriority={eager ? "high" : undefined}
+      decoding="async"
+    />
+  </picture>
+  <figcaption>{cover.credit}</figcaption>
+</figure>

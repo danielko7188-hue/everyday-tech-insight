@@ -9,6 +9,7 @@ import {
   resolveBuildGitSha,
 } from "../utils/build-provenance.mjs";
 import type { ArticleVisual } from "../utils/content-contract";
+import instrumentSansUrl from "@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2?url";
 import "../styles/global.css";
 import "../styles/apple-editorial.css";
 
@@ -65,6 +66,13 @@ const jsonLdItems = Array.isArray(structuredData)
     <meta name="robots" content={robots} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href={instrumentSansUrl}
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link

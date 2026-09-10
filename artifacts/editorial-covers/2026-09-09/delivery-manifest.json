@@ -1,0 +1,242 @@
+[
+  {
+    "slug": "ai-automation",
+    "originalSha256": "5d289a27e7dd075bd7ea23d9e2fa7f03c8c369f476afb7d155287b34fd5d5f1f",
+    "outputs": [
+      {
+        "file": "ai-automation-480.avif",
+        "width": 480,
+        "height": 320,
+        "bytes": 6522,
+        "sha256": "12603baa0569102cfd311fbe412ce40bb5503e2678be2b91a3c447710a0e599a"
+      },
+      {
+        "file": "ai-automation-480.webp",
+        "width": 480,
+        "height": 320,
+        "bytes": 9980,
+        "sha256": "8a084386fa38f345dd697a52902265fb50ae1c947ba75dd3dbdece4e4dfa4fb6"
+      },
+      {
+        "file": "ai-automation-960.avif",
+        "width": 960,
+        "height": 640,
+        "bytes": 17937,
+        "sha256": "9ba651d92a1ef899d2ea773d05780bf4a467df20f8dd608e7d8278676b8ca3b7"
+      },
+      {
+        "file": "ai-automation-960.webp",
+        "width": 960,
+        "height": 640,
+        "bytes": 30544,
+        "sha256": "dc90fee914f312cac2459deb898fa8b71c2c7338ea8ed03a4430ca860b6ba814"
+      },
+      {
+        "file": "ai-automation-1536.avif",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 37540,
+        "sha256": "3c0b6bfe93348edbcd4d6d339f030c5bf449d2aa965e0c099ce1c0ff57fcc30b"
+      },
+      {
+        "file": "ai-automation-1536.webp",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 69640,
+        "sha256": "1c6ffafb2d410d6c7eb1baaae1c35fa0476e9f3101fa22a77c6f53dfcfe48377"
+      }
+    ]
+  },
+  {
+    "slug": "business-software",
+    "originalSha256": "9b879ba7710d9f0e0f0b4cbea01af31d2f6bd8afb1f22ec856c755bef84f8fac",
+    "outputs": [
+      {
+        "file": "business-software-480.avif",
+        "width": 480,
+        "height": 320,
+        "bytes": 5497,
+        "sha256": "eed0e8459b2ac6835baf4dab59556121f8f1cb0970dececbc356ec7d3baed527"
+      },
+      {
+        "file": "business-software-480.webp",
+        "width": 480,
+        "height": 320,
+        "bytes": 9142,
+        "sha256": "bf5db73dc31ff8fdf078f972b14ea6ded28da8ba0a8f2c367068a323cf99bc6b"
+      },
+      {
+        "file": "business-software-960.avif",
+        "width": 960,
+        "height": 640,
+        "bytes": 13816,
+        "sha256": "c1e3f98d746659711f93d12e0dbe7c1d88da1ab0c895e5e3a6076518c2dd879b"
+      },
+      {
+        "file": "business-software-960.webp",
+        "width": 960,
+        "height": 640,
+        "bytes": 24290,
+        "sha256": "dcf9ce57d5a9f3208c7aa0867cf811a5e83ece3943f22da2da8ef99f1285d4df"
+      },
+      {
+        "file": "business-software-1536.avif",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 26102,
+        "sha256": "e2ce1015df36326f7d1169654ff8909b61bf8a79650fa7e19521d568f4a002e1"
+      },
+      {
+        "file": "business-software-1536.webp",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 48984,
+        "sha256": "c3060d51187ba403c5504cdbaaafa1b50b5b746ac316d1d8ac3391bdf60784b8"
+      }
+    ]
+  },
+  {
+    "slug": "cybersecurity-data-protection",
+    "originalSha256": "6c1970e61313acf8fad3d18904f775f4229b8883d2c2fa7c1661c025c45dfe24",
+    "outputs": [
+      {
+        "file": "cybersecurity-data-protection-480.avif",
+        "width": 480,
+        "height": 320,
+        "bytes": 3923,
+        "sha256": "0ee00efadaddcb48b61d8fb96bf5db886597aea0eccffd2fc508b311f98cecea"
+      },
+      {
+        "file": "cybersecurity-data-protection-480.webp",
+        "width": 480,
+        "height": 320,
+        "bytes": 5892,
+        "sha256": "9cb45f2a4afcc83bcf2a4ba8d5e6e122b6197200401cef692c169755a49d1763"
+      },
+      {
+        "file": "cybersecurity-data-protection-960.avif",
+        "width": 960,
+        "height": 640,
+        "bytes": 9384,
+        "sha256": "7f276984312d710fb74b14cd74e5c8b94cb639ef5374ecb09c50c378e610c32d"
+      },
+      {
+        "file": "cybersecurity-data-protection-960.webp",
+        "width": 960,
+        "height": 640,
+        "bytes": 17888,
+        "sha256": "cd7aa7e344aeaa13307228be4d6b6f5130554b2cb27572767d170f86451aaf44"
+      },
+      {
+        "file": "cybersecurity-data-protection-1536.avif",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 22908,
+        "sha256": "67af08c63f01a9d9f124d370bbaa19336bad94e9b968e49f38351548be9dd6a4"
+      },
+      {
+        "file": "cybersecurity-data-protection-1536.webp",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 51536,
+        "sha256": "3326c0134742895337941f499525c5ad67ef9aaa0955996409ef97d246be0251"
+      }
+    ]
+  },
+  {
+    "slug": "digital-operations",
+    "originalSha256": "e39aa7e4710ee768e51f604923de504fd5ccee5dab81d2244e68776e9206ee00",
+    "outputs": [
+      {
+        "file": "digital-operations-480.avif",
+        "width": 480,
+        "height": 320,
+        "bytes": 4881,
+        "sha256": "b4cad0e2c2b084b57826bca8f62d83ff252354990d7e55b5f24b548cd8c16a5e"
+      },
+      {
+        "file": "digital-operations-480.webp",
+        "width": 480,
+        "height": 320,
+        "bytes": 7664,
+        "sha256": "8a54006f8b194a09a7f9c5285e678e56b5eb7f9d69170038be5996a10fef6b1a"
+      },
+      {
+        "file": "digital-operations-960.avif",
+        "width": 960,
+        "height": 640,
+        "bytes": 11917,
+        "sha256": "bb86345f217ed517cb20dccc99c9045f85bd4d977b2ddaaffb7cc675453f866f"
+      },
+      {
+        "file": "digital-operations-960.webp",
+        "width": 960,
+        "height": 640,
+        "bytes": 21232,
+        "sha256": "b8544678594ed23d8561cd6bb9a9da69a379b0e3b7d901615bf5b1f48355d6e8"
+      },
+      {
+        "file": "digital-operations-1536.avif",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 24989,
+        "sha256": "c89619b8c5a230d19cbe5c010a7dfb906bf5b01234778bcf1324df9089ee6e79"
+      },
+      {
+        "file": "digital-operations-1536.webp",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 48954,
+        "sha256": "6ee778ea5a7673ac3e31db7d041d5148327bde8ec05bd4f3ff4d48e2e2b963ca"
+      }
+    ]
+  },
+  {
+    "slug": "technology-strategy",
+    "originalSha256": "19d9521147bbd6ae73222dd4e94bc22c786715d9192052ebaddd3f7e2b63d11a",
+    "outputs": [
+      {
+        "file": "technology-strategy-480.avif",
+        "width": 480,
+        "height": 320,
+        "bytes": 4995,
+        "sha256": "6271c535d71a4667f544a39159092d5fd2205c03a9811a8b38b83d37daf7c6a3"
+      },
+      {
+        "file": "technology-strategy-480.webp",
+        "width": 480,
+        "height": 320,
+        "bytes": 7534,
+        "sha256": "feda00a8f61fe11c8b37ed6b87ccb440a2ead24a3ef67db7844a3e7b95d8dd68"
+      },
+      {
+        "file": "technology-strategy-960.avif",
+        "width": 960,
+        "height": 640,
+        "bytes": 12863,
+        "sha256": "c060cd45096703e0b851bc2449fbd97b2a4fa66e554cd38e01cf29f6686dbeb6"
+      },
+      {
+        "file": "technology-strategy-960.webp",
+        "width": 960,
+        "height": 640,
+        "bytes": 22314,
+        "sha256": "46d95dbc7f2fdc41aace9eedb5a8ef7711c150759981c4c816bb89ce462ea3a1"
+      },
+      {
+        "file": "technology-strategy-1536.avif",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 27761,
+        "sha256": "dd0a2ada2e60a55df39aef84904df2e6ec6f9031e32079fa157bbf7282e0ca30"
+      },
+      {
+        "file": "technology-strategy-1536.webp",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 49704,
+        "sha256": "48bf6bf9321e58447751545bdfe15c5d3a55c20e1ea8f257e1347b8c5539bad9"
+      }
+    ]
+  }
+]

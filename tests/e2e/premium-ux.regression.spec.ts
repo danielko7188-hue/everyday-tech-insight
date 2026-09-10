@@ -150,11 +150,11 @@ for (const width of [390, 1440]) {
       .locator(".category-compact__list .article-card__title a")
       .first();
     await expect(guide).toBeVisible();
-    const top = await guide.evaluate(
-      (element) => element.getBoundingClientRect().top,
+    const bottom = await guide.evaluate(
+      (element) => element.getBoundingClientRect().bottom,
     );
-    expect(top).toBeLessThan(850);
-    await expect(page.locator(".category-hero__copy > p")).toHaveCount(3);
+    expect(bottom).toBeLessThanOrEqual(780);
+    await expect(page.locator(".category-hero__copy > p")).toHaveCount(1);
   });
 }
 
@@ -248,12 +248,17 @@ test("tablet informative diagrams use the reading width instead of a thumbnail c
     "/articles/back-up-business-files-with-the-3-2-1-method/",
     testInfo,
   );
-  const layout = await page.locator(".article-hero").evaluate((hero) => {
-    const copy = hero
+  await expect(page.locator(".article-hero .article-hero__visual")).toHaveCount(
+    0,
+  );
+  const layout = await page.locator(".article-page").evaluate((article) => {
+    const copy = article
       .querySelector(".article-hero__copy")!
       .getBoundingClientRect();
-    const figure = hero
-      .querySelector(".article-hero__visual")!
+    const figure = article
+      .querySelector(
+        ".article-reading-layout__content > .article-hero__visual",
+      )!
       .getBoundingClientRect();
     return {
       copyBottom: copy.bottom,

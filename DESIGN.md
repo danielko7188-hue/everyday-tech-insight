@@ -1,8 +1,12 @@
 # Everyday Tech Insight Design System
 
-## Current direction — Apple editorial, September 9, 2026
+## Current direction — story-led editorial, September 9, 2026
 
-The owner explicitly requested removal of the remaining WEKA-like styling and a closer apple.com feel. The current [Apple editorial contract](docs/superpowers/specs/2026-09-09-apple-editorial-direction-design.md) uses native Apple-style sans typography, white and light-gray surfaces, charcoal text, blue-only category/action accents, unboxed topic introductions and restrained resource controls. It supersedes the narrow interface typography, colored motifs and repeated containers of the earlier [Editorial Clarity contract](docs/DESIGN_REDESIGN_2026-09-09.md), as well as the historical August styling below. Licensed Source Sans remains for diagram and generated-image metrics. Accessibility, truthful content, owner-only publishing and monetization safeguards are unchanged. Apple trademarks, imagery and proprietary web fonts are not copied.
+The owner requested a deeper redesign after the initial Apple-inspired pass. The current [editorial art-direction contract](docs/superpowers/specs/2026-09-09-editorial-art-direction-design.md) makes useful stories the visual subject: a compact introduction, one dominant image-led story, coordinated subject-specific covers, and quieter category and reading-page framing. Self-hosted Instrument Sans variable, white and light-gray surfaces, charcoal text and restrained blue actions retain Apple-like clarity without copying Apple trademarks, imagery or proprietary fonts.
+
+The [cover provenance](docs/EDITORIAL_COVERS_2026-09-09.md) records all five original conceptual illustrations, prompts and delivery hashes. Browsing covers have empty alternatives and visible AI-generated illustration credits; informative article diagrams retain their meaningful alternatives and licensed Source Sans metrics. Native closed “At a glance” disclosures preserve the complete fit information and keyboard/print access. Accessibility, truthful content, owner-only publishing and monetization safeguards remain unchanged.
+
+This contract supersedes the presentation in the first [Apple editorial pass](docs/superpowers/specs/2026-09-09-apple-editorial-direction-design.md), the earlier [Editorial Clarity contract](docs/DESIGN_REDESIGN_2026-09-09.md), and the historical August styling below. Current acceptance criteria and release gates are in the new contract; historical measurements below do not certify the current implementation.
 
 ## Historical August design contract
 

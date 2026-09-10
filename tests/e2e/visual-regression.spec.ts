@@ -98,12 +98,20 @@ async function stabilizePage(page: Page): Promise<void> {
 
   const fontState = await page.evaluate(async () => {
     const publicationFace = await document.fonts.load(
-      '600 16px "Source Sans 3 Variable"',
+      '600 16px "Instrument Sans Variable"',
       "Publication",
     );
     const interfaceFace = await document.fonts.load(
-      '400 16px "Source Sans 3 Variable"',
+      '400 16px "Instrument Sans Variable"',
       "Interface",
+    );
+    const diagramFaces = await Promise.all(
+      [400, 600].map((weight) =>
+        document.fonts.load(
+          `${weight} 16px "Source Sans 3 Variable"`,
+          "Diagram",
+        ),
+      ),
     );
     await document.fonts.ready;
     await new Promise<void>((resolve) =>
@@ -113,6 +121,7 @@ async function stabilizePage(page: Page): Promise<void> {
     return {
       interfaceFace: interfaceFace.length,
       publicationFace: publicationFace.length,
+      diagramFaces: diagramFaces.map((faces) => faces.length),
       bodyFont: getComputedStyle(document.body).fontFamily,
       headingFont: getComputedStyle(document.querySelector("h1")!).fontFamily,
     };
@@ -120,16 +129,16 @@ async function stabilizePage(page: Page): Promise<void> {
 
   expect(
     fontState.publicationFace,
-    "local Source Sans 3 diagram face at weight 600",
+    "local Instrument Sans publication face at weight 600",
   ).toBeGreaterThan(0);
   expect(
     fontState.interfaceFace,
-    "local Source Sans 3 diagram face at weight 400",
+    "local Instrument Sans interface face at weight 400",
   ).toBeGreaterThan(0);
+  for (const faceCount of fontState.diagramFaces)
+    expect(faceCount, "local Source Sans 3 diagram face").toBeGreaterThan(0);
   for (const family of [fontState.bodyFont, fontState.headingFont]) {
-    expect(family).toMatch(
-      /-apple-system.*BlinkMacSystemFont.*Helvetica Neue.*Arial/,
-    );
+    expect(family).toMatch(/Instrument Sans Variable/);
     expect(family).not.toContain("Source Sans");
   }
 }

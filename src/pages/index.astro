@@ -2,9 +2,7 @@
 import { getCollection } from "astro:content";
 
 import ArticleCard from "../components/ArticleCard.astro";
-import EditorialVisual from "../components/EditorialVisual.astro";
 import SectionHeading from "../components/SectionHeading.astro";
-import SignalField from "../components/SignalField.astro";
 import TrustModule from "../components/TrustModule.astro";
 import { categories } from "../data/categories";
 import {
@@ -54,11 +52,6 @@ const topicCounts = new Map(
     ).length,
   ]),
 );
-const editorialVisualSymbolIds = [
-  ...(leadArticle ? [leadArticle.data.visual.key] : []),
-  ...featureArticles.map(({ data }) => data.visual.key),
-  ...categories.map(({ slug }) => slug),
-];
 
 const title = `${site.name} | Practical Business Technology`;
 const description =
@@ -77,34 +70,30 @@ const websiteStructuredData = {
   title={title}
   description={description}
   path="/"
-  editorialVisualSymbolIds={editorialVisualSymbolIds}
   structuredData={websiteStructuredData}
 >
   <div class="page-shell home-page">
     <header class="home-opening">
       <div class="home-opening__inner">
         <div class="home-opening__promise">
-          <p class="eyebrow">Practical business technology</p>
           <h1>Make technology decisions you can explain.</h1>
           <p class="lead-summary">
             Source-backed guides to choose better software, protect business
             data, and put technology to work.
           </p>
           <div class="home-opening__actions">
-            <a class="button-primary" href="/articles/">Explore the guides</a>
+            <a href="/articles/"
+              >Explore the guides <span aria-hidden="true"> →</span></a
+            >
             <a href="/toolkit/"
               >Get a practical worksheet <span aria-hidden="true"> →</span></a
             >
           </div>
-          <SignalField variant="hero" />
         </div>
         <section class="front-page" aria-labelledby="front-page-heading">
-          <div class="front-page__heading">
-            <h2 id="front-page-heading">A clearer place to start.</h2>
-            <a href="/articles/"
-              >All guides <span aria-hidden="true"> →</span></a
-            >
-          </div>
+          <h2 id="front-page-heading" class="visually-hidden">
+            Featured guides
+          </h2>
           <div class="front-page__lead">
             {
               leadArticle && (
@@ -112,6 +101,7 @@ const websiteStructuredData = {
                   article={leadArticle}
                   variant="lead"
                   headingLevel={3}
+                  cover
                 />
               )
             }
@@ -123,6 +113,7 @@ const websiteStructuredData = {
                   article={article}
                   variant="feature"
                   headingLevel={3}
+                  cover
                 />
               ))
             }
@@ -199,14 +190,6 @@ const websiteStructuredData = {
               data-category={category.slug}
               style={`--category-accent: ${category.accent};`}
             >
-              <div class="topic-directory__motif" data-editorial-visual>
-                <EditorialVisual
-                  category={category.slug}
-                  slug={`${category.slug}-home-topic`}
-                  ratio="wide"
-                  fit="contain"
-                />
-              </div>
               <a href={`/categories/${category.slug}/`}>
                 <span>{category.name}</span>
                 <span>
