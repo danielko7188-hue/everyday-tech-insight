@@ -38,7 +38,7 @@ for (const width of [320, 390, 768, 1440]) {
       "h1",
       ".publication-mark__name",
       ".story-meta",
-      ".section-heading__eyebrow",
+      ".category-compact__heading",
     ]) {
       await expect
         .soft(page.locator(selector).first())
@@ -118,6 +118,29 @@ for (const width of [320, 390, 768, 1440]) {
         .toBeLessThanOrEqual(780);
     }
     await expectNoOverflow(page);
+
+    await openPage(page, "/", testInfo);
+    const sectionEyebrows = page.locator(".section-heading__eyebrow");
+    await expect(sectionEyebrows).toHaveCount(3);
+    for (const eyebrow of await sectionEyebrows.all()) {
+      await expect(eyebrow).toBeVisible();
+      await expect(eyebrow).toHaveCSS(
+        "font-family",
+        /Instrument Sans Variable/,
+      );
+      await expect(eyebrow).toHaveCSS("text-transform", "none");
+      expect(
+        await eyebrow.evaluate((element) => {
+          const before = getComputedStyle(element, "::before");
+          return (
+            before.content === "none" ||
+            before.content === "normal" ||
+            before.display === "none"
+          );
+        }),
+        "home section eyebrow has no ornamental bar",
+      ).toBe(true);
+    }
   });
 
   test(`topic directory stays fully usable without circuit tiles or hover lift at ${width}px`, async ({

@@ -338,8 +338,7 @@ test("cover-led editorial home keeps one lead, two supports, nine guide destinat
   const topicEntries = page.locator(".topic-directory--compact > ol > li");
   await expect(topicEntries).toHaveCount(5);
   for (const entry of await topicEntries.all()) {
-    await expect(entry.locator('svg[aria-hidden="true"]')).toHaveCount(1);
-    await expect(entry.locator('svg[aria-hidden="true"]')).toBeHidden();
+    await expect(entry.locator("svg")).toHaveCount(0);
     await expect(entry.getByRole("link")).toBeVisible();
     await expect(entry.locator("p")).toBeVisible();
   }
@@ -392,8 +391,19 @@ test("article reading and utility surfaces expose the approved practical outcome
 }) => {
   skipWhenNoRepresentativeArticle();
   await page.goto(`/articles/${articleSlug}/`);
-  const glance = page.getByRole("region", { name: "At a glance" });
+  const glance = page.getByRole("group", {
+    name: "At a glance",
+    exact: true,
+  });
+  await expect(glance).toHaveCount(1);
+  await expect(glance).toHaveJSProperty("tagName", "DETAILS");
   await expect(glance).toBeVisible();
+  await expect(glance).not.toHaveAttribute("open");
+  await glance.locator("summary").focus();
+  await glance.locator("summary").press("Enter");
+  await expect(glance).toHaveAttribute("open", "");
+  await expect(glance.locator("dt")).toHaveCount(4);
+  await expect(glance.locator("dd")).toHaveCount(4);
   for (const field of [
     "Business problem",
     "Technology focus",
@@ -401,6 +411,10 @@ test("article reading and utility surfaces expose the approved practical outcome
     "What you will produce",
   ]) {
     await expect(glance.getByText(field, { exact: true })).toBeVisible();
+  }
+  for (const value of await glance.locator("dd").all()) {
+    await expect(value).toBeVisible();
+    await expect(value).toContainText(/\S/);
   }
 
   await page.goto("/toolkit/");
@@ -679,7 +693,7 @@ test("home publishes only the approved nine-guide curation", async ({
   ).toBe(true);
 
   const featuredGuidance = page.getByRole("region", {
-    name: "A clearer place to start.",
+    name: "Featured guides",
   });
   const latestGuides = page.getByRole("region", {
     name: "Latest guides",

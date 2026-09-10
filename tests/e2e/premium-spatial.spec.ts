@@ -337,43 +337,87 @@ async function navigateAndProbeRootViewTransition(
   );
 }
 
-test("homepage renders one local decorative responsive image after its promise", async ({
+test("homepage renders three local decorative responsive covers after its promise", async ({
   page,
 }) => {
   await page.goto("/");
 
-  const signal = page.locator(".home-opening [data-signal-field='hero']");
-  await expect(signal).toHaveCount(1);
-  await expect(signal).toHaveAttribute("aria-hidden", "true");
-  await expect(signal.locator("picture")).toHaveCount(1);
-  await expect(signal.locator("source[type='image/avif']")).toHaveCount(1);
-  const artwork = signal.locator("img");
-  await expect(artwork).toHaveCount(1);
-  await expect(artwork).toHaveAttribute("alt", "");
-  await expect(artwork).toHaveAttribute("src", /^\/.*\.webp$/);
-  await expect(artwork).toHaveAttribute("srcset", /480w.*960w.*1536w/);
-  const artworkState = await artwork.evaluate((image: HTMLImageElement) => ({
-    complete: image.complete,
-    height: image.naturalHeight,
-    local: new URL(image.currentSrc).origin === window.location.origin,
-    width: image.naturalWidth,
-  }));
-  expect(artworkState.complete).toBe(true);
-  expect(artworkState.local).toBe(true);
-  expect(artworkState.width).toBeGreaterThan(0);
-  expect(artworkState.height).toBeGreaterThan(0);
-  await expect(signal.locator("svg, script, iframe, video")).toHaveCount(0);
-  await expect(signal.locator("a, button, input, [tabindex]")).toHaveCount(0);
-  await expect(signal.locator("use")).toHaveCount(0);
-  await expect(page.locator("[data-signal-field]")).toHaveCount(1);
-  await expect(page.locator("[data-editorial-visual] use")).toHaveCount(8);
+  const covers = page.locator(".home-opening .editorial-cover");
+  await expect(covers).toHaveCount(3);
+  await expect(covers.locator('img[loading="eager"]')).toHaveCount(1);
+  await expect(covers.locator('img[fetchpriority="high"]')).toHaveCount(1);
+  await expect(covers.locator('img[loading="lazy"]')).toHaveCount(2);
+  await expect(
+    page.locator(".front-page__lead .editorial-cover img"),
+  ).toHaveAttribute("loading", "eager");
+  await expect(
+    page.locator(".front-page__lead .editorial-cover img"),
+  ).toHaveAttribute("fetchpriority", "high");
+  for (const cover of await covers.all()) {
+    await expect(cover).not.toHaveAttribute("aria-hidden", "true");
+    await expect(cover.locator("picture")).toHaveCount(1);
+    const avif = cover.locator("source[type='image/avif']");
+    await expect(avif).toHaveCount(1);
+    await expect(avif).toHaveAttribute("srcset", /480w.*960w.*1536w/);
+    const artwork = cover.locator("img");
+    await expect(artwork).toHaveCount(1);
+    await expect(artwork).toHaveAttribute("alt", "");
+    await expect(artwork).toHaveAttribute(
+      "src",
+      /^\/images\/editorial\/.*\.webp$/,
+    );
+    await expect(artwork).toHaveAttribute("srcset", /480w.*960w.*1536w/);
+    await expect(artwork).toHaveAttribute("width", "1536");
+    await expect(artwork).toHaveAttribute("height", "1024");
+    await expect(artwork).toHaveAttribute("decoding", "async");
+    await expect(artwork).toHaveAttribute("sizes", /\S/);
+    await expect(avif).toHaveAttribute(
+      "sizes",
+      (await artwork.getAttribute("sizes"))!,
+    );
+    await artwork.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() =>
+        artwork.evaluate(
+          (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    const artworkState = await artwork.evaluate((image: HTMLImageElement) => ({
+      complete: image.complete,
+      height: image.naturalHeight,
+      local: new URL(image.currentSrc).origin === window.location.origin,
+      width: image.naturalWidth,
+    }));
+    expect(artworkState.complete).toBe(true);
+    expect(artworkState.local).toBe(true);
+    expect(artworkState.width).toBeGreaterThan(0);
+    expect(artworkState.height).toBeGreaterThan(0);
+    await expect(cover.locator("figcaption")).toBeVisible();
+    await expect(cover.locator("figcaption")).toHaveText(
+      "AI-generated editorial illustration",
+    );
+    await expect(cover.locator("svg, script, iframe, video")).toHaveCount(0);
+    await expect(cover.locator("a, button, input, [tabindex]")).toHaveCount(0);
+    await expect(cover.locator("use")).toHaveCount(0);
+  }
+  await expect(
+    page.locator("[data-signal-field], [data-signal-plane]"),
+  ).toHaveCount(0);
+  await expect(page.locator("[data-editorial-visual] use")).toHaveCount(0);
   expect(
     await page.locator(".home-opening__promise h1").evaluate((heading) => {
-      const artwork = document.querySelector("[data-signal-field='hero']");
-      return Boolean(
-        artwork &&
-        heading.compareDocumentPosition(artwork) &
-          Node.DOCUMENT_POSITION_FOLLOWING,
+      const artworks = Array.from(
+        document.querySelectorAll(".home-opening .editorial-cover"),
+      );
+      return (
+        artworks.length === 3 &&
+        artworks.every((artwork) =>
+          Boolean(
+            heading.compareDocumentPosition(artwork) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+          ),
+        )
       );
     }),
   ).toBe(true);
@@ -563,14 +607,21 @@ test("reduced motion leaves every spatial enhancement static", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  for (const [route, elementCount] of [
-    ["/", 1],
-    ["/404.html", 4],
+  for (const [route, selector, elementCount] of [
+    [
+      "/",
+      ".home-opening :is(.article-card--cover, .editorial-cover, .editorial-cover picture, .editorial-cover img)",
+      12,
+    ],
+    ["/404.html", "[data-signal-field], [data-signal-plane]", 4],
   ] as const) {
     await page.goto(route);
-    const enhancements = page.locator(
-      "[data-signal-field], [data-signal-plane]",
-    );
+    if (route === "/") {
+      await expect(
+        page.locator("[data-signal-field], [data-signal-plane]"),
+      ).toHaveCount(0);
+    }
+    const enhancements = page.locator(selector);
     await expect(enhancements).toHaveCount(elementCount);
     const signalStyles = await enhancements.evaluateAll((elements) =>
       elements.map((element) => {
